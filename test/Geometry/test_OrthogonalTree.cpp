@@ -55,7 +55,7 @@ protected:
 	Tree                    tree;
 	static constexpr double dupl_thres = 2.5;
 
-	Points    points;
+	TriPoints points;
 	Triangles faces;
 
 	void SetUp() override
@@ -89,7 +89,7 @@ TEST_F(test_OrthogonalTree, Construct)
 	TEST_OUTPUT_DIRECTORY(OrthogonalTree, Construct);
 
 	// visualize tree and save
-	Points    out_points;
+	TriPoints out_points;
 	Triangles out_faces;
 
 	std::queue<index_t> nodes_to_traverse;

@@ -60,7 +60,7 @@ protected:
 protected:
 	Tree tree;
 
-	Points    points;
+	TriPoints points;
 	Triangles faces;
 
 	void SetUp() override
@@ -96,7 +96,7 @@ TEST_F(test_AdapOrthTree, Construct)
 	TEST_OUTPUT_DIRECTORY(AdapOrthTree, Construct);
 
 	// visualize tree and save
-	Points    out_points;
+	TriPoints out_points;
 	Triangles out_faces;
 
 	std::queue<index_t> nodes_to_traverse;

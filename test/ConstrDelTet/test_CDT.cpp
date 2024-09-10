@@ -84,10 +84,8 @@ TEST_F(test_ConstrDelTet, TestIfCrash)
 	std::cout << std::format("result vertices {} result tetrahedra {}\n",
 	                         result_points.size(), result_tetrahedra.size());
 
-#if 0
 	if (config.get<bool>("write"))
 		write_mesh(outdir + filename, result_points, result_tetrahedra, io_options);
-#endif
 }
 
 /**
