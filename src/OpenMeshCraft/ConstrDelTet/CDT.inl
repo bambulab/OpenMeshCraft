@@ -48,6 +48,8 @@ public:
 	using CollinearPoints3D  = typename K::CollinearPoints3D;
 	using LongestAxis        = typename K::LongestAxis;
 	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
+	using InCircle           = typename K::InCircle;
+	using InSphere           = typename K::InSphere;
 
 	using CalcBbox = typename K::CalcBoundingBox3;
 
@@ -91,6 +93,8 @@ public: /* Traits ************************************************************/
 	using LessThan3D         = typename Traits::LessThan3D;
 	using CollinearPoints3D  = typename Traits::CollinearPoints3D;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
+	using InCircle           = typename Traits::InCircle;
+	using InSphere           = typename Traits::InSphere;
 
 public: /* Auxiliary data structures *****************************************/
 	// point arena
@@ -173,6 +177,14 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	OMC_ARR_SAVE_ELAPSED(start_pp, pp_elapsed, "Preprocessing");
 
 	/***** Delaunay tetrahedralization *****/
+
+	OMC_ARR_START_ELAPSE(start_dt);
+
+	DelaunayTet<Traits> DT(cdt_out_verts, cdt_out_tets);
+	DT.tetrahedralize();
+
+	OMC_ARR_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
+
 }
 
 template <typename Traits>

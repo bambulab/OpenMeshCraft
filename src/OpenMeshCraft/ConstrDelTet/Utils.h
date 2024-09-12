@@ -22,6 +22,8 @@
 #include "OpenMeshCraft/Utils/Label.h"
 #include "OpenMeshCraft/Utils/Macros.h"
 
+#include "OpenMeshCraft/Arrangements/Utils.h"
+
 #include <bitset>
 #include <memory>
 #include <vector>

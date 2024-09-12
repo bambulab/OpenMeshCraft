@@ -130,10 +130,10 @@
 /*********************************************************/
 
 // Enable indirect predicates
-// #define OMC_INDIRECT_PRED
+#define OMC_INDIRECT_PRED
 
 // Enable indirect offset predicates
-#define OMC_OFFSET_PRED
+// #define OMC_OFFSET_PRED
 
 // Cache semi-static filter in points (lx, ly, lz, ld, max_var...)
 #define OMC_CACHE_SSF
