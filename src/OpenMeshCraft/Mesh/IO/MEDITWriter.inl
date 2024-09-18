@@ -92,7 +92,8 @@ bool MEDITWriter<Traits>::save_to_stream(std::ostream &out)
 	for (size_t i = 0; i < m_tetrahedra.size(); i++)
 	{
 		const Tetrahedron &t = m_tetrahedra[i];
-		out << t[0] << " " << t[1] << " " << t[2] << " " << t[3] << " 1\n";
+		out << t[0] + 1 << " " << t[1] + 1 << " " << t[2] + 1 << " " << t[3] + 1
+		    << " 1\n";
 	}
 
 	return true;

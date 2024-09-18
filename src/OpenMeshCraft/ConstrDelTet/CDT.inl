@@ -229,7 +229,7 @@ void ConstrDelTet_Impl<Traits>::computeExplicitResult(iPoints &final_points,
     final_tets.clear();
     
     // Resize the final tets container to match the number of output tets
-    final_tets.resize(cdt_out_tets.size() / 3);
+    final_tets.resize(cdt_out_tets.size() / 4);
 
     // Initialize a vertex index mapping and a counter for the number of vertices
     size_t               num_vertices = 0;

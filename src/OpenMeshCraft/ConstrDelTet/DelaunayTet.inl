@@ -21,14 +21,15 @@ void DelaunayTet<Traits>::tetrahedralize()
 	index_t init_k, init_l;
 	initialize(init_k, init_l);
 
-	index_t curr_tet = 0;
-	for (index_t i = 2; i < verts.size(); i++)
+	index_t      curr_tet = 0;
+	const size_t n_verts  = sizeVerts();
+	for (index_t i = 2; i < n_verts; i++)
 		if (i != init_k && i != init_l)
 			insertVertex(i, curr_tet);
 
-	removeDeletedTets();
+	markInfiniteTetsDeleted();
 
-	// TODO remove infinite tets.
+	removeDeletedTets();
 }
 
 /**
@@ -43,7 +44,7 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
 	clear();
 
 	// Size of the input vertices
-	const size_t n = verts.size();
+	const size_t n = sizeVerts();
 
 	// Goal: find four non-coplanar vertices to form the initial tetrahedron.
 	// Pre-condition: no coincident vertices exist.
@@ -146,7 +147,7 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 	while (true)
 	{
 		const index_t *curr_nodes = &tetNode(tet);
-		index_t off = 0;
+		index_t        off        = 0;
 		for (; off < 4; off++)
 		{
 			if (off == entering_face) // skip the entering face
@@ -367,6 +368,25 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 	tet = tetNeigh(cavity_corners.back());
 }
 
+/**
+ * @brief Marks tetrahedrons containing infinite vertices as deleted.
+ */
+template <typename Traits>
+void DelaunayTet<Traits>::markInfiniteTetsDeleted()
+{
+	const size_t n = sizeTets();
+	for (index_t id = 0; id < n; id++)
+	{
+		index_t  idoff = id << 2;
+		index_t *node  = &tetNode(idoff);
+		if (node[0] == INFINITE_VERTEX || node[1] == INFINITE_VERTEX ||
+		    node[2] == INFINITE_VERTEX || node[3] == INFINITE_VERTEX)
+		{
+			pushMarkDeletedTet(idoff);
+		}
+	}
+}
+
 template <typename Traits>
 void DelaunayTet<Traits>::removeDeletedTets()
 {
@@ -457,7 +477,7 @@ void DelaunayTet<Traits>::reserveTets(size_t new_capacity)
 template <typename Traits>
 void DelaunayTet<Traits>::incSizeTets(size_t inc_size)
 {
-	resizeTets(tet_mark.size() + inc_size);
+	resizeTets(sizeTets() + inc_size);
 }
 
 template <typename Traits>

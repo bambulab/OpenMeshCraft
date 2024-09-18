@@ -54,6 +54,8 @@ public: /* Algorithm *******************************************************/
 
 	void insertVertex(const index_t vid, index_t &tet);
 
+	void markInfiniteTetsDeleted();
+
 	void removeDeletedTets();
 
 	/* Connectivity operations on tetrahedra mesh */
@@ -107,15 +109,18 @@ public: /* Algorithm *******************************************************/
 	void reserveTets(size_t new_capacity);
 	void incSizeTets(size_t inc_size);
 
+	size_t sizeVerts() const { return verts.size(); }
+	size_t sizeTets() const { return tet_node.size() >> 2; }
+
 	void clear();
 
 	/* Geometric operations on tetrahedra mesh */
 
 	bool vertexInTetSphere(index_t tet_idoff, index_t vid) const;
 
-	bool vertexInTetSphere(const index_t* node, index_t vid) const;
+	bool vertexInTetSphere(const index_t *node, index_t vid) const;
 
-	Sign symbolicPerturbation(index_t* indices) const;
+	Sign symbolicPerturbation(index_t *indices) const;
 
 public: /* Data ************************************************************/
 	/// Input vertices (pointers to points in arena)
