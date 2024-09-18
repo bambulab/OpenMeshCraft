@@ -17,7 +17,6 @@
 
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
 
-#include "boost/filesystem.hpp"
 #include "boost/property_tree/json_parser.hpp"
 #include "boost/property_tree/ptree.hpp"
 
@@ -26,8 +25,8 @@
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
 
 #include <chrono>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stack>
 #include <string>
@@ -35,35 +34,49 @@
 
 extern boost::property_tree::ptree omc_test_config;
 
+/**
+ * @brief Ensures the file's directory is writable.
+ *
+ * @param filename The name of the file.
+ * @return true if the file's directory is writable.
+ * @return false if the file's directory is not writable.
+ */
 inline bool make_file_writable(const std::string &filename)
 {
-	namespace bfs = boost::filesystem;
+	namespace fs = std::filesystem;
 
-	bfs::path filepath(filename);
+	fs::path filepath(filename);
 
-	if (bfs::is_regular_file(filepath))
+	if (fs::is_regular_file(filepath))
 		return true;
 
-	bfs::path parent_path = filepath.parent_path();
-	if (bfs::is_directory(parent_path))
+	fs::path parent_path = filepath.parent_path();
+	if (fs::is_directory(parent_path))
 		return true;
 
-	if (!bfs::create_directories(parent_path))
+	if (!fs::create_directories(parent_path))
 		throw std::logic_error("can't write file " + filename);
 
 	return false;
 }
 
+/**
+ * @brief Ensures the directory is writable.
+ *
+ * @param dirname The name of the directory.
+ * @return true if the directory is writable.
+ * @return false if the directory is not writable.
+ */
 inline bool make_dir_writable(const std::string &dirname)
 {
-	namespace bfs = boost::filesystem;
+	namespace fs = std::filesystem;
 
-	bfs::path dirpath(dirname);
+	fs::path dirpath(dirname);
 
-	if (bfs::is_directory(dirpath))
+	if (fs::is_directory(dirpath))
 		return true;
 
-	if (!bfs::create_directories(dirpath))
+	if (!fs::create_directories(dirpath))
 		throw std::logic_error("can't write dir " + dirname);
 
 	return false;
@@ -89,6 +102,14 @@ using MEDITWriter = OMC::MEDITWriter<TetSoupTraits>;
 
 using IOOptions = OMC::IOOptions;
 
+/**
+ * @brief Reads a mesh from a file.
+ *
+ * @param filename The name of the file.
+ * @param points The points of the mesh.
+ * @param triangles The triangles of the mesh.
+ * @param io_options The IO options.
+ */
 inline void read_mesh(const std::string &filename, TriPoints &points,
                       Triangles &triangles, IOOptions &io_options)
 {
@@ -110,10 +131,18 @@ inline void read_mesh(const std::string &filename, TriPoints &points,
 	}
 	else
 	{
-		throw std::runtime_error("unsupport file type.");
+		throw std::runtime_error("unsupported file type.");
 	}
 }
 
+/**
+ * @brief Writes a mesh to a file.
+ *
+ * @param filename The name of the file.
+ * @param points The points of the mesh.
+ * @param triangles The triangles of the mesh.
+ * @param io_options The IO options.
+ */
 inline void write_mesh(const std::string &filename, const TriPoints &points,
                        const Triangles &triangles, IOOptions &io_options)
 {
@@ -136,7 +165,7 @@ inline void write_mesh(const std::string &filename, const TriPoints &points,
 	}
 	else
 	{
-		throw std::runtime_error("unsupport file type.");
+		throw std::runtime_error("unsupported file type.");
 	}
 };
 
@@ -152,13 +181,12 @@ inline void write_mesh(const std::string &filename, const TetPoints &points,
 	}
 	else
 	{
-		throw std::runtime_error("unsupport file type.");
+		throw std::runtime_error("unsupported file type.");
 	}
 };
 
-#define TEST_OUTPUT_DIRECTORY(TEST_SUIT_NAME, TEST_NAME)      \
-	std::string outdir =                                        \
-	  "./data/test_output/" #TEST_SUIT_NAME "/" #TEST_NAME "/"; \
+#define TEST_OUTPUT_DIRECTORY(TEST_SUIT_NAME, TEST_NAME)                     \
+	std::string outdir = "./data/test_output/" #TEST_SUIT_NAME "/" #TEST_NAME; \
 	make_dir_writable(outdir)
 
 #define TEST_GET_CONFIG(TEST_SUIT_NAME, TEST_NAME) \
