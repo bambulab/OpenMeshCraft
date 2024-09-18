@@ -27,6 +27,8 @@ void DelaunayTet<Traits>::tetrahedralize()
 			insertVertex(i, curr_tet);
 
 	removeDeletedTets();
+
+	// TODO remove infinite tets.
 }
 
 /**

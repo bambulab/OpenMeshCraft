@@ -14,7 +14,6 @@
 #include "OpenMeshCraft/Arrangements/CleanMesh.h"
 #include "OpenMeshCraft/Arrangements/Utils.h"
 
-
 namespace OMC {
 
 template <typename Kernel, typename Traits>
@@ -114,6 +113,9 @@ public: /* Pipeline **********************************************************/
 
 	void collectCleanResults(ArrCleanMesh<Traits> &CM);
 
+	template <typename iPoint, typename iPoints, typename iTet, typename iTets>
+	void computeExplicitResult(iPoints &final_points, iTets &final_tets);
+
 public:
 	/* Input data */
 	/// coordinates of all points
@@ -184,7 +186,6 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	DT.tetrahedralize();
 
 	OMC_ARR_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
-
 }
 
 template <typename Traits>
@@ -202,6 +203,72 @@ void ConstrDelTet_Impl<Traits>::collectCleanResults(ArrCleanMesh<Traits> &CM)
 	cdt_out_labels.num = CM.num_labels;
 	// collect info about duplicated triangles
 	dupl_triangles     = std::move(CM.dupl_triangles);
+}
+
+/**
+ * @brief Computes the explicit result for the constrained Delaunay tetrahedralization.
+ *
+ * This function processes the output vertices and tetrahedra, fixes vertex indices,
+ * and populates the final points and tetrahedra containers.
+ *
+ * @tparam Traits The traits class providing necessary types and utilities.
+ * @tparam iPoint The type representing a point in the final result.
+ * @tparam iPoints The container type for storing the final points.
+ * @tparam iTet The type representing a tetrahedron in the final result.
+ * @tparam iTets The container type for storing the final tetrahedra.
+ * @param final_points The container to store the final points.
+ * @param final_tets The container to store the final tetrahedra.
+ */
+template <typename Traits>
+template <typename iPoint, typename iPoints, typename iTet, typename iTets>
+void ConstrDelTet_Impl<Traits>::computeExplicitResult(iPoints &final_points,
+                                                      iTets   &final_tets)
+{
+    // Clear the final points and tets containers
+    final_points.clear();
+    final_tets.clear();
+    
+    // Resize the final tets container to match the number of output tets
+    final_tets.resize(cdt_out_tets.size() / 3);
+
+    // Initialize a vertex index mapping and a counter for the number of vertices
+    size_t               num_vertices = 0;
+    std::vector<index_t> vertex_index(cdt_out_verts.size(), InvalidIndex);
+
+    // Loop over the output tets and fix vertex indices
+    for (index_t t_id = 0; t_id < cdt_out_tets.size(); t_id += 4)
+    {
+        const index_t         *tet = &cdt_out_tets[t_id];
+        std::array<index_t, 4> out_tets;
+        for (size_t i = 0; i < 4; i++)
+        {
+            index_t old_vid = tet[i];
+            if (!is_valid_idx(vertex_index[old_vid]))
+            {
+                vertex_index[old_vid] = num_vertices++;
+            }
+            out_tets[i] = vertex_index[old_vid];
+        }
+
+        // Assign the fixed vertex indices to the final tets
+        final_tets[t_id / 4] =
+          iTet(out_tets[0], out_tets[1], out_tets[2], out_tets[3]);
+    }
+
+    // Resize the final points container to match the number of vertices
+    final_points.resize(num_vertices);
+
+    // Parallel loop over the output vertices to populate the final points
+    tbb::parallel_for(index_t(0), cdt_out_verts.size(),
+                      [this, &vertex_index, &final_points](index_t v_id)
+                      {
+                          if (!is_valid_idx(vertex_index[v_id]))
+                              return;
+                          const GPoint *gp = cdt_out_verts[v_id];
+                          EPoint        ep = ToEP()(*gp);
+                          final_points[vertex_index[v_id]] =
+                            iPoint(ep.x(), ep.y(), ep.z());
+                      });
 }
 
 /*****************************************************************************/
@@ -270,11 +337,9 @@ void ConstrDelTet<Kernel, Traits>::CDT()
 		OMC_THROW_DOMAIN_ERROR_IF(output_points == nullptr ||
 		                            output_tetrahedra == nullptr,
 		                          "Output mesh is not set.");
-#if 0
-		m_impl
-		  ->template computeExplicitResult<iPoint, iPoints, iTriangle, iTriangles>(
-		    *output_points, *output_triangles, output_labels);
-#endif
+		m_impl->template computeExplicitResult<iPoint, iPoints, iTetrahedron,
+		                                       iTetrahedra>(*output_points,
+		                                                    *output_tetrahedra);
 		m_impl = nullptr;
 	}
 }

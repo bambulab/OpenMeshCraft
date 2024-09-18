@@ -25,7 +25,10 @@
 
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
 
+#include <chrono>
 #include <fstream>
+#include <filesystem>
+#include <iostream>
 #include <stack>
 #include <string>
 #include <vector>
@@ -77,10 +80,10 @@ using TetPoints  = typename TetSoupTraits::Points;
 using Tetrahedra = typename TetSoupTraits::Tetrahedra;
 
 // Define reader and writer
-using OBJReader   = OMC::OBJReader<TriSoupTraits>;
-using OBJWriter   = OMC::OBJWriter<TriSoupTraits>;
-using STLReader   = OMC::STLReader<TriSoupTraits>;
-using STLWriter   = OMC::STLWriter<TriSoupTraits>;
+using OBJReader = OMC::OBJReader<TriSoupTraits>;
+using OBJWriter = OMC::OBJWriter<TriSoupTraits>;
+using STLReader = OMC::STLReader<TriSoupTraits>;
+using STLWriter = OMC::STLWriter<TriSoupTraits>;
 
 using MEDITWriter = OMC::MEDITWriter<TetSoupTraits>;
 
