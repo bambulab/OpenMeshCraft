@@ -95,6 +95,9 @@ public: /* Traits ************************************************************/
 	using InCircle           = typename Traits::InCircle;
 	using InSphere           = typename Traits::InSphere;
 
+	// meshes
+	using TetMesh = TetrahedralMesh<Traits>;
+
 public: /* Auxiliary data structures *****************************************/
 	// point arena
 	using PntArena = ArrPointArena<Traits>;
@@ -150,10 +153,12 @@ public:
 	ConstrDelTet_Stats *stats;
 
 private: /* Private middle data *******************************************/
-	/// explicit points and jolly points
-	std::vector<EPoint>   exp_pnt; // explicit points
+	/// Explicit points
+	std::vector<EPoint>   exp_pnt;
 	/// All generated points in algorithm are stored in pnt_arena
 	std::vector<PntArena> pnt_arenas;
+	/// Tetrahedral mesh
+	TetMesh               tet_mesh;
 };
 
 template <typename Traits>
@@ -182,10 +187,16 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	OMC_ARR_START_ELAPSE(start_dt);
 
-	DelaunayTet<Traits> DT(cdt_out_verts, cdt_out_tets);
-	DT.tetrahedralize();
+	tet_mesh.initVerts(cdt_out_verts);
+
+	DelaunayTet<Traits> DT(/*pass reference*/ tet_mesh);
+	DT.tetrahedralize(/*remove_infinite_tets*/ true);
 
 	OMC_ARR_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
+
+	// output for test
+	cdt_out_verts = tet_mesh.verts;
+	cdt_out_tets  = tet_mesh.tet_node;
 }
 
 template <typename Traits>
@@ -206,10 +217,11 @@ void ConstrDelTet_Impl<Traits>::collectCleanResults(ArrCleanMesh<Traits> &CM)
 }
 
 /**
- * @brief Computes the explicit result for the constrained Delaunay tetrahedralization.
+ * @brief Computes the explicit result for the constrained Delaunay
+ * tetrahedralization.
  *
- * This function processes the output vertices and tetrahedra, fixes vertex indices,
- * and populates the final points and tetrahedra containers.
+ * This function processes the output vertices and tetrahedra, fixes vertex
+ * indices, and populates the final points and tetrahedra containers.
  *
  * @tparam Traits The traits class providing necessary types and utilities.
  * @tparam iPoint The type representing a point in the final result.
@@ -224,51 +236,51 @@ template <typename iPoint, typename iPoints, typename iTet, typename iTets>
 void ConstrDelTet_Impl<Traits>::computeExplicitResult(iPoints &final_points,
                                                       iTets   &final_tets)
 {
-    // Clear the final points and tets containers
-    final_points.clear();
-    final_tets.clear();
-    
-    // Resize the final tets container to match the number of output tets
-    final_tets.resize(cdt_out_tets.size() / 4);
+	// Clear the final points and tets containers
+	final_points.clear();
+	final_tets.clear();
 
-    // Initialize a vertex index mapping and a counter for the number of vertices
-    size_t               num_vertices = 0;
-    std::vector<index_t> vertex_index(cdt_out_verts.size(), InvalidIndex);
+	// Resize the final tets container to match the number of output tets
+	final_tets.resize(cdt_out_tets.size() / 4);
 
-    // Loop over the output tets and fix vertex indices
-    for (index_t t_id = 0; t_id < cdt_out_tets.size(); t_id += 4)
-    {
-        const index_t         *tet = &cdt_out_tets[t_id];
-        std::array<index_t, 4> out_tets;
-        for (size_t i = 0; i < 4; i++)
-        {
-            index_t old_vid = tet[i];
-            if (!is_valid_idx(vertex_index[old_vid]))
-            {
-                vertex_index[old_vid] = num_vertices++;
-            }
-            out_tets[i] = vertex_index[old_vid];
-        }
+	// Initialize a vertex index mapping and a counter for the number of vertices
+	size_t               num_vertices = 0;
+	std::vector<index_t> vertex_index(cdt_out_verts.size(), InvalidIndex);
 
-        // Assign the fixed vertex indices to the final tets
-        final_tets[t_id / 4] =
-          iTet(out_tets[0], out_tets[1], out_tets[2], out_tets[3]);
-    }
+	// Loop over the output tets and fix vertex indices
+	for (index_t t_id = 0; t_id < cdt_out_tets.size(); t_id += 4)
+	{
+		const index_t         *tet = &cdt_out_tets[t_id];
+		std::array<index_t, 4> out_tets;
+		for (size_t i = 0; i < 4; i++)
+		{
+			index_t old_vid = tet[i];
+			if (!is_valid_idx(vertex_index[old_vid]))
+			{
+				vertex_index[old_vid] = num_vertices++;
+			}
+			out_tets[i] = vertex_index[old_vid];
+		}
 
-    // Resize the final points container to match the number of vertices
-    final_points.resize(num_vertices);
+		// Assign the fixed vertex indices to the final tets
+		final_tets[t_id / 4] =
+		  iTet(out_tets[0], out_tets[1], out_tets[2], out_tets[3]);
+	}
 
-    // Parallel loop over the output vertices to populate the final points
-    tbb::parallel_for(index_t(0), cdt_out_verts.size(),
-                      [this, &vertex_index, &final_points](index_t v_id)
-                      {
-                          if (!is_valid_idx(vertex_index[v_id]))
-                              return;
-                          const GPoint *gp = cdt_out_verts[v_id];
-                          EPoint        ep = ToEP()(*gp);
-                          final_points[vertex_index[v_id]] =
-                            iPoint(ep.x(), ep.y(), ep.z());
-                      });
+	// Resize the final points container to match the number of vertices
+	final_points.resize(num_vertices);
+
+	// Parallel loop over the output vertices to populate the final points
+	tbb::parallel_for(index_t(0), cdt_out_verts.size(),
+	                  [this, &vertex_index, &final_points](index_t v_id)
+	                  {
+		                  if (!is_valid_idx(vertex_index[v_id]))
+			                  return;
+		                  const GPoint *gp = cdt_out_verts[v_id];
+		                  EPoint        ep = ToEP()(*gp);
+		                  final_points[vertex_index[v_id]] =
+		                    iPoint(ep.x(), ep.y(), ep.z());
+	                  });
 }
 
 /*****************************************************************************/
