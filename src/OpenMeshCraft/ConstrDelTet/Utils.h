@@ -20,6 +20,7 @@
 #include "OpenMeshCraft/Utils/Hashers.h"
 #include "OpenMeshCraft/Utils/IndexDef.h"
 #include "OpenMeshCraft/Utils/Label.h"
+#include "OpenMeshCraft/Utils/Logger.h"
 #include "OpenMeshCraft/Utils/Macros.h"
 
 #include "OpenMeshCraft/Arrangements/Utils.h"
@@ -49,5 +50,17 @@ struct ConstrDelTet_Stats
 
 	double dt_elapsed = 0.; // timings of Delaunay tetrahedralization
 };
+
+#define OMC_CDT_START_ELAPSE(name) auto name = OMC::Logger::elapse_reset();
+
+#define OMC_CDT_SAVE_ELAPSED(name, dst_name, dscrpt)                    \
+	if (stats != nullptr)                                                 \
+		stats->dst_name = OMC::Logger::elapsed(name).count();               \
+	if (config.verbose)                                                   \
+	{                                                                     \
+		OMC::Logger::info(std::format("[OpenMeshCraft CDT] " dscrpt         \
+		                              " time : {} s",                       \
+		                              OMC::Logger::elapsed(name).count())); \
+	}
 
 } // namespace OMC

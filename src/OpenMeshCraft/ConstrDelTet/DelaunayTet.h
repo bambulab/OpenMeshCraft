@@ -42,14 +42,28 @@ public: /* Constructor & Destructor ****************************************/
 	}
 
 public: /* Algorithm *******************************************************/
-	/* Pipeline of the algorithm */
+
+	/* Pipeline of the algorithm
+	 * - Initialize the Delaunay tetrahedralization
+	 * - Insert vertices into the Delaunay tetrahedralization
+	 * - [Optional] Mark infinite tetrahedra as deleted if required
+	 * - Remove deleted tetrahedra
+	 */
 	void tetrahedralize(bool remove_infinite_tets = false);
 
+	/* Initialize the Delaunay tetrahedralization */
 	void initialize(index_t &k, index_t &l);
 
+	/* Insert a vertex into the Delaunay tetrahedralization */
 	void insertVertex(const index_t vid, index_t &tet);
 
+	/* [Optional] Mark infinite tetrahedra as deleted */
 	void markInfiniteTetsDeleted();
+
+public: /* Checks **********************************************************/
+
+	/* Verify the correctness of the Delaunay tetrahedralization */
+	bool verify(bool verbose) const;
 
 public: /* Data ************************************************************/
 	TetMesh &mesh;

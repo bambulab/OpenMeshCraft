@@ -101,7 +101,7 @@ void TetrahedralMesh<Traits>::newTets(size_t                inc_size,
 }
 
 /**
- * @brief Push the deleted tetrahedron into tet_deleted, and mark it as deleted.
+ * @brief Mark a tetrahedron as deleted.
  * @param idoff tetrahedron's idoff = tet_id * 4 + node_offset
  */
 template <typename Traits>
@@ -151,7 +151,8 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 				// Update the neighbor information.
 				const index_t n  = tet_neigh[last + i];
 				tet_neigh[t + i] = n;
-				tet_neigh[n]     = t + i;
+        if (is_valid_idx(n))
+					tet_neigh[n] = t + i;
 				// Update the incident tetrahedron information.
 				if (tet_node[last + i] != INFINITE_VERTEX &&
 				    inc_tet[tet_node[last + i]] == getId(last))

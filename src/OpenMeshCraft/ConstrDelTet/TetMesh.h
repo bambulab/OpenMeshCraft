@@ -52,7 +52,7 @@ public:
 	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
 	const EPoint &epnt(index_t vid) const { return AsEP()(*verts[vid]); }
 
-	/// Get the index to the incident tetrahedron of a vertex
+	/// Get the index (NOT the idoff) to the incident tetrahedron of a vertex
 	index_t       &incTet(index_t vid) { return inc_tet[vid]; }
 	const index_t &incTet(index_t vid) const { return inc_tet[vid]; }
 
@@ -99,11 +99,18 @@ public:
 	static index_t tetON2(index_t idoff) { return (idoff & 2) ^ 3; }
 	static index_t tetON3(index_t idoff) { return (idoff + 3) & 2; }
 
+	bool tetHasVertex(index_t tet_idoff, index_t vid) const
+	{
+		return tetNode(tet_idoff) == vid || tetNode(tet_idoff + 1) == vid ||
+		       tetNode(tet_idoff + 2) == vid || tetNode(tet_idoff + 3) == vid;
+	}
+
 	/// @brief Check if the tetrahedron is finite.
 	/// Remember that we always put the infinite vertex at the last position.
 	bool isFiniteTet(index_t idoff) const
 	{
-		return tetNode(idoff + 3) != INFINITE_VERTEX;
+		// idoff | 3 == clipId(idoff) + 3
+		return tetNode(idoff | 3) != INFINITE_VERTEX;
 	}
 
 	/* Operations about marks */

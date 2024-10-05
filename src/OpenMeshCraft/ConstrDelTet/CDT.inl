@@ -171,7 +171,7 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	/***** Preprocessing *****/
 
-	OMC_ARR_START_ELAPSE(start_pp);
+	OMC_CDT_START_ELAPSE(start_pp);
 
 	// clean input mesh
 	ArrCleanMesh<Traits> CM(in_coords, in_tris, in_labels);
@@ -181,18 +181,21 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	CM.removeIsolatedVertices();
 	collectCleanResults(CM);
 
-	OMC_ARR_SAVE_ELAPSED(start_pp, pp_elapsed, "Preprocessing");
+	OMC_CDT_SAVE_ELAPSED(start_pp, pp_elapsed, "Preprocessing");
 
 	/***** Delaunay tetrahedralization *****/
 
-	OMC_ARR_START_ELAPSE(start_dt);
+	OMC_CDT_START_ELAPSE(start_dt);
 
 	tet_mesh.initVerts(cdt_out_verts);
 
 	DelaunayTet<Traits> DT(/*pass reference*/ tet_mesh);
 	DT.tetrahedralize(/*remove_infinite_tets*/ true);
 
-	OMC_ARR_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
+	OMC_EXPENSIVE_ASSERT(DT.verify(/*verbose*/ true),
+	                     "The Delaunay tetrahedralization is incorrect.");
+
+	OMC_CDT_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
 
 	// output for test
 	cdt_out_verts = tet_mesh.verts;
