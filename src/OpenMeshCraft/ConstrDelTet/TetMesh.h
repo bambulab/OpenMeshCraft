@@ -42,7 +42,7 @@ public:
 
 	TetrahedralMesh() = default;
 
-	void initVerts(const std::vector<GPoint *> &points);
+	void initialize(const std::vector<GPoint *> &points);
 
 public:
 	/* Connectivity operations on tetrahedra mesh */

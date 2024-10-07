@@ -49,6 +49,11 @@ struct ConstrDelTet_Stats
 	/* Delaunay tetrahedralization ***********************************/
 
 	double dt_elapsed = 0.; // timings of Delaunay tetrahedralization
+
+	/* Constraints Recovery ******************************************/
+
+	double seg_elapsed  = 0.; // timings of segment recovery
+	double face_elapsed = 0.; // timings of face recovery
 };
 
 #define OMC_CDT_START_ELAPSE(name) auto name = OMC::Logger::elapse_reset();

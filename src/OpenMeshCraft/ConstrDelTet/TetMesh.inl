@@ -5,7 +5,7 @@
 namespace OMC {
 
 template <typename Traits>
-void TetrahedralMesh<Traits>::initVerts(const std::vector<GPoint *> &points)
+void TetrahedralMesh<Traits>::initialize(const std::vector<GPoint *> &points)
 {
 	verts = points;
 	inc_tet.resize(verts.size(), InvalidIndex);

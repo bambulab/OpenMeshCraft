@@ -5,10 +5,14 @@
 /* Data structures of CDT */
 // Tetrahedra mesh
 #include "TetMesh.h"
+// Piecewise linear complex
+#include "PLC.h"
 
 /* Sub-algorithms of CDT */
 // Delaunay tetrahedralization
 #include "DelaunayTet.h"
+// Constraints recovery
+#include "ConstrRecover.h"
 
 /* Data structures, algorithms, and utils of arrangements */
 #include "OpenMeshCraft/Arrangements/CleanMesh.h"
@@ -49,6 +53,7 @@ public:
 	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
 	using InCircle           = typename K::InCircle;
 	using InSphere           = typename K::InSphere;
+	using DotProduct3D       = typename K::DotProductSign3D;
 
 	using CalcBbox = typename K::CalcBoundingBox3;
 
@@ -97,6 +102,8 @@ public: /* Traits ************************************************************/
 
 	// meshes
 	using TetMesh = TetrahedralMesh<Traits>;
+	// piecewise linear complex
+	using PLC     = PiecewiseLinearComplex<Traits>;
 
 public: /* Auxiliary data structures *****************************************/
 	// point arena
@@ -159,6 +166,8 @@ private: /* Private middle data *******************************************/
 	std::vector<PntArena> pnt_arenas;
 	/// Tetrahedral mesh
 	TetMesh               tet_mesh;
+	/// Piecewise linear complex
+	PLC                   plc;
 };
 
 template <typename Traits>
@@ -187,9 +196,9 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	OMC_CDT_START_ELAPSE(start_dt);
 
-	tet_mesh.initVerts(cdt_out_verts);
+	tet_mesh.initialize(cdt_out_verts);
 
-	DelaunayTet<Traits> DT(/*pass reference*/ tet_mesh);
+	DelaunayTet<Traits> DT(tet_mesh);
 	DT.tetrahedralize(/*remove_infinite_tets*/ true);
 
 	OMC_EXPENSIVE_ASSERT(DT.verify(/*verbose*/ true),
@@ -197,9 +206,15 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	OMC_CDT_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
 
-	// output for test
-	cdt_out_verts = tet_mesh.verts;
-	cdt_out_tets  = tet_mesh.tet_node;
+	/***** Constraints Recovery *****/
+
+	OMC_CDT_START_ELAPSE(start_seg);
+
+	plc.initialize(cdt_out_verts, /*edges*/ std::vector<index_t>(), cdt_in_tris);
+
+	ConstraintsRecover<Traits> CR(tet_mesh, plc);
+
+	OMC_CDT_SAVE_ELAPSED(start_seg, seg_elapsed, "Segment recovery");
 }
 
 template <typename Traits>
