@@ -12,6 +12,178 @@ void TetrahedralMesh<Traits>::initialize(const std::vector<GPoint *> &points)
 }
 
 /**
+ * @brief Given the tetrahedron (in `idoff`) and its node (in `vertex id`),
+ * get the `idoff` to the tetrahedron node.
+ */
+template <typename Traits>
+index_t TetrahedralMesh<Traits>::tetCorner(index_t tet_idoff, index_t vid) const
+{
+	// clang-format off
+	if (tetNode(tet_idoff) == vid)     return tet_idoff;
+	if (tetNode(tet_idoff + 1) == vid) return tet_idoff + 1;
+	if (tetNode(tet_idoff + 2) == vid) return tet_idoff + 2;
+	if (tetNode(tet_idoff + 3) == vid) return tet_idoff + 3;
+	// clang-format on
+}
+
+/**
+ * @brief Given two vertices `vid0` and `vid1`, check if the edge defined by the
+ * vertices exists in the tetrahedral mesh.
+ *
+ * Check if the edge exists by traversing the adjacent tetrahedra of the vertex
+ * `vid0` to find the vertex `vid1`.
+ *
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
+ * multiple times.
+ *
+ * @note ==NOT THREAD SAFE==
+ */
+template <typename Traits>
+bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1)
+{
+	// find the first adajcent tetrahedron
+	index_t tet_idoff = incTet(vid0) << 2;
+	// check if the tetrahedron has the vertex `vid1`
+	if (tetNode(tet_idoff) == vid1 || tetNode(tet_idoff + 1) == vid1 ||
+	    tetNode(tet_idoff + 2) == vid1 || tetNode(tet_idoff + 3) == vid1)
+		return true; // the edge exists, return true
+
+	// find the remaining adjacent tetrahedra by traversing the neighbors
+	AuxVector64<index_t> adjacent_tets;
+	adjacent_tets.push_back(tet_idoff);
+	mark(tet_idoff, TET_MARK::VISITED);
+	bool exist = false;
+
+	for (index_t i = 0; i < adjacent_tets.size(); i++)
+	{
+		index_t curr_idoff = adjacent_tets[i];
+		// check if the current tetrahedron has the vertex `vid1`
+		if (tetNode(curr_idoff) == vid1 || tetNode(curr_idoff + 1) == vid1 ||
+		    tetNode(curr_idoff + 2) == vid1 || tetNode(curr_idoff + 3) == vid1)
+		{
+			exist = true;
+			break; // the edge exists, return true
+		}
+		// otherwise visit the neighbors at other corners
+		for (index_t j = 0; j < 4; j++)
+		{
+			if (tetNode(curr_idoff + j) == vid0) // skip the current corner
+				continue;
+			// visit neighbors at other corners
+			index_t neigh_idoff = tetNeigh(curr_idoff + j);
+			// skip infinite tetrahedra and visited tetrahedra
+			if (isFiniteTet(neigh_idoff) &&
+			    !isTetMarked(neigh_idoff, TET_MARK::VISITED))
+			{
+				adjacent_tets.push_back(clipId(neigh_idoff));
+				mark(neigh_idoff, TET_MARK::VISITED);
+			}
+		}
+	}
+	// unmark visited tetrahedra
+	for (index_t idoff : adjacent_tets)
+		unmark(idoff, TET_MARK::VISITED);
+	return exist;
+}
+
+/**
+ * @brief Collect tetrahedra adjacent to the vertex `vid` and store them in the
+ * container `tets`.
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
+ * multiple times.
+ * @note ==NOT THREAD SAFE==
+ */
+template <typename Traits>
+template <typename ContainerT>
+void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets)
+{
+	index_t tet_idoff = incTet(vid) << 2;
+
+	tets.push_back(tet_idoff);
+	mark(tet_idoff, TET_MARK::VISITED);
+
+	for (index_t i = 0; i < tets.size(); i++)
+	{
+		index_t curr_idoff = tets[i];
+		// visit neighbors
+		for (index_t j = 0; j < 4; j++)
+		{
+			// skip the corner at `vid`
+			if (tetNode(curr_idoff + j) == vid)
+				continue;
+			// visit neighbors at other corners
+			index_t neigh_idoff = tetNeigh(curr_idoff + j);
+			// skip infinite tetrahedra and visited tetrahedra
+			if (isFiniteTet(neigh_idoff) &&
+			    !isTetMarked(neigh_idoff, TET_MARK::VISITED))
+			{
+				tets.push_back(neigh_idoff);
+				mark(neigh_idoff, TET_MARK::VISITED);
+			}
+		}
+	}
+	// unmark visited tetrahedra
+	for (index_t idoff : tets)
+		unmark(idoff, TET_MARK::VISITED);
+}
+
+/**
+ * @brief Collect vertices adjacent to the vertex `vid` and store them in the
+ * container `verts`.
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
+ * the same vertex multiple times.
+ * @note ==NOT THREAD SAFE==
+ */
+template <typename Traits>
+template <typename ContainerT>
+void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts)
+{
+	index_t tet_idoff = incTet(vid) << 2;
+
+	AuxVector64<index_t> tets;
+	tets.push_back(tet_idoff);
+	mark(tet_idoff, TET_MARK::VISITED);
+
+	for (index_t i = 0; i < tets.size(); i++)
+	{
+		index_t curr_idoff = tets[i];
+		// visit neighbors
+		for (index_t j = 0; j < 4; j++)
+		{
+			index_t curr_vid = tetNode(curr_idoff + j);
+			// skip the corner at `vid`
+			if (curr_vid == vid)
+				continue;
+			// add the corner vertex into `verts`
+			mark(curr_vid, VTX_MARK::VISITED);
+			verts.push_back(curr_vid);
+			// visit neighbors at other corners
+			index_t neigh_idoff = tetNeigh(curr_idoff + j);
+			// skip infinite tetrahedra and visited tetrahedra
+			if (isFiniteTet(neigh_idoff) &&
+			    !isTetMarked(neigh_idoff, TET_MARK::VISITED))
+			{
+				tets.push_back(neigh_idoff);
+				mark(neigh_idoff, TET_MARK::VISITED);
+			}
+		}
+	}
+	// unmark visited tetrahedra
+	for (index_t idoff : tets)
+		unmark(idoff, TET_MARK::VISITED);
+	// unmark visited vertices
+	for (index_t vi : verts)
+		unmark(vi, VTX_MARK::VISITED)
+}
+
+template <typename Traits>
+template <typename ContainerT>
+void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1, ContainerT &tets)
+{
+	// TODO
+}
+
+/**
  * @brief Create a new tetrahedron. The new tetrahedron is either created at the
  * tail of the tetrahedra list or at the position of a deleted tetrahedron.
  * @note
@@ -33,11 +205,11 @@ index_t TetrahedralMesh<Traits>::newTet()
 	}
 	else
 	{
-		OMC_EXPENSIVE_ASSERT(isMarked(tet_deleted.back(), TET_MARK::TO_DELETE),
+		OMC_EXPENSIVE_ASSERT(isTetMarked(tet_deleted.back(), TET_MARK::TO_DELETE),
 		                     "The tet is not marked to be deleted.");
 		new_tet_idoff = tet_deleted.back();
 		tet_deleted.pop_back();
-		clearMark(new_tet_idoff);
+		clearTetMark(new_tet_idoff);
 		// node and neighbor are undefined
 		// ......
 	}
@@ -74,7 +246,7 @@ void TetrahedralMesh<Traits>::newTets(size_t                inc_size,
 		std::copy(tet_deleted.end() - n, tet_deleted.end(), first);
 		// Unmarks these tetrahedra as deleted.
 		for (auto iter = tet_deleted.end() - n; iter != tet_deleted.end(); iter++)
-			clearMark(*iter);
+			clearTetMark(*iter);
 		// Updates the size of `tet_deleted`.
 		tet_deleted.resize(tet_deleted.size() - n);
 		// update the first iterator
@@ -126,7 +298,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 
 	// Locate the last tetrahedron that has not been marked for deletion.
 	index_t last = tet_node.size() - 4;
-	while (isMarked(last, TET_MARK::TO_DELETE) && last > 0)
+	while (isTetMarked(last, TET_MARK::TO_DELETE) && last > 0)
 		last -= 4;
 
 	if (last == 0)
@@ -141,7 +313,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 	{
 		// Check if the current tetrahedron is before the last and is marked for
 		// deletion.
-		if (t < last && isMarked(t, TET_MARK::TO_DELETE))
+		if (t < last && isTetMarked(t, TET_MARK::TO_DELETE))
 		{
 			// Update the nodes associated with the tetrahedron.
 			for (int i = 0; i < 4; i++)
@@ -151,7 +323,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 				// Update the neighbor information.
 				const index_t n  = tet_neigh[last + i];
 				tet_neigh[t + i] = n;
-        if (is_valid_idx(n))
+				if (is_valid_idx(n))
 					tet_neigh[n] = t + i;
 				// Update the incident tetrahedron information.
 				if (tet_node[last + i] != INFINITE_VERTEX &&
@@ -164,7 +336,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 			tet_mark[getId(t)] = tet_mark[getId(last)];
 			// Move to the next "last un-deleted" tetrahedron.
 			last -= 4;
-			while (isMarked(last, TET_MARK::TO_DELETE) && last > 0)
+			while (isTetMarked(last, TET_MARK::TO_DELETE) && last > 0)
 				last -= 4;
 		}
 	}

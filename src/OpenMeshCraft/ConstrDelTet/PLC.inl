@@ -53,6 +53,18 @@ PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(
 
 /**
  * @brief Initializes a PLC with the given vertices, edges and triangles.
+ * 
+ * This constructor classifies the edges and vertices in the PLC.
+ * Vertices are classified into acute and non-acute vertices.
+ * Based on the vertex types, edges are classified into different types (see
+ * PLCEdgeType) for further recovery and splitting.
+ * @see
+ * - [Robust CDT] Diazzi, L., Panozzo, D., Vaxman, A. and Attene, M.
+ *   Constrained Delaunay Tetrahedrization: A Robust and Practical Approach.
+ *   ACM Transactions on Graphics, 42, 6 (2023), 1-15.
+ * - [Si and Gärtner 2005] Hang Si and Klaus Gärtner. 2005. Meshing Piecewise
+ * 	 Linear Complexes by Constrained Delaunay Tetrahedralizations. Proceedings
+ *   of the 14th International Meshing Roundtable, 147–163.
  */
 template <typename Traits>
 void PiecewiseLinearComplex<Traits>::initialize(
@@ -111,8 +123,7 @@ void PiecewiseLinearComplex<Traits>::initialize(
 	                               [](const PLCEdge &e)
 	                               { return e.type == PLCEdgeType::TO_DELETE; }),
 	                plc_edges.end());
-
-	// # Classify vertices ======================================================
+	// # Classify edge and vertices =============================================
 
 	// vertex-vertex relation of the PLC
 	std::vector<AuxVector16<index_t>> vv(input_nv);
@@ -139,8 +150,8 @@ void PiecewiseLinearComplex<Traits>::initialize(
 		return false;
 	};
 
-	// Traverse all edges to check if they are flat edges,
-	// and build the vertex-vertex relation at the same time.
+	// ## Traverse all edges to check if they are flat edges,
+	//    and build the vertex-vertex relation at the same time.
 	for (index_t ei = 0; ei < plc_edges.size(); ei++)
 	{
 		PLCEdge &e = plc_edges[ei];
@@ -159,11 +170,11 @@ void PiecewiseLinearComplex<Traits>::initialize(
 		}
 	}
 
-	// Traverse all vertices to check if they are acute vertices.
+	// ## Traverse all vertices to check if they are acute vertices.
 	for (index_t vi = 0; vi < input_nv; vi++)
 		is_acute_vertex[vi] = isAcuteVert(vi);
 
-	// Classify non-flat edges.
+	// ## Classify non-flat edges.
 	for (index_t ei = 0; ei < edges.size(); ei++)
 	{
 		PLCEdge &e = plc_edges[ei];

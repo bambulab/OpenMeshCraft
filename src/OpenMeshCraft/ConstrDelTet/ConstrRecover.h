@@ -8,6 +8,13 @@ namespace OMC {
 
 /**
  * @brief Recover the constraints in CDT algorithm.
+ * @see
+ * - [Robust CDT] Diazzi, L., Panozzo, D., Vaxman, A. and Attene, M.
+ *   Constrained Delaunay Tetrahedrization: A Robust and Practical Approach.
+ *   ACM Transactions on Graphics, 42, 6 (2023), 1-15.
+ * - [Si and Gärtner 2005] Hang Si and Klaus Gärtner. 2005. Meshing Piecewise
+ * 	 Linear Complexes by Constrained Delaunay Tetrahedralizations. Proceedings
+ *   of the 14th International Meshing Roundtable, 147–163.
  */
 template <typename Traits>
 class ConstraintsRecover
@@ -35,6 +42,17 @@ public: /* Constructor & Destructor ****************************************/
 	ConstraintsRecover(TetMesh &_tet_mesh, PLC &_plc);
 
 public: /* Algorithms ******************************************************/
+
+	/* Recover constrained segments */
+
+	void segmentRecovery();
+
+	/* sub-algorithms for segment recovery */
+
+	void splitMissingSegment(index_t ei);
+
+	void findReferenceEncroachingPoint(const index_t ei, index_t &ref_vid,
+	                                   index_t &ref_tid);
 
 public: /* Data ************************************************************/
 	/// Tetrahedral mesh

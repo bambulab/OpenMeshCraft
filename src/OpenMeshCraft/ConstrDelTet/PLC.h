@@ -107,6 +107,16 @@ public: /* Interfaces ******************************************************/
 	GPoint       &pnt(index_t vid) { return *vertices[vid]; }
 	const GPoint &pnt(index_t vid) const { return *vertices[vid]; }
 
+	PLCEdge       &edge(index_t ei) { return plc_edges[ei]; }
+	const PLCEdge &edge(index_t ei) const { return plc_edges[ei]; }
+
+	PLCFace       &face(index_t fi) { return plc_faces[fi]; }
+	const PLCFace &face(index_t fi) const { return plc_faces[fi]; }
+
+	size_t numVertices() const { return vertices.size(); }
+	size_t numEdges() const { return plc_edges.size(); }
+	size_t numFaces() const { return plc_faces.size(); }
+
 	index_t oppV2E(const PLCEdge &edge, index_t tid) const;
 
 public: /* Data ************************************************************/
@@ -123,7 +133,7 @@ public: /* Data ************************************************************/
 
 	bool is_close_and_manifold; ///< whether the input is close and manifold
 
-	/* PLC */
+	/* Auxiliary data structures for PLC */
 	std::vector<PLCEdge> plc_edges;
 	std::vector<PLCFace> plc_faces;
 };

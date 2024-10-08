@@ -29,6 +29,12 @@ public:
 	/// Infinite vertex index
 	const static index_t INFINITE_VERTEX = InvalidIndex;
 
+	enum class VTX_MARK : uint32_t
+	{
+		NO_MARK = 0,
+		VISITED = 1,
+	};
+
 	/// Mark for each tetrahedron
 	enum class TET_MARK : uint32_t
 	{
@@ -99,6 +105,9 @@ public:
 	static index_t tetON2(index_t idoff) { return (idoff & 2) ^ 3; }
 	static index_t tetON3(index_t idoff) { return (idoff + 3) & 2; }
 
+	index_t tetCorner(index_t tet_idoff, index_t vid) const;
+
+	/// @brief Check if the tetrahedron has the vertex.
 	bool tetHasVertex(index_t tet_idoff, index_t vid) const
 	{
 		return tetNode(tet_idoff) == vid || tetNode(tet_idoff + 1) == vid ||
@@ -113,34 +122,44 @@ public:
 		return tetNode(idoff | 3) != INFINITE_VERTEX;
 	}
 
+	bool edgeExists(index_t vid0, index_t vid1);
+
+	template <typename ContainerT>
+	void VT(index_t vid, ContainerT &tets);
+
+	template <typename ContainerT>
+	void VV(index_t vid, ContainerT &verts);
+
+	template <typename ContainerT>
+	void ET(index_t vid0, index_t vid1, ContainerT &tets);
+
 	/* Operations about marks */
 
-	/// mark the tetrahedron with the given bit
-	void mark(index_t idoff, TET_MARK bit)
-	{
-		tet_mark[getId(idoff)] |= (uint32_t)bit;
-	}
-	/// unmark the tetrahedron with the given bit
-	void unmark(index_t idoff, TET_MARK bit)
-	{
-		tet_mark[getId(idoff)] &= ~((uint32_t)bit);
-	}
-	/// clear all marks of the tetrahedron
-	void clearMark(index_t idoff)
-	{
-		tet_mark[getId(idoff)] = (uint32_t)TET_MARK::NO_MARK;
-	}
+	// clang-format off
 
+	/// mark the tetrahedron with the given bit
+	void mark(index_t idoff, TET_MARK bit) { tet_mark[getId(idoff)] |= (uint32_t)bit; }
+	/// unmark the tetrahedron with the given bit
+	void unmark(index_t idoff, TET_MARK bit) { tet_mark[getId(idoff)] &= ~((uint32_t)bit); }
+	/// clear all marks of the tetrahedron
+	void clearTetMark(index_t idoff) { tet_mark[getId(idoff)] = (uint32_t)TET_MARK::NO_MARK; }
 	/// check if the tetrahedron has no mark
-	bool isNoMark(index_t idoff)
-	{
-		return tet_mark[getId(idoff)] == (uint32_t)TET_MARK::NO_MARK;
-	}
+	bool isTetUnmarked(index_t idoff) { return tet_mark[getId(idoff)] == (uint32_t)TET_MARK::NO_MARK; }
 	/// check if the tetrahedron is marked with the given bit
-	bool isMarked(index_t idoff, TET_MARK bit)
-	{
-		return tet_mark[getId(idoff)] & ((uint32_t)bit);
-	}
+	bool isTetMarked(index_t idoff, TET_MARK bit) { return tet_mark[getId(idoff)] & ((uint32_t)bit); }
+
+	/// mark the vertex with the given bit
+	void mark(index_t vid, VTX_MARK bit) { vtx_mark[vid] |= (uint32_t)bit; }
+	/// unmark the vertex with the given bit
+	void unmark(index_t vid, VTX_MARK bit) { vtx_mark[vid] &= ~((uint32_t)bit); }
+	/// clear all marks of the vertex
+	void clearVtxMark(index_t vid) { vtx_mark[vid] = (uint32_t)VTX_MARK::NO_MARK; }
+	/// check if the vertex has no mark
+	bool isVtxUnmarked(index_t vid) { return vtx_mark[vid] == (uint32_t)VTX_MARK::NO_MARK; }
+	/// check if the vertex is marked with the given bit
+	bool isVtxMarked(index_t vid, VTX_MARK bit) { return vtx_mark[vid] & ((uint32_t)bit); }
+
+	// clang-format on
 
 	/* Operations about creation */
 
@@ -198,6 +217,8 @@ public: /* Data ************************************************************/
 	std::vector<index_t> tet_node;
 
 	/* Auxiliary data */
+
+	std::vector<uint32_t> vtx_mark;
 
 	/// Mark for each tetrahedron (See details for each bit above).
 	std::vector<uint32_t> tet_mark;
