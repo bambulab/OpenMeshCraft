@@ -49,12 +49,125 @@ void ConstraintsRecover<Traits>::splitMissingSegment(index_t ei)
  * @param ref_tid index to the tetrahedron containing the reference encroaching
  * point
  * @see Section 3.3 Segment recovery, in [Robust CDT].
+ * @note Rely on mark `VISITED` to avoid visiting the same tetrahedron and the
+ * same vertex multiple times.
+ * @note ==NOT THREAD SAFE==
  */
 template <typename Traits>
 void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(const index_t ei,
                                                                index_t &ref_vid,
                                                                index_t &ref_tid)
 {
+	AuxVector64<index_t> encroach_tets;
+	PLC::PLCEdge        &edge = plc.edge(ei);
+
+	// find tetrahedra adjacent to the first endpoint `ep0`
+	tet_mesh.VT(edge.ep0(), encroach_tets);
+	// and mark the tetrahedra as visited
+	for (index_t tet_idoff : encroach_tets)
+		tet_mesh.mark(tet_idoff, TetMesh::TET_MARK::VISITED);
+
+	tet_mesh.mark(edge.ep0(), TetMesh::VTX_MARK::VISITED);
+	tet_mesh.mark(edge.ep1(), TetMesh::VTX_MARK::VISITED);
+
+	const GPoint &p0    = tet_mesh.gpnt(edge.ep0());
+	const GPoint &p1    = tet_mesh.gpnt(edge.ep1());
+	const GPoint *ref_p = nullptr;
+	ref_vid             = InvalidIndex;
+	ref_tid             = InvalidIndex;
+
+	// TODO An inSphere predicate, receiving 2 points to form the sphere, and 1
+	// query point.
+	auto inSphere = [](const GPoint &a, const GPoint &b, const GPoint &c) -> bool
+	{ return false; };
+
+	// TODO A LargerCircle predicate, receiving 3 points to form the circle, and 1
+	// query point to form another circle, and compare the radius.
+	auto largerCircle = [](const GPoint &a, const GPoint &b, const GPoint &c,
+	                       const GPoint &d) -> bool { return false; };
+
+	for (index_t i = 0; i < encroach_tets.size(); i++)
+	{
+		index_t tet_idoff = encroach_tets[i];
+
+		// check if the tetrahedron has an encroaching point
+		for (index_t j = 0; j < 4; j++)
+		{
+			index_t vid = tet_mesh.tetNode(tet_idoff + j);
+			if (tet_mesh.isVtxMarked(vid, TetMesh::VTX_MARK::VISITED) ||
+			    tet_mesh.isVtxMarked(vid, TetMesh::VTX_MARK::ENCROACHED))
+				continue;
+			tet_mesh.mark(vid, TetMesh::VTX_MARK::VISITED);
+			const GPoint &curr_p = tet_mesh.gpnt(vid);
+
+			// check if the vertex is encroaching
+			if (inSphere(p0, p1, curr_p))
+			{
+				tet_mesh.mark(vid, TetMesh::VTX_MARK::ENCROACHED);
+				// check if it is the reference encroaching point
+				if (ref_vid == InvalidIndex ||
+				    largerCircle(p0, p1, *ref_p, tet_mesh.gpnt(vid)))
+				{
+					ref_vid = vid;
+					ref_tid = tet_idoff;
+					ref_p   = &tet_mesh.gpnt(ref_vid);
+				}
+			}
+		}
+
+		// clang-format off
+		const int is_encroached[] = {
+			tet_mesh.isVtxMarked(tet_mesh.tetNode(tet_idoff), TetMesh::VTX_MARK::ENCROACHED),
+			tet_mesh.isVtxMarked(tet_mesh.tetNode(tet_idoff + 1), TetMesh::VTX_MARK::ENCROACHED),
+			tet_mesh.isVtxMarked(tet_mesh.tetNode(tet_idoff + 2), TetMesh::VTX_MARK::ENCROACHED),
+			tet_mesh.isVtxMarked(tet_mesh.tetNode(tet_idoff + 3), TetMesh::VTX_MARK::ENCROACHED),
+		};
+		const int total_encroached = is_encroached[0] + is_encroached[1] + is_encroached[2] + is_encroached[3];
+		// clang-format on
+
+		// Add neighboring tetrahedra to `encroach_tets` for subsequent encroachment
+		// checks. The cases are divided based on the number of encroaching vertices
+		// in the current tetrahedron:
+		//
+		// - If the current tetrahedron has no encroaching vertices:
+		// 		No neighboring tetrahedron is added.
+		// - If the current tetrahedron has only one encroaching vertex:
+		//    Neighboring tetrahedra at corners other than the encroaching corner
+		//    are added.
+		// - If the current tetrahedron has more than one encroaching vertex:
+		//    All neighboring tetrahedra are added.
+
+		for (index_t i = 0; i < 4; i++)
+		{
+			index_t neigh_idoff = tet_mesh.tetNeigh(tet_idoff + i);
+
+			if (tet_mesh.isTetMarked(neigh_idoff, TetMesh::TET_MARK::VISITED) ||
+			    tet_mesh.tetNode(neigh_idoff) == TetMesh::INFINITE_VERTEX)
+				continue;
+
+			if (total_encroached - is_encroached[i] > 0)
+			{
+				encroach_tets.push_back(clipId(neigh_idoff));
+				tet_mesh.mark(neigh_idoff, TetMesh::TET_MARK::VISITED);
+			}
+		}
+	}
+
+	// clear all marks
+	tet_mesh.unmark(edge.ep0(), TetMesh::VTX_MARK::VISITED);
+	tet_mesh.unmark(edge.ep1(), TetMesh::VTX_MARK::VISITED);
+	for (index_t idoff : encroach_tets)
+	{
+		tet_mesh.unmark(idoff, TetMesh::TET_MARK::VISITED);
+		tet_mesh.unmark(tet_mesh.tetNode(idoff), TetMesh::VTX_MARK::VISITED);
+		tet_mesh.unmark(tet_mesh.tetNode(idoff), TetMesh::VTX_MARK::ENCROACHED);
+		tet_mesh.unmark(tet_mesh.tetNode(idoff + 1), TetMesh::VTX_MARK::VISITED);
+		tet_mesh.unmark(tet_mesh.tetNode(idoff + 1), TetMesh::VTX_MARK::ENCROACHED);
+		tet_mesh.unmark(tet_mesh.tetNode(idoff + 2), TetMesh::VTX_MARK::VISITED);
+		tet_mesh.unmark(tet_mesh.tetNode(idoff + 2), TetMesh::VTX_MARK::ENCROACHED);
+		tet_mesh.unmark(tet_mesh.tetNode(idoff + 3), TetMesh::VTX_MARK::VISITED);
+		tet_mesh.unmark(tet_mesh.tetNode(idoff + 3), TetMesh::VTX_MARK::ENCROACHED);
+	}
 }
 
 } // namespace OMC

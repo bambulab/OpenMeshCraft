@@ -7,7 +7,7 @@ namespace OMC {
 
 /* Index definition ********************************************************/
 
-/// @brief Index unsed in mesh
+/// @brief Index unsed everywhere
 using index_t = size_t;
 
 /// @brief A value indicates invalid index. When index is unsigned type, `-1`

@@ -89,6 +89,8 @@ bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1)
 /**
  * @brief Collect tetrahedra adjacent to the vertex `vid` and store them in the
  * container `tets`.
+ * @param vid Vertex index
+ * @param tets Container to store the adjacent tetrahedra (tetrahedron idoff)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
  * multiple times.
  * @note ==NOT THREAD SAFE==
@@ -130,6 +132,8 @@ void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets)
 /**
  * @brief Collect vertices adjacent to the vertex `vid` and store them in the
  * container `verts`.
+ * @param vid Vertex index
+ * @param verts Container to store the adjacent vertices (vertex id)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
  * the same vertex multiple times.
  * @note ==NOT THREAD SAFE==
@@ -176,11 +180,30 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts)
 		unmark(vi, VTX_MARK::VISITED)
 }
 
+/**
+ * @brief Find tetrahedra adjacent to the edge defined by the vertices `vid0`
+ * and `vid1`, and store in `tets`.
+ * @param vid0 Vertex index
+ * @param vid1 Vertex index
+ * @param tets Container to store the adjacent tetrahedra (tetrahedron idoff)
+ */
 template <typename Traits>
 template <typename ContainerT>
 void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1, ContainerT &tets)
 {
-	// TODO
+	// find tetrahedra adjacent to the vertex `vid0`
+	VT(vid0, tets);
+	// keep the tetrahedra adjacent to the vertex `vid1`
+	for (index_t i = 0; i < tets.size(); /*`i` is updated in the loop*/)
+	{
+		if (!tetHasVertex(tets[i], vid1))
+		{
+			std::swap(tets[i], tets.back());
+			tets.pop_back();
+		}
+		else
+			i++;
+	}
 }
 
 /**

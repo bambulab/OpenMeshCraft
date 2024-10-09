@@ -31,8 +31,10 @@ public:
 
 	enum class VTX_MARK : uint32_t
 	{
-		NO_MARK = 0,
-		VISITED = 1,
+		NO_MARK    = 0,
+		VISITED    = 1,
+		TO_DELETE  = 2,
+		ENCROACHED = 4,
 	};
 
 	/// Mark for each tetrahedron
