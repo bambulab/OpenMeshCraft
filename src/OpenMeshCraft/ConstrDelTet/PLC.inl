@@ -19,18 +19,18 @@ PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(index_t e0, index_t e1)
 
 /**
  * @brief Initializes a PLC edge with the given endpoints (`e0` and `e1`) and
- * the incident triangle (`fi`).
+ * the incident triangle (`fid`).
  *
  * This constructor is used to initialize a PLC edge at the beginning.
  */
 template <typename Traits>
 PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(index_t e0, index_t e1,
-                                                 index_t fi)
+                                                 index_t fid)
   : type(PLCEdgeType::UNDETERMINED)
   , ep(unique_pair(e0, e1))
   , oep(unique_pair(e0, e1))
 {
-	inc_tri.push_back(fi);
+	inc_tri.push_back(fid);
 }
 
 /**
@@ -53,7 +53,7 @@ PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(
 
 /**
  * @brief Initializes a PLC with the given vertices, edges and triangles.
- * 
+ *
  * This constructor classifies the edges and vertices in the PLC.
  * Vertices are classified into acute and non-acute vertices.
  * Based on the vertex types, edges are classified into different types (see
@@ -67,16 +67,16 @@ PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(
  *   of the 14th International Meshing Roundtable, 147–163.
  */
 template <typename Traits>
-void PiecewiseLinearComplex<Traits>::initialize(
+PiecewiseLinearComplex<Traits>::PiecewiseLinearComplex(
   const std::vector<GPoint *> &_vertices, const std::vector<index_t> &_edges,
   const std::vector<index_t> &_triangles)
+  : vertices(_vertices)
+  , edges(_edges)
+  , triangles(_triangles)
+  , input_nv(_vertices.size())
+  , input_ne(_edges.size() / 2)
+  , input_nt(_triangles.size() / 3)
 {
-	vertices  = _vertices;
-	edges     = _edges;
-	triangles = _triangles;
-	input_nv  = _vertices.size();
-	input_ne  = _edges.size() / 2;
-	input_nt  = _triangles.size() / 3;
 	// # Build PLC edges =========================================================
 
 	// ## Put all triangle edges into the PLC edges.
@@ -90,10 +90,10 @@ void PiecewiseLinearComplex<Traits>::initialize(
 		plc_edges[ti_v + 1] = PLCEdge(triangles[ti_v + 1], triangles[ti_v + 2], ti);
 		plc_edges[ti_v + 2] = PLCEdge(triangles[ti_v], triangles[ti_v + 2], ti);
 	}
-	for (index_t ei = 0; ei < input_ne; ei++)
+	for (index_t eid = 0; eid < input_ne; eid++)
 	{
-		index_t ei_v                 = ei * 2;
-		plc_edges[input_nt * 3 + ei] = PLCEdge(edges[ei_v], edges[ei_v + 1]);
+		index_t ei_v                  = eid * 2;
+		plc_edges[input_nt * 3 + eid] = PLCEdge(edges[ei_v], edges[ei_v + 1]);
 	}
 
 	// ## Merge the duplicate PLC edges
@@ -102,19 +102,19 @@ void PiecewiseLinearComplex<Traits>::initialize(
 	std::sort(plc_edges.begin(), plc_edges.end(), PLCEdge::less);
 
 	// ### Merge the incident triangles of the same edge.
-	for (index_t ei = 0; ei < plc_edges.size(); /*ei is updated in the loop */)
+	for (index_t eid = 0; eid < plc_edges.size(); /*eid is updated in the loop */)
 	{
 		// record the first unique edge
-		PLCEdge &e = plc_edges[ei];
+		PLCEdge &e = plc_edges[eid];
 		// find the subsequent duplicate edges
-		while ((++ei) < plc_edges.size() && PLCEdge::equal(e, plc_edges[ei]))
+		while ((++eid) < plc_edges.size() && PLCEdge::equal(e, plc_edges[eid]))
 		{
 			// merge the incident triangle to the first edge
-			if (plc_edges[ei].inc_tri.size() == 1)
-				e.inc_tri.push_back(plc_edges[ei].inc_tri[0]);
+			if (plc_edges[eid].inc_tri.size() == 1)
+				e.inc_tri.push_back(plc_edges[eid].inc_tri[0]);
 			// clear the incident triangle, this edge will be removed later
-			plc_edges[ei].inc_tri.clear();
-			plc_edges[ei].type = PLCEdgeType::TO_DELETE;
+			plc_edges[eid].inc_tri.clear();
+			plc_edges[eid].type = PLCEdgeType::TO_DELETE;
 		}
 	}
 
@@ -152,9 +152,9 @@ void PiecewiseLinearComplex<Traits>::initialize(
 
 	// ## Traverse all edges to check if they are flat edges,
 	//    and build the vertex-vertex relation at the same time.
-	for (index_t ei = 0; ei < plc_edges.size(); ei++)
+	for (index_t eid = 0; eid < plc_edges.size(); eid++)
 	{
-		PLCEdge &e = plc_edges[ei];
+		PLCEdge &e = plc_edges[eid];
 		if (isFlatEdge(e))
 		{
 			e.type = PLCEdgeType::FLAT_EDGE;
@@ -175,9 +175,9 @@ void PiecewiseLinearComplex<Traits>::initialize(
 		is_acute_vertex[vi] = isAcuteVert(vi);
 
 	// ## Classify non-flat edges.
-	for (index_t ei = 0; ei < edges.size(); ei++)
+	for (index_t eid = 0; eid < edges.size(); eid++)
 	{
-		PLCEdge &e = plc_edges[ei];
+		PLCEdge &e = plc_edges[eid];
 		// skip flat edges
 		if (e.type == PLCEdgeType::FLAT_EDGE)
 			continue;
@@ -218,6 +218,29 @@ index_t PiecewiseLinearComplex<Traits>::oppV2E(const PLCEdge &edge,
 	if (vid != edge.ep0() && vid != edge.ep1()) return vid;
 	// clang-format on
 	return InvalidIndex;
+}
+
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
+{
+	PLCEdge &e   = plc_edges[eid];
+	// update the original endpoints
+	index_t  ep1 = e.ep1();
+	e.ep1()      = vid;
+	// create a new edge
+	if (e.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
+	{
+		// update the original edge type to `ONE_ACUTE_VERTEX`
+		e.type = PLCEdgeType::ONE_ACUTE_VERTEX;
+		// create a new edge with the type `ONE_ACUTE_VERTEX`
+		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep1, vid, e.oep1(),
+		                       e.oep0(), e.inc_tri);
+	}
+	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
+	{
+		// create a new edge inherit the same edge type
+		plc_edges.emplace_back(e.type, vid, ep1, e.oep0(), e.oep1(), e.inc_tri);
+	}
 }
 
 } // namespace OMC

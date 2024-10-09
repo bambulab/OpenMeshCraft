@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DelaunayTet.h"
-#include "Utils.h"
 
 namespace OMC {
 

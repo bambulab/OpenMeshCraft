@@ -5,9 +5,9 @@
 namespace OMC {
 
 template <typename Traits>
-void TetrahedralMesh<Traits>::initialize(const std::vector<GPoint *> &points)
+TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &points)
+  : verts(points)
 {
-	verts = points;
 	inc_tet.resize(verts.size(), InvalidIndex);
 }
 
@@ -177,7 +177,7 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts)
 		unmark(idoff, TET_MARK::VISITED);
 	// unmark visited vertices
 	for (index_t vi : verts)
-		unmark(vi, VTX_MARK::VISITED)
+		unmark(vi, VTX_MARK::VISITED);
 }
 
 /**
@@ -204,6 +204,22 @@ void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1, ContainerT &tets)
 		else
 			i++;
 	}
+}
+
+/**
+ * @brief Create a new vertex.
+ *
+ * Note that TetMesh does not manage the vertices directly. The new vertex is created
+ * externally, and then TetMesh creates the corresponding auxiliary data.
+ * @param new_vid The index of the new vertex created externally.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::newVtx(index_t new_vid)
+{
+	inc_tet.emplace_back(InvalidIndex);
+
+	OMC_EXPENSIVE_ASSERT(verts.size() == new_vid, "vertices size mismatch.");
+	OMC_EXPENSIVE_ASSERT(inc_tet.size() == new_vid, "vertices size mismatch.");
 }
 
 /**

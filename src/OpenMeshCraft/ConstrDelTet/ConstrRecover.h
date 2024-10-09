@@ -1,8 +1,8 @@
 #pragma once
 
+#include "DelaunayTet.h"
 #include "PLC.h"
 #include "TetMesh.h"
-#include "Utils.h"
 
 namespace OMC {
 
@@ -37,28 +37,45 @@ public: /* Traits **********************************************************/
 	using TetMesh = TetrahedralMesh<Traits>;
 	using PLC     = PiecewiseLinearComplex<Traits>;
 
+	using DelTet = DelaunayTet<Traits>;
+
 public: /* Constructor & Destructor ****************************************/
 	ConstraintsRecover() = delete;
-	ConstraintsRecover(TetMesh &_tet_mesh, PLC &_plc);
+	ConstraintsRecover(std::vector<GPoint *> &_verts, TetMesh &_tet_mesh,
+	                   PLC &_plc);
 
 public: /* Algorithms ******************************************************/
-
 	/* Recover constrained segments */
 
 	void segmentRecovery();
 
 	/* sub-algorithms for segment recovery */
 
-	void splitMissingSegment(index_t ei);
+	index_t splitMissingSegment(index_t eid);
 
-	void findReferenceEncroachingPoint(const index_t ei, index_t &ref_vid,
+	void findReferenceEncroachingPoint(index_t eid, index_t &ref_vid,
 	                                   index_t &ref_tid);
 
+	index_t splitAtMiddle(index_t eid);
+
+	index_t splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid);
+
+	index_t splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid);
+
+	/* Geometric & Topologic Operations on both TetMesh & PLC */
+
+	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
+	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
+
+	index_t newVtx(GPoint *new_pnt);
+
 public: /* Data ************************************************************/
+	/// vertices (stored by both `tet_mesh` and `plc`)
+	std::vector<GPoint *> &verts;
 	/// Tetrahedral mesh
-	TetMesh &tet_mesh;
-  /// Constrained piecewise linear complex
-	PLC &plc;
+	TetMesh               &tet_mesh;
+	/// Constrained piecewise linear complex
+	PLC                   &plc;
 };
 
 } // namespace OMC

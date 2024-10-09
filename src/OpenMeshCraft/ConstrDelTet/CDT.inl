@@ -130,12 +130,16 @@ public:
 	/* Input data */
 	/// coordinates of all points
 	std::vector<NT>      in_coords;
-	/// triangles of all meshes / triangle soups
+	/// constrained edges
+	std::vector<index_t> in_edges;
+	/// constrained triangles
 	std::vector<index_t> in_tris;
 	/// labels of all triangles
 	std::vector<size_t>  in_labels;
 
 	/* Middle data */
+	/// remove erroneous edges in in_edges to get cdt_in_edges
+	std::vector<index_t> cdt_in_edges;
 	/// remove erroneous triangle in in_tris to get cdt_in_tris
 	std::vector<index_t> cdt_in_tris;
 	/// convert label id to bitset to get cdt_in_labels
@@ -161,13 +165,13 @@ public:
 
 private: /* Private middle data *******************************************/
 	/// Explicit points
-	std::vector<EPoint>   exp_pnt;
+	std::vector<EPoint>      exp_pnt;
 	/// All generated points in algorithm are stored in pnt_arena
-	std::vector<PntArena> pnt_arenas;
+	std::vector<PntArena>    pnt_arenas;
 	/// Tetrahedral mesh
-	TetMesh               tet_mesh;
+	std::unique_ptr<TetMesh> tet_mesh;
 	/// Piecewise linear complex
-	PLC                   plc;
+	std::unique_ptr<PLC>     plc;
 };
 
 template <typename Traits>
@@ -196,9 +200,9 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	OMC_CDT_START_ELAPSE(start_dt);
 
-	tet_mesh.initialize(cdt_out_verts);
+	tet_mesh = std::make_unique<TetMesh>(cdt_out_verts);
 
-	DelaunayTet<Traits> DT(tet_mesh);
+	DelaunayTet<Traits> DT(*tet_mesh);
 	DT.tetrahedralize(/*remove_infinite_tets*/ true);
 
 	OMC_EXPENSIVE_ASSERT(DT.verify(/*verbose*/ true),
@@ -210,9 +214,10 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	OMC_CDT_START_ELAPSE(start_seg);
 
-	plc.initialize(cdt_out_verts, /*edges*/ std::vector<index_t>(), cdt_in_tris);
+	plc = std::make_unique<PLC>(cdt_out_verts, cdt_in_edges, cdt_in_tris);
 
-	ConstraintsRecover<Traits> CR(tet_mesh, plc);
+	ConstraintsRecover<Traits> CR(cdt_out_verts, *tet_mesh, *plc);
+	CR.segmentRecovery();
 
 	OMC_CDT_SAVE_ELAPSED(start_seg, seg_elapsed, "Segment recovery");
 }

@@ -64,7 +64,7 @@ public: /* Auxiliary data structures ****************************************/
 	public: /* Constructors *************************************************/
 		PLCEdge() = default;
 		PLCEdge(index_t e0, index_t e1);
-		PLCEdge(index_t e0, index_t e1, index_t fi);
+		PLCEdge(index_t e0, index_t e1, index_t fid);
 		PLCEdge(PLCEdgeType _type, index_t e0, index_t e1, index_t oe0, index_t oe1,
 		        const AuxVector4<index_t> &_inc_tri);
 
@@ -95,11 +95,10 @@ public: /* Auxiliary data structures ****************************************/
 	};
 
 public: /* Constructor & Destructor ****************************************/
-	PiecewiseLinearComplex() = default;
-
-	void initialize(const std::vector<GPoint *> &_vertices,
-	                const std::vector<index_t>  &_edges,
-	                const std::vector<index_t>  &_triangles);
+	PiecewiseLinearComplex() = delete;
+	PiecewiseLinearComplex(const std::vector<GPoint *> &_vertices,
+	                       const std::vector<index_t>  &_edges,
+	                       const std::vector<index_t>  &_triangles);
 
 public: /* Interfaces ******************************************************/
 	/* Connectivity operations on PLC */
@@ -107,11 +106,11 @@ public: /* Interfaces ******************************************************/
 	GPoint       &pnt(index_t vid) { return *vertices[vid]; }
 	const GPoint &pnt(index_t vid) const { return *vertices[vid]; }
 
-	PLCEdge       &edge(index_t ei) { return plc_edges[ei]; }
-	const PLCEdge &edge(index_t ei) const { return plc_edges[ei]; }
+	PLCEdge       &edge(index_t eid) { return plc_edges[eid]; }
+	const PLCEdge &edge(index_t eid) const { return plc_edges[eid]; }
 
-	PLCFace       &face(index_t fi) { return plc_faces[fi]; }
-	const PLCFace &face(index_t fi) const { return plc_faces[fi]; }
+	PLCFace       &face(index_t fid) { return plc_faces[fid]; }
+	const PLCFace &face(index_t fid) const { return plc_faces[fid]; }
 
 	size_t numVertices() const { return vertices.size(); }
 	size_t numEdges() const { return plc_edges.size(); }
@@ -119,17 +118,19 @@ public: /* Interfaces ******************************************************/
 
 	index_t oppV2E(const PLCEdge &edge, index_t tid) const;
 
+	void splitPLCEdge(index_t eid, index_t vid);
+
 public: /* Data ************************************************************/
 	/// The input vertices.
-	std::vector<GPoint *> vertices;
+	const std::vector<GPoint *> &vertices;
 	/// The input isolated edges (storing indices to vertices).
-	std::vector<index_t>  edges;
+	const std::vector<index_t>  &edges;
 	/// The input triangles (storing indices to vertices).
-	std::vector<index_t>  triangles;
+	const std::vector<index_t>  &triangles;
 
-	size_t input_nv; ///< number of input vertices
-	size_t input_ne; ///< number of input edges
-	size_t input_nt; ///< number of input triangles
+	const size_t input_nv; ///< number of input vertices
+	const size_t input_ne; ///< number of input edges
+	const size_t input_nt; ///< number of input triangles
 
 	bool is_close_and_manifold; ///< whether the input is close and manifold
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Utils.h"
+
 #include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 
 #include "OpenMeshCraft/Utils/Exception.h"
@@ -35,6 +37,7 @@ public:
 		VISITED    = 1,
 		TO_DELETE  = 2,
 		ENCROACHED = 4,
+		TOUCHED    = 8,
 	};
 
 	/// Mark for each tetrahedron
@@ -47,10 +50,8 @@ public:
 
 public:
 	/* Constructors and Destructors */
-
-	TetrahedralMesh() = default;
-
-	void initialize(const std::vector<GPoint *> &points);
+	TetrahedralMesh() = delete;
+	TetrahedralMesh(const std::vector<GPoint *> &points);
 
 public:
 	/* Connectivity operations on tetrahedra mesh */
@@ -83,6 +84,11 @@ public:
 	/// @param idoff idoff = tet_id * 4 + offset
 	/// @return tet_id
 	static index_t getId(index_t idoff) { return idoff >> 2; }
+
+	/// Get the idoff from an id
+	/// @param id index to a tetrahedron
+	/// @return idoff = id * 4
+	static index_t toIdOff(index_t id) { return id << 2; }
 
 	/// Clip the offset of an idoff
 	/// @param idoff idoff = tet_id * 4 + offset
@@ -165,6 +171,8 @@ public:
 
 	/* Operations about creation */
 
+	void newVtx(index_t new_vid);
+
 	index_t newTet();
 	void    newTets(size_t inc_size, AuxVector64<index_t> &new_tets);
 
@@ -202,7 +210,7 @@ public: /* Data ************************************************************/
 	/// We assume that:
 	/// 1. all vertices are explicit points.
 	/// 2. no coincident vertices exist.
-	std::vector<GPoint *> verts;
+	const std::vector<GPoint *> &verts;
 
 	/// Vertex-(one_of_the)incident-tetrahedron relation.
 	/// Each index is the id of the incident tetrahedron.
