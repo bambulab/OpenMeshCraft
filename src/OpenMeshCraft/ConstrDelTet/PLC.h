@@ -50,23 +50,25 @@ public: /* Auxiliary data structures ****************************************/
 	class PLCEdge
 	{
 	public: /* Data *********************************************************/
+		/// The type of the edge.
 		PLCEdgeType type;
-
 		/// The indices of the endpoints of the edge.
-		IPair ep;
-
-		/// The indices of the original(parent) endpoints of the edge.
-		IPair oep;
-
-		/// Incident triangles (indices to the input triangles).
-		AuxVector4<index_t> inc_tri;
+		/// (In `ONC_ACUTE_VERTEX` case, acute vertex is at the first position.
+		///  In other cases, the order is arbitrary.)
+		IPair       ep;
+		/// the ancestor (not the parent) edge is the original edge before splitting
+		/// (set to InvalidIndex if this edge is not a sub-edge)
+		index_t     ancestor_id;
+		/// the child edge is the edge after splitting
+		/// (set to InvalidIndex if this edge is not splitted)
+		/// (every edge is splitted to two subsequent child edges)
+		index_t     child_id;
 
 	public: /* Constructors *************************************************/
 		PLCEdge() = default;
 		PLCEdge(index_t e0, index_t e1);
-		PLCEdge(index_t e0, index_t e1, index_t fid);
-		PLCEdge(PLCEdgeType _type, index_t e0, index_t e1, index_t oe0, index_t oe1,
-		        const AuxVector4<index_t> &_inc_tri);
+		PLCEdge(PLCEdgeType _type, index_t e0, index_t e1, index_t _ancestor_id,
+		        index_t _child_id);
 
 	public: /* Interfaces ***************************************************/
 		index_t       &ep0() { return ep.first; }
@@ -74,19 +76,10 @@ public: /* Auxiliary data structures ****************************************/
 		index_t       &ep1() { return ep.second; }
 		const index_t &ep1() const { return ep.second; }
 
-		index_t       &oep0() { return oep.first; }
-		const index_t &oep0() const { return oep.first; }
-		index_t       &oep1() { return oep.second; }
-		const index_t &oep1() const { return oep.second; }
+		void swapEp() { std::swap(ep.first, ep.second); }
 
-		static bool less(const PLCEdge &e0, const PLCEdge &e1)
-		{
-			return e0.ep < e1.ep;
-		}
-		static bool equal(const PLCEdge &e0, const PLCEdge &e1)
-		{
-			return e0.ep == e1.ep;
-		}
+		bool operator<(const PLCEdge &rhs) const { return ep < rhs.ep; }
+		bool operator==(const PLCEdge &rhs) const { return ep == rhs.ep; }
 	};
 
 	class PLCFace
@@ -101,6 +94,10 @@ public: /* Constructor & Destructor ****************************************/
 	                       const std::vector<index_t>  &_triangles);
 
 public: /* Interfaces ******************************************************/
+	/* Initialize PLC edges and faces */
+	void initPLCEdges();
+	void initPLCFaces();
+
 	/* Connectivity operations on PLC */
 
 	GPoint       &pnt(index_t vid) { return *vertices[vid]; }
@@ -120,6 +117,15 @@ public: /* Interfaces ******************************************************/
 
 	void splitPLCEdge(index_t eid, index_t vid);
 
+	/* Query auxiliary data */
+
+	// clang-format off
+	/// Number of incident triangles to the edge.
+	size_t numEdgeIncTri(index_t eid) const { return edge_inc_tri[eid].size(); }
+	/// Get the `j`-th incident triangle to the edge.
+	index_t edgeIncTri(index_t eid, index_t j) { return edge_inc_tri[eid][j]; }
+	// clang-format on
+
 public: /* Data ************************************************************/
 	/// The input vertices.
 	const std::vector<GPoint *> &vertices;
@@ -135,7 +141,14 @@ public: /* Data ************************************************************/
 	bool is_close_and_manifold; ///< whether the input is close and manifold
 
 	/* Auxiliary data structures for PLC */
+
 	std::vector<PLCEdge> plc_edges;
+
+	/// Triangles incident to each edge.
+	/// We only store incident triangles for original input edges, not for
+	/// split edges.
+	std::vector<AuxVector4<index_t>> edge_inc_tri;
+
 	std::vector<PLCFace> plc_faces;
 };
 

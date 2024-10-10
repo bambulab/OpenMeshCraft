@@ -22,6 +22,9 @@ ConstraintsRecover<Traits>::ConstraintsRecover(std::vector<GPoint *> &_verts,
 template <typename Traits>
 void ConstraintsRecover<Traits>::segmentRecovery()
 {
+	// initialize the PLC edges
+	plc.initPLCEdges();
+
 	// traverse all edges in the PLC to find missing segments
 	std::vector<index_t> missing_segments;
 	for (index_t eid = 0; eid < plc.numEdges(); eid++)
@@ -44,24 +47,29 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 		// Split the existing constrained segment
 		while (!missing_segments.empty())
 		{
-			// get the constrained segment to split
+			// Get the constrained segment to split
 			index_t eid = missing_segments.back();
 			missing_segments.pop_back();
-			// split the segment
+			const typename PLC::PLCEdge &e = plc.edge(eid);
+			// Check if the segment is still missing
+			if (tet_mesh.edgeExists(e.ep0(), e.ep1()))
+				continue;
+			// Split the segment
 			index_t              new_vid = splitMissingSegment(eid);
-			// touch the neighbor vertices
+			// Touch the neighbor vertices
+			// New missing edges will appear near touched vertices
 			AuxVector64<index_t> local_vv;
-			local_vv.push_back(plc.edge(eid).ep0());
-			local_vv.push_back(plc.edge(eid).ep1());
+			local_vv.push_back(e.ep0());
+			local_vv.push_back(e.ep1());
 			tet_mesh.VV(new_vid, local_vv);
 			for (index_t vid : local_vv)
 				tet_mesh.mark(vid, TetMesh::VTX_MARK::TOUCHED);
 		}
-		// Find new missing edges
+		// Find new missing edges around touched vertices
 		for (index_t eid = 0; eid < plc.numEdges(); eid++)
 		{
 			const PLC::PLCEdge &e = plc.edge(eid);
-			if (e.type != PLC::PLCEdgeType::FLAT_EDGE &&
+			if (!is_valid_idx(e.child_id) && e.type != PLC::PLCEdgeType::FLAT_EDGE &&
 			    tet_mesh.isVtxMarked(e.ep0(), TetMesh::VTX_MARK::TOUCHED) &&
 			    tet_mesh.isVtxMarked(e.ep1(), TetMesh::VTX_MARK::TOUCHED) &&
 			    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
@@ -80,6 +88,7 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 template <typename Traits>
 index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 {
+	GPoint *new_pnt;
 	index_t new_vid  = InvalidIndex;
 	index_t curr_tet = InvalidIndex;
 
@@ -88,7 +97,7 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 	if (edge.type == PLC::PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
 		curr_tet = tet_mesh.toIdOff(tet_mesh.incTet(edge.ep0()));
-		new_vid  = splitAtMiddle(eid);
+		new_pnt  = splitAtMiddle(eid);
 	}
 	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
 	{
@@ -100,17 +109,19 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 
 		if (edge.type == PLC::PLCEdgeType::NO_ACUTE_VERTEX)
 		{
-			new_vid = splitSegment_NoAcuteVertex(eid, ref_vid);
+			new_pnt = splitSegment_NoAcuteVertex(eid, ref_vid);
 		}
 		else // ONE_ACUTE_VERTEX
 		{
-			new_vid = splitSegment_OneAcuteVertex(eid, ref_vid);
+			new_pnt = splitSegment_OneAcuteVertex(eid, ref_vid);
 		}
 	}
 
-	OMC_EXPENSIVE_ASSERT(is_valid_idx(new_vid),
-	                     "Could not find a valid splitting point.");
-
+	// create the new vertex
+	new_vid = newVtx(new_pnt);
+	// split the PLC edge
+	plc.splitPLCEdge(eid, new_vid);
+	// insert the splitting point into the Delaunay tetrahedral mesh
 	DelTet DT(tet_mesh);
 	DT.insertVertex(new_vid, curr_tet);
 
@@ -139,8 +150,8 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
                                                                index_t &ref_vid,
                                                                index_t &ref_tid)
 {
-	AuxVector64<index_t>   encroach_tets;
-	typename PLC::PLCEdge &edge = plc.edge(eid);
+	AuxVector64<index_t>         encroach_tets;
+	const typename PLC::PLCEdge &edge = plc.edge(eid);
 
 	// find tetrahedra adjacent to the first endpoint `ep0`
 	tet_mesh.VT(edge.ep0(), encroach_tets);
@@ -250,37 +261,38 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
 }
 
 /**
- * @brief Split the constrained edge `eid` at the middle point.
+ * @brief Get the splitting point to split the constrained edge `eid` at the
+ * middle point, but do not really split the edge.
+ *
  * This split strategy is used to split segment with two acute vertices.
+ * @return The splitting point.
  */
 template <typename Traits>
-index_t ConstraintsRecover<Traits>::splitAtMiddle(index_t eid)
+auto ConstraintsRecover<Traits>::splitAtMiddle(index_t eid) const -> GPoint *
 {
-	typename PLC::PLCEdge &edge = plc.edge(eid);
+	const typename PLC::PLCEdge &edge = plc.edge(eid);
 
 	// TODO get the middle point represented by LNC implicit point
-	auto    getMidPoint = [](OMC_UNUSED PLC::PLCEdge &e) { return nullptr; };
-	GPoint *new_pnt     = getMidPoint(edge);
+	auto getMidPoint = [](OMC_UNUSED const typename PLC::PLCEdge &e)
+	{ return nullptr; };
+	GPoint *new_pnt = getMidPoint(edge);
 
-	// create the new vertex
-	index_t new_vid = newVtx(new_pnt);
-	// update PLC edges
-	plc.splitPLCEdge(eid, new_vid);
-	return new_vid;
+	return new_pnt;
 }
 
 /**
- * @brief Split the constrained edge `eid` that has no acute vertices.
+ * @brief Find the splitting point to split the constrained edge `eid` that has
+ * no acute vertices, but do not really split the edge.
  * @param eid The constrained edge to split.
  * @param ref_vid The reference encroaching point.
- * @return the new splitting point.
+ * @return the splitting point.
  * @see The strategy is described in Section 3.3 of [Robust CDT].
  */
 template <typename Traits>
-index_t ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
-                                                               index_t ref_vid)
+auto ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(
+  index_t eid, index_t ref_vid) const -> GPoint *
 {
-	typename PLC::PLCEdge &edge = plc.edge(eid);
+	const typename PLC::PLCEdge &edge = plc.edge(eid);
 
 	const GPoint &ep0_pnt = gpnt(edge.ep0());
 	const GPoint &ep1_pnt = gpnt(edge.ep1());
@@ -290,7 +302,8 @@ index_t ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
 	index_t acute_vid = InvalidIndex;
 
 	// TODO get the middle point represented by LNC implicit point
-	auto getMidPoint = [](OMC_UNUSED PLC::PLCEdge &e) { return nullptr; };
+	auto getMidPoint = [](OMC_UNUSED const typename PLC::PLCEdge &e)
+	{ return nullptr; };
 
 	// TODO
 	// Check if the distance between `a` and `b` is less than half the distance
@@ -325,11 +338,7 @@ index_t ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
 		new_pnt = getMidPoint(edge);
 	}
 
-	// create the new vertex
-	index_t new_vid = newVtx(new_pnt);
-	// update PLC edges
-	plc.splitPLCEdge(eid, new_vid);
-	return new_vid;
+	return new_pnt;
 }
 
 /**
@@ -340,13 +349,14 @@ index_t ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
  * @see The strategy is described in Section 3.3 of [Robust CDT].
  */
 template <typename Traits>
-index_t ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
-                                                                index_t ref_vid)
+auto ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(
+  index_t eid, index_t ref_vid) const -> GPoint *
 {
-	typename PLC::PLCEdge &edge = plc.edge(eid);
+	const typename PLC::PLCEdge &edge = plc.edge(eid);
 
 	// TODO get the middle point represented by LNC implicit point
-	auto getMidPoint = [](OMC_UNUSED PLC::PLCEdge &e) { return nullptr; };
+	auto getMidPoint = [](OMC_UNUSED const typename PLC::PLCEdge &e)
+	{ return nullptr; };
 
 	// TODO
 	// Similar to but not the same as the one in splitSegment_NoAcuteVertex.
@@ -371,11 +381,12 @@ index_t ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
 		new_pnt = getMidPoint(edge);
 	}
 
-	// create the new vertex
-	index_t new_vid = newVtx(new_pnt);
-	// update PLC edges
-	plc.splitPLCEdge(eid, new_vid);
-	return new_vid;
+	return new_pnt;
+}
+
+template <typename Traits>
+void ConstraintsRecover<Traits>::faceRecovery()
+{
 }
 
 /**
@@ -388,6 +399,7 @@ index_t ConstraintsRecover<Traits>::newVtx(GPoint *new_pnt)
 {
 	// create the new vertex
 	index_t new_vid = verts.size();
+	// TODO point arena
 	verts.push_back(new_pnt);
 
 	// create auxiliary data in TetMesh & PLC

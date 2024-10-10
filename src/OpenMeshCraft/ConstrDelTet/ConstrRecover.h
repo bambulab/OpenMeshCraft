@@ -56,11 +56,17 @@ public: /* Algorithms ******************************************************/
 	void findReferenceEncroachingPoint(index_t eid, index_t &ref_vid,
 	                                   index_t &ref_tid);
 
-	index_t splitAtMiddle(index_t eid);
+	GPoint* splitAtMiddle(index_t eid) const;
 
-	index_t splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid);
+	GPoint* splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid) const;
 
-	index_t splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid);
+	GPoint* splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid) const;
+
+	/* Recover constrained faces */
+
+	void faceRecovery();
+
+	/* sub-algorithms for face recovery */
 
 	/* Geometric & Topologic Operations on both TetMesh & PLC */
 
