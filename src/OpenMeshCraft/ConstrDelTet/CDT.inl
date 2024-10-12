@@ -220,6 +220,12 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	CR.segmentRecovery();
 
 	OMC_CDT_SAVE_ELAPSED(start_seg, seg_elapsed, "Segment recovery");
+
+	OMC_CDT_START_ELAPSE(start_face);
+
+	CR.faceRecovery();
+
+	OMC_CDT_SAVE_ELAPSED(start_face, face_elapsed, "Face recovery");
 }
 
 template <typename Traits>

@@ -387,6 +387,7 @@ auto ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(
 template <typename Traits>
 void ConstraintsRecover<Traits>::faceRecovery()
 {
+	plc.initPLCFaces();
 }
 
 /**

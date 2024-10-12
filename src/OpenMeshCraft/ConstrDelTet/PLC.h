@@ -76,15 +76,62 @@ public: /* Auxiliary data structures ****************************************/
 		index_t       &ep1() { return ep.second; }
 		const index_t &ep1() const { return ep.second; }
 
+		void makeUniqEp() { ep = unique_pair(ep.first, ep.second); }
 		void swapEp() { std::swap(ep.first, ep.second); }
 
 		bool operator<(const PLCEdge &rhs) const { return ep < rhs.ep; }
 		bool operator==(const PLCEdge &rhs) const { return ep == rhs.ep; }
 	};
 
+	/// A range of sub-edges for an original edge after splitting.
+	struct SubEdgeRange
+	{
+		index_t orig_eid; ///< the index of the original edge.
+		index_t start; ///< the position in `sub_edges` where the sub-edges start.
+		index_t size;  ///< the number of sub-edges stored in `sub_edges`.
+		// clang-format off
+		SubEdgeRange() = default;
+		SubEdgeRange(index_t _eid, index_t _start, index_t _size)
+		  : orig_eid(_eid), start(_start), size(_size) {}
+		SubEdgeRange(const SubEdgeRange &) = default;
+		SubEdgeRange(SubEdgeRange &&)      = default;
+		SubEdgeRange &operator=(const SubEdgeRange &rhs)
+		{ orig_eid = rhs.orig_eid; start = rhs.start; size = rhs.size; return *this; }
+		// clang-format on
+	};
+
+	struct BoundingEdge
+	{
+		SubEdgeRange range;
+		bool         reversed;
+
+		// clang-format off
+		bool operator==(index_t eid) const { return range.orig_eid == eid; }
+		bool operator==(const BoundingEdge &rhs) const { return range.orig_eid == rhs.range.orig_eid; }
+		bool operator<(index_t eid) const { return range.orig_eid < eid; }
+		bool operator<(const BoundingEdge &rhs) const { return range.orig_eid < rhs.range.orig_eid; }
+		// clang-format on
+	};
+
 	class PLCFace
 	{
 	public: /* Data *********************************************************/
+		/// Original triangles composing the face
+		/// (triangle index, mutiple 3 with offset to point to `triangles`)
+		AuxVector2<index_t> triangles;
+
+		/// Edges bounding the face (index to `plc_edges`)
+		/// - The face may not be simply connected, i.e., there may be holes and
+		/// multiple disjoint boundaries.
+		/// - Duplicate bounding edges may exist during construction, these
+		/// duplicate edges may be subsequent or not. We will remove the duplicate
+		/// edges finally.
+		AuxVector4<BoundingEdge> bounding_edges;
+
+		/// The unordered bounding vertices of the face (index to `vertices`)
+		AuxVector4<index_t> bounding_vertices;
+		/// The unordered flat vertices of the face (index to `vertices`)
+		AuxVector4<index_t> flat_vertices;
 	};
 
 public: /* Constructor & Destructor ****************************************/
@@ -142,12 +189,22 @@ public: /* Data ************************************************************/
 
 	/* Auxiliary data structures for PLC */
 
+	/// The edges in the PLC.
 	std::vector<PLCEdge> plc_edges;
+
+	/// The initial number of PLC edges.
+	size_t init_npe;
 
 	/// Triangles incident to each edge.
 	/// We only store incident triangles for original input edges, not for
 	/// split edges.
 	std::vector<AuxVector4<index_t>> edge_inc_tri;
+
+	/// Sub-edges range after splitting the original edges.
+	std::vector<SubEdgeRange> sub_edge_range;
+
+	/// All sub-edges are subsequently stored in this vector.
+	std::vector<index_t> sub_edges;
 
 	std::vector<PLCFace> plc_faces;
 };

@@ -56,6 +56,10 @@ struct ConstrDelTet_Stats
 	double face_elapsed = 0.; // timings of face recovery
 };
 
+// TODO Move this to Arrangements/Utils.h after merging the git branch
+template<typename T>
+using AuxVector2 = boost::container::small_vector<index_t, 2>;
+
 #define OMC_CDT_START_ELAPSE(name) auto name = OMC::Logger::elapse_reset();
 
 #define OMC_CDT_SAVE_ELAPSED(name, dst_name, dscrpt)                    \
