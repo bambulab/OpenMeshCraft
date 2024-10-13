@@ -146,9 +146,8 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
  * @note ==NOT THREAD SAFE==
  */
 template <typename Traits>
-void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
-                                                               index_t &ref_vid,
-                                                               index_t &ref_tid)
+void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
+  index_t eid, index_t &ref_vid, index_t &ref_tid) const
 {
 	AuxVector64<index_t>         encroach_tets;
 	const typename PLC::PLCEdge &edge = plc.edge(eid);
@@ -388,6 +387,75 @@ template <typename Traits>
 void ConstraintsRecover<Traits>::faceRecovery()
 {
 	plc.initPLCFaces();
+}
+
+/**
+ * @brief Check if a tetrahedron `tet_idoff` intersects a PLC face `face`.
+ */
+template <typename Traits>
+bool ConstraintsRecover<Traits>::tetIntersectsFace(
+  index_t tet_idoff, const typename PLC::PLCFace &face) const
+{
+	if (!tet_mesh.isFiniteTet(tet_idoff))
+		return false;
+}
+
+template <typename Traits>
+void ConstraintsRecover<Traits>::getTetsIntersectingFace(
+  index_t fid, std::vector<index_t> &tets)
+{
+	// Get the PLC face
+	const typename PLC::PLCFace &face = plc.face(fid);
+	// Get the first bounding edge of the face
+	const typename PLC::PLCEdge &e0   = plc.boundingEdge(face, 0);
+
+	index_t first_tri = face.triangles[0];
+	index_t tri_v[3]  = {plc.triVtx(first_tri, 0), plc.triVtx(first_tri, 1),
+	                     plc.triVtx(first_tri, 2)};
+
+	// Four vertices of a tetrahedron.
+	// First essemble the two endpoints of the first bounding edge.
+	index_t tet_v[4] = {e0.ep0(), e0.ep1(), InvalidIndex, InvalidIndex};
+
+	// Get the incident tets of the first bounding edge
+	AuxVector64<index_t> edge_incident_tets;
+	tet_mesh.ET(tet_v[0], tet_v[1], edge_incident_tets);
+
+	// If the face just has one triangle
+	if (face.triangles.size() == 1 && face.bounding_vertices.size() == 3 &&
+	    face.flat_vertices.empty())
+	{
+		// The opposite vertex to the edge `e0`
+		index_t opp_v = (tri_v[0] != tet_v[0] && tri_v[0] != tet_v[1])   ? tri_v[0]
+		                : (tri_v[1] != tet_v[0] && tri_v[1] != tet_v[1]) ? tri_v[1]
+		                                                                 : tri_v[2];
+		// Check if the opposite vertex is in the incident tets
+		for (index_t tet_idoff : edge_incident_tets)
+		{
+			if (tet_mesh.tetHasVertex(tet_idoff, opp_v))
+			{ // The tetrahedron contains the opposite vertex
+				return;
+			}
+		}
+	}
+
+	// initialize vertex orientation and increase count
+	for (index_t vid : face.bounding_vertices)
+	{
+		v_orient[vid] = Sign::ZERO;
+		v_count[vid]++;
+	}
+	for (index_t vid : face.flat_vertices)
+	{
+		v_orient[vid] = Sign::ZERO;
+	}
+	// reindex bounding vertices
+	for (index_t i = 0; i < face.bounding_vertices.size(); i++)
+	{
+		index_t vid    = face.bounding_vertices[i];
+		v_reindex[vid] = i;
+		// WARN How to handle singular vertex on the boundary?
+	}
 }
 
 /**

@@ -591,8 +591,9 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		}
 		// sort and remove duplicate vertices
 		std::sort(f.flat_vertices.begin(), f.flat_vertices.end());
-		std::erase(std::unique(f.flat_vertices.begin(), f.flat_vertices.end()),
-		           f.flat_vertices.end());
+		f.flat_vertices.erase(
+		  std::unique(f.flat_vertices.begin(), f.flat_vertices.end()),
+		  f.flat_vertices.end());
 		// sort bounding vertices
 		std::sort(f.bounding_vertices.begin(), f.bounding_vertices.end());
 		// subtract `bounding_vertices` from current `flat_vertices` to get
@@ -663,6 +664,42 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 		                       /*child_id*/ InvalidIndex);
 	}
 	e.child_id = plc_edges.size() - 2;
+}
+
+/**
+ * @brief Get the `eid`-th bounding edge of a PLC face `fid`.
+ * @param fid index to the PLC face.
+ * @param eid index to the bounding edge in the PLC face.
+ * @return the bounding edge (PLCEdge).
+ */
+template <typename Traits>
+auto PiecewiseLinearComplex<Traits>::boundingEdge(
+  index_t fid, index_t eid) const -> const PLCEdge &
+{
+	return boundingEdge(face[fid], eid);
+}
+
+/**
+ * @brief Get the `eid`-th bounding edge of a PLC face `fid`.
+ * @param f the PLC face.
+ * @param eid index to the bounding edge in the PLC face.
+ * @return the bounding edge (PLCEdge).
+ */
+template <typename Traits>
+auto PiecewiseLinearComplex<Traits>::boundingEdge(
+  const PLCFace &f, index_t eid) const -> const PLCEdge &
+{
+	OMC_EXPENSIVE_ASSERT(!f.bounding_edges.empty(), "empty bounding edges.");
+
+	index_t first = 0;
+	for (const BoundingEdge &be : f.bounding_edges)
+	{
+		if (first + be.range.size > eid)
+			return edge(sub_edges[be.range.start + eid - first]);
+		first += be.range.size;
+	}
+
+	OMC_ASSERT(false, "Invalid index to the bounding edge.");
 }
 
 } // namespace OMC

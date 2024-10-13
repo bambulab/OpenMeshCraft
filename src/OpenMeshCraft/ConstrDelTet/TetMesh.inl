@@ -39,7 +39,7 @@ index_t TetrahedralMesh<Traits>::tetCorner(index_t tet_idoff, index_t vid) const
  * @note ==NOT THREAD SAFE==
  */
 template <typename Traits>
-bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1)
+bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1) const
 {
 	// find the first adajcent tetrahedron
 	index_t tet_idoff = incTet(vid0) << 2;
@@ -97,7 +97,7 @@ bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1)
  */
 template <typename Traits>
 template <typename ContainerT>
-void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets)
+void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets) const
 {
 	index_t tet_idoff = incTet(vid) << 2;
 
@@ -140,7 +140,7 @@ void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets)
  */
 template <typename Traits>
 template <typename ContainerT>
-void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts)
+void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
 {
 	index_t tet_idoff = incTet(vid) << 2;
 
@@ -189,7 +189,8 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts)
  */
 template <typename Traits>
 template <typename ContainerT>
-void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1, ContainerT &tets)
+void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1,
+                                 ContainerT &tets) const
 {
 	// find tetrahedra adjacent to the vertex `vid0`
 	VT(vid0, tets);
@@ -209,8 +210,9 @@ void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1, ContainerT &tets)
 /**
  * @brief Create a new vertex.
  *
- * Note that TetMesh does not manage the vertices directly. The new vertex is created
- * externally, and then TetMesh creates the corresponding auxiliary data.
+ * Note that TetMesh does not manage the vertices directly. The new vertex is
+ * created externally, and then TetMesh creates the corresponding auxiliary
+ * data.
  * @param new_vid The index of the new vertex created externally.
  */
 template <typename Traits>

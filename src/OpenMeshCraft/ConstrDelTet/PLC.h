@@ -89,6 +89,7 @@ public: /* Auxiliary data structures ****************************************/
 		index_t orig_eid; ///< the index of the original edge.
 		index_t start; ///< the position in `sub_edges` where the sub-edges start.
 		index_t size;  ///< the number of sub-edges stored in `sub_edges`.
+
 		// clang-format off
 		SubEdgeRange() = default;
 		SubEdgeRange(index_t _eid, index_t _start, index_t _size)
@@ -141,14 +142,22 @@ public: /* Constructor & Destructor ****************************************/
 	                       const std::vector<index_t>  &_triangles);
 
 public: /* Interfaces ******************************************************/
-	/* Initialize PLC edges and faces */
+	/* Initialize PLC edges and faces ****************************************/
 	void initPLCEdges();
 	void initPLCFaces();
 
-	/* Connectivity operations on PLC */
+	/* Query on input constraints ********************************************/
 
+	// clang-format off
 	GPoint       &pnt(index_t vid) { return *vertices[vid]; }
 	const GPoint &pnt(index_t vid) const { return *vertices[vid]; }
+
+	index_t edgeVtx(index_t eid, index_t j) const { return edges[eid * 2 + j]; }
+
+	index_t triVtx(index_t tid, index_t j) const { return triangles[tid * 3 + j]; }
+	// clang-format on
+
+	/* Connectivity operations on PLC ****************************************/
 
 	PLCEdge       &edge(index_t eid) { return plc_edges[eid]; }
 	const PLCEdge &edge(index_t eid) const { return plc_edges[eid]; }
@@ -164,7 +173,9 @@ public: /* Interfaces ******************************************************/
 
 	void splitPLCEdge(index_t eid, index_t vid);
 
-	/* Query auxiliary data */
+	/* Query auxiliary data **************************************************/
+
+	/* Query auxiliary data of a PLC edge */
 
 	// clang-format off
 	/// Number of incident triangles to the edge.
@@ -172,6 +183,11 @@ public: /* Interfaces ******************************************************/
 	/// Get the `j`-th incident triangle to the edge.
 	index_t edgeIncTri(index_t eid, index_t j) { return edge_inc_tri[eid][j]; }
 	// clang-format on
+
+	/* Query auxiliary data of a PLC face */
+
+	const PLCEdge &boundingEdge(index_t fid, index_t eid) const;
+	const PLCEdge &boundingEdge(const PLCFace &f, index_t eid) const;
 
 public: /* Data ************************************************************/
 	/// The input vertices.

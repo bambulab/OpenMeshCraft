@@ -54,19 +54,24 @@ public: /* Algorithms ******************************************************/
 	index_t splitMissingSegment(index_t eid);
 
 	void findReferenceEncroachingPoint(index_t eid, index_t &ref_vid,
-	                                   index_t &ref_tid);
+	                                   index_t &ref_tid) const;
 
-	GPoint* splitAtMiddle(index_t eid) const;
+	GPoint *splitAtMiddle(index_t eid) const;
 
-	GPoint* splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid) const;
+	GPoint *splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid) const;
 
-	GPoint* splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid) const;
+	GPoint *splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid) const;
 
 	/* Recover constrained faces */
 
 	void faceRecovery();
 
 	/* sub-algorithms for face recovery */
+
+	bool tetIntersectsFace(index_t                      tet_idoff,
+	                       const typename PLC::PLCFace &face) const;
+
+	void getTetsIntersectingFace(index_t fid, std::vector<index_t> &tets);
 
 	/* Geometric & Topologic Operations on both TetMesh & PLC */
 
@@ -82,6 +87,15 @@ public: /* Data ************************************************************/
 	TetMesh               &tet_mesh;
 	/// Constrained piecewise linear complex
 	PLC                   &plc;
+
+	/* Auxiliary data defined between tetrahedral mesh and PLC */
+
+	/// Vertex orientation with respect to one PLC face
+	std::vector<Sign>     v_orient;
+	/// Vertex count
+	std::vector<uint32_t> v_count;
+	/// Vertex reindex
+	std::vector<index_t>  v_reindex;
 };
 
 } // namespace OMC
