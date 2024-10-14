@@ -68,7 +68,10 @@ PiecewiseLinearComplex<Traits>::PiecewiseLinearComplex(
 template <typename Traits>
 void PiecewiseLinearComplex<Traits>::initPLCEdges()
 {
-	// # Build PLC edges =========================================================
+	// =========================================================================
+	// # Build PLC edges
+	// ## pre-condition: the input PLC is valid (without intersections).
+	// ## post-condition: input edges and triangles are initialized as PLC edges.
 
 	// ## Put all input edges into the PLC edges.
 	//    Duplicate edges may exist, so they will be merged later.
@@ -139,7 +142,11 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 	}
 	edge_inc_tri = std::move(tmp_edge_inc_tri);
 
-	// # Classify edge and vertices ===========================================
+	// =========================================================================
+	// # Classify edge and vertices
+	// ## pre-condition: PLC edges are built.
+	// ## post-condition: PLC vertices are classified to acute or not, and PLC
+	//    edges are classified to different types.
 
 	// vertex-vertex relation of the PLC
 	std::vector<AuxVector16<index_t>> vv(input_nv);
@@ -346,8 +353,12 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		plc_faces[tid].bounding_edges.resize(3);
 	}
 
-	auto assembleEdges2Faces = [this](const SubEdgeRange &range, PLCFace &f)
+	auto assembleEdges2Faces =
+	  [this](const SubEdgeRange &range, PLCFace &f, index_t t_id)
 	{
+		OMC_EXPENSIVE_ASSERT(f.triangles.size() == 1 && f.triangles[0] == t_id,
+		                     "Not the same triangle face.");
+
 		index_t tv[3] = {triangles[f.triangles[0] * 3],
 		                 triangles[f.triangles[0] * 3 + 1],
 		                 triangles[f.triangles[0] * 3 + 2]};
@@ -360,12 +371,14 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 			if (ev[0] == tv[i] && ev[1] == tv[(i + 1) % 3])
 			{
 				f.bounding_edges[i].range    = range;
+				f.bounding_edges[i].tid      = t_id;
 				f.bounding_edges[i].reversed = false;
 				return;
 			}
 			else if (ev[0] == tv[(i + 1) % 3] && ev[1] == tv[i])
 			{
 				f.bounding_edges[i].range    = range;
+				f.bounding_edges[i].tid      = t_id;
 				f.bounding_edges[i].reversed = true;
 				return;
 			}
@@ -382,7 +395,7 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		for (index_t tid : edge_inc_tri[eid])
 		{
 			PLCFace &f = plc_faces[tid];
-			assembleEdges2Faces(sub_edge_range[eid], f);
+			assembleEdges2Faces(sub_edge_range[eid], f, tid);
 		}
 	}
 
@@ -668,26 +681,16 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 
 /**
  * @brief Get the `eid`-th bounding edge of a PLC face `fid`.
- * @param fid index to the PLC face.
- * @param eid index to the bounding edge in the PLC face.
+ * @param [in] f the PLC face.
+ * @param [in] eid index to the bounding edge in the PLC face.
+ * @param [out] tid the incident input triangle index to the bounding edge.
+ * @param [out] reversed the orientation of the bounding edge.
  * @return the bounding edge (PLCEdge).
  */
 template <typename Traits>
 auto PiecewiseLinearComplex<Traits>::boundingEdge(
-  index_t fid, index_t eid) const -> const PLCEdge &
-{
-	return boundingEdge(face[fid], eid);
-}
-
-/**
- * @brief Get the `eid`-th bounding edge of a PLC face `fid`.
- * @param f the PLC face.
- * @param eid index to the bounding edge in the PLC face.
- * @return the bounding edge (PLCEdge).
- */
-template <typename Traits>
-auto PiecewiseLinearComplex<Traits>::boundingEdge(
-  const PLCFace &f, index_t eid) const -> const PLCEdge &
+  const PLCFace &f, index_t eid, index_t *tid,
+  bool *reversed) const -> const PLCEdge &
 {
 	OMC_EXPENSIVE_ASSERT(!f.bounding_edges.empty(), "empty bounding edges.");
 
@@ -695,7 +698,13 @@ auto PiecewiseLinearComplex<Traits>::boundingEdge(
 	for (const BoundingEdge &be : f.bounding_edges)
 	{
 		if (first + be.range.size > eid)
+		{
+			if (tid)
+				*tid = be.tid;
+			if (reversed)
+				*reversed = be.reversed;
 			return edge(sub_edges[be.range.start + eid - first]);
+		}
 		first += be.range.size;
 	}
 

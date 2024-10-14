@@ -26,6 +26,46 @@ index_t TetrahedralMesh<Traits>::tetCorner(index_t tet_idoff, index_t vid) const
 	// clang-format on
 }
 
+/// @brief Check if the tetrahedron has the vertex.
+template <typename Traits>
+bool TetrahedralMesh<Traits>::tetHasVertex(index_t tet_idoff, index_t vid) const
+{
+	return tetNode(tet_idoff) == vid || tetNode(tet_idoff + 1) == vid ||
+	       tetNode(tet_idoff + 2) == vid || tetNode(tet_idoff + 3) == vid;
+}
+
+/// @brief Check if the tetrahedron is finite.
+/// Remember that we always put the infinite vertex at the last position.
+template <typename Traits>
+bool TetrahedralMesh<Traits>::isFiniteTet(index_t idoff) const
+{
+	// idoff | 3 == clipId(idoff) + 3
+	return tetNode(idoff | 3) != INFINITE_VERTEX;
+}
+
+/**
+ * @brief Finds the two vertices opposite to the given edge in a tetrahedron.
+ * @param [in] tet_idoff The offset index of the tetrahedron.
+ * @param [in] vid_0_1 The vertices of the query edge.
+ * @param [out] vid_2_3 The vertices of the opposite edge.
+ * @note The function assumes that the input edge is valid and belongs to the
+ * tetrahedron.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::oppoTetEdge(index_t tet_idoff, index_t vid0,
+                                          index_t vid1, index_t &vid2,
+                                          index_t &vid3) const
+{
+	index_t *res[2] = {&vid2, &vid3}, i, j;
+	for (i = 0, j = 0; i < 4; i++)
+	{
+		index_t w = tetNode(tet_idoff + i);
+		if (w != vid0 && w != vid1)
+			*(res[j++]) = w;
+	}
+	OMC_EXPENSIVE_ASSERT(j == 2, "Invalid Input.");
+}
+
 /**
  * @brief Given two vertices `vid0` and `vid1`, check if the edge defined by the
  * vertices exists in the tetrahedral mesh.

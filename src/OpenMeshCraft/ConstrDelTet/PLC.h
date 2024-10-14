@@ -103,8 +103,9 @@ public: /* Auxiliary data structures ****************************************/
 
 	struct BoundingEdge
 	{
-		SubEdgeRange range;
-		bool         reversed;
+		SubEdgeRange range;    // sub-edge range
+		index_t      tid;      // adjacent triangle (not PLC face) index
+		bool         reversed; // whether the edge is reversed
 
 		// clang-format off
 		bool operator==(index_t eid) const { return range.orig_eid == eid; }
@@ -186,8 +187,9 @@ public: /* Interfaces ******************************************************/
 
 	/* Query auxiliary data of a PLC face */
 
-	const PLCEdge &boundingEdge(index_t fid, index_t eid) const;
-	const PLCEdge &boundingEdge(const PLCFace &f, index_t eid) const;
+	const PLCEdge &boundingEdge(const PLCFace &f, index_t eid,
+	                            index_t *tid      = nullptr,
+	                            bool    *reversed = nullptr) const;
 
 public: /* Data ************************************************************/
 	/// The input vertices.

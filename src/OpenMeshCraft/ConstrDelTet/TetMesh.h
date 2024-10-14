@@ -115,22 +115,14 @@ public:
 
 	index_t tetCorner(index_t tet_idoff, index_t vid) const;
 
-	/// @brief Check if the tetrahedron has the vertex.
-	bool tetHasVertex(index_t tet_idoff, index_t vid) const
-	{
-		return tetNode(tet_idoff) == vid || tetNode(tet_idoff + 1) == vid ||
-		       tetNode(tet_idoff + 2) == vid || tetNode(tet_idoff + 3) == vid;
-	}
+	bool tetHasVertex(index_t tet_idoff, index_t vid) const;
 
-	/// @brief Check if the tetrahedron is finite.
-	/// Remember that we always put the infinite vertex at the last position.
-	bool isFiniteTet(index_t idoff) const
-	{
-		// idoff | 3 == clipId(idoff) + 3
-		return tetNode(idoff | 3) != INFINITE_VERTEX;
-	}
+	bool isFiniteTet(index_t idoff) const;
 
 	bool edgeExists(index_t vid0, index_t vid1) const;
+
+	void oppoTetEdge(index_t tet_idoff, index_t vid0, index_t vid1, index_t &vid2,
+	                 index_t &vid3) const;
 
 	template <typename ContainerT>
 	void VT(index_t vid, ContainerT &tets) const;

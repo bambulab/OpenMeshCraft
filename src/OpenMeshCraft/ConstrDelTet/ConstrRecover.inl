@@ -386,7 +386,24 @@ auto ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(
 template <typename Traits>
 void ConstraintsRecover<Traits>::faceRecovery()
 {
+	// initialize PLC faces
 	plc.initPLCFaces();
+
+	// initialize auxiliary data for face recovery.
+	v_orient.clear();
+	v_cached_orient.clear();
+	v_count.clear();
+	v_orient.resize(verts.size(), Sign::UNCERTAIN);
+	v_count.resize(verts.size(), 0);
+	for (index_t tid = 0; tid < tet_mesh.sizeTets(); tid++)
+		tet_mesh.unmark(tid << 2, TetMesh::TET_MARK::VISITED);
+
+	// traverse all faces in the PLC to recover the missing faces
+	for (index_t i = 0; i < plc.numFaces(); i++)
+	{
+		std::vector<index_t> tets;
+		getTetsIntersectingFace(i, tets);
+	}
 }
 
 /**
@@ -404,24 +421,51 @@ template <typename Traits>
 void ConstraintsRecover<Traits>::getTetsIntersectingFace(
   index_t fid, std::vector<index_t> &tets)
 {
+	// =========================================================================
+	// # Find the tetrahedra intersecting the PLC face (not all)
+	// ## pre-condition: all PLC segments are recovered.
+	// ## post-condition: find the tetrahedra intersecting the PLC face (not all).
+
+	// TODO how to check the face is already recovered?
+
+	// ## Get and initialize data.
+
 	// Get the PLC face
 	const typename PLC::PLCFace &face = plc.face(fid);
-	// Get the first bounding edge of the face
-	const typename PLC::PLCEdge &e0   = plc.boundingEdge(face, 0);
 
-	index_t first_tri = face.triangles[0];
-	index_t tri_v[3]  = {plc.triVtx(first_tri, 0), plc.triVtx(first_tri, 1),
-	                     plc.triVtx(first_tri, 2)};
+	// Get the first bounding edge `e0` of the face
+	// - `tri0` is the incident input triangle of `e0`.
+	// - `rev0` is the orientation of `e0`.
+	// - `orig_e0` is the original edge of `e0` and an edge of `tri0`
+	index_t                      tri0    = InvalidIndex;
+	const typename PLC::PLCEdge &e0      = plc.boundingEdge(face, 0, &tri0);
+	const typename PLC::PLCEdge &orig_e0 = plc.edge(e0.ancestor_id);
 
-	// Four vertices of a tetrahedron.
+	// Get the endpoints of `e0` and `orig_e0`
+	index_t e0p0 = e0.ep0(), e0p1 = e0.ep1();
+	index_t oe0p0 = orig_e0.ep0(), oe0p1 = orig_e0.ep1();
+	// Get the three vertices of `tri0`
+	index_t tri_v[3] = {plc.triVtx(tri0, 0), plc.triVtx(tri0, 1),
+	                    plc.triVtx(tri0, 2)};
+	OMC_EXPENSIVE_ASSERT(
+	  (oe0p0 == tri_v[0] || oe0p0 == tri_v[1] || oe0p0 == tri_v[2]) &&
+	    (oe0p1 == tri_v[0] || oe0p1 == tri_v[1] || oe0p1 == tri_v[2]),
+	  "The original edge is not an edge of the input triangle.");
+
+	// Adjust the order of the vertices of `tri0` to make sure that `oe0p0` and
+	// `oe0p1` are the first two vertices of `tri0`.
+	tri_v[2] += tri_v[0] + tri_v[1];
+	tri_v[0] = oe0p0, tri_v[1] = oe0p1, tri_v[2] = tri_v[2] - oe0p0 - oe0p1;
+
+	// Initialize four vertices of adajcent tetrahedron.
 	// First essemble the two endpoints of the first bounding edge.
-	index_t tet_v[4] = {e0.ep0(), e0.ep1(), InvalidIndex, InvalidIndex};
-
+	index_t              tet_v[4] = {e0p0, e0p1, InvalidIndex, InvalidIndex};
 	// Get the incident tets of the first bounding edge
 	AuxVector64<index_t> edge_incident_tets;
 	tet_mesh.ET(tet_v[0], tet_v[1], edge_incident_tets);
 
-	// If the face just has one triangle
+	// ## If the face just has one triangle and is not splitted,
+	//    check if the face is already recovered.
 	if (face.triangles.size() == 1 && face.bounding_vertices.size() == 3 &&
 	    face.flat_vertices.empty())
 	{
@@ -433,13 +477,17 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 		for (index_t tet_idoff : edge_incident_tets)
 		{
 			if (tet_mesh.tetHasVertex(tet_idoff, opp_v))
-			{ // The tetrahedron contains the opposite vertex
-				return;
+			{         // The tetrahedron contains the opposite vertex
+				return; // The face is already recovered, exit.
 			}
 		}
 	}
 
+	// ## initialize data for further check
+
 	// initialize vertex orientation and increase count
+	// v_orient is initialized to UNCERTAIN and v_count is initialized to zero.
+	// so, remember to reset them before and after calling this function.
 	for (index_t vid : face.bounding_vertices)
 	{
 		v_orient[vid] = Sign::ZERO;
@@ -449,13 +497,89 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 	{
 		v_orient[vid] = Sign::ZERO;
 	}
-	// reindex bounding vertices
-	for (index_t i = 0; i < face.bounding_vertices.size(); i++)
+
+	// The vector to store intersected tetrahedra
+	AuxVector64<index_t> B;
+
+	// ## Find the intersected tetrahedra around flat vertices
+	if (!face.flat_vertices.empty())
 	{
-		index_t vid    = face.bounding_vertices[i];
-		v_reindex[vid] = i;
-		// WARN How to handle singular vertex on the boundary?
+		// find in VT
+		for (index_t vid : face.flat_vertices)
+		{
+			AuxVector64<index_t> tmp_B;
+			tet_mesh.VT(vid, tmp_B);
+			B.insert(B.end(), tmp_B.begin(), tmp_B.end());
+		}
+		// unique
+		B.erase(std::unique(B.begin(), B.end()), B.end());
 	}
+
+	// ## Find a tet `t0` in ET(e) intersecting the face interior.
+	if (!B.empty())               // if `B` is not empty.
+		edge_incident_tets.clear(); // skip finding.
+	for (index_t tet_idoff : edge_incident_tets)
+	{
+		// Get the edge opposite to `e0`
+		// (`e0` is stored in tet_v[0,1], the oppo edge is stored in tet_v[3,4])
+		tet_mesh.oppoTetEdge(tet_idoff, tet_v[0], tet_v[1], tet_v[2], tet_v[3]);
+
+		// Calculate the orientation of two endpoints of the opposite edge with
+		// respect to the plane defined by the PLC face.
+		//                        ========== plane ===========  query point
+		Sign ot2 = orient3dCached(tri_v[0], tri_v[1], tri_v[2], tet_v[2]);
+		Sign ot3 = orient3dCached(tri_v[0], tri_v[1], tri_v[2], tet_v[3]);
+
+		OMC_EXPENSIVE_ASSERT(ot2 != Sign::ZERO || ot3 != Sign::ZERO,
+		                     "Degenerate tetrahedron.");
+
+		// check if the opposite edge is totally above or below the plane
+		if (ot2 != Sign::ZERO && ot2 == ot3)
+			continue; // ==> no intersection, skip
+
+		if (ot2 == Sign::ZERO || ot3 == Sign::ZERO) // one endpoint is on the plane
+		{
+			index_t copl_vid = ot2 == Sign::ZERO ? tet_v[2] : tet_v[3];
+
+			if (v_count[copl_vid] == 0) // this point is not a bounding vertex,
+				continue;                 // so it is outside, skip it.
+
+			const GPoint &tri_p0 = gpnt(tri_v[0]), &tri_p1 = gpnt(tri_v[1]),
+			             &tri_p2 = gpnt(tri_v[2]), &copl_p = gpnt(copl_vid);
+
+			int n_max = MaxCompInTriNormal()(
+			  AsEP()(tri_p0).data(), AsEP()(tri_p1).data(), AsEP()(tri_p2).data());
+			Sign tri_ori  = OrientOn2D()(tri_p0, tri_p1, tri_p2, n_max);
+			Sign copl_ori = OrientOn2D()(tri_p0, tri_p1, copl_p, n_max);
+			OMC_EXPENSIVE_ASSERT(tri_ori != Sign::ZERO && copl_ori != Sign::ZERO,
+			                     "Degenerate triangle.");
+
+			if (tri_ori == copl_ori) // coplanar point is inside the face
+			{
+				B.push_back(tet_idoff); // find an intersected tetrahedron
+				break;                  // exit loop
+			}
+		}
+		if (ot2 != ot3 && segCrossesFace(tet_v[2], tet_v[3], face))
+		{                         // the opposite edge crosses the face
+			B.push_back(tet_idoff); // find an intersected tetrahedron
+			break;                  // exit loop
+		}
+	}
+
+	// mark found tetrahedra as visited
+	for (index_t tet_idoff : B)
+		tet_mesh.mark(tet_idoff, TetMesh::TET_MARK::VISITED);
+
+	// =========================================================================
+	// # Find all the intersected tetrahedra by expanding
+	//   from the found tetrahedra.
+	// ## pre-condition: part intersected tetrahedra are found
+	// ## post-condition: all intersected tetrahedra are found
+
+	// TODO
+
+	tets.assign(B.begin(), B.end()); // kill warning, remove later.
 }
 
 /**
@@ -475,6 +599,58 @@ index_t ConstraintsRecover<Traits>::newVtx(GPoint *new_pnt)
 	tet_mesh.newVtx(new_vid);
 
 	return new_vid;
+}
+
+/**
+ * @brief Compute orient3d for four vertices and cache the result.
+ * Use a cached value if available to avoid redundant calculations.
+ * @param v_0_1_2 the first three vertices define a plane
+ * @param v3 the fourth query vertex
+ * @return The orientation of v3 with respect to the plane defined by v_0_1_2.
+ */
+template <typename Traits>
+Sign ConstraintsRecover<Traits>::orient3dCached(index_t v0, index_t v1,
+                                                index_t v2, index_t v3)
+{
+	if (v_orient[v3] != Sign::UNCERTAIN)
+		return v_orient[v3];
+	v_orient[v3] = Orient3D()(gpnt(v0), gpnt(v1), gpnt(v2), gpnt(v3));
+	v_cached_orient.push_back(v3);
+	return v_orient[v3];
+}
+
+/**
+ * @brief Clears the cached orientation data.
+ */
+template <typename Traits>
+void ConstraintsRecover<Traits>::clearCachedOrient3d()
+{
+	for (index_t vid : v_cached_orient)
+		v_orient[vid] = Sign::UNCERTAIN;
+	v_cached_orient.clear();
+}
+
+/**
+ * @brief Checks if a segment crosses any triangle within a given PLC face.
+ *
+ * @param s0 The index of the first point of the segment.
+ * @param s1 The index of the second point of the segment.
+ * @param face The face containing the triangles to check for intersection.
+ * @return True if the segment crosses any triangle in the face.
+ */
+template <typename Traits>
+bool ConstraintsRecover<Traits>::segCrossesFace(
+  index_t s0, index_t s1, const typename PLC::PLCFace &face) const
+{
+	const GPoint &p0 = gpnt(s0), &p1 = gpnt(s1);
+	for (index_t tid : face.triangles)
+	{
+		if (Triangle3_Segment3_DoIntersect().cross(
+		      gpnt(plc.triVtx(tid, 0)), gpnt(plc.triVtx(tid, 1)),
+		      gpnt(plc.triVtx(tid, 2)), p0, p1))
+			return true;
+	}
+	return false;
 }
 
 } // namespace OMC

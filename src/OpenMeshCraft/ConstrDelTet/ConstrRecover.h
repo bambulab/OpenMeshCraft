@@ -30,9 +30,22 @@ public: /* Traits **********************************************************/
 	using AsEP = typename Traits::AsEP;
 	using ToEP = typename Traits::ToEP;
 
-	using Orient3D          = typename Traits::Orient3D;
-	using CollinearPoints3D = typename Traits::CollinearPoints3D;
-	using InSphere          = typename Traits::InSphere;
+	using Orient3D           = typename Traits::Orient3D;
+	using OrientOn2D         = typename Traits::OrientOn2D;
+	using CollinearPoints3D  = typename Traits::CollinearPoints3D;
+	using InSphere           = typename Traits::InSphere;
+	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
+
+	// clang-format off
+	using Segment3_Point3_DoIntersect        = typename Traits::Segment3_Point3_DoIntersect;
+	using Segment3_Segment3_DoIntersect      = typename Traits::Segment3_Segment3_DoIntersect;
+	using Triangle3_Point3_DoIntersect       = typename Traits::Triangle3_Point3_DoIntersect;
+	using Triangle3_Segment3_DoIntersect     = typename Traits::Triangle3_Segment3_DoIntersect;
+	using Triangle3_Triangle3_DoIntersect    = typename Traits::Triangle3_Triangle3_DoIntersect;
+	using Tetrahedron3_Point3_DoIntersect    = typename Traits::Tetrahedron3_Point3_DoIntersect;
+	using Tetrahedron3_Segment3_DoIntersect  = typename Traits::Tetrahedron3_Segment3_DoIntersect;
+	using Tetrahedron3_Triangle3_DoIntersect = typename Traits::Tetrahedron3_Triangle3_DoIntersect;
+	// clang-format on
 
 	using TetMesh = TetrahedralMesh<Traits>;
 	using PLC     = PiecewiseLinearComplex<Traits>;
@@ -80,6 +93,12 @@ public: /* Algorithms ******************************************************/
 
 	index_t newVtx(GPoint *new_pnt);
 
+	Sign orient3dCached(index_t v0, index_t v1, index_t v2, index_t v3);
+	void clearCachedOrient3d();
+
+	bool segCrossesFace(index_t s0, index_t s1,
+	                    const typename PLC::PLCFace &face) const;
+
 public: /* Data ************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
 	std::vector<GPoint *> &verts;
@@ -90,12 +109,19 @@ public: /* Data ************************************************************/
 
 	/* Auxiliary data defined between tetrahedral mesh and PLC */
 
-	/// Vertex orientation with respect to one PLC face
-	std::vector<Sign>     v_orient;
-	/// Vertex count
+	/// Vertex orientation with respect to one PLC face.
+	std::vector<Sign>    v_orient;
+	/// Vertex indices of the cached orientation.
+	/// Record them to clear the cache after the recovery of a PLC face.
+	std::vector<index_t> v_cached_orient;
+
+	/// Vertex count.
+	/// During the recovery of a PLC face, the count of each vertex is incremented
+	/// by one each time it appears on the boundary.
+	/// - A flat vertex's count is zero.
+	/// - A bounding vertex's count is at least one.
+	/// - A singular bounding vertex's count is more than one.
 	std::vector<uint32_t> v_count;
-	/// Vertex reindex
-	std::vector<index_t>  v_reindex;
 };
 
 } // namespace OMC

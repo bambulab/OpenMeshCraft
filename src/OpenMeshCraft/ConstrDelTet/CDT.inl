@@ -59,11 +59,14 @@ public:
 
 	// clang-format off
 	using DoIntersect = typename K::DoIntersect;
-	using Segment3_Point3_DoIntersect     = typename K::Segment3_Point3_DoIntersect;
-	using Segment3_Segment3_DoIntersect   = typename K::Segment3_Segment3_DoIntersect;
-	using Triangle3_Point3_DoIntersect    = typename K::Triangle3_Point3_DoIntersect;
-	using Triangle3_Segment3_DoIntersect  = typename K::Triangle3_Segment3_DoIntersect;
-	using Triangle3_Triangle3_DoIntersect = typename K::Triangle3_Triangle3_DoIntersect;
+	using Segment3_Point3_DoIntersect        = typename K::Segment3_Point3_DoIntersect;
+	using Segment3_Segment3_DoIntersect      = typename K::Segment3_Segment3_DoIntersect;
+	using Triangle3_Point3_DoIntersect       = typename K::Triangle3_Point3_DoIntersect;
+	using Triangle3_Segment3_DoIntersect     = typename K::Triangle3_Segment3_DoIntersect;
+	using Triangle3_Triangle3_DoIntersect    = typename K::Triangle3_Triangle3_DoIntersect;
+	using Tetrahedron3_Point3_DoIntersect    = typename K::Tetrahedron3_Point3_DoIntersect;
+	using Tetrahedron3_Segment3_DoIntersect  = typename K::Tetrahedron3_Segment3_DoIntersect;
+	using Tetrahedron3_Triangle3_DoIntersect = typename K::Tetrahedron3_Triangle3_DoIntersect;
 	// clang-format on
 };
 
