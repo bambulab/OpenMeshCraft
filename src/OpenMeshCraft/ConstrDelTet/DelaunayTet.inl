@@ -201,7 +201,7 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 			index_t neigh_idoff = mesh.tetNeigh(cavity_tets[i] + j);
 			if (mesh.isTetUnmarked(neigh_idoff))
 			{
-				// if the neighbor has not been visited...
+				// if the neighbor has not been touched...
 				if (mesh.vertexInTetSphere(neigh_idoff, vid))
 				{
 					// if the vertex is inside the circumsphere of the neighbor,
@@ -213,20 +213,20 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 				{
 					// if the vertex is outside the circumsphere of the neighbor,
 					// the shared face is the boundary of the cavity, so we record it.
-					mesh.mark(neigh_idoff, TetMesh::TET_MARK::VISITED);
+					mesh.mark(neigh_idoff, TetMesh::TET_MARK::TOUCHED);
 					cavity_corners.push_back(neigh_idoff);
 				}
 			}
-			else if (mesh.isTetMarked(neigh_idoff, TetMesh::TET_MARK::VISITED))
+			else if (mesh.isMarked(neigh_idoff, TetMesh::TET_MARK::TOUCHED))
 			{
-				// the neighbor has been visited but is not deleted (i.e. its
+				// the neighbor has been touched but is not deleted (i.e. its
 				// circumsphere does not contain the vertex), thus the shared face is
 				// the boundary of the cavity, so we record the node opposite to the
 				// shared face (neigh_idoff) as a cavity corner.
 				cavity_corners.push_back(neigh_idoff);
 			}
 #ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-			else if (mesh.isTetMarked(neigh_idoff, TetMesh::TET_MARK::TO_DELETE))
+			else if (mesh.isMarked(neigh_idoff, TetMesh::TET_MARK::TO_DELETE))
 			{
 				OMC_ASSERT(std::find(cavity_tets.begin(), cavity_tets.end(),
 				                     mesh.clipId(neigh_idoff)) != cavity_tets.end(),
@@ -254,7 +254,7 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 	// Create a new tet for each cavity corner.
 	for (index_t corner : cavity_corners)
 	{
-		mesh.unmark(corner, TetMesh::TET_MARK::VISITED);
+		mesh.unmark(corner, TetMesh::TET_MARK::TOUCHED);
 
 		// get the idoff of the new tet
 		index_t new_idoff = new_tets.back();
@@ -368,7 +368,7 @@ void DelaunayTet<Traits>::markInfiniteTetsDeleted()
 	for (index_t id = 0; id < n; id++)
 	{
 		index_t idoff = id << 2;
-		if (mesh.isTetMarked(idoff, TetMesh::TET_MARK::TO_DELETE))
+		if (mesh.isMarked(idoff, TetMesh::TET_MARK::TO_DELETE))
 			continue;
 		if (!mesh.isFiniteTet(idoff))
 		{

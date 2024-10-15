@@ -110,10 +110,9 @@ bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1) const
 			if (tetNode(curr_idoff + j) == vid0) // skip the current corner
 				continue;
 			// visit neighbors at other corners
-			index_t neigh_idoff = tetNeigh(curr_idoff + j);
+			index_t neigh_idoff = clipId(tetNeigh(curr_idoff + j));
 			// skip infinite tetrahedra and visited tetrahedra
-			if (isFiniteTet(neigh_idoff) &&
-			    !isTetMarked(neigh_idoff, TET_MARK::VISITED))
+			if (isFiniteTet(neigh_idoff) && !isMarked(neigh_idoff, TET_MARK::VISITED))
 			{
 				adjacent_tets.push_back(clipId(neigh_idoff));
 				mark(neigh_idoff, TET_MARK::VISITED);
@@ -154,10 +153,9 @@ void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets) const
 			if (tetNode(curr_idoff + j) == vid)
 				continue;
 			// visit neighbors at other corners
-			index_t neigh_idoff = tetNeigh(curr_idoff + j);
+			index_t neigh_idoff = clipId(tetNeigh(curr_idoff + j));
 			// skip infinite tetrahedra and visited tetrahedra
-			if (isFiniteTet(neigh_idoff) &&
-			    !isTetMarked(neigh_idoff, TET_MARK::VISITED))
+			if (isFiniteTet(neigh_idoff) && !isMarked(neigh_idoff, TET_MARK::VISITED))
 			{
 				tets.push_back(neigh_idoff);
 				mark(neigh_idoff, TET_MARK::VISITED);
@@ -199,13 +197,15 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
 			if (curr_vid == vid)
 				continue;
 			// add the corner vertex into `verts`
-			mark(curr_vid, VTX_MARK::VISITED);
-			verts.push_back(curr_vid);
+			if (!isMarked(curr_vid, VTX_MARK::VISITED))
+			{
+				mark(curr_vid, VTX_MARK::VISITED);
+				verts.push_back(curr_vid);
+			}
 			// visit neighbors at other corners
-			index_t neigh_idoff = tetNeigh(curr_idoff + j);
+			index_t neigh_idoff = clipId(tetNeigh(curr_idoff + j));
 			// skip infinite tetrahedra and visited tetrahedra
-			if (isFiniteTet(neigh_idoff) &&
-			    !isTetMarked(neigh_idoff, TET_MARK::VISITED))
+			if (isFiniteTet(neigh_idoff) && !isMarked(neigh_idoff, TET_MARK::VISITED))
 			{
 				tets.push_back(neigh_idoff);
 				mark(neigh_idoff, TET_MARK::VISITED);
@@ -286,7 +286,7 @@ index_t TetrahedralMesh<Traits>::newTet()
 	}
 	else
 	{
-		OMC_EXPENSIVE_ASSERT(isTetMarked(tet_deleted.back(), TET_MARK::TO_DELETE),
+		OMC_EXPENSIVE_ASSERT(isMarked(tet_deleted.back(), TET_MARK::TO_DELETE),
 		                     "The tet is not marked to be deleted.");
 		new_tet_idoff = tet_deleted.back();
 		tet_deleted.pop_back();
@@ -379,7 +379,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 
 	// Locate the last tetrahedron that has not been marked for deletion.
 	index_t last = tet_node.size() - 4;
-	while (isTetMarked(last, TET_MARK::TO_DELETE) && last > 0)
+	while (isMarked(last, TET_MARK::TO_DELETE) && last > 0)
 		last -= 4;
 
 	if (last == 0)
@@ -394,7 +394,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 	{
 		// Check if the current tetrahedron is before the last and is marked for
 		// deletion.
-		if (t < last && isTetMarked(t, TET_MARK::TO_DELETE))
+		if (t < last && isMarked(t, TET_MARK::TO_DELETE))
 		{
 			// Update the nodes associated with the tetrahedron.
 			for (int i = 0; i < 4; i++)
@@ -417,7 +417,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 			tet_mark[getId(t)] = tet_mark[getId(last)];
 			// Move to the next "last un-deleted" tetrahedron.
 			last -= 4;
-			while (isTetMarked(last, TET_MARK::TO_DELETE) && last > 0)
+			while (isMarked(last, TET_MARK::TO_DELETE) && last > 0)
 				last -= 4;
 		}
 	}

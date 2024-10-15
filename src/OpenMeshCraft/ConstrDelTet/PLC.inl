@@ -711,4 +711,20 @@ auto PiecewiseLinearComplex<Traits>::boundingEdge(
 	OMC_ASSERT(false, "Invalid index to the bounding edge.");
 }
 
+template <typename Traits>
+template <typename IndexPairSet>
+void PiecewiseLinearComplex<Traits>::buildBoundingVtxAdjSet(
+  const PLCFace &f, IndexPairSet &adj_vtx) const
+{
+	for (const BoundingEdge &be : f.bounding_edges)
+	{
+		const SubEdgeRange &range = be.range;
+		for (index_t i = range.start; i < range.start + range.size; i++)
+		{
+			const PLCEdge &sub_e = edge(sub_edges[i]);
+			adj_vtx.insert(unique_pair(sub_e.ep0(), sub_e.ep1()));
+		}
+	}
+}
+
 } // namespace OMC

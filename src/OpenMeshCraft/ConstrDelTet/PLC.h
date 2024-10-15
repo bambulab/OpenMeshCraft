@@ -191,6 +191,9 @@ public: /* Interfaces ******************************************************/
 	                            index_t *tid      = nullptr,
 	                            bool    *reversed = nullptr) const;
 
+	template <typename IndexPairSet>
+	void buildBoundingVtxAdjSet(const PLCFace &f, IndexPairSet &adj_vtx) const;
+
 public: /* Data ************************************************************/
 	/// The input vertices.
 	const std::vector<GPoint *> &vertices;

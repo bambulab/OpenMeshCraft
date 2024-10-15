@@ -82,9 +82,17 @@ public: /* Algorithms ******************************************************/
 	/* sub-algorithms for face recovery */
 
 	bool tetIntersectsFace(index_t                      tet_idoff,
-	                       const typename PLC::PLCFace &face) const;
+	                       const typename PLC::PLCFace &face);
 
 	void getTetsIntersectingFace(index_t fid, std::vector<index_t> &tets);
+
+	Sign orient3dCached(index_t v0, index_t v1, index_t v2, index_t v3);
+
+	bool segCrossesFace(index_t s0, index_t s1,
+	                    const typename PLC::PLCFace &face) const;
+
+	bool isVtxBounding(index_t vid) const { return v_count[vid] > 0; }
+	bool isVtxSingular(index_t vid) const { return v_count[vid] > 1; }
 
 	/* Geometric & Topologic Operations on both TetMesh & PLC */
 
@@ -92,12 +100,6 @@ public: /* Algorithms ******************************************************/
 	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
 
 	index_t newVtx(GPoint *new_pnt);
-
-	Sign orient3dCached(index_t v0, index_t v1, index_t v2, index_t v3);
-	void clearCachedOrient3d();
-
-	bool segCrossesFace(index_t s0, index_t s1,
-	                    const typename PLC::PLCFace &face) const;
 
 public: /* Data ************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)

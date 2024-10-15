@@ -31,21 +31,23 @@ public:
 	/// Infinite vertex index
 	const static index_t INFINITE_VERTEX = InvalidIndex;
 
+	/// Marks for each vertex
 	enum class VTX_MARK : uint32_t
 	{
-		NO_MARK    = 0,
-		VISITED    = 1,
-		TO_DELETE  = 2,
-		ENCROACHED = 4,
-		TOUCHED    = 8,
+		NO_MARK    = 0, ///< No mark
+		TO_DELETE  = 1, ///< Marked for deletion
+		VISITED    = 2, ///< Marked as visited (internal use only)
+		TOUCHED    = 4, ///< Marked as touched (interface use)
+		ENCROACHED = 8, ///< Marked as encroached
 	};
 
-	/// Mark for each tetrahedron
+	/// Marks for each tetrahedron
 	enum class TET_MARK : uint32_t
 	{
-		NO_MARK   = 0,
-		VISITED   = 1,
-		TO_DELETE = 2,
+		NO_MARK   = 0, ///< No mark
+		TO_DELETE = 1, ///< Marked for deletion
+		VISITED   = 2, ///< Marked as visited (internal use only)
+		TOUCHED   = 4, ///< Marked as touched (interface use)
 	};
 
 public:
@@ -141,23 +143,23 @@ public:
 	void mark(index_t idoff, TET_MARK bit) const { tet_mark[getId(idoff)] |= (uint32_t)bit; }
 	/// unmark the tetrahedron with the given bit
 	void unmark(index_t idoff, TET_MARK bit) const { tet_mark[getId(idoff)] &= ~((uint32_t)bit); }
+	/// check if the tetrahedron is marked with the given bit
+	bool isMarked(index_t idoff, TET_MARK bit) const { return tet_mark[getId(idoff)] & ((uint32_t)bit); }
 	/// clear all marks of the tetrahedron
 	void clearTetMark(index_t idoff) const { tet_mark[getId(idoff)] = (uint32_t)TET_MARK::NO_MARK; }
 	/// check if the tetrahedron has no mark
 	bool isTetUnmarked(index_t idoff) const { return tet_mark[getId(idoff)] == (uint32_t)TET_MARK::NO_MARK; }
-	/// check if the tetrahedron is marked with the given bit
-	bool isTetMarked(index_t idoff, TET_MARK bit) const { return tet_mark[getId(idoff)] & ((uint32_t)bit); }
 
 	/// mark the vertex with the given bit
 	void mark(index_t vid, VTX_MARK bit) const { vtx_mark[vid] |= (uint32_t)bit; }
 	/// unmark the vertex with the given bit
 	void unmark(index_t vid, VTX_MARK bit) const { vtx_mark[vid] &= ~((uint32_t)bit); }
+	/// check if the vertex is marked with the given bit
+	bool isMarked(index_t vid, VTX_MARK bit) const { return vtx_mark[vid] & ((uint32_t)bit); }
 	/// clear all marks of the vertex
 	void clearVtxMark(index_t vid) const { vtx_mark[vid] = (uint32_t)VTX_MARK::NO_MARK; }
 	/// check if the vertex has no mark
 	bool isVtxUnmarked(index_t vid) const { return vtx_mark[vid] == (uint32_t)VTX_MARK::NO_MARK; }
-	/// check if the vertex is marked with the given bit
-	bool isVtxMarked(index_t vid, VTX_MARK bit) const { return vtx_mark[vid] & ((uint32_t)bit); }
 
 	// clang-format on
 
