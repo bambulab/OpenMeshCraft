@@ -135,6 +135,9 @@ public:
 	template <typename ContainerT>
 	void ET(index_t vid0, index_t vid1, ContainerT &tets) const;
 
+	void faceVertices(index_t tet_idoff, index_t &vid0, index_t &vid1,
+	                  index_t &vid2) const;
+
 	/* Operations about marks */
 
 	// clang-format off

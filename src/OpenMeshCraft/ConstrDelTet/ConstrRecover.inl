@@ -39,7 +39,7 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 
 	// clear the `TOUCHED` mark for all vertices
 	for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
-		tet_mesh.unmark(vid, TetMesh::VTX_MARK::TOUCHED);
+		tet_mesh.unmark(vid, VTX_MARK::TOUCHED);
 
 	// Main loop: split missing segments to recover them.
 	while (!missing_segments.empty())
@@ -50,7 +50,7 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 			// Get the constrained segment to split
 			index_t eid = missing_segments.back();
 			missing_segments.pop_back();
-			const typename PLC::PLCEdge &e = plc.edge(eid);
+			const PLCEdge &e = plc.edge(eid);
 			// Check if the segment is still missing
 			if (tet_mesh.edgeExists(e.ep0(), e.ep1()))
 				continue;
@@ -63,15 +63,15 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 			local_vv.push_back(e.ep1());
 			tet_mesh.VV(new_vid, local_vv);
 			for (index_t vid : local_vv)
-				tet_mesh.mark(vid, TetMesh::VTX_MARK::TOUCHED);
+				tet_mesh.mark(vid, VTX_MARK::TOUCHED);
 		}
 		// Find new missing edges around touched vertices
 		for (index_t eid = 0; eid < plc.numEdges(); eid++)
 		{
 			const PLC::PLCEdge &e = plc.edge(eid);
 			if (!is_valid_idx(e.child_id) && e.type != PLC::PLCEdgeType::FLAT_EDGE &&
-			    tet_mesh.isMarked(e.ep0(), TetMesh::VTX_MARK::TOUCHED) &&
-			    tet_mesh.isMarked(e.ep1(), TetMesh::VTX_MARK::TOUCHED) &&
+			    tet_mesh.isMarked(e.ep0(), VTX_MARK::TOUCHED) &&
+			    tet_mesh.isMarked(e.ep1(), VTX_MARK::TOUCHED) &&
 			    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
 			{
 				missing_segments.push_back(eid);
@@ -79,7 +79,7 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 		}
 		// clear the `TOUCHED` mark for all vertices
 		for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
-			tet_mesh.unmark(vid, TetMesh::VTX_MARK::TOUCHED);
+			tet_mesh.unmark(vid, VTX_MARK::TOUCHED);
 	}
 
 	tet_mesh.removeDeletedTets();
@@ -92,7 +92,7 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 	index_t new_vid  = InvalidIndex;
 	index_t curr_tet = InvalidIndex;
 
-	typename PLC::PLCEdge &edge = plc.edge(eid);
+	PLCEdge &edge = plc.edge(eid);
 
 	if (edge.type == PLC::PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
@@ -149,17 +149,17 @@ template <typename Traits>
 void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
   index_t eid, index_t &ref_vid, index_t &ref_tid) const
 {
-	AuxVector64<index_t>         encroach_tets;
-	const typename PLC::PLCEdge &edge = plc.edge(eid);
+	AuxVector64<index_t> encroach_tets;
+	const PLCEdge       &edge = plc.edge(eid);
 
 	// find tetrahedra adjacent to the first endpoint `ep0`
 	tet_mesh.VT(edge.ep0(), encroach_tets);
 	// and mark the tetrahedra as touched
 	for (index_t tet_idoff : encroach_tets)
-		tet_mesh.mark(tet_idoff, TetMesh::TET_MARK::TOUCHED);
+		tet_mesh.mark(tet_idoff, TET_MARK::TOUCHED);
 
-	tet_mesh.mark(edge.ep0(), TetMesh::VTX_MARK::TOUCHED);
-	tet_mesh.mark(edge.ep1(), TetMesh::VTX_MARK::TOUCHED);
+	tet_mesh.mark(edge.ep0(), VTX_MARK::TOUCHED);
+	tet_mesh.mark(edge.ep1(), VTX_MARK::TOUCHED);
 
 	const GPoint &p0    = gpnt(edge.ep0());
 	const GPoint &p1    = gpnt(edge.ep1());
@@ -186,16 +186,16 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 		for (index_t j = 0; j < 4; j++)
 		{
 			index_t vid = tet_mesh.tetNode(tet_idoff + j);
-			if (tet_mesh.isMarked(vid, TetMesh::VTX_MARK::TOUCHED) ||
-			    tet_mesh.isMarked(vid, TetMesh::VTX_MARK::ENCROACHED))
+			if (tet_mesh.isMarked(vid, VTX_MARK::TOUCHED) ||
+			    tet_mesh.isMarked(vid, VTX_MARK::ENCROACHED))
 				continue;
-			tet_mesh.mark(vid, TetMesh::VTX_MARK::TOUCHED);
+			tet_mesh.mark(vid, VTX_MARK::TOUCHED);
 			const GPoint &curr_p = gpnt(vid);
 
 			// check if the vertex is encroaching
 			if (inSphere(p0, p1, curr_p))
 			{
-				tet_mesh.mark(vid, TetMesh::VTX_MARK::ENCROACHED);
+				tet_mesh.mark(vid, VTX_MARK::ENCROACHED);
 				// check if it is the reference encroaching point
 				if (ref_vid == InvalidIndex || largerCircle(p0, p1, *ref_p, gpnt(vid)))
 				{
@@ -208,10 +208,10 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 
 		// clang-format off
 		const int is_encroached[] = {
-			tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff), TetMesh::VTX_MARK::ENCROACHED),
-			tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 1), TetMesh::VTX_MARK::ENCROACHED),
-			tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 2), TetMesh::VTX_MARK::ENCROACHED),
-			tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 3), TetMesh::VTX_MARK::ENCROACHED),
+			tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff), VTX_MARK::ENCROACHED),
+			tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 1), VTX_MARK::ENCROACHED),
+			tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 2), VTX_MARK::ENCROACHED),
+			tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 3), VTX_MARK::ENCROACHED),
 		};
 		const int total_encroached = is_encroached[0] + is_encroached[1] + is_encroached[2] + is_encroached[3];
 		// clang-format on
@@ -232,29 +232,29 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 		{
 			index_t neigh_idoff = tet_mesh.tetNeigh(tet_idoff + j);
 
-			if (tet_mesh.isMarked(neigh_idoff, TetMesh::TET_MARK::TOUCHED) ||
+			if (tet_mesh.isMarked(neigh_idoff, TET_MARK::TOUCHED) ||
 			    tet_mesh.tetNode(neigh_idoff) == TetMesh::INFINITE_VERTEX)
 				continue;
 
 			if (total_encroached - is_encroached[j] > 0)
 			{
 				encroach_tets.push_back(tet_mesh.clipId(neigh_idoff));
-				tet_mesh.mark(neigh_idoff, TetMesh::TET_MARK::TOUCHED);
+				tet_mesh.mark(neigh_idoff, TET_MARK::TOUCHED);
 			}
 		}
 	}
 
 	// clear all marks
-	tet_mesh.unmark(edge.ep0(), TetMesh::VTX_MARK::TOUCHED);
-	tet_mesh.unmark(edge.ep1(), TetMesh::VTX_MARK::TOUCHED);
+	tet_mesh.unmark(edge.ep0(), VTX_MARK::TOUCHED);
+	tet_mesh.unmark(edge.ep1(), VTX_MARK::TOUCHED);
 	for (index_t idoff : encroach_tets)
 	{
-		tet_mesh.unmark(idoff, TetMesh::TET_MARK::TOUCHED);
+		tet_mesh.unmark(idoff, TET_MARK::TOUCHED);
 		for (index_t j = 0; j < 4; j++)
 		{
 			index_t vid = tet_mesh.tetNode(idoff + j);
-			tet_mesh.unmark(vid, TetMesh::VTX_MARK::TOUCHED);
-			tet_mesh.unmark(vid, TetMesh::VTX_MARK::ENCROACHED);
+			tet_mesh.unmark(vid, VTX_MARK::TOUCHED);
+			tet_mesh.unmark(vid, VTX_MARK::ENCROACHED);
 		}
 	}
 }
@@ -269,12 +269,11 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 template <typename Traits>
 auto ConstraintsRecover<Traits>::splitAtMiddle(index_t eid) const -> GPoint *
 {
-	const typename PLC::PLCEdge &edge = plc.edge(eid);
+	const PLCEdge &edge = plc.edge(eid);
 
 	// TODO get the middle point represented by LNC implicit point
-	auto getMidPoint = [](OMC_UNUSED const typename PLC::PLCEdge &e)
-	{ return nullptr; };
-	GPoint *new_pnt = getMidPoint(edge);
+	auto    getMidPoint = [](OMC_UNUSED const PLCEdge &e) { return nullptr; };
+	GPoint *new_pnt     = getMidPoint(edge);
 
 	return new_pnt;
 }
@@ -291,7 +290,7 @@ template <typename Traits>
 auto ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(
   index_t eid, index_t ref_vid) const -> GPoint *
 {
-	const typename PLC::PLCEdge &edge = plc.edge(eid);
+	const PLCEdge &edge = plc.edge(eid);
 
 	const GPoint &ep0_pnt = gpnt(edge.ep0());
 	const GPoint &ep1_pnt = gpnt(edge.ep1());
@@ -301,8 +300,7 @@ auto ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(
 	index_t acute_vid = InvalidIndex;
 
 	// TODO get the middle point represented by LNC implicit point
-	auto getMidPoint = [](OMC_UNUSED const typename PLC::PLCEdge &e)
-	{ return nullptr; };
+	auto getMidPoint = [](OMC_UNUSED const PLCEdge &e) { return nullptr; };
 
 	// TODO
 	// Check if the distance between `a` and `b` is less than half the distance
@@ -351,11 +349,10 @@ template <typename Traits>
 auto ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(
   index_t eid, index_t ref_vid) const -> GPoint *
 {
-	const typename PLC::PLCEdge &edge = plc.edge(eid);
+	const PLCEdge &edge = plc.edge(eid);
 
 	// TODO get the middle point represented by LNC implicit point
-	auto getMidPoint = [](OMC_UNUSED const typename PLC::PLCEdge &e)
-	{ return nullptr; };
+	auto getMidPoint = [](OMC_UNUSED const PLCEdge &e) { return nullptr; };
 
 	// TODO
 	// Similar to but not the same as the one in splitSegment_NoAcuteVertex.
@@ -397,7 +394,7 @@ void ConstraintsRecover<Traits>::faceRecovery()
 		v_orient.resize(verts.size(), Sign::UNCERTAIN);
 		v_count.resize(verts.size(), 0);
 		for (index_t tid = 0; tid < tet_mesh.sizeTets(); tid++)
-			tet_mesh.unmark(tid << 2, TetMesh::TET_MARK::TOUCHED);
+			tet_mesh.unmark(tid << 2, TET_MARK::TOUCHED);
 	}
 
 	// traverse all faces in the PLC to recover the missing faces
@@ -414,45 +411,41 @@ void ConstraintsRecover<Traits>::faceRecovery()
 
 			if (tets.empty())
 				continue; // this face is already recovered.
+
+			bool succeed = false, expanded = false;
+			recoverFace_cavityExpanding(i, tets, succeed, expanded);
+
+			// A recovered face may be destroyed by the recovery of another face
+			// when expansion is needed.
+			// OPT: Record relation between tet face and PLC face to detect destroyed
+			// faces more efficiently.
+			if (expanded)
+				need_recursion = true;
 		}
 	} while (need_recursion);
 }
 
 /**
- * @brief Check if a tetrahedron `tet_idoff` intersects a PLC face `face`.
+ * @brief Finds the tetrahedra intersecting a given PLC face.
+ *
+ * This function identifies the tetrahedra that intersect with a specified PLC
+ * face. It assumes that all PLC segments have already been recovered.
+ *
+ * @param fid The index of the PLC face to check for intersections.
+ * @param tets A vector to store the indices of the intersecting tetrahedra.
+ *
+ * @pre All PLC segments are recovered.
+ * @post The vector `tets` contains the indices of the tetrahedra intersecting
+ * the PLC face.
+ *
+ * @details
+ * The function performs the following main steps:
+ * 1. Finds part of tetrahedra intersecting the face around flat vertices or
+ * around a bounding edge.
+ * 2. Expands the search to find all intersected tetrahedra by traversing
+ * neighbors.
+ * 3. Checks if found tetrahedra penetrate the face and outputs the results.
  */
-template <typename Traits>
-bool ConstraintsRecover<Traits>::tetIntersectsFace(
-  index_t tet_idoff, const typename PLC::PLCFace &face)
-{
-	if (!tet_mesh.isFiniteTet(tet_idoff))
-		return false;
-
-	index_t tid = face.triangles[0];
-	index_t t0 = plc.triVtx(tid, 0), t1 = plc.triVtx(tid, 1),
-	        t2 = plc.triVtx(tid, 2);
-
-	for (int i = 0; i < 4; i++)
-		for (int j = i + 1; j < 4; j++)
-		{
-			index_t ei = tet_mesh.tetNode(tet_idoff + i);
-			index_t ej = tet_mesh.tetNode(tet_idoff + j);
-			if (isVtxBounding(ei) || isVtxBounding(ej))
-				continue; // the edge is coplanar
-
-			Sign oei = orient3dCached(t0, t1, t2, ei);
-			Sign oej = orient3dCached(t0, t1, t2, ej);
-			if (oei >= Sign::ZERO && oej >= Sign::ZERO ||
-			    oei <= Sign::ZERO && oej <= Sign::ZERO)
-				continue; // the inner edge does not crosses the face
-
-			if (segCrossesFace(ei, ej, face))
-				return true; // the inner edge crosses one of the triangles
-		}
-
-	return false;
-}
-
 template <typename Traits>
 void ConstraintsRecover<Traits>::getTetsIntersectingFace(
   index_t fid, std::vector<index_t> &tets)
@@ -462,20 +455,18 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 	// ## pre-condition: all PLC segments are recovered.
 	// ## post-condition: find the tetrahedra intersecting the PLC face (not all).
 
-	// TODO how to check the face is already recovered?
-
 	// ## Get and initialize data.
 
 	// Get the PLC face
-	const typename PLC::PLCFace &face = plc.face(fid);
+	const PLCFace &face = plc.face(fid);
 
 	// Get the first bounding edge `e0` of the face
 	// - `tri0` is the incident input triangle of `e0`.
 	// - `rev0` is the orientation of `e0`.
 	// - `orig_e0` is the original edge of `e0` and an edge of `tri0`
-	index_t                      tri0    = InvalidIndex;
-	const typename PLC::PLCEdge &e0      = plc.boundingEdge(face, 0, &tri0);
-	const typename PLC::PLCEdge &orig_e0 = plc.edge(e0.ancestor_id);
+	index_t        tri0    = InvalidIndex;
+	const PLCEdge &e0      = plc.boundingEdge(face, 0, &tri0);
+	const PLCEdge &orig_e0 = plc.edge(e0.ancestor_id);
 
 	// Get the endpoints of `e0` and `orig_e0`
 	index_t e0p0 = e0.ep0(), e0p1 = e0.ep1();
@@ -605,7 +596,7 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 
 	// mark found tetrahedra as touched
 	for (index_t tet_idoff : B)
-		tet_mesh.mark(tet_idoff, TetMesh::TET_MARK::TOUCHED);
+		tet_mesh.mark(tet_idoff, TET_MARK::TOUCHED);
 
 	OMC_EXPENSIVE_ASSERT(!B.empty(), "No intersected tetrahedra found.");
 
@@ -618,7 +609,7 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 	auto collectTet = [this, &B](index_t tet_idoff)
 	{
 		B.push_back(tet_idoff);
-		tet_mesh.mark(tet_idoff, TetMesh::TET_MARK::TOUCHED);
+		tet_mesh.mark(tet_idoff, TET_MARK::TOUCHED);
 	};
 
 	phmap::flat_hash_set<IPair, hash<IPair>> vtx_adj_set;
@@ -637,7 +628,7 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 			index_t nb_idoff = tet_mesh.clipId(tet_mesh.tetNeigh(tet_idoff + j));
 			// If the neighbor is not finite or touched, skip
 			if (!tet_mesh.isFiniteTet(nb_idoff) ||
-			    tet_mesh.isMarked(nb_idoff, TetMesh::TET_MARK::TOUCHED))
+			    tet_mesh.isMarked(nb_idoff, TET_MARK::TOUCHED))
 				continue;
 			// The vertices of the common triangle between two tets.
 			index_t cv[3]  = {tet_mesh.tetNode(tet_idoff + ((j + 1) & 3)),
@@ -709,7 +700,7 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 	// Check if found tetrahedra penetrate the face and output
 	for (index_t tet_idoff : B)
 	{
-		tet_mesh.unmark(tet_idoff, TetMesh::TET_MARK::TOUCHED);
+		tet_mesh.unmark(tet_idoff, TET_MARK::TOUCHED);
 		index_t v[4] = {
 		  tet_mesh.tetNode(tet_idoff + 0), tet_mesh.tetNode(tet_idoff + 1),
 		  tet_mesh.tetNode(tet_idoff + 2), tet_mesh.tetNode(tet_idoff + 3)};
@@ -743,6 +734,173 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 		v_orient[vid] = Sign::UNCERTAIN;
 }
 
+template <typename Traits>
+void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
+  index_t fid, const std::vector<index_t> &tets, bool &succeed, bool &expanded)
+{
+	// Get the PLC face
+	const PLCFace &face = plc.face(fid);
+
+	{ // Initialize vertex orientation and count
+		index_t tid = face.triangles[0];
+		index_t tv0 = plc.triVtx(tid, 0), tv1 = plc.triVtx(tid, 1),
+		        tv2 = plc.triVtx(tid, 2);
+
+		for (index_t vid : face.bounding_vertices)
+		{
+			v_orient[vid] = Sign::ZERO;
+			v_count[vid]  = 0;
+		}
+		for (index_t vid : face.flat_vertices)
+		{
+			v_orient[vid] = Sign::ZERO;
+			v_count[vid]  = 0;
+		}
+
+		for (index_t tet_idoff : tets)
+		{
+			for (index_t j = 0; j < 4; j++)
+			{
+				index_t vid  = tet_mesh.tetNode(tet_idoff + j);
+				v_count[vid] = 0;
+				orient3dCached(tv0, tv1, tv2, vid);
+			}
+		}
+	}
+	expanded = false;
+
+	// =========================================================================
+	// # Divide cavity into top and bottom half cavity
+	// ## pre-condition: all tetrahedra intersecting the PLC face are found.
+	// ## post-condition: cavity vertices and boundary faces are divided.
+
+	// touch all tetrahedra in `tets` for dividing cavity
+	for (index_t tet_idoff : tets)
+		tet_mesh.mark(tet_idoff, TET_MARK::TOUCHED);
+
+	// divide cavity into top and bottom half cavity.
+	AuxVector64<index_t> top_faces, bottom_faces;
+	AuxVector64<index_t> top_vertices, bottom_vertices;
+	for (index_t tet_idoff : tets)
+	{
+		// divide vertices into top and bottom cavity.
+		for (index_t j = 0; j < 4; j++)
+		{
+			index_t vid = tet_mesh.tetNode(tet_idoff + j);
+			if (v_count[vid]) // skip traversed vertices
+				continue;
+
+			v_count[vid] = 1;
+			Sign ov      = v_orient[vid];
+			OMC_EXPENSIVE_ASSERT(is_sign_reliable(ov), "uninitialized orientation.");
+			if (ov >= Sign::ZERO)
+				top_vertices.push_back(vid);
+			if (ov <= Sign::ZERO)
+				bottom_vertices.push_back(vid);
+		}
+		// divide boundary faces into top and bottom cavity.
+		for (index_t j = 0; j < 4; j++)
+		{
+			index_t neigh_idoff = tet_mesh.tetNeigh(tet_idoff + j);
+			if (tet_mesh.isMarked(neigh_idoff, TET_MARK::TOUCHED))
+				continue;
+			// Get the vertices of the common face, which is also the boundary face of
+			// the cavity.
+			index_t v0, v1, v2;
+			tet_mesh.faceVertices(neigh_idoff, v0, v1, v2);
+
+			bool top = v_orient[v0] >= Sign::ZERO && v_orient[v1] >= Sign::ZERO &&
+			           v_orient[v2] >= Sign::ZERO;
+			bool bottom = v_orient[v0] <= Sign::ZERO && v_orient[v1] <= Sign::ZERO &&
+			              v_orient[v2] <= Sign::ZERO;
+			OMC_EXPENSIVE_ASSERT(
+			  top || bottom, "Face belongs to neither top nor bottom half cavity.");
+			// check if the face belongs to the top or bottom half cavity.
+			if (top)
+				top_faces.push_back(neigh_idoff);
+			else
+				bottom_faces.push_back(neigh_idoff);
+		}
+	}
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	for (index_t vid : face.bounding_vertices)
+	{
+		OMC_ASSERT(v_count[vid], "missing bounding vertex in cavity");
+	}
+	for (index_t vid : face.flat_vertices)
+	{
+		OMC_ASSERT(v_count[vid], "missing flat vertex in cavity");
+	}
+#endif
+
+	std::sort(top_vertices.begin(), top_vertices.end());
+	std::sort(bottom_vertices.begin(), bottom_vertices.end());
+
+	// clear vertex count
+	for (index_t vid : top_vertices)
+		v_count[vid] = 0;
+	for (index_t vid : bottom_vertices)
+		v_count[vid] = 0;
+	// clear touched marks
+	for (index_t tet_idoff : tets)
+		tet_mesh.unmark(tet_idoff, TET_MARK::TOUCHED);
+	// v_orient is kept for further use.
+
+	// =========================================================================
+	// # Delaunay tetrahedralize the top and bottom half cavity.
+	//   The cavity may be expanded to recover missing cavity boundary faces.
+	// ## pre-condition: cavity is properly divided.
+	// ## post-condition: two half cavities are properly tetrahedralized.
+
+	{ // Clear cached vertex orientation
+		for (index_t vid : v_cached_orient)
+			v_orient[vid] = Sign::UNCERTAIN;
+		v_cached_orient.clear();
+		for (index_t vid : face.bounding_vertices)
+			v_orient[vid] = Sign::UNCERTAIN;
+		for (index_t vid : face.flat_vertices)
+			v_orient[vid] = Sign::UNCERTAIN;
+	}
+
+	succeed = true;
+}
+
+/**
+ * @brief Check if a tetrahedron `tet_idoff` intersects a PLC face `face`.
+ */
+template <typename Traits>
+bool ConstraintsRecover<Traits>::tetIntersectsFace(index_t        tet_idoff,
+                                                   const PLCFace &face)
+{
+	if (!tet_mesh.isFiniteTet(tet_idoff))
+		return false;
+
+	index_t tid = face.triangles[0];
+	index_t t0 = plc.triVtx(tid, 0), t1 = plc.triVtx(tid, 1),
+	        t2 = plc.triVtx(tid, 2);
+
+	for (int i = 0; i < 4; i++)
+		for (int j = i + 1; j < 4; j++)
+		{
+			index_t ei = tet_mesh.tetNode(tet_idoff + i);
+			index_t ej = tet_mesh.tetNode(tet_idoff + j);
+			if (isVtxBounding(ei) || isVtxBounding(ej))
+				continue; // the edge is coplanar
+
+			Sign oei = orient3dCached(t0, t1, t2, ei);
+			Sign oej = orient3dCached(t0, t1, t2, ej);
+			if (oei >= Sign::ZERO && oej >= Sign::ZERO ||
+			    oei <= Sign::ZERO && oej <= Sign::ZERO)
+				continue; // the inner edge does not crosses the face
+
+			if (segCrossesFace(ei, ej, face))
+				return true; // the inner edge crosses one of the triangles
+		}
+
+	return false;
+}
+
 /**
  * @brief Compute orient3d for four vertices and cache the result.
  * Use a cached value if available to avoid redundant calculations.
@@ -770,8 +928,8 @@ Sign ConstraintsRecover<Traits>::orient3dCached(index_t v0, index_t v1,
  * @note Assume that segment crosses the support plane of the PLC face.
  */
 template <typename Traits>
-bool ConstraintsRecover<Traits>::segCrossesFace(
-  index_t s0, index_t s1, const typename PLC::PLCFace &face) const
+bool ConstraintsRecover<Traits>::segCrossesFace(index_t s0, index_t s1,
+                                                const PLCFace &face) const
 {
 	const GPoint &p0 = gpnt(s0), &p1 = gpnt(s1);
 

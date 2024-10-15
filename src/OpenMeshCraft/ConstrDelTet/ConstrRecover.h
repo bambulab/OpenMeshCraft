@@ -47,8 +47,13 @@ public: /* Traits **********************************************************/
 	using Tetrahedron3_Triangle3_DoIntersect = typename Traits::Tetrahedron3_Triangle3_DoIntersect;
 	// clang-format on
 
-	using TetMesh = TetrahedralMesh<Traits>;
+	using TetMesh  = TetrahedralMesh<Traits>;
+	using TET_MARK = typename TetMesh::TET_MARK;
+	using VTX_MARK = typename TetMesh::VTX_MARK;
+
 	using PLC     = PiecewiseLinearComplex<Traits>;
+	using PLCEdge = typename PLC::PLCEdge;
+	using PLCFace = typename PLC::PLCFace;
 
 	using DelTet = DelaunayTet<Traits>;
 
@@ -81,15 +86,17 @@ public: /* Algorithms ******************************************************/
 
 	/* sub-algorithms for face recovery */
 
-	bool tetIntersectsFace(index_t                      tet_idoff,
-	                       const typename PLC::PLCFace &face);
-
 	void getTetsIntersectingFace(index_t fid, std::vector<index_t> &tets);
+
+	void recoverFace_cavityExpanding(index_t                     fid,
+	                                 const std::vector<index_t> &tets,
+	                                 bool &succeed, bool &expanded);
+
+	bool tetIntersectsFace(index_t tet_idoff, const PLCFace &face);
 
 	Sign orient3dCached(index_t v0, index_t v1, index_t v2, index_t v3);
 
-	bool segCrossesFace(index_t s0, index_t s1,
-	                    const typename PLC::PLCFace &face) const;
+	bool segCrossesFace(index_t s0, index_t s1, const PLCFace &face) const;
 
 	bool isVtxBounding(index_t vid) const { return v_count[vid] > 0; }
 	bool isVtxSingular(index_t vid) const { return v_count[vid] > 1; }

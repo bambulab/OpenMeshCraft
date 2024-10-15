@@ -247,6 +247,28 @@ void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1,
 	}
 }
 
+
+/**
+ * @brief Retrieves the vertex indices of a face of a tetrahedron.
+ *
+ * This function extracts the vertex indices of a specific face of a tetrahedron
+ * identified by the given tetrahedron ID offset.
+ *
+ * @param tet_idoff The tetrahedron ID offset.
+ * @param vid_0_1_2 Reference to store the vertex indices of the face.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::faceVertices(index_t tet_idoff, index_t &vid0,
+                                           index_t &vid1, index_t &vid2) const
+{
+	index_t        off  = clipOff(tet_idoff);
+	const index_t *node = &tetNode(clipId(tet_idoff));
+
+	vid0 = node[tetON1(off)];
+	vid1 = node[tetON2(off)];
+	vid2 = node[tetON3(off)];
+}
+
 /**
  * @brief Create a new vertex.
  *
