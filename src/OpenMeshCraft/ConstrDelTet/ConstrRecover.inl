@@ -96,7 +96,7 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 
 	if (edge.type == PLC::PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
-		curr_tet = tet_mesh.toIdOff(tet_mesh.incTet(edge.ep0()));
+		curr_tet = TetMesh::toIdOff(tet_mesh.incTet(edge.ep0()));
 		new_pnt  = splitAtMiddle(eid);
 	}
 	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
@@ -238,7 +238,7 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 
 			if (total_encroached - is_encroached[j] > 0)
 			{
-				encroach_tets.push_back(tet_mesh.clipId(neigh_idoff));
+				encroach_tets.push_back(TetMesh::clipId(neigh_idoff));
 				tet_mesh.mark(neigh_idoff, TET_MARK::TOUCHED);
 			}
 		}
@@ -391,10 +391,14 @@ void ConstraintsRecover<Traits>::faceRecovery()
 		v_orient.clear();
 		v_cached_orient.clear();
 		v_count.clear();
+		v_reindex.clear();
+
 		v_orient.resize(verts.size(), Sign::UNCERTAIN);
 		v_count.resize(verts.size(), 0);
+		v_reindex.resize(verts.size(), InvalidIndex);
+
 		for (index_t tid = 0; tid < tet_mesh.sizeTets(); tid++)
-			tet_mesh.unmark(tid << 2, TET_MARK::TOUCHED);
+			tet_mesh.unmark(TetMesh::toIdOff(tid), TET_MARK::TOUCHED);
 	}
 
 	// traverse all faces in the PLC to recover the missing faces
@@ -549,7 +553,7 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 	{
 		// Get the edge opposite to `e0`
 		// (`e0` is stored in tet_v[0,1], the oppo edge is stored in tet_v[3,4])
-		tet_mesh.oppoTetEdge(tet_idoff, tet_v[0], tet_v[1], tet_v[2], tet_v[3]);
+		tet_mesh.oppoEdge(tet_idoff, tet_v[0], tet_v[1], tet_v[2], tet_v[3]);
 
 		// Calculate the orientation of two endpoints of the opposite edge with
 		// respect to the plane defined by the PLC face.
@@ -625,7 +629,7 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 		// Traverse the four neighbors of the tetrahedron
 		for (index_t j = 0; j < 4; j++)
 		{
-			index_t nb_idoff = tet_mesh.clipId(tet_mesh.tetNeigh(tet_idoff + j));
+			index_t nb_idoff = TetMesh::clipId(tet_mesh.tetNeigh(tet_idoff + j));
 			// If the neighbor is not finite or touched, skip
 			if (!tet_mesh.isFiniteTet(nb_idoff) ||
 			    tet_mesh.isMarked(nb_idoff, TET_MARK::TOUCHED))
@@ -767,7 +771,6 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 			}
 		}
 	}
-	expanded = false;
 
 	// =========================================================================
 	// # Divide cavity into top and bottom half cavity
@@ -779,8 +782,19 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 		tet_mesh.mark(tet_idoff, TET_MARK::TOUCHED);
 
 	// divide cavity into top and bottom half cavity.
-	AuxVector64<index_t> top_faces, bottom_faces;
+
+	// indices of the vertices of the two half cavities.
+	// - vertices on the PLC face belong to both sides.
 	AuxVector64<index_t> top_vertices, bottom_vertices;
+
+	// boundary faces of the two half cavities.
+	// - each boundary face has a corresponding corner in an adjacent untouched
+	// tet.
+	//   (see explanation of `corner` in TetMesh::tet_node.(3))
+	// - store the indices of corners in below vectors.
+	// - faces on the PLC face are ignored.
+	AuxVector64<index_t> top_faces, bottom_faces;
+
 	for (index_t tet_idoff : tets)
 	{
 		// divide vertices into top and bottom cavity.
@@ -801,6 +815,7 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 		// divide boundary faces into top and bottom cavity.
 		for (index_t j = 0; j < 4; j++)
 		{
+			// the neighboring corner
 			index_t neigh_idoff = tet_mesh.tetNeigh(tet_idoff + j);
 			if (tet_mesh.isMarked(neigh_idoff, TET_MARK::TOUCHED))
 				continue;
@@ -814,7 +829,9 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 			bool bottom = v_orient[v0] <= Sign::ZERO && v_orient[v1] <= Sign::ZERO &&
 			              v_orient[v2] <= Sign::ZERO;
 			OMC_EXPENSIVE_ASSERT(
-			  top || bottom, "Face belongs to neither top nor bottom half cavity.");
+			  (top || bottom) && (!top || !bottom),
+			  "(1) Face belongs to neither top nor bottom half cavity."
+			  "(2) Face belongs to both top and bottom half cavity.");
 			// check if the face belongs to the top or bottom half cavity.
 			if (top)
 				top_faces.push_back(neigh_idoff);
@@ -834,8 +851,12 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 	}
 #endif
 
+	// Sort vertices and faces so that
+	// we can build a sequential map from global mesh to local meshed cavity.
 	std::sort(top_vertices.begin(), top_vertices.end());
 	std::sort(bottom_vertices.begin(), bottom_vertices.end());
+	std::sort(top_faces.begin(), top_faces.end());
+	std::sort(bottom_faces.begin(), bottom_faces.end());
 
 	// clear vertex count
 	for (index_t vid : top_vertices)
@@ -853,6 +874,99 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 	// ## pre-condition: cavity is properly divided.
 	// ## post-condition: two half cavities are properly tetrahedralized.
 
+	std::unique_ptr<TetMesh> top_mesh, bottom_mesh; // Delaunay tet mesh
+	std::vector<GPoint *>    top_vps, bottom_vps;   // vertex pointers
+	std::vector<index_t>     tets_to_remove;        // new tets after expanding
+
+	index_t missing_face = InvalidIndex;
+	index_t new_tet = InvalidIndex, new_vertex = InvalidIndex;
+
+	// cavity is ok when it does not cross the PLC plane.
+	bool cavity_ok = true;
+
+	// convert vertex indices to vertex pointers
+	top_vps.reserve(2 * top_vertices.size());
+	bottom_vps.reserve(2 * bottom_vertices.size());
+	for (index_t vid : top_vertices)
+		top_vps.push_back(&gpnt(vid));
+	for (index_t vid : bottom_vertices)
+		bottom_vps.push_back(&gpnt(vid));
+
+	// tetrahedralize the half cavity.
+	// if any cavity face is missing, expand the cavity to recover the missing
+	// face, until no missing face.
+	while (cavity_ok)
+	{ // fill the cavity by Delaunay tetrahedralization
+		top_mesh = std::make_unique<TetMesh>(top_vps);
+		DelTet top_dt(*top_mesh);
+		top_dt.tetrahedralize();
+		// check if any cavity face is missing
+		if (cavityHasMissingFace(*top_mesh, top_vertices, top_faces, missing_face))
+		{
+			// expand the cavity to recover the missing boundary face.
+			expandCavity(face, top_vertices, top_faces, missing_face, new_tet,
+			             new_vertex);
+			// mark the tetrahedron to remove
+			tets_to_remove.push_back(new_tet);
+			// add the vertex if it is not in the cavity
+			if (is_valid_idx(new_vertex) && v_orient[new_vertex] >= Sign::ZERO)
+				top_vps.push_back(&gpnt(new_vertex));
+			else if (is_valid_idx(new_vertex) && v_orient[new_vertex] < Sign::ZERO)
+				cavity_ok = false;
+			// mark the cavity is expanded
+			expanded = true;
+		}
+		else // no missing face found, tethraheralization is done.
+			break;
+	}
+
+	while (cavity_ok)
+	{ // fill the cavity by Delaunay tetrahedralization
+		bottom_mesh = std::make_unique<TetMesh>(bottom_vps);
+		DelTet bottom_dt(*bottom_mesh);
+		bottom_dt.tetrahedralize();
+		// check if any cavity face is missing
+		if (cavityHasMissingFace(*bottom_mesh, bottom_vertices, bottom_faces,
+		                         missing_face))
+		{
+			// expand the cavity to recover the missing boundary face.
+			expandCavity(face, bottom_vertices, bottom_faces, missing_face, new_tet,
+			             new_vertex);
+			// mark the tetrahedron to remove
+			tets_to_remove.push_back(new_tet);
+			// add the vertex if it is not in the cavity
+			if (is_valid_idx(new_vertex) && v_orient[new_vertex] <= Sign::ZERO)
+				bottom_vps.push_back(&gpnt(new_vertex));
+			else if (is_valid_idx(new_vertex) && v_orient[new_vertex] > Sign::ZERO)
+				cavity_ok = false;
+			// mark the cavity is expanded
+			expanded = true;
+		}
+		else // no missing face found, tethraheralization is done.
+			break;
+	}
+
+	if (cavity_ok)
+	{ // Really modify the global mesh.
+		// first, remove the tetrahedra of cavity
+		for (index_t idoff : tets) // original part of the cavity
+			tet_mesh.markTetAsDeleted(idoff);
+		for (index_t idoff : tets_to_remove) // expanded part of the cavity
+			tet_mesh.markTetAsDeleted(idoff);
+		tet_mesh.removeDeletedTets();
+
+		size_t n_top_faces = top_faces.size(), n_bottom_faces = bottom_faces.size();
+		// then, embed the tetrahedralization of the cavity to the global mesh
+		embedMeshedCavity(*top_mesh, top_vertices, top_faces, bottom_faces);
+		embedMeshedCavity(*bottom_mesh, bottom_vertices, bottom_faces, top_faces);
+
+		OMC_ASSERT(n_top_faces == top_faces.size(),
+		           "The number of top faces is not consistent.");
+		OMC_ASSERT(n_bottom_faces > bottom_faces.size(),
+		           "The number of bottom faces is not consistent.");
+	}
+	succeed = cavity_ok;
+
 	{ // Clear cached vertex orientation
 		for (index_t vid : v_cached_orient)
 			v_orient[vid] = Sign::UNCERTAIN;
@@ -862,8 +976,371 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 		for (index_t vid : face.flat_vertices)
 			v_orient[vid] = Sign::UNCERTAIN;
 	}
+}
 
-	succeed = true;
+/**
+ * @brief Checks if the cavity has any missing faces.
+ *
+ * This function determines if any face in the given list of faces is missing
+ * in the local mesh. It maps the global indices of vertices to local indices,
+ * traverses all faces to check for their existence in the local mesh, and
+ * identifies any missing face.
+ *
+ * @param local_mesh The local tetrahedral mesh to check against.
+ * @param vertices A vector of vertex indices in the global mesh.
+ * @param faces A vector of face indices in the global mesh.
+ * @param missing_face Output parameter that will hold the index of the missing
+ * face if any.
+ * @return True if there is a missing face, false otherwise.
+ * @note `v_reindex` is used, not thread safe.
+ */
+template <typename Traits>
+bool ConstraintsRecover<Traits>::cavityHasMissingFace(
+  const TetMesh &local_mesh, const AuxVector64<index_t> &vertices,
+  const AuxVector64<index_t> &faces, index_t &missing_face)
+{
+	missing_face = InvalidIndex;
+	// map global index in `tet_mesh` to local index in `local_mesh`
+	for (index_t i = 0; i < vertices.size(); i++)
+		v_reindex[vertices[i]] = i;
+
+	// traverse all faces to check if any one is missing
+	for (index_t idoff : faces)
+	{
+		// map global face to local face
+		index_t lv0, lv1, lv2;
+		tet_mesh.faceVertices(idoff, lv0, lv1, lv2);
+		lv0 = v_reindex[lv0], lv1 = v_reindex[lv1], lv2 = v_reindex[lv2];
+		// check if local face exists
+		if (!local_mesh.faceExists(lv0, lv1, lv2))
+		{
+			missing_face = idoff;
+			break;
+		}
+	}
+
+	// reset the map in `v_reindex`
+	for (index_t i = 0; i < vertices.size(); i++)
+		v_reindex[vertices[i]] = InvalidIndex;
+	return is_valid_idx(missing_face);
+}
+
+/**
+ * @brief Expand the cavity to recover the missing boundary face.
+ *
+ * The missing face is adjacent to two tetrahedra.
+ * One tetrahedron belongs to the cavity while the other does not.
+ * We expand the cavity by adding the new tetrahedron into the cavity.
+ *
+ * @param [in] plc_face The PLC face to recover.
+ * @param [in] vertices Vertices of the half cavity.
+ * @param [in] faces Boundary faces of the half cavity.
+ * @param [in] missing_face The missing boundary face when meshing the cavity.
+ * @param [out] new_tet The new tetrahedron of the cavity after expanding.
+ * @param [out] new_vertex The new vertex of the cavity after expanding.
+ */
+template <typename Traits>
+void ConstraintsRecover<Traits>::expandCavity(const PLCFace        &plc_face,
+                                              AuxVector64<index_t> &vertices,
+                                              AuxVector64<index_t> &faces,
+                                              index_t  missing_face,
+                                              index_t &new_tet,
+                                              index_t &new_vertex)
+{
+	OMC_EXPENSIVE_ASSERT(tet_mesh.isFiniteTet(missing_face),
+	                     "The missing face belongs to an infinite tet.");
+
+	// (1) Get the `new_tet`
+	// The new tetrahedron containing `missing_face` will be added to the cavity.
+	// `missing_face` corresponds to a corner in `new_tet`
+	new_tet = TetMesh::clipId(missing_face);
+
+	// (2) Remove `missing_face` from `faces`
+	auto faces_iter = std::lower_bound(faces.begin(), faces.end(), missing_face);
+	OMC_EXPENSIVE_ASSERT(faces_iter != faces.end() && *faces_iter == missing_face,
+	                     "The missing face is not in the boundary faces.");
+	faces.erase(faces_iter);
+
+	// (3) Add the `new_tet`.
+	// For each corner in `new_tet` except the one corresponding to (corr. to)
+	// `missing_face`, check if the face corr. to the corner needs to be
+	// expanded.
+	size_t added_corner_count = 0;
+	for (index_t i = 0; i < 4; i++)
+	{
+		index_t corner = new_tet + i;
+		if (corner == missing_face) // Skip the corner corr. to the missing face
+			continue;
+		// Check if the face corr. to this corner is already in the boundary faces
+		faces_iter = std::lower_bound(faces.begin(), faces.end(), corner);
+		if (faces_iter == faces.end() || *faces_iter == corner)
+		{ // If the corner is in the boundary faces, remove it due to expanding.
+			faces.erase(faces_iter);
+		}
+		else
+		{ // Otherwise, add the face corr. to this corner of the cavity.
+			// (we actually add the opposite corner.)
+			faces.insert(faces_iter, tet_mesh.tetNeigh(corner));
+			added_corner_count++;
+		}
+	}
+
+	// (4) A new vertex is possibly added to the cavity.
+	// If three corners are added, add their common vertex to the cavity. The
+	// common vertex is the opposite vertex to the missing face in the `new_tet`.
+	if (added_corner_count == 3)
+	{
+		new_vertex = tet_mesh.tetNode(missing_face);
+		auto vit   = std::lower_bound(vertices.begin(), vertices.end(), new_vertex);
+		if (vit == vertices.end() || *vit != new_vertex)
+		{
+			vertices.insert(vit, new_vertex);
+			// calculate the orientation of the new vertex
+			index_t tid = plc_face.triangles[0];
+			index_t tv0 = plc.triVtx(tid, 0), tv1 = plc.triVtx(tid, 1),
+			        tv2 = plc.triVtx(tid, 2);
+
+			v_orient[new_vertex] = orient3dCached(tv0, tv1, tv2, new_vertex);
+		}
+		else
+			new_vertex = InvalidIndex;
+	}
+	else
+		new_vertex = InvalidIndex;
+}
+
+template <typename Traits>
+void ConstraintsRecover<Traits>::embedMeshedCavity(
+  TetMesh &local_mesh, const AuxVector64<index_t> &vertices,
+  const AuxVector64<index_t> &faces, AuxVector64<index_t> &base)
+{
+	std::vector<uint8_t> corner_is_boundary(local_mesh.sizeTets() * 4, false);
+
+	typedef struct BoundaryCornerPair
+	{
+		index_t c0;  // one corner in the local mesh.
+		index_t c1;  // the other corner in the local mesh.
+		index_t bnd; // boundary corner in the global mesh.
+	} BCP;
+	AuxVector64<BCP> bcpairs;
+
+	// (1) Map the global corners (with corresponding boundary face) to local ones
+
+	// Build a map from global vertices to local vertices
+	for (index_t i = 0; i < vertices.size(); i++)
+		v_reindex[vertices[i]] = i;
+
+	// Find the boundary corners in the local mesh
+	for (index_t idoff : faces)
+	{
+		// map global face to local face
+		index_t lv0, lv1, lv2;
+		tet_mesh.faceVertices(idoff, lv0, lv1, lv2);
+		lv0 = v_reindex[lv0], lv1 = v_reindex[lv1], lv2 = v_reindex[lv2];
+		// Get the two corners corresponding to the local face
+		index_t c0, c1;
+		local_mesh.faceCorners(lv0, lv1, lv2, c0, c1);
+		// Mark them as boundary corners and record the pair
+		corner_is_boundary[c0] = true;
+		corner_is_boundary[c1] = true;
+		bcpairs.push_back({c0, c1, idoff});
+	}
+
+	// Reset the map
+	for (index_t i = 0; i < vertices.size(); i++)
+		v_reindex[vertices[i]] = InvalidIndex;
+
+	// (2) Classify the local tetrahedra to inside/outside based on the boundary
+	// corners. We will embed inner tetrahedra into the global mesh. Note that
+	// not all tetrahedra or vertices will be embedded.
+
+	// Find an infinite tet in the local mesh that has at least a vertex not on
+	// the PLC face. Start from this tet to classify the tetrahedra.
+	index_t start_tet = InvalidIndex;
+	for (index_t tid = 0; tid < local_mesh.sizeTets(); tid++)
+	{
+		index_t tet_idoff = TetMesh::toIdOff(tid);
+		if (!local_mesh.isFiniteTet(tet_idoff) &&
+		    (v_orient[vertices[local_mesh.tetNode(tet_idoff)]] != Sign::ZERO ||
+		     v_orient[vertices[local_mesh.tetNode(tet_idoff + 1)]] != Sign::ZERO ||
+		     v_orient[vertices[local_mesh.tetNode(tet_idoff + 2)]] != Sign::ZERO))
+		{
+			start_tet = tet_idoff;
+			break;
+		}
+	}
+	OMC_ASSERT(is_valid_idx(start_tet), "No start tet found.");
+
+	local_mesh.classifyInOut(corner_is_boundary, start_tet);
+
+	// (3) Remove the outside tetrahedra, since we only embed the inside
+	// tetrahedra to the global mesh.
+	std::vector<index_t> tet_reindex(local_mesh.sizeTets());
+	std::iota(tet_reindex.begin(), tet_reindex.end(), 0);
+
+	std::vector<uint8_t> remain_vtx(vertices.size(), false);
+
+	// Depart the outside tetrahedra from the local mesh
+	for (index_t tid = 0; tid < local_mesh.sizeTets(); tid++)
+	{
+		index_t idoff = TetMesh::toIdOff(tid);
+		if (local_mesh.isMarked(idoff, TET_MARK::OUTSIDE))
+		{
+			// depart the outside tetrahedron from its inside neighbors.
+			for (index_t j = 0; j < 4; j++)
+			{
+				index_t neigh_idoff = local_mesh.tetNeigh(idoff + j);
+				if (local_mesh.isMarked(neigh_idoff, TET_MARK::INSIDE))
+					local_mesh.tetNeigh(neigh_idoff) = InvalidIndex;
+			}
+		}
+		else
+		{
+			OMC_EXPENSIVE_ASSERT(local_mesh.isMarked(idoff, TET_MARK::INSIDE),
+			                     "Wrong mark.");
+			// remaining vertices only relate to the inside tetrahedra.
+			for (index_t j = 0; j < 4; j++)
+			{
+				index_t vid            = local_mesh.tetNode(idoff + j);
+				local_mesh.incTet(vid) = tid;
+				remain_vtx[vid]        = true;
+			}
+		}
+	}
+
+	// To remove the outside tetrahedra, we move the inside tetrahedra from the
+	// end to replace the outside tetrahedra at the beginning.
+	index_t last_tid = local_mesh.sizeTets() - 1;
+	for (index_t tid = 0; tid < last_tid; tid++)
+	{
+		index_t idoff = TetMesh::toIdOff(tid);
+		if (!local_mesh.isMarked(idoff, TET_MARK::OUTSIDE))
+			continue;
+
+		// move to the last inside tetrahedron
+		while (local_mesh.isMarked(TetMesh::toIdOff(last_tid), TET_MARK::OUTSIDE))
+			last_tid--; // there is at least one inside tet.
+		if (tid >= last_tid)
+			break; // all outside tets are removed, break the loop.
+
+		index_t last_idoff = TetMesh::toIdOff(last_tid);
+		// Move the last inside tetrahedron to the current position.
+		for (index_t j = 0; j < 4; j++)
+		{
+			TetMesh &LM   = local_mesh;
+			// Update the node information.
+			index_t &node = LM.tetNode(idoff + j);
+			node          = LM.tetNode(last_idoff + j);
+
+			// Update the neighbor information.
+			index_t neigh          = LM.tetNeigh(last_idoff + j);
+			LM.tetNeigh(idoff + j) = neigh;
+			if (is_valid_idx(neigh))
+				LM.tetNeigh(neigh) = idoff + j;
+
+			// Update the incident tetrahedron information.
+			LM.incTet(node) = tid;
+		}
+		// Update the mark.
+		local_mesh.tetMark(tid) = local_mesh.tetMark(last_tid);
+		// Update the reindex map.
+		tet_reindex[last_tid]   = tid;
+		tet_reindex[tid]        = last_tid;
+		// move the last tetrahedron.
+		last_tid--;
+	}
+	// Finally, all outside tetrahedra are removed by the above loop.
+	local_mesh.resizeTets(last_tid + 1);
+
+	// (4) Embed the local mesh to the global
+
+	// record size before embedding
+	size_t n_local_tets  = local_mesh.sizeTets();
+	size_t n_local_verts = local_mesh.sizeVerts();
+	size_t n_global_tets = tet_mesh.sizeTets();
+
+	// update the node in the local mesh to the corresponding global node
+	for (index_t tid = 0; tid < n_local_tets; tid++)
+	{
+		for (index_t idoff = TetMesh::toIdOff(tid), j = 0; j < 4; j++)
+		{
+			OMC_EXPENSIVE_ASSERT(local_mesh.tetNode(idoff + j) !=
+			                       TetMesh::INFINITE_VERTEX,
+			                     "Infinite vertex.");
+			local_mesh.tetNode(idoff + j) = vertices[local_mesh.tetNode(idoff + j)];
+		}
+	}
+	// attach the local nodes to the global mesh
+	tet_mesh.tet_node.insert(tet_mesh.tet_node.end(), local_mesh.tet_node.begin(),
+	                         local_mesh.tet_node.end());
+	// update the vertex-tetrahedron incident relation in the global mesh
+	for (index_t vid = 0; vid < n_local_verts; vid++)
+	{
+		if (remain_vtx[vid])
+		{
+			OMC_EXPENSIVE_ASSERT(local_mesh.incTet(vid) < n_local_tets,
+			                     "Wrong incTet.");
+			tet_mesh.incTet(vertices[vid]) = local_mesh.incTet(vid) + n_global_tets;
+		}
+	}
+	// update the neighbor in the local mesh
+	size_t _4n_global_tets = n_global_tets * 4;
+	for (index_t tid = 0; tid < n_local_tets; tid++)
+	{
+		for (index_t idoff = TetMesh::toIdOff(tid), j = 0; j < 4; j++)
+		{
+			index_t &neigh = local_mesh.tetNeigh(idoff + j);
+			if (is_valid_idx(neigh))
+				neigh += _4n_global_tets;
+		}
+	}
+	// attach the local neightbor to the global mesh
+	tet_mesh.tet_neigh.insert(tet_mesh.tet_neigh.end(),
+	                          local_mesh.tet_neigh.begin(),
+	                          local_mesh.tet_neigh.end());
+	OMC_EXPENSIVE_ASSERT(tet_mesh.tet_neigh.size() == 4 * tet_mesh.sizeTets(),
+	                     "Wrong tet_neigh size.");
+	// connect the neighbors adjacent to the cavity boundary
+	for (const BCP &bcp : bcpairs)
+	{
+		index_t t0 = tet_reindex[TetMesh::getId(bcp.c0)];
+		index_t t1 = tet_reindex[TetMesh::getId(bcp.c1)];
+		OMC_EXPENSIVE_ASSERT((t0 < n_local_tets || t1 < n_local_tets) &&
+		                       (t0 >= n_local_tets || t1 >= n_local_tets),
+		                     "One inside tet and one outside tet.");
+		index_t inner_corner  = t0 < n_local_tets
+		                          ? TetMesh::toIdOff(t0) + TetMesh::clipOff(bcp.c0)
+		                          : TetMesh::toIdOff(t1) + TetMesh::clipOff(bcp.c1);
+		index_t bnd           = bcp.bnd;
+		index_t global_corner = _4n_global_tets + inner_corner;
+		OMC_EXPENSIVE_ASSERT(
+		  !is_valid_idx(tet_mesh.tetNeigh(global_corner)),
+		  "This neighbor must be invalid since we depart the outside tetrahedra.");
+		tet_mesh.tetNeigh(global_corner) = bnd;
+		tet_mesh.tetNeigh(bnd)           = global_corner;
+	}
+	// update the tet marks in the global mesh
+	tet_mesh.tet_mark.resize(tet_mesh.sizeTets());
+
+	// (5) Collect the base faces (corners). They are the boundary faces of the
+	// cavity, located on the PLC face.
+	for (index_t tid = n_global_tets; tid < tet_mesh.sizeTets(); tid++)
+	{
+		index_t idoff = TetMesh::toIdOff(tid);
+		for (index_t j = 0; j < 4; j++)
+		{
+			if (is_valid_idx(tet_mesh.tetNeigh(idoff + j)))
+				continue;
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+			index_t v0, v1, v2;
+			tet_mesh.faceVertices(idoff + j, v0, v1, v2);
+			OMC_ASSERT(v_orient[v0] == Sign::ZERO && v_orient[v1] == Sign::ZERO &&
+			             v_orient[v2] == Sign::ZERO,
+			           "Wrong base face.");
+#endif
+			base.push_back(idoff + j);
+		}
+	}
 }
 
 /**

@@ -18,18 +18,24 @@ TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &points)
 template <typename Traits>
 index_t TetrahedralMesh<Traits>::tetCorner(index_t tet_idoff, index_t vid) const
 {
+	OMC_EXPENSIVE_ASSERT(clipOff(tet_idoff) == 0,
+	                     "Invalid tetrahedron id offset.");
 	// clang-format off
 	if (tetNode(tet_idoff) == vid)     return tet_idoff;
 	if (tetNode(tet_idoff + 1) == vid) return tet_idoff + 1;
 	if (tetNode(tet_idoff + 2) == vid) return tet_idoff + 2;
 	if (tetNode(tet_idoff + 3) == vid) return tet_idoff + 3;
 	// clang-format on
+	OMC_ASSERT(false, "The vertex is not in the tetrahedron.");
+	return InvalidIndex;
 }
 
 /// @brief Check if the tetrahedron has the vertex.
 template <typename Traits>
 bool TetrahedralMesh<Traits>::tetHasVertex(index_t tet_idoff, index_t vid) const
 {
+	OMC_EXPENSIVE_ASSERT(clipOff(tet_idoff) == 0,
+	                     "Invalid tetrahedron id offset.");
 	return tetNode(tet_idoff) == vid || tetNode(tet_idoff + 1) == vid ||
 	       tetNode(tet_idoff + 2) == vid || tetNode(tet_idoff + 3) == vid;
 }
@@ -52,10 +58,16 @@ bool TetrahedralMesh<Traits>::isFiniteTet(index_t idoff) const
  * tetrahedron.
  */
 template <typename Traits>
-void TetrahedralMesh<Traits>::oppoTetEdge(index_t tet_idoff, index_t vid0,
-                                          index_t vid1, index_t &vid2,
-                                          index_t &vid3) const
+void TetrahedralMesh<Traits>::oppoEdge(index_t tet_idoff, index_t vid0,
+                                       index_t vid1, index_t &vid2,
+                                       index_t &vid3) const
 {
+	OMC_EXPENSIVE_ASSERT(clipOff(tet_idoff) == 0,
+	                     "Invalid tetrahedron id offset.");
+	OMC_EXPENSIVE_ASSERT(tetHasVertex(tet_idoff, vid0) &&
+	                       tetHasVertex(tet_idoff, vid1),
+	                     "The edge is not in the tetrahedron.");
+
 	index_t *res[2] = {&vid2, &vid3}, i, j;
 	for (i = 0, j = 0; i < 4; i++)
 	{
@@ -67,39 +79,78 @@ void TetrahedralMesh<Traits>::oppoTetEdge(index_t tet_idoff, index_t vid0,
 }
 
 /**
+ * @brief Finds the opposite corner/node of the face defined by the given
+ * vertices `vid0`, `vid1` and `vid2` in the tetrahedron `tet_idoff`.
+ *
+ * @param [in] tet_idoff The tetrahedron ID offset.
+ * @param [in] vid_0_1_2 The face defined by three vertices.
+ * @return index_t The opposite vertex index.
+ */
+template <typename Traits>
+index_t TetrahedralMesh<Traits>::oppoVertex(index_t tet_idoff, index_t vid0,
+                                            index_t vid1, index_t vid2) const
+{
+	OMC_EXPENSIVE_ASSERT(clipOff(tet_idoff) == 0,
+	                     "Invalid tetrahedron id offset.");
+	OMC_EXPENSIVE_ASSERT(tetHasVertex(tet_idoff, vid0) &&
+	                       tetHasVertex(tet_idoff, vid1) &&
+	                       tetHasVertex(tet_idoff, vid2),
+	                     "The face is not in the tetrahedron.");
+	// rely on overflow.
+	return tetNode(tet_idoff) + tetNode(tet_idoff + 1) + tetNode(tet_idoff + 2) +
+	       tetNode(tet_idoff + 3) - vid0 - vid1 - vid2;
+}
+
+/**
+ * @brief Retrieves the vertex indices of a face of a tetrahedron.
+ *
+ * This function extracts the vertex indices of a specific face of a tetrahedron
+ * identified by the given tetrahedron ID offset.
+ *
+ * @param [in] tet_idoff The tetrahedron ID offset.
+ * @param [out] vid_0_1_2 Reference to store the vertex indices of the face.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::faceVertices(index_t tet_idoff, index_t &vid0,
+                                           index_t &vid1, index_t &vid2) const
+{
+	index_t        off  = clipOff(tet_idoff);
+	const index_t *node = &tetNode(clipId(tet_idoff));
+
+	vid0 = node[tetON1(off)];
+	vid1 = node[tetON2(off)];
+	vid2 = node[tetON3(off)];
+}
+
+/**
  * @brief Given two vertices `vid0` and `vid1`, check if the edge defined by the
  * vertices exists in the tetrahedral mesh.
  *
  * Check if the edge exists by traversing the adjacent tetrahedra of the vertex
  * `vid0` to find the vertex `vid1`.
  *
- * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
- * multiple times.
+ * @param [in] vid_0_1 two vertices define the edge.
+ * @return True if the edge exists, otherwise false.
  *
- * @note ==NOT THREAD SAFE==
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
+ * multiple times. NOT THREAD SAFE.
  */
 template <typename Traits>
 bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1) const
 {
+	bool    exist     = false;
 	// find the first adajcent tetrahedron
-	index_t tet_idoff = incTet(vid0) << 2;
-	// check if the tetrahedron has the vertex `vid1`
-	if (tetNode(tet_idoff) == vid1 || tetNode(tet_idoff + 1) == vid1 ||
-	    tetNode(tet_idoff + 2) == vid1 || tetNode(tet_idoff + 3) == vid1)
-		return true; // the edge exists, return true
+	index_t tet_idoff = toIdOff(incTet(vid0));
 
-	// find the remaining adjacent tetrahedra by traversing the neighbors
-	AuxVector64<index_t> adjacent_tets;
-	adjacent_tets.push_back(tet_idoff);
+	AuxVector64<index_t> tets;
+	tets.push_back(tet_idoff);
 	mark(tet_idoff, TET_MARK::VISITED);
-	bool exist = false;
 
-	for (index_t i = 0; i < adjacent_tets.size(); i++)
+	for (index_t i = 0; i < tets.size(); i++)
 	{
-		index_t curr_idoff = adjacent_tets[i];
+		index_t curr_idoff = tets[i];
 		// check if the current tetrahedron has the vertex `vid1`
-		if (tetNode(curr_idoff) == vid1 || tetNode(curr_idoff + 1) == vid1 ||
-		    tetNode(curr_idoff + 2) == vid1 || tetNode(curr_idoff + 3) == vid1)
+		if (tetHasVertex(curr_idoff, vid1))
 		{
 			exist = true;
 			break; // the edge exists, return true
@@ -107,20 +158,77 @@ bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1) const
 		// otherwise visit the neighbors at other corners
 		for (index_t j = 0; j < 4; j++)
 		{
-			if (tetNode(curr_idoff + j) == vid0) // skip the current corner
+			// skip the corner at `vid0`
+			if (tetNode(curr_idoff + j) == vid0)
 				continue;
 			// visit neighbors at other corners
 			index_t neigh_idoff = clipId(tetNeigh(curr_idoff + j));
 			// skip infinite tetrahedra and visited tetrahedra
 			if (isFiniteTet(neigh_idoff) && !isMarked(neigh_idoff, TET_MARK::VISITED))
 			{
-				adjacent_tets.push_back(clipId(neigh_idoff));
+				tets.push_back(neigh_idoff);
 				mark(neigh_idoff, TET_MARK::VISITED);
 			}
 		}
 	}
 	// unmark visited tetrahedra
-	for (index_t idoff : adjacent_tets)
+	for (index_t idoff : tets)
+		unmark(idoff, TET_MARK::VISITED);
+	return exist;
+}
+
+/**
+ * @brief Given three vertices `vid0`, `vid1` and `vid2`, check if the face
+ * defined by the vertices exists in the tetrahedral mesh.
+ *
+ * Check if the face exists by traversing the adjacent tetrahedra of the vertex
+ * `vid0` to find the vertex `vid1` and `vid2`.
+ *
+ * @param [in] vid_0_1_2 three vertices define the face.
+ * @return True if the face exists, otherwise false.
+ *
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
+ * multiple times. NOT THREAD SAFE.
+ */
+template <typename Traits>
+bool TetrahedralMesh<Traits>::faceExists(index_t vid0, index_t vid1,
+                                         index_t vid2) const
+{
+	bool    exist     = false;
+	// find the first adajcent tetrahedron
+	index_t tet_idoff = toIdOff(incTet(vid0));
+
+	AuxVector64<index_t> tets;
+	tets.push_back(tet_idoff);
+	mark(tet_idoff, TET_MARK::VISITED);
+
+	for (index_t i = 0; i < tets.size(); i++)
+	{
+		index_t curr_idoff = tets[i];
+		// check if the current tetrahedron has the vertex `vid1` and `vid2`
+		if (tetHasVertex(curr_idoff, vid1) && tetHasVertex(curr_idoff, vid2))
+		{
+			exist = true;
+			break; // the face exists, return true
+		}
+		// otherwise visit the neighbors at other corners
+		for (index_t j = 0; j < 4; j++)
+		{
+			// skip the corner at `vid0`
+			if (tetNode(curr_idoff + j) == vid0)
+				continue;
+			// visit neighbors at other corners
+			index_t neigh_idoff = clipId(tetNeigh(curr_idoff + j));
+			// skip infinite tetrahedra and visited tetrahedra
+			if (isFiniteTet(neigh_idoff) && !isMarked(neigh_idoff, TET_MARK::VISITED))
+			{
+				tets.push_back(neigh_idoff);
+				mark(neigh_idoff, TET_MARK::VISITED);
+			}
+		}
+	}
+	// unmark visited tetrahedra
+	for (index_t idoff : tets)
 		unmark(idoff, TET_MARK::VISITED);
 	return exist;
 }
@@ -128,17 +236,18 @@ bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1) const
 /**
  * @brief Collect tetrahedra adjacent to the vertex `vid` and store them in the
  * container `tets`.
- * @param vid Vertex index
- * @param tets Container to store the adjacent tetrahedra (tetrahedron idoff)
- * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
- * multiple times.
- * @note ==NOT THREAD SAFE==
+ * @param [in] vid Vertex index
+ * @param [out] tets Container to store the adjacent tetrahedra (tetrahedron
+ * idoff)
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
+ * the same vertex multiple times. NOT THREAD SAFE.
  */
 template <typename Traits>
 template <typename ContainerT>
 void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets) const
 {
-	index_t tet_idoff = incTet(vid) << 2;
+	OMC_EXPENSIVE_ASSERT(vid < verts.size(), "Invalid vertex index.");
+	index_t tet_idoff = toIdOff(incTet(vid));
 
 	tets.push_back(tet_idoff);
 	mark(tet_idoff, TET_MARK::VISITED);
@@ -170,17 +279,17 @@ void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets) const
 /**
  * @brief Collect vertices adjacent to the vertex `vid` and store them in the
  * container `verts`.
- * @param vid Vertex index
- * @param verts Container to store the adjacent vertices (vertex id)
+ * @param [in] vid Vertex index
+ * @param [out] verts Container to store the adjacent vertices (vertex id)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
- * the same vertex multiple times.
- * @note ==NOT THREAD SAFE==
+ * the same vertex multiple times. NOT THREAD SAFE.
  */
 template <typename Traits>
 template <typename ContainerT>
 void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
 {
-	index_t tet_idoff = incTet(vid) << 2;
+	OMC_EXPENSIVE_ASSERT(vid < verts.size(), "Invalid vertex index.");
+	index_t tet_idoff = toIdOff(incTet(vid));
 
 	AuxVector64<index_t> tets;
 	tets.push_back(tet_idoff);
@@ -223,15 +332,20 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
 /**
  * @brief Find tetrahedra adjacent to the edge defined by the vertices `vid0`
  * and `vid1`, and store in `tets`.
- * @param vid0 Vertex index
- * @param vid1 Vertex index
- * @param tets Container to store the adjacent tetrahedra (tetrahedron idoff)
+ * @param [in] vid0 Vertex index
+ * @param [in] vid1 Vertex index
+ * @param [out] tets Container to store the adjacent tetrahedra (tetrahedron
+ * idoff)
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
+ * the same vertex multiple times. NOT THREAD SAFE.
  */
 template <typename Traits>
 template <typename ContainerT>
 void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1,
                                  ContainerT &tets) const
 {
+	OMC_EXPENSIVE_ASSERT(vid0 < verts.size() && vid1 < verts.size(),
+	                     "Invalid vertex index.");
 	// find tetrahedra adjacent to the vertex `vid0`
 	VT(vid0, tets);
 	// keep the tetrahedra adjacent to the vertex `vid1`
@@ -247,26 +361,161 @@ void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1,
 	}
 }
 
-
 /**
- * @brief Retrieves the vertex indices of a face of a tetrahedron.
+ * @brief Find two tetrahedra corresponding to the face defined by the vertices
+ * `vid0`, `vid1` and `vid2`.
  *
- * This function extracts the vertex indices of a specific face of a tetrahedron
- * identified by the given tetrahedron ID offset.
- *
- * @param tet_idoff The tetrahedron ID offset.
- * @param vid_0_1_2 Reference to store the vertex indices of the face.
+ * @param [in] vid_0_1_2 three vertices (index) define the face.
+ * @param [out] t_1_2 two tetrahedra (tet_idoff) corresponding to the face.
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
+ * the same vertex multiple times. NOT THREAD SAFE.
  */
 template <typename Traits>
-void TetrahedralMesh<Traits>::faceVertices(index_t tet_idoff, index_t &vid0,
-                                           index_t &vid1, index_t &vid2) const
+void TetrahedralMesh<Traits>::faceAdjTets(index_t vid0, index_t vid1,
+                                          index_t vid2, index_t &t0,
+                                          index_t &t1)
 {
-	index_t        off  = clipOff(tet_idoff);
-	const index_t *node = &tetNode(clipId(tet_idoff));
+	// temporary container to store the adjacent tetrahedra
+	index_t adj_tets[2] = {InvalidIndex, InvalidIndex};
+	index_t tc          = 0;
 
-	vid0 = node[tetON1(off)];
-	vid1 = node[tetON2(off)];
-	vid2 = node[tetON3(off)];
+	// find the first adajcent tetrahedron
+	index_t tet_idoff = toIdOff(incTet(vid0));
+
+	AuxVector64<index_t> tets;
+	tets.push_back(tet_idoff);
+	mark(tet_idoff, TET_MARK::VISITED);
+
+	for (index_t i = 0; i < tets.size(); i++)
+	{
+		index_t curr_idoff = tets[i];
+		// check if the current tetrahedron has the vertex `vid1` and `vid2`
+		if (tetHasVertex(curr_idoff, vid1) && tetHasVertex(curr_idoff, vid2))
+		{
+			adj_tets[tc++] = curr_idoff;
+#ifndef OMC_ENABLE_EXPENSIVE_ASSERT
+			if (tc == 2)
+				break;
+#endif
+		}
+		// visit the neighbors at other corners
+		for (index_t j = 0; j < 4; j++)
+		{
+			// skip the corner at `vid0`
+			if (tetNode(curr_idoff + j) == vid0)
+				continue;
+			// visit neighbors at other corners
+			index_t neigh_idoff = clipId(tetNeigh(curr_idoff + j));
+			// skip visited tetrahedra
+			if (!isMarked(neigh_idoff, TET_MARK::VISITED))
+			{
+				tets.push_back(neigh_idoff);
+				mark(neigh_idoff, TET_MARK::VISITED);
+			}
+		}
+	}
+	// unmark visited tetrahedra
+	for (index_t idoff : tets)
+		unmark(idoff, TET_MARK::VISITED);
+
+	OMC_EXPENSIVE_ASSERT(tc == 2, "The face is not shared by two tetrahedra.");
+	t0 = adj_tets[0], t1 = adj_tets[1];
+}
+
+/**
+ * @brief Find two corners corresponding to the face defined by the vertices
+ * `vid0`, `vid1` and `vid2`.
+ *
+ * The face has two adjacent tetrahedra, each tetrahedron has a corner
+ * corresponding to the face (i.e., the node opposite to the face).
+ *
+ * @param [in] vid_0_1_2 three vertices (index) define the face.
+ * @param [out] c_0_1 two corners (idoff) corresponding to the face.
+ * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
+ * the same vertex multiple times. NOT THREAD SAFE.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::faceCorners(index_t vid0, index_t vid1,
+                                          index_t vid2, index_t &c0,
+                                          index_t &c1)
+{
+	// two tetrahedra (tet_idoff) adjacent to the face
+	index_t t0, t1;
+	faceAdjTets(vid0, vid1, vid2, t0, t1);
+	// the idoff of the two corners
+	c0 = tetCorner(t0, oppoVertex(t0, vid0, vid1, vid2));
+	c1 = tetCorner(t1, oppoVertex(t1, vid0, vid1, vid2));
+}
+
+/**
+ * @brief Classify tetrahedra to inside and outside.
+ * `corner_is_boundary` marks boundary corners.
+ * @param [in] corner_is_boundary A vector to mark boundary corners.
+ * @param [in] start_tet_idoff The starting tetrahedron to mark.
+ * @return The number of tetrahedra classified as inside.
+ * @note Rely on a closed and not self-intersected boundary.
+ */
+template <typename Traits>
+size_t
+TetrahedralMesh<Traits>::classifyInOut(std::vector<uint8_t> &corner_is_boundary,
+                                       index_t               start_tet_idoff)
+{
+	// All infinite tetrahedra are marked as outside,
+	// other tetrahedra are marked as unknown.
+	for (index_t i = 0; i < sizeTets(); i++)
+		mark(toIdOff(i),
+		     isFiniteTet(toIdOff(i)) ? TET_MARK::IO_UNKNOWN : TET_MARK::OUTSIDE);
+
+	// tets saves classified tetrahedra
+	std::vector<uint64_t> tets;
+	tets.reserve(sizeTets());
+
+	if (is_valid_idx(start_tet_idoff))
+	{ // start classification from the given tetrahedron
+		OMC_EXPENSIVE_ASSERT(clipOff(start_tet_idoff) == 0 &&
+		                       start_tet_idoff < sizeTets() * 4,
+		                     "Invalid start tetrahedron id offset.");
+		tets.push_back(start_tet_idoff);
+	}
+	else
+	{ // start classification from the all outer tetrahedra
+		for (index_t i = 0; i < sizeTets(); i++)
+			if (isMarked(toIdOff(i), TET_MARK::OUTSIDE))
+				tets.push_back(toIdOff(i));
+	}
+
+	// Traverse the unkown tetrahedra to classify them.
+	for (index_t i = 0; i < tets.size(); i++)
+	{
+		index_t tet_idoff = tets[i];
+		for (index_t j = 0; j < 4; j++)
+		{
+			const index_t neigh_idoff = tetNeigh(tet_idoff + j);
+			// skip the classified tetrahedra
+			if (!isMarked(neigh_idoff, TET_MARK::IO_UNKNOWN))
+				continue;
+
+			if (corner_is_boundary[neigh_idoff])
+			{ // Encountered a boundary corner/face.
+				// Mark the neighbor as the opposite of the current tet.
+				mark(neigh_idoff, isMarked(tet_idoff, TET_MARK::INSIDE)
+				                    ? TET_MARK::OUTSIDE
+				                    : TET_MARK::INSIDE);
+			}
+			else
+			{ // Mark the neighbor as the same as the current tet.
+				mark(neigh_idoff, isMarked(tet_idoff, TET_MARK::INSIDE)
+				                    ? TET_MARK::INSIDE
+				                    : TET_MARK::OUTSIDE);
+			}
+			// now the neighbor is classified, add it to the list
+			unmark(neigh_idoff, TET_MARK::IO_UNKNOWN);
+			tets.push_back(clipId(neigh_idoff));
+		}
+	}
+
+	return std::count_if(tet_mark.begin(), tet_mark.end(), [](uint32_t m)
+	                     { return m & (uint32_t)TET_MARK::INSIDE; });
 }
 
 /**

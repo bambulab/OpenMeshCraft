@@ -44,10 +44,13 @@ public:
 	/// Marks for each tetrahedron
 	enum class TET_MARK : uint32_t
 	{
-		NO_MARK   = 0, ///< No mark
-		TO_DELETE = 1, ///< Marked for deletion
-		VISITED   = 2, ///< Marked as visited (internal use only)
-		TOUCHED   = 4, ///< Marked as touched (interface use)
+		NO_MARK    = 0,  ///< No mark
+		TO_DELETE  = 1,  ///< Marked for deletion
+		VISITED    = 2,  ///< Marked as visited (internal use only)
+		TOUCHED    = 4,  ///< Marked as touched (interface use)
+		IO_UNKNOWN = 8,  ///< Marked as inside/outside unknown
+		INSIDE     = 16, ///< Marked as inside
+		OUTSIDE    = 32, ///< Marked as outside
 	};
 
 public:
@@ -115,6 +118,8 @@ public:
 	static index_t tetON2(index_t idoff) { return (idoff & 2) ^ 3; }
 	static index_t tetON3(index_t idoff) { return (idoff + 3) & 2; }
 
+	/* Connectivity operations in a single tetrahedron */
+
 	index_t tetCorner(index_t tet_idoff, index_t vid) const;
 
 	bool tetHasVertex(index_t tet_idoff, index_t vid) const;
@@ -123,8 +128,18 @@ public:
 
 	bool edgeExists(index_t vid0, index_t vid1) const;
 
-	void oppoTetEdge(index_t tet_idoff, index_t vid0, index_t vid1, index_t &vid2,
-	                 index_t &vid3) const;
+	bool faceExists(index_t vid0, index_t vid1, index_t vid2) const;
+
+	void oppoEdge(index_t tet_idoff, index_t vid0, index_t vid1, index_t &vid2,
+	              index_t &vid3) const;
+
+	index_t oppoVertex(index_t tet_idoff, index_t vid0, index_t vid1,
+	                   index_t vid2) const;
+
+	void faceVertices(index_t tet_idoff, index_t &vid0, index_t &vid1,
+	                  index_t &vid2) const;
+
+	/* Connectivity operations for adjacent tetrahedrons */
 
 	template <typename ContainerT>
 	void VT(index_t vid, ContainerT &tets) const;
@@ -135,8 +150,16 @@ public:
 	template <typename ContainerT>
 	void ET(index_t vid0, index_t vid1, ContainerT &tets) const;
 
-	void faceVertices(index_t tet_idoff, index_t &vid0, index_t &vid1,
-	                  index_t &vid2) const;
+	void faceAdjTets(index_t vid0, index_t vid1, index_t vid2, index_t &t0,
+	                 index_t &t1);
+
+	void faceCorners(index_t vid0, index_t vid1, index_t vid2, index_t &c0,
+	                 index_t &c1);
+
+	/* Connectivity operations for the whole tetrahedra mesh */
+
+	size_t classifyInOut(std::vector<uint8_t> &corner_is_boundary,
+	                     index_t               start_tet_idoff = InvalidIndex);
 
 	/* Operations about marks */
 
@@ -153,6 +176,9 @@ public:
 	/// check if the tetrahedron has no mark
 	bool isTetUnmarked(index_t idoff) const { return tet_mark[getId(idoff)] == (uint32_t)TET_MARK::NO_MARK; }
 
+	uint32_t &tetMark(index_t tid) { return tet_mark[tid]; }
+	uint32_t  tetMark(index_t tid) const { return tet_mark[tid]; }
+
 	/// mark the vertex with the given bit
 	void mark(index_t vid, VTX_MARK bit) const { vtx_mark[vid] |= (uint32_t)bit; }
 	/// unmark the vertex with the given bit
@@ -164,7 +190,11 @@ public:
 	/// check if the vertex has no mark
 	bool isVtxUnmarked(index_t vid) const { return vtx_mark[vid] == (uint32_t)VTX_MARK::NO_MARK; }
 
+	uint32_t &vtxMark(index_t vid) { return vtx_mark[vid]; }
+	uint32_t  vtxMark(index_t vid) const { return vtx_mark[vid]; }
+
 	// clang-format on
+
 
 	/* Operations about creation */
 
@@ -216,22 +246,36 @@ public: /* Data ************************************************************/
 	/// Tetrahedra (indices to vertices)
 	///
 	/// 1. There are `n` tetrahedra, and each tetrahedron has 4 vertices/nodes,
-	/// resulting in a total of `4n` vertex/node indices stored in tet_node.
+	/// resulting in a total of `4n` vertex/node indices stored in `tet_node`.
 	/// 2. The orientation of the tetrahedron vertices/nodes (a, b, c, d) is
 	/// determined by the convention that the cross product of (b - a) and (c - a)
 	/// points toward d (i.e., the tetrahedron has a positive volume when
 	/// calculating orient3d(a, b, c, d)).
+	/// 3. `idoff = tet_id * 4 + offset` points to a node in `tet_node`
+	/// 4. `tet_idoff` is the index to a tetrahedron, and `tet_id = tet_idoff / 4`
+	/// 5. In some certain contexts (e.g. meshing a cavity in DT or CDT), we also
+	/// call a node as a `corner`. A `corner` is pointed by `idoff` and
+	/// corresponds to its opposite face in the same tetrahedron. So, we can use a
+	/// single corner index to represent a face, thus avoiding complex
+	/// representations. For example, the cavity is bounded by boundary faces, and
+	/// each boundary face is represented by its corresponding corner.
 	std::vector<index_t> tet_node;
 
 	/* Auxiliary data */
 
+	/// Mark for each vertex (See details for each bit above).
 	mutable std::vector<uint32_t> vtx_mark;
 
 	/// Mark for each tetrahedron (See details for each bit above).
 	mutable std::vector<uint32_t> tet_mark;
 
-	/// Collect all deleted tetrahedra. They may be reused to generate new
-	/// tetrahedra.
+	/// Collect all deleted tetrahedra.
+	/// 1. Once a tetrahedron is marked as deleted, it may still "connect" to
+	/// other tetrahedra and be accessed. But undeleted tetrahedra and vertices
+	/// should not have connection with deleted tetrahedra. Here, connection
+	/// means neighbor relation (tet_neigh), vertex-tetrahedron relation
+	/// (inc_tet), etc.
+	/// 2. They may be reused to generate new tetrahedra.
 	std::vector<index_t> tet_deleted;
 
 	/// Four neighbors for each tetrahedron
@@ -246,12 +290,14 @@ public: /* Data ************************************************************/
 	/// its node index.
 	///
 	/// An illustration in 2D:
+	/// @verbatim
 	///  idoff of the opposite node in the opposite neighbor...
 	///        /\ 
 	///      /___\ 
 	///      \   /
 	///       \/
 	/// ...is stored in tet_neigh.
+	/// @verbatim
 	std::vector<index_t> tet_neigh;
 };
 

@@ -92,6 +92,20 @@ public: /* Algorithms ******************************************************/
 	                                 const std::vector<index_t> &tets,
 	                                 bool &succeed, bool &expanded);
 
+	bool cavityHasMissingFace(const TetMesh              &local_mesh,
+	                          const AuxVector64<index_t> &vertices,
+	                          const AuxVector64<index_t> &faces,
+	                          index_t                    &missing_face);
+
+	void expandCavity(const PLCFace &plc_face, AuxVector64<index_t> &vertices,
+	                  AuxVector64<index_t> &faces, index_t missing_face,
+	                  index_t &new_tet, index_t &new_vertex);
+
+	void embedMeshedCavity(TetMesh                    &local_mesh,
+	                       const AuxVector64<index_t> &vertices,
+	                       const AuxVector64<index_t> &faces,
+												 AuxVector64<index_t>& base);
+
 	bool tetIntersectsFace(index_t tet_idoff, const PLCFace &face);
 
 	Sign orient3dCached(index_t v0, index_t v1, index_t v2, index_t v3);
@@ -131,6 +145,12 @@ public: /* Data ************************************************************/
 	/// - A bounding vertex's count is at least one.
 	/// - A singular bounding vertex's count is more than one.
 	std::vector<uint32_t> v_count;
+
+	/// Vertex re-index, mapping global index to local index.
+	/// During the recovery of a PLC face, local cavity is tetrahedralized.
+	/// We need to build a mapping from global vertex index to local vertex index,
+	/// to check if a cavity face is missing.
+	std::vector<index_t> v_reindex;
 };
 
 } // namespace OMC
