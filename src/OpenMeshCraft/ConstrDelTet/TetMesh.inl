@@ -527,7 +527,7 @@ TetrahedralMesh<Traits>::classifyInOut(std::vector<uint8_t> &corner_is_boundary,
  * @param new_vid The index of the new vertex created externally.
  */
 template <typename Traits>
-void TetrahedralMesh<Traits>::newVtx(index_t new_vid)
+void TetrahedralMesh<Traits>::newVtx(OMC_UNUSED index_t new_vid)
 {
 	inc_tet.emplace_back(InvalidIndex);
 

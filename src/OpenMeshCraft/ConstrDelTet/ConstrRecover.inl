@@ -835,7 +835,7 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 			// check if the face belongs to the top or bottom half cavity.
 			if (top)
 				top_faces.push_back(neigh_idoff);
-			else
+			else if (bottom)
 				bottom_faces.push_back(neigh_idoff);
 		}
 	}

@@ -274,9 +274,8 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 	// find all sub-edges for each original edge
 	for (index_t eid = 0; eid < init_npe; eid++)
 	{
-		const PLCEdge &e = edge(eid);
 		// skip the sub-edge (non-original edge)
-		OMC_EXPENSIVE_ASSERT(!is_valid_idx(e.ancestor_id),
+		OMC_EXPENSIVE_ASSERT(!is_valid_idx(edge(eid).ancestor_id),
 		                     "Not an ancestor PLC edge.");
 		// the start position of sub-edges
 		index_t sub_edge_start = sub_edges.size();
@@ -389,8 +388,7 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 	// Assemble edges to their incident faces
 	for (index_t eid = 0; eid < init_npe; eid++)
 	{
-		const PLCEdge &e = edge(eid);
-		OMC_EXPENSIVE_ASSERT(!is_valid_idx(e.ancestor_id),
+		OMC_EXPENSIVE_ASSERT(!is_valid_idx(edge(eid).ancestor_id),
 		                     "Not an ancestor PLC edge.");
 		for (index_t tid : edge_inc_tri[eid])
 		{
