@@ -7,7 +7,7 @@ namespace OMC {
 /****************************************************************************/
 
 // Cache dynamic filter (interval numbers) in points
-// #define OMC_CACHE_DF
+#define OMC_CACHE_DF
 
 // Compress expansion before:
 // 1. storing coordinates.

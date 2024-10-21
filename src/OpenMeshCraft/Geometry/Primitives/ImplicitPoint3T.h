@@ -116,7 +116,7 @@ private:
 	int plane;
 
 #ifdef OMC_CACHE_DF
-	IT m_lx, m_ly, m_lz, m_d;
+	mutable IT m_lx, m_ly, m_lz, m_d;
 #endif
 
 	/// global cached lambda values
@@ -218,7 +218,7 @@ private:
 	const EP *ir, *is, *it; ///< The plane RST
 
 #ifdef OMC_CACHE_DF
-	IT m_lx, m_ly, m_lz, m_d;
+	mutable IT m_lx, m_ly, m_lz, m_d;
 #endif
 
 	/// global cached lambda values
@@ -325,7 +325,7 @@ private:
 	const EP *iu1, *iu2, *iu3; ///< Plane 3
 
 #ifdef OMC_CACHE_DF
-	IT m_lx, m_ly, m_lz, m_d;
+	mutable IT m_lx, m_ly, m_lz, m_d;
 #endif
 
 	/// global cached lambda values

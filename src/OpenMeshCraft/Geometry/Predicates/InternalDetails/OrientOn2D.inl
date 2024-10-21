@@ -428,7 +428,8 @@ Sign orientOn2Dxy_IIE_expansion(const GenericPoint3T<IT, ET> &p1,
 				return_sign = Sign::ZERO;
 		}
 #ifdef OMC_LIMIT_EXPANSION_LENGTH
-		else
+		else if (ab_len <= OMC_SUM_LENGTH_THRES && cd_len <= OMC_SUM_LENGTH_THRES &&
+		         ef_len <= OMC_SUM_LENGTH_THRES && gh_len <= OMC_SUM_LENGTH_THRES)
 		{
 			ET ab_et = 0, cd_et = 0, ef_et = 0, gh_et = 0;
 			// clang-format off
@@ -440,7 +441,11 @@ Sign orientOn2Dxy_IIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			ET abcd_et  = ab_et * cd_et;
 			ET efgh_et  = ef_et * gh_et;
 			ET L_et     = abcd_et - efgh_et;
-			return_sign = OMC::sign(L);
+			return_sign = OMC::sign(L_et);
+		}
+		else
+		{
+			return_sign = orientOn2Dxy_IIE_exact<IT, ET>(p1, p2, op3x, op3y);
 		}
 #endif
 
@@ -591,7 +596,8 @@ Sign orientOn2Dxy_III_expansion(const GenericPoint3T<IT, ET> &p1,
 				return_sign = Sign::ZERO;
 		}
 #ifdef OMC_LIMIT_EXPANSION_LENGTH
-		else
+		else if (ab_len <= OMC_SUM_LENGTH_THRES && cd_len <= OMC_SUM_LENGTH_THRES &&
+		         ef_len <= OMC_SUM_LENGTH_THRES && gh_len <= OMC_SUM_LENGTH_THRES)
 		{
 			ET ab_et = 0, cd_et = 0, ef_et = 0, gh_et = 0;
 			// clang-format off
@@ -603,7 +609,11 @@ Sign orientOn2Dxy_III_expansion(const GenericPoint3T<IT, ET> &p1,
 			ET abcd_et  = ab_et * cd_et;
 			ET efgh_et  = ef_et * gh_et;
 			ET L_et     = abcd_et - efgh_et;
-			return_sign = OMC::sign(L);
+			return_sign = OMC::sign(L_et);
+		}
+		else
+		{
+			return_sign = orientOn2Dxy_III_exact<IT, ET>(p1, p2, p3);
 		}
 #endif
 
@@ -755,7 +765,8 @@ Sign orientOn2Dyz_IIE_expansion(const GenericPoint3T<IT, ET> &p1,
 				return_sign = Sign::ZERO;
 		}
 #ifdef OMC_LIMIT_EXPANSION_LENGTH
-		else
+		else if (ab_len <= OMC_SUM_LENGTH_THRES && cd_len <= OMC_SUM_LENGTH_THRES &&
+		         ef_len <= OMC_SUM_LENGTH_THRES && gh_len <= OMC_SUM_LENGTH_THRES)
 		{
 			ET ab_et = 0, cd_et = 0, ef_et = 0, gh_et = 0;
 			// clang-format off
@@ -767,7 +778,11 @@ Sign orientOn2Dyz_IIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			ET abcd_et  = ab_et * cd_et;
 			ET efgh_et  = ef_et * gh_et;
 			ET L_et     = abcd_et - efgh_et;
-			return_sign = OMC::sign(L);
+			return_sign = OMC::sign(L_et);
+		}
+		else
+		{
+			return_sign = orientOn2Dyz_IIE_exact<IT, ET>(p1, p2, op3y, op3z);
 		}
 #endif
 
@@ -918,7 +933,8 @@ Sign orientOn2Dyz_III_expansion(const GenericPoint3T<IT, ET> &p1,
 				return_sign = Sign::ZERO;
 		}
 #ifdef OMC_LIMIT_EXPANSION_LENGTH
-		else
+		else if (ab_len <= OMC_SUM_LENGTH_THRES && cd_len <= OMC_SUM_LENGTH_THRES &&
+		         ef_len <= OMC_SUM_LENGTH_THRES && gh_len <= OMC_SUM_LENGTH_THRES)
 		{
 			ET ab_et = 0, cd_et = 0, ef_et = 0, gh_et = 0;
 			// clang-format off
@@ -930,7 +946,11 @@ Sign orientOn2Dyz_III_expansion(const GenericPoint3T<IT, ET> &p1,
 			ET abcd_et  = ab_et * cd_et;
 			ET efgh_et  = ef_et * gh_et;
 			ET L_et     = abcd_et - efgh_et;
-			return_sign = OMC::sign(L);
+			return_sign = OMC::sign(L_et);
+		}
+		else
+		{
+			return_sign = orientOn2Dyz_III_exact<IT, ET>(p1, p2, p3);
 		}
 #endif
 
@@ -1082,7 +1102,8 @@ Sign orientOn2Dzx_IIE_expansion(const GenericPoint3T<IT, ET> &p1,
 				return_sign = Sign::ZERO;
 		}
 #ifdef OMC_LIMIT_EXPANSION_LENGTH
-		else
+		else if (ab_len <= OMC_SUM_LENGTH_THRES && cd_len <= OMC_SUM_LENGTH_THRES &&
+		         ef_len <= OMC_SUM_LENGTH_THRES && gh_len <= OMC_SUM_LENGTH_THRES)
 		{
 			ET ab_et = 0, cd_et = 0, ef_et = 0, gh_et = 0;
 			// clang-format off
@@ -1094,7 +1115,11 @@ Sign orientOn2Dzx_IIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			ET abcd_et  = ab_et * cd_et;
 			ET efgh_et  = ef_et * gh_et;
 			ET L_et     = abcd_et - efgh_et;
-			return_sign = OMC::sign(L);
+			return_sign = OMC::sign(L_et);
+		}
+		else
+		{
+			return_sign = orientOn2Dzx_IIE_exact<IT, ET>(p1, p2, op3x, op3z);
 		}
 #endif
 
@@ -1245,7 +1270,8 @@ Sign orientOn2Dzx_III_expansion(const GenericPoint3T<IT, ET> &p1,
 				return_sign = Sign::ZERO;
 		}
 #ifdef OMC_LIMIT_EXPANSION_LENGTH
-		else
+		else if (ab_len <= OMC_SUM_LENGTH_THRES && cd_len <= OMC_SUM_LENGTH_THRES &&
+		         ef_len <= OMC_SUM_LENGTH_THRES && gh_len <= OMC_SUM_LENGTH_THRES)
 		{
 			ET ab_et = 0, cd_et = 0, ef_et = 0, gh_et = 0;
 			// clang-format off
@@ -1257,7 +1283,11 @@ Sign orientOn2Dzx_III_expansion(const GenericPoint3T<IT, ET> &p1,
 			ET abcd_et  = ab_et * cd_et;
 			ET efgh_et  = ef_et * gh_et;
 			ET L_et     = abcd_et - efgh_et;
-			return_sign = OMC::sign(L);
+			return_sign = OMC::sign(L_et);
+		}
+		else
+		{
+			return_sign = orientOn2Dzx_III_exact<IT, ET>(p1, p2, p3);
 		}
 #endif
 
