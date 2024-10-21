@@ -5,8 +5,6 @@
 
 #include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 
-#include "OpenMeshCraft/Utils/Macros.h"
-
 #include <tuple>
 
 namespace OMC {

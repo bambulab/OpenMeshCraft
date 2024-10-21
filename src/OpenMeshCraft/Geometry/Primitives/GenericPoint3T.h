@@ -8,6 +8,7 @@
 
 namespace OMC {
 
+/***** Forward declarations ******/
 template <typename IT, typename ET>
 class ExplicitPoint3T;
 
@@ -19,6 +20,7 @@ class ImplicitPoint3T_LPI;
 
 template <typename IT, typename ET>
 class ImplicitPoint3T_TPI;
+/*** Forward declarations end ***/
 
 /// @brief the generic point of 3D exact implicit and explicit points
 template <typename IT, typename ET>
@@ -33,9 +35,8 @@ public: /* types *************************************************************/
 	using IP_LPI = ImplicitPoint3T_LPI<IT, ET>;
 	using IP_TPI = ImplicitPoint3T_TPI<IT, ET>;
 
-public: /* functions about types **********************************************/
 	enum class PointType : uint32_t
-	{ // make sure simpler point has smaller value
+	{
 		Explicit = 0,
 		Implicit = 1,
 		SSI      = 2,
@@ -43,29 +44,47 @@ public: /* functions about types **********************************************/
 		TPI      = 4,
 	};
 
+public: /* members ************************************************************/
+	/// Indicates the point type in derived classes.
+	/// The only member variable in the base class.
 	PointType m_point_type;
 
+public: /* Constructor and Destructor *****************************************/
+	GenericPoint3T(PointType pt)
+	  : m_point_type(pt)
+	{
+	}
+
+	GenericPoint3T(const GenericPoint3T &gp)            = default;
+	GenericPoint3T(GenericPoint3T &&gp)                 = default;
+	GenericPoint3T &operator=(const GenericPoint3T &gp) = default;
+	GenericPoint3T &operator=(GenericPoint3T &&gp)      = default;
+
+protected:
+	/// you can't delete a protected and nonvirtual derived class
+	/// by delete the pointer to this base class.
+	~GenericPoint3T() = default;
+
+public: /* functions about types **********************************************/
 	/// @brief get the point type
 	inline PointType point_type() const { return m_point_type; }
 
-	bool is_Explicit() const { return point_type() == PointType::Explicit; }
-	bool is_Implicit() const { return point_type() > PointType::Implicit; }
+	bool is_explicit() const { return point_type() == PointType::Explicit; }
+	bool is_implicit() const { return point_type() > PointType::Implicit; }
 	bool is_SSI() const { return point_type() == PointType::SSI; }
 	bool is_LPI() const { return point_type() == PointType::LPI; }
 	bool is_TPI() const { return point_type() == PointType::TPI; }
 
-	bool has_ssf() const { return true; }
-
 	/// @brief Convert to explicit point, won't check type again.
 	EP &EXP()
 	{
-		OMC_EXPENSIVE_ASSERT(is_Explicit(), "point type mismatch.");
+		OMC_EXPENSIVE_ASSERT(is_explicit(), "point type mismatch.");
 		return *static_cast<EP *>(this);
 	}
 	/// @brief Convert to explicit point, won't check type again.
 	const EP &EXP() const
 	{
-		OMC_EXPENSIVE_ASSERT(is_Explicit(), "point type mismatch.");
+		OMC_EXPENSIVE_ASSERT(is_explicit(), "point type mismatch.");
 		return *static_cast<const EP *>(this);
 	}
 
@@ -108,67 +127,11 @@ public: /* functions about types **********************************************/
 		return *static_cast<const IP_TPI *>(this);
 	}
 
-	/// @brief approximate this generic point by an explicit point
-	void get_Explicit(EP &e) const
-	{
-		if (point_type() == PointType::Explicit)
-			e = EXP();
-		else if (point_type() == PointType::SSI)
-			SSI().get_Explicit(e);
-		else if (point_type() == PointType::LPI)
-			LPI().get_Explicit(e);
-		else if (point_type() == PointType::TPI)
-			TPI().get_Explicit(e);
-	}
-
-	/// @brief approximate this generic point by an explicit point
-	EP to_Explicit() const
-	{
-		EP e;
-		get_Explicit(e);
-		return e;
-	}
-
-	/// @brief Get approximate values on all dimensions of this generic point.
-	void get_coordinates(FT &x, FT &y, FT &z) const
-	{
-		EP e_;
-		get_Explicit(e_);
-		x = e_.x();
-		y = e_.y();
-		z = e_.z();
-	}
-
-public: /* Constructor and Destructor ***************************************/
-	GenericPoint3T(PointType pt)
-	  : m_point_type(pt)
-	{
-	}
-
-	GenericPoint3T(const GenericPoint3T &gp)            = default;
-	GenericPoint3T(GenericPoint3T &&gp)                 = default;
-	GenericPoint3T &operator=(const GenericPoint3T &gp) = default;
-	GenericPoint3T &operator=(GenericPoint3T &&gp)      = default;
-
-protected:
-	/// you can't delete a protected and nonvirtual derived class
-	/// by delete the pointer to this base class.
-	~GenericPoint3T() = default;
-
 public: /* get lambda values from implicit points ****************************/
-#if defined(OMC_INDIRECT_PRED)
-	bool getFilteredLambda(FT &lx, FT &ly, FT &lz, FT &d, FT &mv) const
-	{
-		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
-		                     "no lambda for explicit point");
-		if (point_type() == PointType::SSI)
-			return SSI().getFilteredLambda(lx, ly, lz, d, mv);
-		else if (point_type() == PointType::LPI)
-			return LPI().getFilteredLambda(lx, ly, lz, d, mv);
-		else // if (point_type() == PointType::TPI)
-			return TPI().getFilteredLambda(lx, ly, lz, d, mv);
-	}
-
+	/**
+	 * @brief Get the Lambda values represented by interval numbers.
+	 * @return true if the sign of d is reliable.
+	 */
 	template <typename _IT = IT,
 	          typename     = std::enable_if_t<!std::is_void_v<_IT>>>
 	bool getIntervalLambda(_IT &lx, _IT &ly, _IT &lz, _IT &d) const
@@ -183,6 +146,9 @@ public: /* get lambda values from implicit points ****************************/
 			return TPI().getIntervalLambda(lx, ly, lz, d);
 	}
 
+	/**
+	 * @brief Get the Lambda values represented by exact numbers.
+	 */
 	template <typename _ET = ET,
 	          typename     = std::enable_if_t<!std::is_void_v<_ET>>>
 	void getExactLambda(_ET &lx, _ET &ly, _ET &lz, _ET &d) const
@@ -197,6 +163,9 @@ public: /* get lambda values from implicit points ****************************/
 			TPI().getExactLambda(lx, ly, lz, d);
 	}
 
+	/**
+	 * @brief Get the Lambda values represented by expansion numbers.
+	 */
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
 	                        int &lz_len, FT **d, int &d_len) const
 	{
@@ -209,89 +178,51 @@ public: /* get lambda values from implicit points ****************************/
 		else // if (point_type() == PointType::TPI)
 			TPI().getExpansionLambda(lx, lx_len, ly, ly_len, lz, lz_len, d, d_len);
 	}
-#elif defined(OMC_OFFSET_PRED)
-	bool getFilteredLambda(FT &lx, FT &ly, FT &lz, FT &d, FT &bx, FT &by, FT &bz,
-	                       FT &mv) const
-	{
-		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
-		                     "no lambda for explicit point");
-		if (point_type() == PointType::SSI)
-			return SSI().getFilteredLambda(lx, ly, lz, d, bx, by, bz, mv);
-		else if (point_type() == PointType::LPI)
-			return LPI().getFilteredLambda(lx, ly, lz, d, bx, by, bz, mv);
-		else /*if (point_type() == PointType::TPI)*/
-			return TPI().getFilteredLambda(lx, ly, lz, d, bx, by, bz, mv);
-	}
 
-	template <typename _IT = IT,
-	          typename     = std::enable_if_t<!std::is_void_v<_IT>>>
-	bool getIntervalLambda(_IT &lx, _IT &ly, _IT &lz, _IT &d, _IT &bx, _IT &by,
-	                       _IT &bz) const
+public: /* Convert to other point types ************************************/
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param e the explicit point to store the result.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 */
+	void get_explicit(EP &e, bool aeap = false) const
 	{
-		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
-		                     "no lambda for explicit point");
-		if (point_type() == PointType::SSI)
-			return SSI().getIntervalLambda(lx, ly, lz, d, bx, by, bz);
+		if (point_type() == PointType::Explicit)
+			e = EXP();
+		else if (point_type() == PointType::SSI)
+			SSI().get_explicit(e, aeap);
 		else if (point_type() == PointType::LPI)
-			return LPI().getIntervalLambda(lx, ly, lz, d, bx, by, bz);
-		else /*if (point_type() == PointType::TPI)*/
-			return TPI().getIntervalLambda(lx, ly, lz, d, bx, by, bz);
-	}
-
-	template <typename _ET = ET,
-	          typename     = std::enable_if_t<!std::is_void_v<_ET>>>
-	void getExactLambda(_ET &lx, _ET &ly, _ET &lz, _ET &d, _ET &bx, _ET &by,
-	                    _ET &bz) const
-	{
-		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
-		                     "no lambda for explicit point");
-		if (point_type() == PointType::SSI)
-			SSI().getExactLambda(lx, ly, lz, d, bx, by, bz);
-		else if (point_type() == PointType::LPI)
-			LPI().getExactLambda(lx, ly, lz, d, bx, by, bz);
+			LPI().get_explicit(e, aeap);
 		else if (point_type() == PointType::TPI)
-			TPI().getExactLambda(lx, ly, lz, d, bx, by, bz);
+			TPI().get_explicit(e, aeap);
 	}
 
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len, FT &bx, FT &by,
-	                        FT &bz) const
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 * @return the explicit point.
+	 */
+	EP to_explicit(bool aeap = false) const
 	{
-		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
-		                     "no lambda for explicit point");
-		// clang-format off
-		if (point_type() == PointType::SSI)
-			SSI().getExpansionLambda(lx, lx_len, ly, ly_len, lz, lz_len, d, d_len, bx, by, bz);
-		else if (point_type() == PointType::LPI)
-			LPI().getExpansionLambda(lx, lx_len, ly, ly_len, lz, lz_len, d, d_len, bx, by, bz);
-		else if (point_type() == PointType::TPI)
-			TPI().getExpansionLambda(lx, lx_len, ly, ly_len, lz, lz_len, d, d_len, bx, by, bz);
-		// clang-format on
-	}
-#endif
-
-	FT getIndirectMaxVar() const
-	{
-		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
-		                     "no lambda for explicit point");
-		if (point_type() == PointType::SSI)
-			return SSI().getIndirectMaxVar();
-		else if (point_type() == PointType::LPI)
-			return LPI().getIndirectMaxVar();
-		else /*if (point_type() == PointType::TPI)*/
-			return TPI().getIndirectMaxVar();
+		EP e;
+		get_explicit(e, aeap);
+		return e;
 	}
 
-	FT getOffsetMaxVar() const
+	/**
+	 * @brief Get approximate values on all dimensions of this generic point.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 */
+	void get_coordinates(FT &x, FT &y, FT &z, bool aeap = false) const
 	{
-		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
-		                     "no lambda for explicit point");
-		if (point_type() == PointType::SSI)
-			return SSI().getOffsetMaxVar();
-		else if (point_type() == PointType::LPI)
-			return LPI().getOffsetMaxVar();
-		else /*if (point_type() == PointType::TPI)*/
-			return TPI().getOffsetMaxVar();
+		EP e_;
+		get_explicit(e_, aeap);
+		x = e_.x();
+		y = e_.y();
+		z = e_.z();
 	}
 
 public:

@@ -45,7 +45,7 @@ public:
 
 	EP lower_bound(const GP &gp)
 	{
-		if (gp.is_Explicit())
+		if (gp.is_explicit())
 		{
 			return gp.to_Explicit();
 		}
@@ -60,7 +60,7 @@ public:
 
 	EP upper_bound(const GP &gp)
 	{
-		if (gp.is_Explicit())
+		if (gp.is_explicit())
 		{
 			return gp.to_Explicit();
 		}
@@ -83,42 +83,30 @@ public:
 
 	EP lower_bound(const GP &gp)
 	{
-		if (gp.is_Explicit())
+		if (gp.is_explicit())
 		{
 			return gp.to_Explicit();
 		}
 		else
 		{
-#if defined(OMC_INDIRECT_PRED)
 			IT lx, ly, lz, d;
 			gp.getIntervalLambda(lx, ly, lz, d);
 			IT x = lx / d, y = ly / d, z = lz / d;
-#else
-			IT lx, ly, lz, d, bx, by, bz;
-			gp.getIntervalLambda(lx, ly, lz, d, bx, by, bz);
-			IT x = lx / d + bx, y = ly / d + by, z = lz / d + bz;
-#endif
 			return EP(x.inf(), y.inf(), z.inf());
 		}
 	}
 
 	EP upper_bound(const GP &gp)
 	{
-		if (gp.is_Explicit())
+		if (gp.is_explicit())
 		{
 			return gp.to_Explicit();
 		}
 		else
 		{
-#if defined(OMC_INDIRECT_PRED)
 			IT lx, ly, lz, d;
 			gp.getIntervalLambda(lx, ly, lz, d);
 			IT x = lx / d, y = ly / d, z = lz / d;
-#else
-			IT lx, ly, lz, d, bx, by, bz;
-			gp.getIntervalLambda(lx, ly, lz, d, bx, by, bz);
-			IT x = lx / d + bx, y = ly / d + by, z = lz / d + bz;
-#endif
 			return EP(x.sup(), y.sup(), z.sup());
 		}
 	}

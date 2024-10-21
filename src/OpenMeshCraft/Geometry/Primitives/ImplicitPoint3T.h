@@ -1,43 +1,57 @@
 #pragma once
 
+#include "ImplicitPoints/GlobalCachedValues.h"
+
 #include "ExplicitPoint3T.h"
 #include "GenericPoint3T.h"
-#include "GlobalCachedValues.h"
 
+#include "OpenMeshCraft/Geometry/Utils.h"
 #include "OpenMeshCraft/NumberTypes/ExpansionObject.h"
 
 #include <memory>
 
 namespace OMC {
 
-/// @brief Implicit point defined by the intersection of two coplanar segments
-/// in 3D.
+/**
+ * @brief Implicit exact 3D point defined by the intersection of two lines.
+ * Two lines (segments) are defined by two endpoints respectively.
+ *
+ * The point has a homogeneous representation (lx, ly, lz, d), which defines the
+ * coordinates of the point as (x, y, z) = (lx, ly, lz) / d.
+ *
+ * The homogeneous representation avoids the division operation, which enables
+ * efficient exact arithmetic operations.
+ */
 template <typename IT_, typename ET_>
 class ImplicitPoint3T_SSI : public GenericPoint3T<IT_, ET_>
 {
 public: /* Types *************************************************************/
-	using FT = double;
-	using IT = IT_;
-	using ET = ET_;
+	using FT = double; ///< floating point type
+	using IT = IT_;    ///< interval type
+	using ET = ET_;    ///< exact type
 
 	using EP = ExplicitPoint3T<IT, ET>;
 	using IP = ImplicitPoint3T_SSI<IT, ET>;
 	using GP = GenericPoint3T<IT, ET>;
 
+	/// An enum class to indicate the type of the point.
 	using PointType = typename GP::PointType;
 
-	using GCV = GlobalCachedValues<IT, ET, OnePointCachedValues3<IT, ET>>;
-
-public: /* functions about types *********************************************/
-	// Calculates an explicit approximation of the implicit point.
-	void get_Explicit(EP &e) const;
-	EP   to_Explicit() const;
+	/// A class to store cached values for one point.
+	using GCV = GlobalCachedValues<OnePointCachedValues3<IT, ET>>;
 
 public: /* Constructors ******************************************************/
-	/// @brief init SSI point with segment(a,b) and segment(p,q)
+	/// @brief default constructor
 	ImplicitPoint3T_SSI() noexcept;
+
+	/**
+	 * @brief init SSI point with segment(a, b) and segment(p, q)
+	 * @param _plane The 2D plane where the projection of two segments are not
+	 * degenerate.
+	 */
 	ImplicitPoint3T_SSI(const EP &_a, const EP &_b, const EP &_p, const EP &_q,
 	                    int _plane) noexcept;
+
 	~ImplicitPoint3T_SSI() noexcept;
 
 	ImplicitPoint3T_SSI(const IP &rhs) noexcept;
@@ -53,70 +67,99 @@ public: /* Members ***********************************************************/
 	const EP &Q() const { return *iq; }
 
 public: /* Lambdas ***********************************************************/
-#if defined(OMC_INDIRECT_PRED)
-	bool getFilteredLambda(FT &lx, FT &ly, FT &lz, FT &d, FT &mv) const;
+	/**
+	 * @brief Get the Lambda values represented by interval numbers.
+	 * @return true if the sign of d is reliable.
+	 */
 	bool getIntervalLambda(IT &lx, IT &ly, IT &lz, IT &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by exact numbers.
+	 */
 	void getExactLambda(ET &lx, ET &ly, ET &lz, ET &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by expansion numbers.
+	 */
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
 	                        int &lz_len, FT **d, int &d_len) const;
-#elif defined(OMC_OFFSET_PRED)
-	// clang-format off
-	bool getFilteredLambda(FT &lx, FT &ly, FT &lz, FT &d, FT &bx, FT &by, FT &bz, FT &mv) const;
-	bool getIntervalLambda(IT &lx, IT &ly, IT &lz, IT &d, IT &bx, IT &by, IT &bz) const;
-	void getExactLambda(ET &lx, ET &ly, ET &lz, ET &d, ET &bx, ET &by, ET &bz) const;
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len, FT &bx, FT &by, FT &bz) const;
-	// clang-format on
-#endif
 
-	FT getIndirectMaxVar() const;
-	FT getOffsetMaxVar() const;
+public: /* convert other points **********************************************/
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param e the explicit point to store the result.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 */
+	void get_explicit(EP &e, bool aeap = false) const;
 
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 * @return the explicit point.
+	 */
+	EP to_explicit(bool aeap = false) const;
+
+public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
 
 private:
-	const EP *ia, *ib; // The first segment AB
-	const EP *ip, *iq; // The second segment PQ
-	// The 2D plane where two segments are not degenerate.
-	// Its value means the index of max component of plane's normal.
-	// plane == 0 -> YZ plane;
-	// plane == 1 -> ZX plane;
-	// plane == 2 -> XY plane.
-	int       plane;
-#ifdef OMC_CACHE_SSF
-	FT m_lx, m_ly, m_lz, m_ld, m_maxvar;
+	const EP *ia, *ib; ///< The first segment AB
+	const EP *ip, *iq; ///< The second segment PQ
+
+	/// The 2D plane where two segments are not degenerate.
+	/// Its value means the index of max component of plane's normal.
+	/// plane == 0 -> YZ plane;
+	/// plane == 1 -> ZX plane;
+	/// plane == 2 -> XY plane.
+	int plane;
+
+#ifdef OMC_CACHE_DF
+	IT m_lx, m_ly, m_lz, m_d;
 #endif
 
+	/// global cached lambda values
 	static GCV global_cached_values;
 };
 
-/// @brief Implicit point defined by the intersection of a line and a plane
+/**
+ * @brief Implicit point defined by the intersection of a line and a plane.
+ * The line is defined by a segment with two endpoints, and the plane is defined
+ * by a triangle with three points.
+ *
+ * The point has a homogeneous representation (lx, ly, lz, d), which defines the
+ * coordinates of the point as (x, y, z) = (lx, ly, lz) / d.
+ *
+ * The homogeneous representation avoids the division operation, which enables
+ * efficient exact arithmetic operations.
+ */
 template <typename IT_, typename ET_>
 class ImplicitPoint3T_LPI : public GenericPoint3T<IT_, ET_>
 {
 public: /* Types *************************************************************/
-	using FT = double;
-	using IT = IT_;
-	using ET = ET_;
+	using FT = double; ///< floating point type
+	using IT = IT_;    ///< interval type
+	using ET = ET_;    ///< exact type
 
 	using EP = ExplicitPoint3T<IT, ET>;
 	using IP = ImplicitPoint3T_LPI<IT, ET>;
 	using GP = GenericPoint3T<IT, ET>;
 
+	/// An enum class to indicate the type of the point.
 	using PointType = typename GP::PointType;
 
-	using GCV = GlobalCachedValues<IT, ET, OnePointCachedValues3<IT, ET>>;
-
-public: /* functions about types *********************************************/
-	// Calculates an explicit approximation of the implicit point.
-	void get_Explicit(EP &e) const;
-	EP   to_Explicit() const;
+	/// A class to store cached values for one point.
+	using GCV = GlobalCachedValues<OnePointCachedValues3<IT, ET>>;
 
 public: /* Constructors ******************************************************/
-	/// @brief init LPI point with line(p,q) and plane(r,s,t)
+	/// @brief default constructor
 	ImplicitPoint3T_LPI() noexcept;
+
+	/// @brief init LPI point with line(p,q) and plane(r,s,t)
 	ImplicitPoint3T_LPI(const EP &_p, const EP &_q, const EP &_r, const EP &_s,
 	                    const EP &_t) noexcept;
+
 	~ImplicitPoint3T_LPI() noexcept;
 
 	ImplicitPoint3T_LPI(const IP &rhs) noexcept;
@@ -133,66 +176,92 @@ public: /* Members ***********************************************************/
 	const EP &T() const { return *it; }
 
 public: /* Lambdas ***********************************************************/
-#if defined(OMC_INDIRECT_PRED)
-	bool getFilteredLambda(FT &lx, FT &ly, FT &lz, FT &d, FT &mv) const;
+	/**
+	 * @brief Get the Lambda values represented by interval numbers.
+	 * @return true if the sign of d is reliable.
+	 */
 	bool getIntervalLambda(IT &lx, IT &ly, IT &lz, IT &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by exact numbers.
+	 */
 	void getExactLambda(ET &lx, ET &ly, ET &lz, ET &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by expansion numbers.
+	 */
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
 	                        int &lz_len, FT **d, int &d_len) const;
-#elif defined(OMC_OFFSET_PRED)
-	bool getFilteredLambda(FT &lx, FT &ly, FT &lz, FT &d, FT &bx, FT &by, FT &bz,
-	                       FT &mv) const;
-	bool getIntervalLambda(IT &lx, IT &ly, IT &lz, IT &d, IT &bx, IT &by,
-	                       IT &bz) const;
-	void getExactLambda(ET &lx, ET &ly, ET &lz, ET &d, ET &bx, ET &by,
-	                    ET &bz) const;
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len, FT &bx, FT &by,
-	                        FT &bz) const;
-#endif
 
-	FT getIndirectMaxVar() const;
-	FT getOffsetMaxVar() const;
+public: /* convert other points **********************************************/
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param e the explicit point to store the result.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 */
+	void get_explicit(EP &e, bool aeap = false) const;
 
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 * @return the explicit point.
+	 */
+	EP to_explicit(bool aeap = false) const;
+
+public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
 
 private:
-	const EP *ip, *iq;      // The line
-	const EP *ir, *is, *it; // The plane
-#ifdef OMC_CACHE_SSF
-	FT m_lx, m_ly, m_lz, m_ld, m_maxvar;
+	const EP *ip, *iq;      ///< The line PQ
+	const EP *ir, *is, *it; ///< The plane RST
+
+#ifdef OMC_CACHE_DF
+	IT m_lx, m_ly, m_lz, m_d;
 #endif
 
+	/// global cached lambda values
 	static GCV global_cached_values;
 };
 
-/// @brief Implicit point defined by the intersection of three planes
+/**
+ * @brief Implicit exact 3D point defined by the intersection of three planes.
+ * Three planes (triangles) are defined by three endpoints respectively.
+ *
+ * The point has a homogeneous representation (lx, ly, lz, d), which defines the
+ * coordinates of the point as (x, y, z) = (lx, ly, lz) / d.
+ *
+ * The homogeneous representation avoids the division operation, which enables
+ * efficient exact arithmetic operations.
+ */
 template <typename IT_, typename ET_>
 class ImplicitPoint3T_TPI : public GenericPoint3T<IT_, ET_>
 {
 public: /* Types *************************************************************/
-	using FT = double;
-	using IT = IT_;
-	using ET = ET_;
+	using FT = double; ///< floating point type
+	using IT = IT_;    ///< interval type
+	using ET = ET_;    ///< exact type
 
 	using EP = ExplicitPoint3T<IT, ET>;
 	using IP = ImplicitPoint3T_TPI<IT, ET>;
 	using GP = GenericPoint3T<IT, ET>;
 
+	/// An enum class to indicate the type of the point.
 	using PointType = typename GP::PointType;
 
-	using GCV = GlobalCachedValues<IT, ET, OnePointCachedValues3<IT, ET>>;
-
-public: /* functions about types *********************************************/
-	// Calculates an explicit approximation of the implicit point.
-	void get_Explicit(EP &e) const;
-	EP   to_Explicit() const;
+	/// A class to store cached values for one point.
+	using GCV = GlobalCachedValues<OnePointCachedValues3<IT, ET>>;
 
 public: /* Constructors ******************************************************/
+	/// @brief default constructor
 	ImplicitPoint3T_TPI() noexcept;
+
+	/// @brief init TPI point with planes (v1,v2,v3), (w1,w2,w3), (u1,u2,u3).
 	ImplicitPoint3T_TPI(const EP &_v1, const EP &_v2, const EP &_v3,
 	                    const EP &_w1, const EP &_w2, const EP &_w3,
 	                    const EP &_u1, const EP &_u2, const EP &_u3) noexcept;
+
 	~ImplicitPoint3T_TPI() noexcept;
 
 	ImplicitPoint3T_TPI(const IP &rhs) noexcept;
@@ -213,35 +282,53 @@ public: /* Members ***********************************************************/
 	const EP &U3() const { return *iu3; }
 
 public: /* Lambdas ***********************************************************/
-#if defined(OMC_INDIRECT_PRED)
-	bool getFilteredLambda(FT &lx, FT &ly, FT &lz, FT &d, FT &mv) const;
+	/**
+	 * @brief Get the Lambda values represented by interval numbers.
+	 * @return true if the sign of d is reliable.
+	 */
 	bool getIntervalLambda(IT &lx, IT &ly, IT &lz, IT &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by exact numbers.
+	 */
 	void getExactLambda(ET &lx, ET &ly, ET &lz, ET &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by expansion numbers.
+	 */
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
 	                        int &lz_len, FT **d, int &d_len) const;
-#elif defined(OMC_OFFSET_PRED)
-	// clang-format off
-	bool getFilteredLambda(FT &lx, FT &ly, FT &lz, FT &d, FT &bx, FT &by, FT &bz, FT &mv) const;
-	bool getIntervalLambda(IT &lx, IT &ly, IT &lz, IT &d, IT &bx, IT &by, IT &bz) const;
-	void getExactLambda(ET &lx, ET &ly, ET &lz, ET &d, ET &bx, ET& by, ET &bz) const;
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len, FT &bx, FT &by, FT &bz) const;
-	// clang-format on
-#endif
 
-	FT getIndirectMaxVar() const;
-	FT getOffsetMaxVar() const;
+public: /* functions about types *********************************************/
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param e the explicit point to store the result.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 */
+	void get_explicit(EP &e, bool aeap = false) const;
 
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 * @return the explicit point.
+	 */
+	EP to_explicit(bool aeap = false) const;
+
+public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
 
 private:
-	const EP *iv1, *iv2, *iv3; // Plane 1
-	const EP *iw1, *iw2, *iw3; // Plane 2
-	const EP *iu1, *iu2, *iu3; // Plane 3
-#ifdef OMC_CACHE_SSF
-	FT m_lx, m_ly, m_lz, m_ld, m_maxvar;
+	const EP *iv1, *iv2, *iv3; ///< Plane 1
+	const EP *iw1, *iw2, *iw3; ///< Plane 2
+	const EP *iu1, *iu2, *iu3; ///< Plane 3
+
+#ifdef OMC_CACHE_DF
+	IT m_lx, m_ly, m_lz, m_d;
 #endif
 
+	/// global cached lambda values
 	static GCV global_cached_values;
 };
 
@@ -297,7 +384,7 @@ inline void normalizeLambda3D(double *lx, int &lxl, double *ly, int &lyl,
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "ImplicitPoint3T_SSI.inl"
-	#include "ImplicitPoint3T_LPI.inl"
-	#include "ImplicitPoint3T_TPI.inl"
+	#include "ImplicitPoints/ImplicitPoint3T_SSI.inl"
+	#include "ImplicitPoints/ImplicitPoint3T_LPI.inl"
+	#include "ImplicitPoints/ImplicitPoint3T_TPI.inl"
 #endif

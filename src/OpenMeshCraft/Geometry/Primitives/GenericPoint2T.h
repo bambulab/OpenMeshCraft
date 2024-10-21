@@ -8,11 +8,13 @@
 
 namespace OMC {
 
+/***** Forward declarations ******/
 template <typename IT, typename ET>
 class ExplicitPoint2T;
 
 template <typename IT, typename ET>
 class ImplicitPoint2T_SSI;
+/*** Forward declarations end ***/
 
 /// @brief the generic point of 2D exact implicit and explicit points
 template <typename IT, typename ET>
@@ -25,76 +27,17 @@ public: /* types *************************************************************/
 	using EP     = ExplicitPoint2T<IT, ET>;
 	using IP_SSI = ImplicitPoint2T_SSI<IT, ET>;
 
-public: /* functions about types **********************************************/
 	enum class PointType : uint32_t
-	{ // make sure simpler point has smaller value
+	{
 		Explicit = 0,
 		Implicit = 1,
 		SSI      = 2
 	};
 
+public: /* members ************************************************************/
+	/// Indicates the point type in derived classes.
+	/// The only member variable in the base class.
 	PointType m_point_type;
-
-	/// @brief get the point type
-	inline PointType point_type() const { return m_point_type; };
-
-	bool is_Explicit() const { return point_type() == PointType::Explicit; }
-	bool is_Implicit() const { return point_type() > PointType::Implicit; }
-	bool is_SSI() const { return point_type() == PointType::SSI; }
-
-	bool has_ssf() const { return true; }
-
-	/// @brief Convert to explicit point, won't check type again.
-	EP &EXP()
-	{
-		OMC_EXPENSIVE_ASSERT(is_Explicit(), "point type mismatch.");
-		return *static_cast<EP *>(this);
-	}
-	/// @brief Convert to explicit point, won't check type again.
-	const EP &EXP() const
-	{
-		OMC_EXPENSIVE_ASSERT(is_Explicit(), "point type mismatch.");
-		return *static_cast<const EP *>(this);
-	}
-
-	/// @brief Convert to SSI point, won't check type again.
-	IP_SSI &SSI()
-	{
-		OMC_EXPENSIVE_ASSERT(is_SSI(), "point type mismatch.");
-		return *static_cast<IP_SSI *>(this);
-	}
-	/// @brief Convert to SSI point, won't check type again.
-	const IP_SSI &SSI() const
-	{
-		OMC_EXPENSIVE_ASSERT(is_SSI(), "point type mismatch.");
-		return *static_cast<const IP_SSI *>(this);
-	}
-
-	/// @brief approximate this generic point by an explicit point
-	void get_Explicit(EP &e) const
-	{
-		if (point_type() == PointType::Explicit)
-			e = EXP();
-		else /*if (point_type() == PointType::SSI)*/
-			SSI().get_Explicit(e);
-	}
-
-	/// @brief approximate this generic point by an explicit point
-	EP to_Explicit() const
-	{
-		EP e;
-		get_Explicit(e);
-		return e;
-	}
-
-	/// @brief Get approximate values on all dimensions of this generic point.
-	void get_coordinates(FT &x, FT &y) const
-	{
-		EP e_;
-		get_Explicit(e_);
-		x = e_.x();
-		y = e_.y();
-	}
 
 public: /* Constructor and Destructor ****************************************/
 	GenericPoint2T(PointType pt)
@@ -112,15 +55,45 @@ protected:
 	/// by delete the pointer to this base class.
 	~GenericPoint2T() = default;
 
-public: /* get lambda values from implicit points ****************************/
-	bool getFilteredLambda(FT &lx, FT &ly, FT &d, FT &mv) const
+public: /* functions about types **********************************************/
+	/// @brief get the point type
+	inline PointType point_type() const { return m_point_type; };
+
+	bool is_explicit() const { return point_type() == PointType::Explicit; }
+	bool is_implicit() const { return point_type() > PointType::Implicit; }
+	bool is_SSI() const { return point_type() == PointType::SSI; }
+
+	/// @brief Convert to explicit point, won't check type again.
+	EP &EXP()
 	{
-		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
-		                     "no lambda for explicit point");
-		/*if (point_type() == PointType::SSI)*/
-		return SSI().getFilteredLambda(lx, ly, d, mv);
+		OMC_EXPENSIVE_ASSERT(is_explicit(), "point type mismatch.");
+		return *static_cast<EP *>(this);
+	}
+	/// @brief Convert to explicit point, won't check type again.
+	const EP &EXP() const
+	{
+		OMC_EXPENSIVE_ASSERT(is_explicit(), "point type mismatch.");
+		return *static_cast<const EP *>(this);
 	}
 
+	/// @brief Convert to SSI point, won't check type again.
+	IP_SSI &SSI()
+	{
+		OMC_EXPENSIVE_ASSERT(is_SSI(), "point type mismatch.");
+		return *static_cast<IP_SSI *>(this);
+	}
+	/// @brief Convert to SSI point, won't check type again.
+	const IP_SSI &SSI() const
+	{
+		OMC_EXPENSIVE_ASSERT(is_SSI(), "point type mismatch.");
+		return *static_cast<const IP_SSI *>(this);
+	}
+
+public: /* get lambda values from implicit points ****************************/
+	/**
+	 * @brief Get the Lambda values represented by interval numbers.
+	 * @return true if the sign of d is reliable.
+	 */
 	template <typename _IT = IT,
 	          typename     = std::enable_if_t<!std::is_void_v<_IT>>>
 	bool getIntervalLambda(_IT &lx, _IT &ly, _IT &d) const
@@ -131,6 +104,9 @@ public: /* get lambda values from implicit points ****************************/
 		return SSI().getIntervalLambda(lx, ly, d);
 	}
 
+	/**
+	 * @brief Get the Lambda values represented by exact numbers.
+	 */
 	template <typename _ET = ET,
 	          typename     = std::enable_if_t<!std::is_void_v<_ET>>>
 	void getExactLambda(_ET &lx, _ET &ly, _ET &d) const
@@ -141,6 +117,9 @@ public: /* get lambda values from implicit points ****************************/
 		return SSI().getExactLambda(lx, ly, d);
 	}
 
+	/**
+	 * @brief Get the Lambda values represented by expansion numbers.
+	 */
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **d,
 	                        int &d_len) const
 	{
@@ -149,6 +128,49 @@ public: /* get lambda values from implicit points ****************************/
 		/*if (point_type() == PointType::SSI)*/
 		return SSI().getExpansionLambda(lx, lx_len, ly, ly_len, d, d_len);
 	}
+
+public: /* Convert to other point types ************************************/
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param e the explicit point to store the result.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 */
+	void get_explicit(EP &e, bool aeap = false) const
+	{
+		if (point_type() == PointType::Explicit)
+			e = EXP();
+		else if (point_type() == PointType::SSI)
+			SSI().get_explicit(e, aeap);
+	}
+
+	/**
+	 * @brief get the explicit reprensentation of the point.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 * @return the explicit point.
+	 */
+	EP to_explicit(bool aeap = false) const
+	{
+		EP e;
+		get_explicit(e, aeap);
+		return e;
+	}
+
+	/**
+	 * @brief Get approximate values on all dimensions of this generic point.
+	 * @param aeap abbreviates "as exact as possible". If true, the exact
+	 * value is calculated and rounded to the nearest floating point number.
+	 */
+	void get_coordinates(FT &x, FT &y, bool aeap = false) const
+	{
+		EP e_;
+		get_explicit(e_, aeap);
+		x = e_.x();
+		y = e_.y();
+	}
+
+
 
 public:
 	/***********************************************************************

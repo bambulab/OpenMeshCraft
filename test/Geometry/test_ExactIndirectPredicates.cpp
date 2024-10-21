@@ -1,6 +1,6 @@
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
 #include "OpenMeshCraft/Geometry/ExactIndirectPredicatesApproxConstructions.h"
-#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicateDetails.h"
+#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicates.h"
 #include "OpenMeshCraft/NumberTypes/FPU.h"
 #include "OpenMeshCraft/Utils/Macros.h"
 

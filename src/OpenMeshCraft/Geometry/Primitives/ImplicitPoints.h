@@ -67,8 +67,8 @@ public:
 	const EP2 &operator()(const GP2 &src) { return src.EXP(); }
 	const EP3 &operator()(const GP3 &src) { return src.EXP(); }
 
-	bool is_explicit(const GP2 &src) { return src.is_Explicit(); }
-	bool is_explicit(const GP3 &src) { return src.is_Explicit(); }
+	bool is_explicit(const GP2 &src) { return src.is_explicit(); }
+	bool is_explicit(const GP3 &src) { return src.is_explicit(); }
 };
 
 template <typename IT, typename ET>
@@ -88,13 +88,13 @@ public:
 	using IP3_TPI = ImplicitPoint3T_TPI<IT, ET>;
 
 public:
-	EP2 operator()(const GP2 &src) { return src.to_Explicit(); }
-	EP3 operator()(const GP3 &src) { return src.to_Explicit(); }
+	EP2 operator()(const GP2 &src) { return src.to_explicit(); }
+	EP3 operator()(const GP3 &src) { return src.to_explicit(); }
 
-	EP2 operator()(const IP2_SSI &src) { return src.to_Explicit(); }
-	EP3 operator()(const IP3_SSI &src) { return src.to_Explicit(); }
-	EP3 operator()(const IP3_LPI &src) { return src.to_Explicit(); }
-	EP3 operator()(const IP3_TPI &src) { return src.to_Explicit(); }
+	EP2 operator()(const IP2_SSI &src) { return src.to_explicit(); }
+	EP3 operator()(const IP3_SSI &src) { return src.to_explicit(); }
+	EP3 operator()(const IP3_LPI &src) { return src.to_explicit(); }
+	EP3 operator()(const IP3_TPI &src) { return src.to_explicit(); }
 };
 
 template <typename IT, typename ET>
@@ -106,19 +106,17 @@ public:
 	using EP2     = ExplicitPoint2T<IT, ET>;
 	using IP2_SSI = ImplicitPoint2T_SSI<IT, ET>;
 
-	IP2_SSI operator()(const GP2 &l11, const GP2 &l12, const GP2 &l21,
-	                   const GP2 &l22)
+	IP2_SSI operator()(const GP2 &a, const GP2 &b, const GP2 &p, const GP2 &q)
 	{
-		OMC_EXPENSIVE_ASSERT((l11.is_Explicit() && l12.is_Explicit() &&
-		                      l21.is_Explicit() && l22.is_Explicit()),
+		OMC_EXPENSIVE_ASSERT((a.is_explicit() && b.is_explicit() &&
+		                      p.is_explicit() && q.is_explicit()),
 		                     "Must initialize implicit point by explicit points.");
-		return IP2_SSI(l11.EXP(), l12.EXP(), l21.EXP(), l22.EXP());
+		return IP2_SSI(a.EXP(), b.EXP(), p.EXP(), q.EXP());
 	}
 
-	IP2_SSI operator()(const EP2 &l11, const EP2 &l12, const EP2 &l21,
-	                   const EP2 &l22)
+	IP2_SSI operator()(const EP2 &a, const EP2 &b, const EP2 &p, const EP2 &q)
 	{
-		return IP2_SSI(l11, l12, l21, l22);
+		return IP2_SSI(a, b, p, q);
 	}
 };
 
@@ -135,8 +133,8 @@ public:
 	IP3_SSI operator()(const GP3 &a, const GP3 &b, const GP3 &p, const GP3 &q,
 	                   int plane)
 	{
-		OMC_EXPENSIVE_ASSERT(p.is_Explicit() && q.is_Explicit() &&
-		                       a.is_Explicit() && b.is_Explicit(),
+		OMC_EXPENSIVE_ASSERT(p.is_explicit() && q.is_explicit() &&
+		                       a.is_explicit() && b.is_explicit(),
 		                     "Must initialize implicit point by explicit points.");
 		OMC_EXPENSIVE_ASSERT(plane >= 0 && plane <= 2, "wrong plane.");
 		return IP3_SSI(a.EXP(), b.EXP(), p.EXP(), q.EXP(), plane);
@@ -163,10 +161,10 @@ public:
 	IP3_LPI operator()(const GP3 &p, const GP3 &q, const GP3 &r, const GP3 &s,
 	                   const GP3 &t)
 	{
-		OMC_EXPENSIVE_ASSERT(
-		  (p.is_Explicit() && q.is_Explicit() && r.is_Explicit() &&
-		   s.is_Explicit() && t.is_Explicit()),
-		  "Must initialize implicit point by explicit points.");
+		OMC_EXPENSIVE_ASSERT((p.is_explicit() && q.is_explicit() &&
+		                      r.is_explicit() && s.is_explicit() &&
+		                      t.is_explicit()),
+		                     "Must initialize implicit point by explicit points.");
 		return IP3_LPI(p.EXP(), q.EXP(), r.EXP(), s.EXP(), t.EXP());
 	}
 
@@ -191,9 +189,9 @@ public:
 	                   const GP3 &u3)
 	{
 		OMC_EXPENSIVE_ASSERT(
-		  (v1.is_Explicit() && v2.is_Explicit() && v3.is_Explicit() &&
-		   w1.is_Explicit() && w2.is_Explicit() && w3.is_Explicit() &&
-		   u1.is_Explicit() && u2.is_Explicit() && u3.is_Explicit()),
+		  (v1.is_explicit() && v2.is_explicit() && v3.is_explicit() &&
+		   w1.is_explicit() && w2.is_explicit() && w3.is_explicit() &&
+		   u1.is_explicit() && u2.is_explicit() && u3.is_explicit()),
 		  "Must initialize implicit point by explicit points.");
 		return IP3_TPI(v1.EXP(), v2.EXP(), v3.EXP(), w1.EXP(), w2.EXP(), w3.EXP(),
 		               u1.EXP(), u2.EXP(), u3.EXP());

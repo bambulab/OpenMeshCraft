@@ -2,7 +2,7 @@
 #include "OpenMeshCraft/Geometry/Intersection/Triangle3_Point3.h"
 #include "OpenMeshCraft/Geometry/Intersection/Triangle3_Segment3.h"
 #include "OpenMeshCraft/Geometry/Intersection/Triangle3_Triangle3.h"
-#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicateDetails.h"
+#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicates.h"
 #include "OpenMeshCraft/NumberTypes/FPU.h"
 #include "OpenMeshCraft/Utils/Macros.h"
 

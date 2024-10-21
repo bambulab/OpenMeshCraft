@@ -62,7 +62,7 @@ struct TriangleSoup<Traits>::EdgeComparator
 	}
 	bool operator()(const GPoint &lhs, const GPoint &rhs) const
 	{
-		if (!lhs.is_Explicit() && lhs.point_type() == rhs.point_type())
+		if (!lhs.is_explicit() && lhs.point_type() == rhs.point_type())
 		{ // lhs and rhs are both implicit points, compare topology first.
 			if (lhs.is_SSI())
 			{
