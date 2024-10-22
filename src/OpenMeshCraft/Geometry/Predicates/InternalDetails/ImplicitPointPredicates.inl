@@ -1,9 +1,11 @@
 #pragma once
-#include "ImplicitPointPredicates.h"
-#include "IndirectDefinitions.h"
+
+#include "OpenMeshCraft/Geometry/Predicates/IndirectDefinitions.h"
 
 #include "OpenMeshCraft/NumberTypes/ExpansionObject.h"
 #include "OpenMeshCraft/NumberTypes/IntervalNumber.h"
+
+#include "OpenMeshCraft/Utils/Macros.h"
 
 namespace OMC {
 

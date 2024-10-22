@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenMeshCraft/Geometry/Predicates/ImplicitPointPredicates.h"
+#include "OpenMeshCraft/Geometry/Predicates/InternalDetails/ImplicitPointPredicates.inl"
 #include "OpenMeshCraft/Geometry/Primitives/ImplicitPoint2T.h"
 
 #include <memory>
