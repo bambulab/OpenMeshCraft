@@ -1,8 +1,13 @@
-// Sign of (p-q).dot(r-s)
 explicitPoint3D(p:px,py,pz)
 explicitPoint3D(r:rx,ry,rz)
 explicitPoint3D(q:qx,qy,qz)
 explicitPoint3D(s:sx,sy,sz)
+
+// p, r, q and s form two vectors (p-q) and (r-s).
+// dotProductSign2D: (p-q) dot (r-s).
+
+//   (p-q) dot (r-s)
+// = (px - qx)(rx - sx) + (py - qy)(ry - sy) + (pz - qz)(rz - sz)
 
 lx = px - qx
 ly = py - qy

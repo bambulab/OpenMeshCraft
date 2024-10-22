@@ -111,7 +111,7 @@ void ImplicitPoint2T_SSI<IT, ET>::getExactLambda(ET &lx, ET &ly, ET &d) const
 	// if lambda values are cached, return them
 	if (gcv_enabled && cv->exact_cached)
 	{
-		lx = cv->exact_lx, ly = cv->exact_ly, d = cv->exact_d;
+		lx = *cv->exact_lx, ly = *cv->exact_ly, d = *cv->exact_d;
 		return;
 	}
 

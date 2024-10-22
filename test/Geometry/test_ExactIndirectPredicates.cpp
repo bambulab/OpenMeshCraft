@@ -17,7 +17,7 @@
 #include <execution>
 
 // #define CHECK_EACH
-#if 0
+
 class test_ExactIndirectPredicates : public testing::Test
 {
 protected:
@@ -27,11 +27,11 @@ protected:
 	using Orient2D           = EIAC::Orient2D;
 	using Orient3D           = EIAC::Orient3D;
 	using OrientOn2D         = EIAC::OrientOn2D;
-	using CollinearPoints3D  = EIAC::CollinearPoints3D;
 	using LessThan3D         = EIAC::LessThan3D;
 	using MaxCompInTriNormal = EIAC::MaxCompInTriNormal;
 	using InCircle           = EIAC::InCircle;
 	using InSphere           = EIAC::InSphere;
+	using CollinearPoints3   = EIAC::CollinearPoints3;
 
 	using FPnt2 = OMC::Point2T<double>;
 	using FPnt3 = OMC::Point3T<double>;
@@ -91,18 +91,18 @@ TEST_F(test_ExactIndirectPredicates, PlainPredicates2D)
 
 	// Calculate predicates on them
 	int  cgal_dummy = 0;
-	auto start = OMC::Logger::elapse_reset();
+	auto start      = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
-		cgal_dummy += EKIC::Orientation_2()(ref_points[3 * i], ref_points[3 * i + 1],
-		                               ref_points[3 * i + 2]);
+		cgal_dummy += EKIC::Orientation_2()(
+		  ref_points[3 * i], ref_points[3 * i + 1], ref_points[3 * i + 2]);
 	}
 	std::cout << "CGAL elapsed time: " << OMC::Logger::elapsed(start).count()
 	          << "s\n";
 	std::cout << "Dummy sum: " << cgal_dummy << "\n";
 
 	int ours_dummy = 0;
-	start = OMC::Logger::elapse_reset();
+	start          = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
 		OMC::Sign sign = Orient2D()(our_points[3 * i], our_points[3 * i + 1],
@@ -155,19 +155,19 @@ TEST_F(test_ExactIndirectPredicates, PlainPredicates3D)
 	double *degn_groups = atp + num_random_groups * 12;
 	for (size_t i = 0; i < num_degn_groups; i++)
 	{
-		group[0]       = randomUnitDouble();
-		group[1]       = randomUnitDouble();
-		group[2]       = randomUnitDouble();
-		group[3]       = randomUnitDouble();
-		group[4]       = randomUnitDouble();
-		group[5]       = randomUnitDouble();
-		group[6]       = randomUnitDouble();
-		group[7]       = randomUnitDouble();
-		group[8]       = randomUnitDouble();
+		group[0]     = randomUnitDouble();
+		group[1]     = randomUnitDouble();
+		group[2]     = randomUnitDouble();
+		group[3]     = randomUnitDouble();
+		group[4]     = randomUnitDouble();
+		group[5]     = randomUnitDouble();
+		group[6]     = randomUnitDouble();
+		group[7]     = randomUnitDouble();
+		group[8]     = randomUnitDouble();
 		double delta = randomUnitDouble();
-		group[9]       = group[3] + (group[3] - group[0]) * delta;
-		group[10]      = group[4] + (group[4] - group[1]) * delta;
-		group[11]      = group[5] + (group[5] - group[2]) * delta;
+		group[9]     = group[3] + (group[3] - group[0]) * delta;
+		group[10]    = group[4] + (group[4] - group[1]) * delta;
+		group[11]    = group[5] + (group[5] - group[2]) * delta;
 		for (int j = 0; j < 12; j++)
 			degn_groups[i * 12 + j] = group[j];
 	}
@@ -184,7 +184,7 @@ TEST_F(test_ExactIndirectPredicates, PlainPredicates3D)
 
 	// Calculate predicates on them
 	int  cgal_dummy = 0;
-	auto start = OMC::Logger::elapse_reset();
+	auto start      = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
 		cgal_dummy +=
@@ -196,7 +196,7 @@ TEST_F(test_ExactIndirectPredicates, PlainPredicates3D)
 	std::cout << "Dummy sum: " << cgal_dummy << "\n";
 
 	int ours_dummy = 0;
-	start = OMC::Logger::elapse_reset();
+	start          = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
 		OMC::Sign sign = Orient3D()(our_points[4 * i], our_points[4 * i + 1],
@@ -274,7 +274,7 @@ TEST_F(test_ExactIndirectPredicates, Coincident)
 
 	// Calculate predicates on them
 	int  cgal_dummy = 0;
-	auto start = OMC::Logger::elapse_reset();
+	auto start      = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
 		cgal_dummy += EKIC::Equal_3()(ref_points[2 * i], ref_points[2 * i + 1]);
@@ -285,10 +285,11 @@ TEST_F(test_ExactIndirectPredicates, Coincident)
 
 	// Calculate predicates on them
 	int ours_dummy = 0;
-	start = OMC::Logger::elapse_reset();
+	start          = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
-		ours_dummy += LessThan3D().coincident(our_points[2 * i], our_points[2 * i + 1]);
+		ours_dummy +=
+		  LessThan3D().coincident(our_points[2 * i], our_points[2 * i + 1]);
 	}
 
 	std::cout << "OpenMeshCraft elapsed time: "
@@ -364,22 +365,22 @@ TEST_F(test_ExactIndirectPredicates, Misaligned)
 	}
 
 	// Calculate predicates on them
-	int cgal_dummy      = 0;
-	auto start = OMC::Logger::elapse_reset();
+	int  cgal_dummy = 0;
+	auto start      = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
 		cgal_dummy += !EKIC::Collinear_3()(ref_points[3 * i], ref_points[3 * i + 1],
-		                              ref_points[3 * i + 2]);
+		                                   ref_points[3 * i + 2]);
 	}
 	std::cout << "CGAL elapsed time: " << OMC::Logger::elapsed(start).count()
 	          << "s\n";
 	std::cout << "Dummy sum: " << cgal_dummy << "\n";
 
 	int ours_dummy = 0;
-	start = OMC::Logger::elapse_reset();
+	start          = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
-		ours_dummy += CollinearPoints3D().misaligned(
+		ours_dummy += CollinearPoints3().misaligned(
 		  our_points[3 * i], our_points[3 * i + 1], our_points[3 * i + 2]);
 	}
 	std::cout << "OpenMeshCraft elapsed time: "
@@ -439,8 +440,8 @@ TEST_F(test_ExactIndirectPredicates, InCircle)
 
 		// not real degenerate
 		const double delta = randomUnitDouble();
-		group[6]             = group[4] + (group[4] - group[1]) * delta;
-		group[7]             = group[5] + (group[5] - group[2]) * delta;
+		group[6]           = group[4] + (group[4] - group[1]) * delta;
+		group[7]           = group[5] + (group[5] - group[2]) * delta;
 
 		for (size_t j = 0; j < 8; j++)
 			degn_groups[i * 8 + j] = group[j];
@@ -458,7 +459,7 @@ TEST_F(test_ExactIndirectPredicates, InCircle)
 
 	// Calculate predicates on them
 	int  cgal_dummy = 0;
-	auto start = OMC::Logger::elapse_reset();
+	auto start      = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
 		cgal_dummy += EKIC::Side_of_oriented_circle_2()(
@@ -471,7 +472,7 @@ TEST_F(test_ExactIndirectPredicates, InCircle)
 	std::cout << "Dummy sum: " << cgal_dummy << "\n";
 
 	int ours_dummy = 0;
-	start = OMC::Logger::elapse_reset();
+	start          = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
 		ours_dummy += static_cast<int>(
@@ -540,9 +541,9 @@ TEST_F(test_ExactIndirectPredicates, InSphere)
 		group[8] = randomUnitDouble();
 
 		const double delta = randomUnitDouble();
-		group[9]             = group[3] + (group[3] - group[0]) * delta;
-		group[10]            = group[4] + (group[4] - group[1]) * delta;
-		group[11]            = group[5] + (group[5] - group[2]) * delta;
+		group[9]           = group[3] + (group[3] - group[0]) * delta;
+		group[10]          = group[4] + (group[4] - group[1]) * delta;
+		group[11]          = group[5] + (group[5] - group[2]) * delta;
 
 		group[12] = randomUnitDouble();
 		group[13] = randomUnitDouble();
@@ -562,11 +563,11 @@ TEST_F(test_ExactIndirectPredicates, InSphere)
 	}
 
 	// Calculate predicates on them
-	int cgal_dummy      = 0;
-	auto start = OMC::Logger::elapse_reset();
+	int  cgal_dummy = 0;
+	auto start      = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
-		cgal_dummy += EKIC::Side_of_oriented_sphere_3()(
+		cgal_dummy += -EKIC::Side_of_oriented_sphere_3()(
 		  ref_points[5 * i], ref_points[5 * i + 1], ref_points[5 * i + 2],
 		  ref_points[5 * i + 3], ref_points[5 * i + 4]);
 	}
@@ -576,7 +577,7 @@ TEST_F(test_ExactIndirectPredicates, InSphere)
 	std::cout << "Dummy sum: " << cgal_dummy << "\n";
 
 	int ours_dummy = 0;
-	start = OMC::Logger::elapse_reset();
+	start          = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
 		ours_dummy += static_cast<int>(InSphere()(
@@ -597,7 +598,7 @@ TEST_F(test_ExactIndirectPredicates, InSphere)
 	  std::execution::seq, indices.begin(), indices.end(),
 	  [&](size_t i)
 	  {
-		  int ref_sign = EKIC::Side_of_oriented_sphere_3()(
+		  int ref_sign = -EKIC::Side_of_oriented_sphere_3()(
 		    ref_points[5 * i], ref_points[5 * i + 1], ref_points[5 * i + 2],
 		    ref_points[5 * i + 3], ref_points[5 * i + 4]);
 
@@ -610,4 +611,3 @@ TEST_F(test_ExactIndirectPredicates, InSphere)
 #endif
 	delete[] atp;
 }
-#endif

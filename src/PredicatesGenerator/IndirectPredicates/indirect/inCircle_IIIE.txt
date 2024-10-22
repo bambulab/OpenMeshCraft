@@ -3,6 +3,8 @@ implicitPoint2D(p2:l2x,l2y,d2)
 implicitPoint2D(p3:l3x,l3y,d3)
 explicitPoint2D(pd:pdx,pdy)
 
+errorDefinition(SSI,S,2:x;3;1024;2.221313410988302e-015;4.000000000000004;y;3;1024;2.221313410988302e-015;4.000000000000004;d;2;1024;8.883952601346225e-016;2.000000000000001)
+
 pdx1 = pdx * d1
 pdy1 = pdy * d1
 adx = l1x - pdx1

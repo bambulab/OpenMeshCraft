@@ -7,26 +7,54 @@ errorDefinition(SSI,S,3:x;3;1024;2.886579864025407e-15;4.000000000000004;y;3;102
 errorDefinition(LPI,L,3:x;4;1024;1.221613955826318e-14;12.00000000000002;y;4;1024;1.221613955826318e-14;12.00000000000002;z;4;1024;1.221613955826318e-14;12.00000000000002;d;3;1024;4.886390771174922e-015;6.000000000000006)
 errorDefinition(TPI,T,3:x;7;1024;2.931951556539587e-013;144.0000000000005;y;7;1024;2.931951556539587e-013;144.0000000000005;z;7;1024;2.931951556539587e-013;144.0000000000005;d;6;1024;8.706837334449009e-014;48.00000000000014)
 
+// p4 is the query point, p1, p2 and p3 form the plane.
+// Assume that d1, d2, d3 and d4 are positive.
+
+// we first calculate determinant(p1, p2, p3, p4)
+// = | p1 1 |
+//   | p2 1 |
+//   | p3 1 |
+//   | p4 1 |
+// = | p1 - p4 |
+//   | p2 - p4 |
+//   | p3 - p4 |
+// expand to (we assume that d1, d2, d3 and d4 are positive)
+//   | d4 * l1 - d1 * l4 |
+//   | d4 * l2 - d2 * l4 |
+//   | d4 * l3 - d3 * l4 |
+// and finally reverse the sign of the determinant.
+
+// -- d1 * l4
 d1p4x = d1 * l4x
 d1p4y = d1 * l4y
 d1p4z = d1 * l4z
+
+// -- d2 * l4
 d2p4x = d2 * l4x
 d2p4y = d2 * l4y
 d2p4z = d2 * l4z
+
+// -- d3 * l4
 d3p4x = d3 * l4x
 d3p4y = d3 * l4y
 d3p4z = d3 * l4z
 
+// -- d4 * l1
 d4l1x = d4 * l1x
 d4l1y = d4 * l1y
 d4l1z = d4 * l1z
+
+// -- d4 * l2
 d4l2x = d4 * l2x
 d4l2y = d4 * l2y
 d4l2z = d4 * l2z
+
+// -- d4 * l3
 d4l3x = d4 * l3x
 d4l3y = d4 * l3y
 d4l3z = d4 * l3z
 
+// -- m = (p1 - p4) cross (p2 - p4)
 p1p4x = d4l1x - d1p4x
 p1p4y = d4l1y - d1p4y
 p1p4z = d4l1z - d1p4z
@@ -37,17 +65,21 @@ p3p4x = d4l3x - d3p4x
 p3p4y = d4l3y - d3p4y
 p3p4z = d4l3z - d3p4z
 
-tmc_a = p1p4x * p2p4y
-tmc_b = p1p4y * p2p4x
-m01 = tmc_a - tmc_b
-tmi_a = p1p4x * p2p4z
-tmi_b = p1p4z * p2p4x
-m02 = tmi_a - tmi_b
-tma_a = p1p4y * p2p4z
-tma_b = p1p4z * p2p4y
-m12 = tma_a - tma_b
+t0 = p1p4x * p2p4y
+t1 = p1p4y * p2p4x
+m01 = t0 - t1
+t2 = p1p4x * p2p4z
+t3 = p1p4z * p2p4x
+m02 = t2 - t3
+t4 = p1p4y * p2p4z
+t5 = p1p4z * p2p4y
+m12 = t4 - t5
+
+// -- m dot (p3 - p4)
 mt1 = m01 * p3p4z
 mt2 = m02 * p3p4y
 mt3 = m12 * p3p4x
+
+// -- reverse sign because we actually calculate a reversed determinant.
 mtt = mt2 - mt1
 m012 = mtt - mt3

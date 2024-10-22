@@ -4,6 +4,21 @@ implicitPoint2D(p3:l3x,l3y,d3)
 
 errorDefinition(SSI,S,2:x;3;1024;2.221313410988302e-015;4.000000000000004;y;3;1024;2.221313410988302e-015;4.000000000000004;d;2;1024;8.883952601346225e-016;2.000000000000001)
 
+// segment/line: p1->p2; query point: p3.
+// orient2D:
+// = | l1x l1y d1 |
+//   | l2x l2y d2 |
+//   | l3x l3y d3 |
+//
+// = (p2 - p1) cross (p3 - p1)
+//
+// = |(l2x / d2 - l1x / d1)  (l2y / d2 - l1y / d1)|
+//   |(l3x / d3 - l1x / d1)  (l3y / d3 - l1y / d1)|
+//
+// = |(l2x * d1 - l1x * d2)  (l2y * d1 - l1y * d2)|
+//   |(l3x * d1 - l1x * d3)  (l3y * d1 - l1y * d3)|
+
+
 a = d1 * l2x
 b = d2 * l1x
 c = d1 * l3y

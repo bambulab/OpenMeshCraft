@@ -165,19 +165,20 @@ public:
  * @brief Orient2D: Orientation of three 2D points.
  * @details Given three points a, b, c, let ab = b-a, ac = c-a.
  *
- * The orientation is the determinant of the matrix formed by ab and ac.
- * The determinant can also be calculated as:
- *     det = cross(ab, ac).
- *
- * The sign of the determinant indicates the orientation, we describe the
- * orientation as the volume of the triangle formed by three points:
- * - ZERO -> three points are collinear;
- * - POSITIVE -> the triangle formed by three points has positive volume;
- * - NEGATIVE -> the triangle formed by three points has negative volume.
- *
  * In general, a and b usually come from a segment/line, and c is the query
  * point, we expect to know the relative position of c with respect to the
  * segment/line.
+ * In another common case, a, b and c come from a triangle, and we expect to
+ * knwo the sign of the triangle area.
+ *
+ * In both cases we determine the sign by calculate `cross(ab, ac)`.
+ * The sign indicates:
+ * - ZERO -> three points are collinear;
+ * - POSITIVE -> left & positive area;
+ * - NEGATIVE -> right & negative area.
+ *
+ * `cross(ab, ac)` is equal to the determinant:
+ *    det(ab, ac) = det(a', b', c') = det(c', a', b')
  */
 TEMPLATE_DECL
 class Orient2D_Indirect
@@ -210,19 +211,29 @@ public:
  * @brief Orient3D: orientation of four 3D points.
  * @details Given four points a, b, c, d, let ab = b-a, ac = c-a, ad = d-a.
  *
- * The orientation is the determinant of the matrix formed by ab, ac, ad.
- * The determinant can also be calculated as:
- *     det = dot(cross(ab, ac), ad).
- *
- * The sign of the determinant indicates the orientation, we describe the
- * orientation as the volume of the tetrahedron formed by four points:
- * - ZERO -> four points are coplanar;
- * - POSITIVE -> the tetrahedron formed by four points has positive volume;
- * - NEGATIVE -> the tetrahedron formed by four points has negative volume.
- *
- * In general, a, b and c usually come from a triangle, and d is the query
+ * In a common case, a, b and c usually come from a triangle, and d is the query
  * point, we expect to know the relative position of d with respect to the
  * triangle.
+ * Triangle normal is calculate as: cross(ab, ac).
+ * We calculate the sign of dot(cross(ab, ac), ad), and determine the
+ * relative position based on this sign:
+ * - POSITIVE -> the normal points to d, and d is above the triangle;
+ * - ZERO -> d is on the triangle;
+ * - NEGATIVE -> d is below the triangle.
+ *
+ * In another common case, a, b, c and d come from a tetrahedron in order, we
+ * expect to know the sign of the tetrahedron volume.
+ * We agree in our lib that the volume is positive if the normal of tri(abc)
+ * points to d.
+ * So, we also calculate the sign of dot(cross(ab, ac), ad).
+ *
+ * The above expression is equal to the determinant:
+ *     det(ab, ac, ad) = -det(a', b', c', d'),
+ * where a' is (a, 1), so as b', c' and d'.
+ *
+ * @note orient3d in other libs (e.g., shewchuk) may calculate
+ * `det(a', b', c', d')` directly. Their signs are exactly opposite to ours.
+ * @todo keep the same sign convention with other libs.
  */
 TEMPLATE_DECL
 class Orient3D_Indirect
@@ -290,6 +301,7 @@ public: /* Separated stages of adaptive precision strategy ******************/
 /**
  * @brief Check 3D points' orientation on 2D orthogonal planes.
  * The 2D orthogonal planes include `xy`, `yz` and `zx` planes.
+ * @details see details in `Orient2D`.
  */
 TEMPLATE_DECL
 class OrientOn2D_Indirect
