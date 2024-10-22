@@ -32,9 +32,9 @@ public: /* Traits **********************************************************/
 
 	using Orient3D           = typename Traits::Orient3D;
 	using OrientOn2D         = typename Traits::OrientOn2D;
-	using CollinearPoints3D  = typename Traits::CollinearPoints3D;
 	using InSphere           = typename Traits::InSphere;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
+	using CollinearPoints3   = typename Traits::CollinearPoints3;
 
 	// clang-format off
 	using Segment3_Point3_DoIntersect        = typename Traits::Segment3_Point3_DoIntersect;

@@ -48,12 +48,12 @@ public:
 	using Orient3D           = typename K::Orient3D;
 	using OrientOn2D         = typename K::OrientOn2D;
 	using LessThan3D         = typename K::LessThan3D;
-	using CollinearPoints3D  = typename K::CollinearPoints3D;
 	using LongestAxis        = typename K::LongestAxis;
 	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
 	using InCircle           = typename K::InCircle;
 	using InSphere           = typename K::InSphere;
 	using DotProduct3D       = typename K::DotProductSign3D;
+	using CollinearPoints3   = typename K::CollinearPoints3;
 
 	using CalcBbox = typename K::CalcBoundingBox3;
 
@@ -98,7 +98,7 @@ public: /* Traits ************************************************************/
 	using Orient3D           = typename Traits::Orient3D;
 	using OrientOn2D         = typename Traits::OrientOn2D;
 	using LessThan3D         = typename Traits::LessThan3D;
-	using CollinearPoints3D  = typename Traits::CollinearPoints3D;
+	using CollinearPoints3   = typename Traits::CollinearPoints3;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
 	using InCircle           = typename Traits::InCircle;
 	using InSphere           = typename Traits::InSphere;

@@ -56,7 +56,7 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
 	{
 		const EPoint &vk = mesh.epnt(k);
 		// Find the third vertex to form a valid triangle
-		if (CollinearPoints3D()(vi, vj, vk))
+		if (CollinearPoints3()(vi, vj, vk))
 			continue;
 		// Find the fourth vertex to form a valid tetrahedron
 		for (l = k + 1; ori == Sign::ZERO && l < n; l++)
@@ -146,7 +146,7 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 			if (off == entering_face) // skip the entering face
 				continue;
 			OMC_EXPENSIVE_ASSERT(
-			  !CollinearPoints3D()(
+			  !CollinearPoints3()(
 			    mesh.epnt(mesh.tetNode(tet + TetMesh::tetON1(off))),
 			    mesh.epnt(mesh.tetNode(tet + TetMesh::tetON2(off))),
 			    mesh.epnt(mesh.tetNode(tet + TetMesh::tetON3(off)))),

@@ -23,10 +23,10 @@ public:
 	using TriangleT    = typename K::Triangle3;
 	using TetrahedronT = typename K::Tetrahedron3;
 
-	using LessThan3D        = typename K::LessThan3D;
-	using OrientOn2D        = typename K::OrientOn2D;
-	using Orient3D          = typename K::Orient3D;
-	using CollinearPoints3D = typename K::CollinearPoints3D;
+	using LessThan3D       = typename K::LessThan3D;
+	using OrientOn2D       = typename K::OrientOn2D;
+	using Orient3D         = typename K::Orient3D;
+	using CollinearPoints3 = typename K::CollinearPoints3;
 
 	using Triangle3_Triangle3_DoInter = Triangle3_Triangle3_Do_Intersect<Kernel>;
 	using Tetrahedron3_Point3_DoInter = Tetrahedron3_Point3_Do_Intersect<Kernel>;

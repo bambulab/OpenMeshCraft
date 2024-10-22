@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IndirectPredicates.h"
+
 #include "InternalDetails/DotProductSign.inl"
 #include "InternalDetails/InCircle.inl"
 #include "InternalDetails/InSphere.inl"
@@ -17,10 +19,15 @@
 
 namespace OMC {
 
+#define TEMPLATE_DECL template <typename FT, typename IT, typename ET>
 #define TP IT, ET // Template Parameters
 #define PntType(p) static_cast<uint32_t>(p.point_type())
 
-template <typename FT, typename IT, typename ET>
+/******************************************************************************/
+/* Dot Product ****************************************************************/
+/******************************************************************************/
+
+TEMPLATE_DECL
 Sign DotProductSign2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
                                                        const PointT &r,
                                                        const PointT &q)
@@ -49,7 +56,7 @@ Sign DotProductSign2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSign2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
                                                        const PointT &r,
                                                        const PointT &q,
@@ -67,7 +74,7 @@ Sign DotProductSign2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSign3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
                                                        const PointT &r,
                                                        const PointT &q)
@@ -95,7 +102,7 @@ Sign DotProductSign3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSign3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
                                                        const PointT &r,
                                                        const PointT &q,
@@ -113,7 +120,7 @@ Sign DotProductSign3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_xy(const PointT &p,
                                                     const PointT &r,
                                                     const PointT &q)
@@ -122,7 +129,7 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_xy(const PointT &p,
 	return Sign::ZERO; // warning killer
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_xy(const PointT &p,
                                                     const PointT &r,
                                                     const PointT &q,
@@ -140,7 +147,7 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_xy(const PointT &p,
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_yz(const PointT &p,
                                                     const PointT &r,
                                                     const PointT &q)
@@ -149,7 +156,7 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_yz(const PointT &p,
 	return Sign::ZERO; // warning killer
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_yz(const PointT &p,
                                                     const PointT &r,
                                                     const PointT &q,
@@ -167,7 +174,7 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_yz(const PointT &p,
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_zx(const PointT &p,
                                                     const PointT &r,
                                                     const PointT &q)
@@ -176,7 +183,7 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_zx(const PointT &p,
 	return Sign::ZERO; // warning killer
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_zx(const PointT &p,
                                                     const PointT &r,
                                                     const PointT &q,
@@ -194,7 +201,61 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_zx(const PointT &p,
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+/******************************************************************************/
+/* Distance *******************************************************************/
+/******************************************************************************/
+
+TEMPLATE_DECL
+Sign SquareDistance2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
+                                                       const PointT &q,
+                                                       FT            sqr_dis)
+{
+	PntArr2 arr = get_pnts_arr2(PntType(p), PntType(q));
+	// SquareDistance is simple now, expand it by hand.
+	switch (arr)
+	{
+	case PntArr2::EE:
+		return squareDistance2D<TP>(p, q, sqr_dis);
+	case PntArr2::EI:
+		return squareDistance2D_IE<TP>(q, p, sqr_dis);
+	case PntArr2::IE:
+		return squareDistance2D_IE<TP>(p, q, sqr_dis);
+	case PntArr2::II:
+		return squareDistance2D_II<TP>(q, p, sqr_dis);
+	default:
+		OMC_ASSERT(false, "SquaredDistance2D - should not happen");
+		return Sign::ZERO; // warning killer
+	}
+}
+
+TEMPLATE_DECL
+Sign SquareDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
+                                                       const PointT &q,
+                                                       FT            sqr_dis)
+{
+	PntArr3 arr = get_pnts_arr3(PntType(p), PntType(q));
+	// SquareDistance is simple now, expand it by hand.
+	switch (arr)
+	{
+	case PntArr3::EE:
+		return squareDistance3D<TP>(p, q, sqr_dis);
+	case PntArr3::EI:
+		return squareDistance3D_IE<TP>(q, p, sqr_dis);
+	case PntArr3::IE:
+		return squareDistance3D_IE<TP>(p, q, sqr_dis);
+	case PntArr3::II:
+		return squareDistance3D_II<TP>(q, p, sqr_dis);
+	default:
+		OMC_ASSERT(false, "SquaredDistance3D - should not happen");
+		return Sign::ZERO; // warning killer
+	}
+}
+
+/******************************************************************************/
+/* Orientation ****************************************************************/
+/******************************************************************************/
+
+TEMPLATE_DECL
 Sign Orient2D_Indirect<FT, IT, ET>::operator()(const PointT &p, const PointT &q,
                                                const PointT &query)
 {
@@ -223,60 +284,451 @@ Sign Orient2D_Indirect<FT, IT, ET>::operator()(const PointT &p, const PointT &q,
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign Orient2D_Indirect<FT, IT, ET>::operator()(const FT *p, const FT *q,
                                                const FT *query)
 {
 	return orient2d(p, q, query);
 }
 
-template <typename FT, typename IT, typename ET>
-Sign SquareDistance2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
-                                                       const PointT &q,
-                                                       FT            sqr_dis)
+TEMPLATE_DECL
+Sign Orient3D_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
+                                               const PointT &c, const PointT &d)
 {
-	PntArr2 arr = get_pnts_arr2(PntType(p), PntType(q));
-	// SquareDistance is simple now, expand it by hand.
+	// Here we implicitly assume that points are 3D. Do not check.
+	// clang-format off
+	int i = a.is_explicit() + b.is_explicit() + c.is_explicit() + d.is_explicit();
+
+	if (i == 4) return orient3d<TP>(a, b, c, d);
+	
+	if (i == 3)
+	{
+		if (!a.is_explicit()) return orient3D_IEEE<TP>(a, b, c, d);
+		if (!b.is_explicit()) return orient3D_IEEE<TP>(b, c, a, d);
+		if (!c.is_explicit()) return orient3D_IEEE<TP>(c, d, a, b);
+		/*if (!d.is_explicit())*/ return orient3D_IEEE<TP>(d, a, c, b);
+	}
+	else if (i == 2)
+	{
+		if (c.is_explicit() && d.is_explicit()) return orient3D_IIEE<TP>(a, b, c, d);
+		if (b.is_explicit() && d.is_explicit()) return orient3D_IIEE<TP>(a, c, d, b);
+		if (a.is_explicit() && d.is_explicit()) return orient3D_IIEE<TP>(b, c, a, d);
+		if (b.is_explicit() && c.is_explicit()) return orient3D_IIEE<TP>(d, a, c, b);
+		if (a.is_explicit() && c.is_explicit()) return orient3D_IIEE<TP>(d, b, a, c);
+		/*if (a.is_explicit() && b.is_explicit())*/ return orient3D_IIEE<TP>(c, d, a, b);
+	}
+	else if (i == 1)
+	{
+		if (d.is_explicit()) return orient3D_IIIE<TP>(a, b, c, d);
+		if (c.is_explicit()) return orient3D_IIIE<TP>(d, b, a, c);
+		if (b.is_explicit()) return orient3D_IIIE<TP>(a, c, d, b);
+		/*if (a.is_explicit())*/ return orient3D_IIIE<TP>(b, d, c, a);
+	}
+	else
+	{
+		return orient3D_IIII<TP>(a, b, c, d);
+	}
+	// clang-format on
+}
+
+TEMPLATE_DECL
+Sign Orient3D_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
+                                               const FT *c, const FT *d)
+{
+	return orient3d(a, b, c, d);
+}
+
+TEMPLATE_DECL
+Sign Orient3D_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
+                                               const FT *c, const PointT &d)
+{
+	if (d.is_explicit())
+		return orient3d(a, b, c, d.data());
+	else
+		return orient3D_IEEE<TP>(d, a[0], a[1], a[2], c[0], c[1], c[2], b[0], b[1],
+		                         b[2]);
+}
+
+TEMPLATE_DECL
+void Orient3D_Indirect<FT, IT, ET>::get_minors(const FT *a, const FT *b,
+                                               const FT *c, FT *minor, FT *perm)
+{
+	orient3d_get_minors(a, b, c, minor, perm);
+}
+
+TEMPLATE_DECL
+Sign Orient3D_Indirect<FT, IT, ET>::with_cached_minors(
+  const FT *pa, const FT *pb, const FT *pc, const FT *pd, const FT *minor,
+  const FT *perm)
+{
+	return orient3d_with_cached_minors(pa, pb, pc, pd, minor, perm);
+}
+
+TEMPLATE_DECL
+Sign Orient3D_Indirect<FT, IT, ET>::filter(const FT *a, const FT *b,
+                                           const FT *c, const FT *d)
+{
+	return orient3d_filtered(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2],
+	                         d[0], d[1], d[2]);
+}
+
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::operator()(const PointT &a,
+                                                 const PointT &b,
+                                                 const PointT &c, int n_max)
+{
+	if (n_max == 0)
+		return on_yz(a, b, c);
+	else if (n_max == 1)
+		return on_zx(a, b, c);
+	else
+		return on_xy(a, b, c);
+}
+
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::on_xy(const PointT &a, const PointT &b,
+                                            const PointT &c)
+{
+	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
+		return orient2dxy<TP>(a, b, c);
+
+	PntArr3 arr = get_pnts_arr3(PntType(a), PntType(b), PntType(c));
+	// cases are simple, expand them by hand.
 	switch (arr)
 	{
-	case PntArr2::EE:
-		return squareDistance2D<TP>(p, q, sqr_dis);
-	case PntArr2::EI:
-		return squareDistance2D_IE<TP>(q, p, sqr_dis);
-	case PntArr2::IE:
-		return squareDistance2D_IE<TP>(p, q, sqr_dis);
-	case PntArr2::II:
-		return squareDistance2D_II<TP>(q, p, sqr_dis);
-	default:
-		OMC_ASSERT(false, "SquaredDistance2D - should not happen");
-		return Sign::ZERO; // warning killer
+	case PntArr3::IEE:
+		return orientOn2Dxy_IEE<TP>(a, b, c);
+	case PntArr3::EIE:
+		return orientOn2Dxy_IEE<TP>(b, c, a);
+	case PntArr3::EEI:
+		return orientOn2Dxy_IEE<TP>(c, a, b);
+	case PntArr3::IIE:
+		return orientOn2Dxy_IIE<TP>(a, b, c);
+	case PntArr3::IEI:
+		return orientOn2Dxy_IIE<TP>(c, a, b);
+	case PntArr3::EII:
+		return orientOn2Dxy_IIE<TP>(b, c, a);
+	default: // PntArr3::III
+		return orientOn2Dxy_III<TP>(a, b, c);
 	}
 }
 
-template <typename FT, typename IT, typename ET>
-Sign SquareDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
-                                                       const PointT &q,
-                                                       FT            sqr_dis)
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::on_yz(const PointT &a, const PointT &b,
+                                            const PointT &c)
 {
-	PntArr3 arr = get_pnts_arr3(PntType(p), PntType(q));
-	// SquareDistance is simple now, expand it by hand.
+	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
+		return orient2dyz<TP>(a, b, c);
+
+	PntArr3 arr = get_pnts_arr3(PntType(a), PntType(b), PntType(c));
+	// cases are simple, expand them by hand.
 	switch (arr)
 	{
-	case PntArr3::EE:
-		return squareDistance3D<TP>(p, q, sqr_dis);
-	case PntArr3::EI:
-		return squareDistance3D_IE<TP>(q, p, sqr_dis);
-	case PntArr3::IE:
-		return squareDistance3D_IE<TP>(p, q, sqr_dis);
-	case PntArr3::II:
-		return squareDistance3D_II<TP>(q, p, sqr_dis);
-	default:
-		OMC_ASSERT(false, "SquaredDistance3D - should not happen");
-		return Sign::ZERO; // warning killer
+	case PntArr3::IEE:
+		return orientOn2Dyz_IEE<TP>(a, b, c);
+	case PntArr3::EIE:
+		return orientOn2Dyz_IEE<TP>(b, c, a);
+	case PntArr3::EEI:
+		return orientOn2Dyz_IEE<TP>(c, a, b);
+	case PntArr3::IIE:
+		return orientOn2Dyz_IIE<TP>(a, b, c);
+	case PntArr3::IEI:
+		return orientOn2Dyz_IIE<TP>(c, a, b);
+	case PntArr3::EII:
+		return orientOn2Dyz_IIE<TP>(b, c, a);
+	default: // PntArr3::III
+		return orientOn2Dyz_III<TP>(a, b, c);
 	}
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::on_zx(const PointT &a, const PointT &b,
+                                            const PointT &c)
+{
+	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
+		return orient2dzx<TP>(a, b, c);
+
+	PntArr3 arr = get_pnts_arr3(PntType(a), PntType(b), PntType(c));
+	// cases are simple, expand them by hand.
+	switch (arr)
+	{
+	case PntArr3::IEE:
+		return orientOn2Dzx_IEE<TP>(a, b, c);
+	case PntArr3::EIE:
+		return orientOn2Dzx_IEE<TP>(b, c, a);
+	case PntArr3::EEI:
+		return orientOn2Dzx_IEE<TP>(c, a, b);
+	case PntArr3::IIE:
+		return orientOn2Dzx_IIE<TP>(a, b, c);
+	case PntArr3::IEI:
+		return orientOn2Dzx_IIE<TP>(c, a, b);
+	case PntArr3::EII:
+		return orientOn2Dzx_IIE<TP>(b, c, a);
+	default: // PntArr3::III
+		return orientOn2Dzx_III<TP>(a, b, c);
+	}
+}
+
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
+                                                 const PointT &c, int n_max)
+{
+	if (c.is_explicit())
+		return operator()(a, b, c.data(), n_max);
+
+	if (n_max == 0) // yz
+		return orientOn2Dyz_IEE<TP>(c, a[1], a[2], b[1], b[2]);
+	else if (n_max == 1) // zx
+		return orientOn2Dzx_IEE<TP>(c, a[0], a[2], b[0], b[2]);
+	else // xy
+		return orientOn2Dxy_IEE<TP>(c, a[0], a[1], b[0], b[1]);
+}
+
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
+                                                 const FT *c, int n_max)
+{
+	if (n_max == 0)
+		return on_yz(a, b, c);
+	else if (n_max == 1)
+		return on_zx(a, b, c);
+	else
+		return on_xy(a, b, c);
+}
+
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::on_xy(const FT *a, const FT *b,
+                                            const FT *c)
+{
+	return orient2dxy(a, b, c);
+}
+
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::on_yz(const FT *a, const FT *b,
+                                            const FT *c)
+{
+	return orient2dyz(a, b, c);
+}
+
+TEMPLATE_DECL
+Sign OrientOn2D_Indirect<FT, IT, ET>::on_zx(const FT *a, const FT *b,
+                                            const FT *c)
+{
+	return orient2dzx(a, b, c);
+}
+
+/******************************************************************************/
+/* Less Than ******************************************************************/
+/******************************************************************************/
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_x(const PointT &a, const PointT &b)
+{
+	if (a.is_explicit() && b.is_explicit())
+		return static_cast<Sign>(((a.x() > b.x()) - (a.x() < b.x())));
+
+	// cases are simple, expand them by hand.
+	if (!a.is_explicit() && b.is_explicit())
+		return lessThanOnX_IE<TP>(a, b);
+	if (a.is_explicit() && !b.is_explicit())
+		return reverse_sign(lessThanOnX_IE<TP>(b, a));
+	return lessThanOnX_II<TP>(a, b);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_y(const PointT &a, const PointT &b)
+{
+	if (a.is_explicit() && b.is_explicit())
+		return static_cast<Sign>(((a.y() > b.y()) - (a.y() < b.y())));
+
+	// cases are simple, expand them by hand.
+	if (!a.is_explicit() && b.is_explicit())
+		return lessThanOnY_IE<TP>(a, b);
+	if (a.is_explicit() && !b.is_explicit())
+		return reverse_sign(lessThanOnY_IE<TP>(b, a));
+	return lessThanOnY_II<TP>(a, b);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_z(const PointT &a, const PointT &b)
+{
+	if (a.is_explicit() && b.is_explicit())
+		return static_cast<Sign>(((a.z() > b.z()) - (a.z() < b.z())));
+
+	if (!a.is_explicit() && b.is_explicit())
+		return lessThanOnZ_IE<TP>(a, b);
+	if (a.is_explicit() && !b.is_explicit())
+		return reverse_sign(lessThanOnZ_IE<TP>(b, a));
+	return lessThanOnZ_II<TP>(a, b);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on(const PointT &a, const PointT &b,
+                                         size_t axis)
+{
+	if (axis == 0)
+		return on_x(a, b);
+	if (axis == 1)
+		return on_y(a, b);
+	if (axis == 2)
+		return on_z(a, b);
+	OMC_EXIT("should not happen");
+}
+
+TEMPLATE_DECL
+std::array<Sign, 3> LessThan3D_Indirect<FT, IT, ET>::on_all(const PointT &a,
+                                                            const PointT &b)
+{
+	if (a.is_explicit() && b.is_explicit())
+		return lessThanOnAll_EE(a.x(), a.y(), a.z(), b.x(), b.y(), b.z());
+
+	if (!a.is_explicit() && b.is_explicit())
+		return lessThanOnAll_IE<TP>(a, b);
+	if (a.is_explicit() && !b.is_explicit())
+		return reverse_signs(lessThanOnAll_IE<TP>(b, a));
+	return lessThanOnAll_II<TP>(a, b);
+
+	OMC_EXIT("LessThan3D - should not happen");
+	return std::array<Sign, 3>{Sign::ZERO, Sign::ZERO, Sign::ZERO};
+	// warning killer
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_x(const PointT &a, const FT *b)
+{
+	return on_x(a, b[0]);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_y(const PointT &a, const FT *b)
+{
+	return on_y(a, b[1]);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_z(const PointT &a, const FT *b)
+{
+	return on_z(a, b[2]);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on(const PointT &a, const FT *b,
+                                         size_t axis)
+{
+	return on(a, b[axis], axis);
+}
+
+TEMPLATE_DECL
+std::array<Sign, 3> LessThan3D_Indirect<FT, IT, ET>::on_all(const PointT &a,
+                                                            const FT     *b)
+{
+	if (a.is_explicit())
+		return lessThanOnAll_EE(a.x(), a.y(), a.z(), b[0], b[1], b[2]);
+	else
+		return lessThanOnAll_IE<TP>(a, b[0], b[1], b[2]);
+
+	OMC_EXIT("LessThan3D - should not happen");
+	return std::array<Sign, 3>{Sign::ZERO, Sign::ZERO, Sign::ZERO};
+	// warning killer
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_x(const PointT &a, const FT b)
+{
+	if (a.is_explicit())
+		return static_cast<Sign>(((a.x() > b) - (a.x() < b)));
+	else
+		return lessThanOnX_IE<TP>(a, b);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_y(const PointT &a, const FT b)
+{
+	if (a.is_explicit())
+		return static_cast<Sign>(((a.y() > b) - (a.y() < b)));
+	else
+		return lessThanOnY_IE<TP>(a, b);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on_z(const PointT &a, const FT b)
+{
+	if (a.is_explicit())
+		return static_cast<Sign>(((a.z() > b) - (a.z() < b)));
+	else
+		return lessThanOnZ_IE<TP>(a, b);
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::on(const PointT &a, const FT b,
+                                         size_t axis)
+{
+	if (axis == 0)
+		return on_x(a, b);
+	if (axis == 1)
+		return on_y(a, b);
+	if (axis == 2)
+		return on_z(a, b);
+
+	OMC_EXIT("LessThan3D - should not happen");
+}
+
+TEMPLATE_DECL
+Sign LessThan3D_Indirect<FT, IT, ET>::operator()(const PointT &a,
+                                                 const PointT &b)
+{
+	if (a.is_explicit() && b.is_explicit())
+		return lessThan_EE<TP>(a, b);
+
+	// cases are simple, expand them by hand.
+	if (!a.is_explicit() && b.is_explicit())
+		return lessThan_IE<TP>(a, b);
+	if (a.is_explicit() && !b.is_explicit())
+		return reverse_sign(lessThan_IE<TP>(b, a));
+	return lessThan_II<TP>(a, b);
+}
+
+/******************************************************************************/
+/* Triangle Normal & Segment Axis *********************************************/
+/******************************************************************************/
+
+TEMPLATE_DECL
+int MaxComponentInTriangleNormal<FT, IT, ET>::operator()(FT ov1x, FT ov1y,
+                                                         FT ov1z, FT ov2x,
+                                                         FT ov2y, FT ov2z,
+                                                         FT ov3x, FT ov3y,
+                                                         FT ov3z)
+{
+	return maxComponentInTriangleNormal(ov1x, ov1y, ov1z, ov2x, ov2y, ov2z, ov3x,
+	                                    ov3y, ov3z);
+}
+
+TEMPLATE_DECL
+int LongestAxis_Indirect<FT, IT, ET>::operator()(const PointT &a,
+                                                 const PointT &b)
+{
+	if (a.is_explicit() && b.is_explicit())
+	{
+		double diff_x = fabs(a.x() - b.x());
+		double diff_y = fabs(a.y() - b.y());
+		double diff_z = fabs(a.z() - b.z());
+		return diff_y > diff_x ? (diff_z > diff_y ? 2 : 1)
+		                       : (diff_z > diff_x ? 2 : 0);
+	}
+
+	// cases are simple, expand them by hand.
+	if (!a.is_explicit() && b.is_explicit())
+		return longestAxis_IE<TP>(a, b);
+	if (a.is_explicit() && !b.is_explicit())
+		return longestAxis_IE<TP>(b, a);
+	return longestAxis_II<TP>(a, b);
+}
+
+/******************************************************************************/
+/* Circle & Sphere ************************************************************/
+/******************************************************************************/
+
+TEMPLATE_DECL
 Sign InCircle_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
                                                const PointT &c, const PointT &d)
 {
@@ -321,510 +773,14 @@ Sign InCircle_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
 	return inCircle_IIII<TP>(a, b, c, d);
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign InCircle_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
                                                const FT *c, const FT *d)
 {
 	return inCircle(a, b, c, d);
 }
 
-template <typename FT, typename IT, typename ET>
-Sign Orient3D_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
-                                               const PointT &c, const PointT &d)
-{
-	// Here we implicitly assume that points are 3D. Do not check.
-	// clang-format off
-	int i = a.is_explicit() + b.is_explicit() + c.is_explicit() + d.is_explicit();
-
-	if (i == 4) return orient3d<TP>(a, b, c, d);
-	
-	if (i == 3)
-	{
-		if (!a.is_explicit()) return orient3D_IEEE<TP>(a, b, c, d);
-		if (!b.is_explicit()) return orient3D_IEEE<TP>(b, c, a, d);
-		if (!c.is_explicit()) return orient3D_IEEE<TP>(c, d, a, b);
-		/*if (!d.is_explicit())*/ return orient3D_IEEE<TP>(d, a, c, b);
-	}
-	else if (i == 2)
-	{
-		if (c.is_explicit() && d.is_explicit()) return orient3D_IIEE<TP>(a, b, c, d);
-		if (b.is_explicit() && d.is_explicit()) return orient3D_IIEE<TP>(a, c, d, b);
-		if (a.is_explicit() && d.is_explicit()) return orient3D_IIEE<TP>(b, c, a, d);
-		if (b.is_explicit() && c.is_explicit()) return orient3D_IIEE<TP>(d, a, c, b);
-		if (a.is_explicit() && c.is_explicit()) return orient3D_IIEE<TP>(d, b, a, c);
-		/*if (a.is_explicit() && b.is_explicit())*/ return orient3D_IIEE<TP>(c, d, a, b);
-	}
-	else if (i == 1)
-	{
-		if (d.is_explicit()) return orient3D_IIIE<TP>(a, b, c, d);
-		if (c.is_explicit()) return orient3D_IIIE<TP>(d, b, a, c);
-		if (b.is_explicit()) return orient3D_IIIE<TP>(a, c, d, b);
-		/*if (a.is_explicit())*/ return orient3D_IIIE<TP>(b, d, c, a);
-	}
-	else
-	{
-		return orient3D_IIII<TP>(a, b, c, d);
-	}
-	// clang-format on
-}
-
-template <typename FT, typename IT, typename ET>
-Sign Orient3D_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
-                                               const FT *c, const FT *d)
-{
-	return orient3d(a, b, c, d);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign Orient3D_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
-                                               const FT *c, const PointT &d)
-{
-	if (d.is_explicit())
-		return orient3d(a, b, c, d.data());
-	else
-		return orient3D_IEEE<TP>(d, a[0], a[1], a[2], c[0], c[1], c[2], b[0], b[1],
-		                         b[2]);
-}
-
-template <typename FT, typename IT, typename ET>
-void Orient3D_Indirect<FT, IT, ET>::get_minors(const FT *a, const FT *b,
-                                               const FT *c, FT *minor, FT *perm)
-{
-	orient3d_get_minors(a, b, c, minor, perm);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign Orient3D_Indirect<FT, IT, ET>::with_cached_minors(
-  const FT *pa, const FT *pb, const FT *pc, const FT *pd, const FT *minor,
-  const FT *perm)
-{
-	return orient3d_with_cached_minors(pa, pb, pc, pd, minor, perm);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign Orient3D_Indirect<FT, IT, ET>::filter(const FT *a, const FT *b,
-                                           const FT *c, const FT *d)
-{
-	return orient3d_filtered(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2],
-	                         d[0], d[1], d[2]);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::operator()(const PointT &a,
-                                                 const PointT &b,
-                                                 const PointT &c, int n_max)
-{
-	if (n_max == 0)
-		return on_yz(a, b, c);
-	else if (n_max == 1)
-		return on_zx(a, b, c);
-	else
-		return on_xy(a, b, c);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::on_xy(const PointT &a, const PointT &b,
-                                            const PointT &c)
-{
-	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
-		return orient2dxy<TP>(a, b, c);
-
-	PntArr3 arr = get_pnts_arr3(PntType(a), PntType(b), PntType(c));
-	// cases are simple, expand them by hand.
-	switch (arr)
-	{
-	case PntArr3::IEE:
-		return orientOn2Dxy_IEE<TP>(a, b, c);
-	case PntArr3::EIE:
-		return orientOn2Dxy_IEE<TP>(b, c, a);
-	case PntArr3::EEI:
-		return orientOn2Dxy_IEE<TP>(c, a, b);
-	case PntArr3::IIE:
-		return orientOn2Dxy_IIE<TP>(a, b, c);
-	case PntArr3::IEI:
-		return orientOn2Dxy_IIE<TP>(c, a, b);
-	case PntArr3::EII:
-		return orientOn2Dxy_IIE<TP>(b, c, a);
-	default: // PntArr3::III
-		return orientOn2Dxy_III<TP>(a, b, c);
-	}
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::on_yz(const PointT &a, const PointT &b,
-                                            const PointT &c)
-{
-	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
-		return orient2dyz<TP>(a, b, c);
-
-	PntArr3 arr = get_pnts_arr3(PntType(a), PntType(b), PntType(c));
-	// cases are simple, expand them by hand.
-	switch (arr)
-	{
-	case PntArr3::IEE:
-		return orientOn2Dyz_IEE<TP>(a, b, c);
-	case PntArr3::EIE:
-		return orientOn2Dyz_IEE<TP>(b, c, a);
-	case PntArr3::EEI:
-		return orientOn2Dyz_IEE<TP>(c, a, b);
-	case PntArr3::IIE:
-		return orientOn2Dyz_IIE<TP>(a, b, c);
-	case PntArr3::IEI:
-		return orientOn2Dyz_IIE<TP>(c, a, b);
-	case PntArr3::EII:
-		return orientOn2Dyz_IIE<TP>(b, c, a);
-	default: // PntArr3::III
-		return orientOn2Dyz_III<TP>(a, b, c);
-	}
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::on_zx(const PointT &a, const PointT &b,
-                                            const PointT &c)
-{
-	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
-		return orient2dzx<TP>(a, b, c);
-
-	PntArr3 arr = get_pnts_arr3(PntType(a), PntType(b), PntType(c));
-	// cases are simple, expand them by hand.
-	switch (arr)
-	{
-	case PntArr3::IEE:
-		return orientOn2Dzx_IEE<TP>(a, b, c);
-	case PntArr3::EIE:
-		return orientOn2Dzx_IEE<TP>(b, c, a);
-	case PntArr3::EEI:
-		return orientOn2Dzx_IEE<TP>(c, a, b);
-	case PntArr3::IIE:
-		return orientOn2Dzx_IIE<TP>(a, b, c);
-	case PntArr3::IEI:
-		return orientOn2Dzx_IIE<TP>(c, a, b);
-	case PntArr3::EII:
-		return orientOn2Dzx_IIE<TP>(b, c, a);
-	default: // PntArr3::III
-		return orientOn2Dzx_III<TP>(a, b, c);
-	}
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
-                                                 const PointT &c, int n_max)
-{
-	if (c.is_explicit())
-		return operator()(a, b, c.data(), n_max);
-
-	if (n_max == 0) // yz
-		return orientOn2Dyz_IEE<TP>(c, a[1], a[2], b[1], b[2]);
-	else if (n_max == 1) // zx
-		return orientOn2Dzx_IEE<TP>(c, a[0], a[2], b[0], b[2]);
-	else // xy
-		return orientOn2Dxy_IEE<TP>(c, a[0], a[1], b[0], b[1]);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
-                                                 const FT *c, int n_max)
-{
-	if (n_max == 0)
-		return on_yz(a, b, c);
-	else if (n_max == 1)
-		return on_zx(a, b, c);
-	else
-		return on_xy(a, b, c);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::on_xy(const FT *a, const FT *b,
-                                            const FT *c)
-{
-	return orient2dxy(a, b, c);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::on_yz(const FT *a, const FT *b,
-                                            const FT *c)
-{
-	return orient2dyz(a, b, c);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign OrientOn2D_Indirect<FT, IT, ET>::on_zx(const FT *a, const FT *b,
-                                            const FT *c)
-{
-	return orient2dzx(a, b, c);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_x(const PointT &a, const PointT &b)
-{
-	if (a.is_explicit() && b.is_explicit())
-		return static_cast<Sign>(((a.x() > b.x()) - (a.x() < b.x())));
-
-	// cases are simple, expand them by hand.
-	if (!a.is_explicit() && b.is_explicit())
-		return lessThanOnX_IE<TP>(a, b);
-	if (a.is_explicit() && !b.is_explicit())
-		return reverse_sign(lessThanOnX_IE<TP>(b, a));
-	return lessThanOnX_II<TP>(a, b);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_y(const PointT &a, const PointT &b)
-{
-	if (a.is_explicit() && b.is_explicit())
-		return static_cast<Sign>(((a.y() > b.y()) - (a.y() < b.y())));
-
-	// cases are simple, expand them by hand.
-	if (!a.is_explicit() && b.is_explicit())
-		return lessThanOnY_IE<TP>(a, b);
-	if (a.is_explicit() && !b.is_explicit())
-		return reverse_sign(lessThanOnY_IE<TP>(b, a));
-	return lessThanOnY_II<TP>(a, b);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_z(const PointT &a, const PointT &b)
-{
-	if (a.is_explicit() && b.is_explicit())
-		return static_cast<Sign>(((a.z() > b.z()) - (a.z() < b.z())));
-
-	if (!a.is_explicit() && b.is_explicit())
-		return lessThanOnZ_IE<TP>(a, b);
-	if (a.is_explicit() && !b.is_explicit())
-		return reverse_sign(lessThanOnZ_IE<TP>(b, a));
-	return lessThanOnZ_II<TP>(a, b);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on(const PointT &a, const PointT &b,
-                                         size_t dim)
-{
-	if (dim == 0)
-		return on_x(a, b);
-	if (dim == 1)
-		return on_y(a, b);
-	if (dim == 2)
-		return on_z(a, b);
-	OMC_EXIT("should not happen");
-}
-
-template <typename FT, typename IT, typename ET>
-std::array<Sign, 3> LessThan3D_Indirect<FT, IT, ET>::on_all(const PointT &a,
-                                                            const PointT &b)
-{
-	if (a.is_explicit() && b.is_explicit())
-		return lessThanOnAll_EE(a.x(), a.y(), a.z(), b.x(), b.y(), b.z());
-
-	if (!a.is_explicit() && b.is_explicit())
-		return lessThanOnAll_IE<TP>(a, b);
-	if (a.is_explicit() && !b.is_explicit())
-		return reverse_signs(lessThanOnAll_IE<TP>(b, a));
-	return lessThanOnAll_II<TP>(a, b);
-
-	OMC_EXIT("LessThan3D - should not happen");
-	return std::array<Sign, 3>{Sign::ZERO, Sign::ZERO, Sign::ZERO};
-	// warning killer
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_x(const PointT &a, const FT *b)
-{
-	return on_x(a, b[0]);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_y(const PointT &a, const FT *b)
-{
-	return on_y(a, b[1]);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_z(const PointT &a, const FT *b)
-{
-	return on_z(a, b[2]);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on(const PointT &a, const FT *b,
-                                         size_t dim)
-{
-	return on(a, b[dim], dim);
-}
-
-template <typename FT, typename IT, typename ET>
-std::array<Sign, 3> LessThan3D_Indirect<FT, IT, ET>::on_all(const PointT &a,
-                                                            const FT     *b)
-{
-	if (a.is_explicit())
-		return lessThanOnAll_EE(a.x(), a.y(), a.z(), b[0], b[1], b[2]);
-	else
-		return lessThanOnAll_IE<TP>(a, b[0], b[1], b[2]);
-
-	OMC_EXIT("LessThan3D - should not happen");
-	return std::array<Sign, 3>{Sign::ZERO, Sign::ZERO, Sign::ZERO};
-	// warning killer
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_x(const PointT &a, const FT b)
-{
-	if (a.is_explicit())
-		return static_cast<Sign>(((a.x() > b) - (a.x() < b)));
-	else
-		return lessThanOnX_IE<TP>(a, b);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_y(const PointT &a, const FT b)
-{
-	if (a.is_explicit())
-		return static_cast<Sign>(((a.y() > b) - (a.y() < b)));
-	else
-		return lessThanOnY_IE<TP>(a, b);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on_z(const PointT &a, const FT b)
-{
-	if (a.is_explicit())
-		return static_cast<Sign>(((a.z() > b) - (a.z() < b)));
-	else
-		return lessThanOnZ_IE<TP>(a, b);
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::on(const PointT &a, const FT b,
-                                         size_t dim)
-{
-	if (dim == 0)
-		return on_x(a, b);
-	if (dim == 1)
-		return on_y(a, b);
-	if (dim == 2)
-		return on_z(a, b);
-
-	OMC_EXIT("LessThan3D - should not happen");
-}
-
-template <typename FT, typename IT, typename ET>
-Sign LessThan3D_Indirect<FT, IT, ET>::operator()(const PointT &a,
-                                                 const PointT &b)
-{
-	if (a.is_explicit() && b.is_explicit())
-		return lessThan_EE<TP>(a, b);
-
-	// cases are simple, expand them by hand.
-	if (!a.is_explicit() && b.is_explicit())
-		return lessThan_IE<TP>(a, b);
-	if (a.is_explicit() && !b.is_explicit())
-		return reverse_sign(lessThan_IE<TP>(b, a));
-	return lessThan_II<TP>(a, b);
-}
-
-template <typename FT, typename IT, typename ET>
-bool CollinearPoints3D_Indirect<FT, IT, ET>::misaligned(const PointT &A,
-                                                        const PointT &B,
-                                                        const PointT &C)
-{
-	return (is_sign_posneg(OrientOn2D().on_xy(A, B, C)) ||
-	        is_sign_posneg(OrientOn2D().on_yz(A, B, C)) ||
-	        is_sign_posneg(OrientOn2D().on_zx(A, B, C)));
-}
-
-template <typename FT, typename IT, typename ET>
-bool CollinearPoints3D_Indirect<FT, IT, ET>::misaligned(const FT *A,
-                                                        const FT *B,
-                                                        const FT *C)
-{
-	return (is_sign_posneg(orient2dxy(A, B, C)) ||
-	        is_sign_posneg(orient2dyz(A, B, C)) ||
-	        is_sign_posneg(orient2dzx(A, B, C)));
-}
-
-template <typename FT, typename IT, typename ET>
-bool CollinearPoints3D_Indirect<FT, IT, ET>::misaligned(const PointT &A,
-                                                        const PointT &B,
-                                                        const PointT &C,
-                                                        int           n_max)
-{
-	return ((n_max == 2 && is_sign_posneg(OrientOn2D().on_xy(A, B, C))) ||
-	        (n_max == 0 && is_sign_posneg(OrientOn2D().on_yz(A, B, C))) ||
-	        (n_max == 1 && is_sign_posneg(OrientOn2D().on_zx(A, B, C))));
-}
-
-template <typename FT, typename IT, typename ET>
-auto CollinearSort3D_Indirect<FT, IT, ET>::operator()(
-  const PointT &p, const PointT &q,
-  const PointT &r) -> std::tuple<const PointT &, const PointT &, const PointT &>
-{
-	using CR = const PointT &;
-	using CP = const PointT *;
-
-#define SORT_ON_AXIS(axis)                              \
-	if (LessThan3D().on_##axis(*a, *b) == Sign::POSITIVE) \
-		std::swap(a, b);                                    \
-	if (LessThan3D().on_##axis(*b, *c) == Sign::POSITIVE) \
-		std::swap(b, c);                                    \
-	if (LessThan3D().on_##axis(*a, *c) == Sign::POSITIVE) \
-		std::swap(a, c);
-
-	CP a = &p, b = &q, c = &r;
-	if (LessThan3D().on_x(p, q) != Sign::ZERO ||
-	    LessThan3D().on_x(p, r) != Sign::ZERO ||
-	    LessThan3D().on_x(q, r) != Sign::ZERO)
-	{
-		SORT_ON_AXIS(x);
-	}
-	else if (LessThan3D().on_y(p, q) != Sign::ZERO ||
-	         LessThan3D().on_y(p, r) != Sign::ZERO ||
-	         LessThan3D().on_y(q, r) != Sign::ZERO)
-	{
-		SORT_ON_AXIS(y);
-	}
-	else if (LessThan3D().on_z(p, q) != Sign::ZERO ||
-	         LessThan3D().on_z(p, r) != Sign::ZERO ||
-	         LessThan3D().on_z(q, r) != Sign::ZERO)
-	{
-		SORT_ON_AXIS(z);
-	}
-#undef SORT_ON_AXIS
-
-	return std::make_tuple<CR, CR, CR>(*a, *b, *c);
-}
-
-template <typename FT, typename IT, typename ET>
-int MaxComponentInTriangleNormal<FT, IT, ET>::operator()(FT ov1x, FT ov1y,
-                                                         FT ov1z, FT ov2x,
-                                                         FT ov2y, FT ov2z,
-                                                         FT ov3x, FT ov3y,
-                                                         FT ov3z)
-{
-	return maxComponentInTriangleNormal(ov1x, ov1y, ov1z, ov2x, ov2y, ov2z, ov3x,
-	                                    ov3y, ov3z);
-}
-
-template <typename FT, typename IT, typename ET>
-int LongestAxis_Indirect<FT, IT, ET>::operator()(const PointT &a,
-                                                 const PointT &b)
-{
-	if (a.is_explicit() && b.is_explicit())
-	{
-		double diff_x = fabs(a.x() - b.x());
-		double diff_y = fabs(a.y() - b.y());
-		double diff_z = fabs(a.z() - b.z());
-		return diff_y > diff_x ? (diff_z > diff_y ? 2 : 1)
-		                       : (diff_z > diff_x ? 2 : 0);
-	}
-
-	// cases are simple, expand them by hand.
-	if (!a.is_explicit() && b.is_explicit())
-		return longestAxis_IE<TP>(a, b);
-	if (a.is_explicit() && !b.is_explicit())
-		return longestAxis_IE<TP>(b, a);
-	return longestAxis_II<TP>(a, b);
-}
-
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign InSphere_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
                                                const PointT &c, const PointT &d,
                                                const PointT &e)
@@ -854,7 +810,7 @@ Sign InSphere_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
 	return swap_cnt % 2 == 1 ? reverse_sign(sign) : sign;
 }
 
-template <typename FT, typename IT, typename ET>
+TEMPLATE_DECL
 Sign InSphere_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
                                                const FT *c, const FT *d,
                                                const FT *e)
@@ -862,9 +818,8 @@ Sign InSphere_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
 	return inSphere<TP>(a, b, c, d, e);
 }
 
-#undef NF
-#undef SSF
-#undef DF
+#undef TEMPLATE_TYPE
+#undef TP
 #undef PntType
 
 } // namespace OMC

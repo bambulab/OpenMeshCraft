@@ -29,8 +29,8 @@ public: /* Traits **********************************************************/
 	using ToEP = typename Traits::ToEP;
 
 	using Orient3D          = typename Traits::Orient3D;
-	using CollinearPoints3D = typename Traits::CollinearPoints3D;
 	using InSphere          = typename Traits::InSphere;
+	using CollinearPoints3  = typename Traits::CollinearPoints3;
 
 	using TetMesh = TetrahedralMesh<Traits>;
 

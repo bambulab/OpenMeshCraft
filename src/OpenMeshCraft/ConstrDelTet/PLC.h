@@ -22,9 +22,9 @@ public: /* Traits **********************************************************/
 	using ToEP = typename Traits::ToEP;
 
 	using Orient3D          = typename Traits::Orient3D;
-	using CollinearPoints3D = typename Traits::CollinearPoints3D;
 	using DotProduct3D      = typename Traits::DotProduct3D;
 	using InSphere          = typename Traits::InSphere;
+	using CollinearPoints3  = typename Traits::CollinearPoints3;
 
 public: /* Auxiliary data structures ****************************************/
 	/// The type of the edge in the PLC, determining the recovery strategy on

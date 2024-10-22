@@ -108,7 +108,7 @@ void ArrCleanMesh<Traits>::removeDegenerateAndDuplicatedTriangles()
 	                  [this, ptr_verts, ptr_tris, &collinear_res](index_t t_id)
 	                  {
 		                  const vec3i &t      = ptr_tris[t_id];
-		                  collinear_res[t_id] = CollinearPoints3D()(
+		                  collinear_res[t_id] = CollinearPoints3()(
 		                    ptr_verts[t[0]].data(), ptr_verts[t[1]].data(),
 		                    ptr_verts[t[2]].data());
 	                  });

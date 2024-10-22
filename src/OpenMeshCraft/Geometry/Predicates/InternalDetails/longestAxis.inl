@@ -48,25 +48,25 @@ int longestAxis_IE_interval(const GenericPoint3T<IT, ET> &p1, IT bx, IT by,
 	IT dbz = bz * d1;
 	IT kz  = l1z - dbz;
 
-	int    dim = -1;
+	int    axis = -1;
 	double k   = 0.;
 	if (kx.is_sign_reliable() && fabs(kx.inf() + kx.sup()) > k)
 	{
 		k   = fabs(kx.inf() + kx.sup());
-		dim = 0;
+		axis = 0;
 	}
 	if (ky.is_sign_reliable() && fabs(ky.inf() + ky.sup()) > k)
 	{
 		k   = fabs(ky.inf() + ky.sup());
-		dim = 1;
+		axis = 1;
 	}
 	if (kz.is_sign_reliable() && fabs(kz.inf() + kz.sup()) > k)
 	{
 		k   = fabs(kz.inf() + kz.sup());
-		dim = 2;
+		axis = 2;
 	}
 
-	return dim;
+	return axis;
 }
 
 template <typename IT, typename ET>
@@ -199,25 +199,25 @@ int longestAxis_II_interval(const GenericPoint3T<IT, ET> &p1,
 	k2    = d1 * l2z;
 	IT kz = k1 - k2;
 
-	int    dim = -1;
+	int    axis = -1;
 	double k   = 0.;
 	if (kx.is_sign_reliable() && fabs(kx.inf() + kx.sup()) > k)
 	{
 		k   = fabs(kx.inf() + kx.sup());
-		dim = 0;
+		axis = 0;
 	}
 	if (ky.is_sign_reliable() && fabs(ky.inf() + ky.sup()) > k)
 	{
 		k   = fabs(ky.inf() + ky.sup());
-		dim = 1;
+		axis = 1;
 	}
 	if (kz.is_sign_reliable() && fabs(kz.inf() + kz.sup()) > k)
 	{
 		k   = fabs(kz.inf() + kz.sup());
-		dim = 2;
+		axis = 2;
 	}
 
-	return dim;
+	return axis;
 }
 
 template <typename IT, typename ET>

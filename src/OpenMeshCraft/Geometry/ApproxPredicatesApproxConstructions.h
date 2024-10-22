@@ -34,7 +34,7 @@
 #include "Intersection/DoIntersectK.h"
 
 // Degeneration
-#include "Predicates/CheckDegenerate3K.h"
+#include "Predicates/DegeneratePredicates.h"
 
 // Constructions
 #include "Constructions/Normal3.h"
@@ -144,15 +144,12 @@ public:
 	using DotProductSign3D   = DotProductSign3D_GNR<NT>;
 	using DotProductSignOn2D = DotProductSignOn2D_GNR<NT>;
 
-	using Orient2D          = Orient2D_GNR<NT>;
-	using CollinearPoints2D = CollinearPoints2D_GNR<NT>;
-	using LessThan2D        = LessThan2D_GNR<NT>;
+	using Orient2D   = Orient2D_GNR<NT>;
+	using Orient3D   = Orient3D_GNR<NT>;
+	using OrientOn2D = OrientOn2D_GNR<NT>;
 
-	using Orient3D          = Orient3D_GNR<NT>;
-	using OrientOn2D        = OrientOn2D_GNR<NT>;
-	using CollinearPoints3D = CollinearPoints3D_GNR<NT>;
-	using CollinearSort3D   = CollinearSort3D_GNR<NT>;
-	using LessThan3D        = LessThan3D_GNR<NT>;
+	using LessThan2D = LessThan2D_GNR<NT>;
+	using LessThan3D = LessThan3D_GNR<NT>;
 	/// @}
 
 	/********************************************/
@@ -166,6 +163,12 @@ public:
 
 	/// @name Degeneration
 	/// @{
+	using CollinearPoints2 = CollinearPoints2K<Kernel>;
+	using CollinearPoints3 = CollinearPoints3K<Kernel>;
+	using CollinearSort3   = CollinearSort3K<Kernel>;
+
+	using CoplanarPoints3 = CoplanarPoints3K<Kernel>;
+
 	using CheckDegenerate3 = CheckDegenerate3K<Kernel>;
 	/// @}
 

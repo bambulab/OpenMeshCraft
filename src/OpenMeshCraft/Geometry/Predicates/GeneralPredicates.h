@@ -162,25 +162,6 @@ public:
 };
 
 /**
- * @brief Check if three points in 2D are collinear.
- * @tparam NT the number type
- */
-template <typename NT>
-class CollinearPoints2D_GNR
-{
-public:
-	using Orient2D = Orient2D_GNR<NT>;
-	using PointT   = Point2T<NT>;
-
-public:
-	/**
-	 * @brief Check if \p p , \p q and \p r are collinear.
-	 * @return true if they are collinear, otherwise false.
-	 */
-	bool operator()(const PointT &p, const PointT &q, const PointT &r);
-};
-
-/**
  * @brief Check if a 2D point is less than another 2D point.
  * @tparam NT Number type.
  */
@@ -266,85 +247,6 @@ public:
 	{
 		return operator()(p, q) == Sign::ZERO;
 	}
-};
-
-/**
- * @brief Check if three points in 3D are collinear.
- * @tparam NT the number type
- */
-template <typename NT>
-class CollinearPoints3D_GNR
-{
-public:
-	using Orient2D = Orient2D_GNR<NT>;
-	using PointT   = Point3T<NT>;
-
-public:
-	/**
-	 * @brief Check if \p p , \p q and \p r are collinear.
-	 * @return true if they are collinear, otherwise false.
-	 */
-	bool operator()(const PointT &p, const PointT &q, const PointT &r);
-};
-
-/**
- * @brief Given three collinear points in 3D, check if they are ordered along
- * the line.
- * @tparam NT the number type
- */
-template <typename NT>
-class CollinearOrdered3D_GNR
-{
-public:
-	using PointT = Point3T<NT>;
-
-public:
-	/**
-	 * @brief Given collinear points \p p , \p q and \p r in 3D, check if they are
-	 * ordered along the line.
-	 * @return true if they are ordered, otherwise false.
-	 * @note If you want sort points, call function `sort`.
-	 */
-	bool operator()(const PointT &p, const PointT &q, const PointT &r);
-};
-
-/**
- * @brief Given three collinear points in 3D, sort them along the line.
- * @tparam NT the number type
- */
-template <typename NT>
-class CollinearSort3D_GNR
-{
-public:
-	using PointT = Point3T<NT>;
-
-public:
-	/**
-	 * @brief Sort three collinear points along the line.
-	 * @return A tuple contains three references that are ordered.
-	 */
-	std::tuple<const PointT &, const PointT &, const PointT &>
-	operator()(const PointT &p, const PointT &q, const PointT &r);
-};
-
-/**
- * @brief Check if four points in 3D are coplanar.
- * @tparam NT the number type
- */
-template <typename NT>
-class CoplanarPoints3D_GNR
-{
-public:
-	using Orient3D = Orient3D_GNR<NT>;
-	using PointT   = Point3T<NT>;
-
-public:
-	/**
-	 * @brief Check if \p p , \p q , \p r and \p r are coplanar.
-	 * @return true if they are coplanar, otherwise false.
-	 */
-	bool operator()(const PointT &p, const PointT &q, const PointT &r,
-	                const PointT &s);
 };
 
 template <typename NT>

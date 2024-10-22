@@ -26,7 +26,7 @@ protected:
 	using Pnt2 = EIAC::Point2;
 	using Pnt3 = EIAC::Point3;
 
-	using CollinearPoints3D               = EIAC::CollinearPoints3D;
+	using CollinearPoints3                = EIAC::CollinearPoints3;
 	using Tetrahedron3_Point3_DoIntersect = EIAC::Tetrahedron3_Point3_DoIntersect;
 	using Tetrahedron3_Segment3_DoIntersect =
 	  EIAC::Tetrahedron3_Segment3_DoIntersect;

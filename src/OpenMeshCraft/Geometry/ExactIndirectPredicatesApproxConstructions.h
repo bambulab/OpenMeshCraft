@@ -31,7 +31,7 @@
 #include "Predicates/IndirectPredicates.h"
 
 // Degeneration
-#include "Predicates/CheckDegenerate3K.h"
+#include "Predicates/DegeneratePredicates.h"
 
 // Intersection
 #include "Intersection/DoIntersectK.h"
@@ -156,20 +156,18 @@ public:
 	using DotProductSign3D   = DotProductSign3D_Indirect<FT, IT, ET>;
 	using DotProductSignOn2D = DotProductSignOn2D_Indirect<FT, IT, ET>;
 
-	using Orient2D          = Orient2D_Indirect<FT, IT, ET>;
-	using LessThan2D        = LessThan2D_Indirect<FT, IT, ET>;
-	using InCircle          = InCircle_Indirect<FT, IT, ET>;
-	using CollinearPoints2D = CollinearPoints2D_Indirect<FT, IT, ET>;
+	using Orient2D   = Orient2D_Indirect<FT, IT, ET>;
+	using Orient3D   = Orient3D_Indirect<FT, IT, ET>;
+	using OrientOn2D = OrientOn2D_Indirect<FT, IT, ET>;
+
+	using LessThan2D = LessThan2D_Indirect<FT, IT, ET>;
+	using LessThan3D = LessThan3D_Indirect<FT, IT, ET>;
 
 	using LongestAxis        = LongestAxis_Indirect<FT, IT, ET>;
 	using MaxCompInTriNormal = MaxComponentInTriangleNormal<FT, IT, ET>;
 
-	using Orient3D          = Orient3D_Indirect<FT, IT, ET>;
-	using OrientOn2D        = OrientOn2D_Indirect<FT, IT, ET>;
-	using LessThan3D        = LessThan3D_Indirect<FT, IT, ET>;
-	using CollinearPoints3D = CollinearPoints3D_Indirect<FT, IT, ET>;
-	using CollinearSort3D   = CollinearSort3D_Indirect<FT, IT, ET>;
-	using InSphere          = InSphere_Indirect<FT, IT, ET>;
+	using InCircle = InCircle_Indirect<FT, IT, ET>;
+	using InSphere = InSphere_Indirect<FT, IT, ET>;
 	/// @}
 
 	/********************************************/
@@ -181,6 +179,12 @@ public:
 
 	/// @name Degeneration
 	/// @{
+	using CollinearPoints2 = CollinearPoints2K<Kernel>;
+	using CollinearPoints3 = CollinearPoints3K<Kernel>;
+	using CollinearSort3   = CollinearSort3K<Kernel>;
+
+	using CoplanarPoints3 = CoplanarPoints3K<Kernel>;
+
 	using CheckDegenerate3 = CheckDegenerate3K<Kernel>;
 	/// @}
 

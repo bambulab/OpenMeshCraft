@@ -795,9 +795,9 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
 		// (a) the outer half-space defined by the supporting plane of the boundary
 		// face (excluding the supporting plane) and (b) the boundary face itself.
 
-		OMC_EXPENSIVE_ASSERT(!CollinearPoints3D()(epnt(tet_nodes[0]),
-		                                          epnt(tet_nodes[1]),
-		                                          epnt(tet_nodes[2])),
+		OMC_EXPENSIVE_ASSERT(!CollinearPoints3()(epnt(tet_nodes[0]),
+		                                         epnt(tet_nodes[1]),
+		                                         epnt(tet_nodes[2])),
 		                     "The boundary face is degenerate.");
 
 		// We first check the position of the vertex relative to the supporting

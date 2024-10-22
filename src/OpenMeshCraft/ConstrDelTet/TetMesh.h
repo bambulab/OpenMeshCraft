@@ -25,8 +25,8 @@ public:
 	using ToEP = typename Traits::ToEP; ///< convert to explicit point
 
 	using Orient3D          = typename Traits::Orient3D;
-	using CollinearPoints3D = typename Traits::CollinearPoints3D;
 	using InSphere          = typename Traits::InSphere;
+	using CollinearPoints3  = typename Traits::CollinearPoints3;
 
 	/// Infinite vertex index
 	const static index_t INFINITE_VERTEX = InvalidIndex;

@@ -27,7 +27,7 @@ protected:
 	using Pnt2 = EIAC::Point2;
 	using Pnt3 = EIAC::Point3;
 
-	using CollinearPoints3D               = EIAC::CollinearPoints3D;
+	using CollinearPoints3                = EIAC::CollinearPoints3;
 	using Triangle3_Point3_DoIntersect    = EIAC::Triangle3_Point3_DoIntersect;
 	using Triangle3_Segment3_DoIntersect  = EIAC::Triangle3_Segment3_DoIntersect;
 	using Triangle3_Triangle3_DoIntersect = EIAC::Triangle3_Triangle3_DoIntersect;
@@ -326,10 +326,10 @@ TEST_F(test_Intersection_Triangle3, triangleTriangle)
 	start          = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
-		if (CollinearPoints3D()(our_points[6 * i], our_points[6 * i + 1],
-		                        our_points[6 * i + 2]) ||
-		    CollinearPoints3D()(our_points[6 * i + 3], our_points[6 * i + 4],
-		                        our_points[6 * i + 5]))
+		if (CollinearPoints3()(our_points[6 * i], our_points[6 * i + 1],
+		                       our_points[6 * i + 2]) ||
+		    CollinearPoints3()(our_points[6 * i + 3], our_points[6 * i + 4],
+		                       our_points[6 * i + 5]))
 			continue;
 		ours_dummy += Triangle3_Triangle3_DoIntersect()(
 		  our_points[6 * i], our_points[6 * i + 1], our_points[6 * i + 2],

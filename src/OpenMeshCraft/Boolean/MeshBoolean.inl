@@ -37,8 +37,8 @@ public:
 	using OrientOn2D         = typename K::OrientOn2D;
 	using LessThan3D         = typename K::LessThan3D;
 	using LongestAxis        = typename K::LongestAxis;
-	using CollinearPoints3D  = typename K::CollinearPoints3D;
 	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
+	using CollinearPoints3   = typename K::CollinearPoints3;
 
 	using CalcBbox = typename K::CalcBoundingBox3;
 
@@ -80,7 +80,7 @@ public: /* Traits ***********************************************************/
 	using OrientOn2D         = typename Traits::OrientOn2D;
 	using LessThan3D         = typename Traits::LessThan3D;
 	using LongestAxis        = typename Traits::LongestAxis;
-	using CollinearPoints3D  = typename Traits::CollinearPoints3D;
+	using CollinearPoints3   = typename Traits::CollinearPoints3;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
 
 public: /* Auxiliary data structures *****************************************/
@@ -591,7 +591,7 @@ auto MeshBoolean_Impl<Traits>::findRay(
 		b = ToEP()(tm.triVert(t_id, 1));
 		c = ToEP()(tm.triVert(t_id, 2));
 
-		if (!CollinearPoints3D().misaligned(a.data(), b.data(), c.data()))
+		if (!CollinearPoints3().misaligned(a.data(), b.data(), c.data()))
 			continue;
 
 		int dir = MaxCompInTriNormal()(a.x(), a.y(), a.z(), b.x(), b.y(), b.z(), c.x(), c.y(), c.z());

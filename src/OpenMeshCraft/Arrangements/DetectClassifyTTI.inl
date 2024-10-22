@@ -135,8 +135,8 @@ void DetectClassifyTTI<Traits>::check_TTI(index_t ta, index_t tb)
 
 	// check if any triangle is degenerate
 	OMC_EXPENSIVE_ASSERT(
-	  CollinearPoints3D().misaligned(ha.v[0], ha.v[1], ha.v[2]) &&
-	    CollinearPoints3D().misaligned(hb.v[0], hb.v[1], hb.v[2]),
+	  CollinearPoints3().misaligned(ha.v[0], ha.v[1], ha.v[2]) &&
+	    CollinearPoints3().misaligned(hb.v[0], hb.v[1], hb.v[2]),
 	  "Detect degenerate triangle in check TTI.");
 	OMC_ARR_PROF_TTI_INCT;
 
@@ -1540,7 +1540,8 @@ bool DetectClassifyTTI<Traits>::classify_coplanar_edge_intersections(
 	{
 		if (ev0_in_seg != ev1_in_seg) // ea crosses tb
 		{
-			add_symbolic_segment(ha.v_id[ev0], ha.v_id[ev1], ha, ea, hb, InvalidIndex);
+			add_symbolic_segment(ha.v_id[ev0], ha.v_id[ev1], ha, ea, hb,
+			                     InvalidIndex);
 			ts.addCoplanarEdge(hb.t_id, get_e_id(ha, ea), ha.v_id[ev0], ha.v_id[ev1]);
 		}
 		else // ea is totally contained in an edge of tb
@@ -1554,7 +1555,8 @@ bool DetectClassifyTTI<Traits>::classify_coplanar_edge_intersections(
 	{
 		if (ev0_in_seg == (ev1_in_vtx + 1) % 3) // ea crosses tb
 		{
-			add_symbolic_segment(ha.v_id[ev0], ha.v_id[ev1], ha, ea, hb, InvalidIndex);
+			add_symbolic_segment(ha.v_id[ev0], ha.v_id[ev1], ha, ea, hb,
+			                     InvalidIndex);
 			ts.addCoplanarEdge(hb.t_id, get_e_id(ha, ea), ha.v_id[ev0], ha.v_id[ev1]);
 		}
 		else // ea is totally contained in an edge of tb
@@ -1568,7 +1570,8 @@ bool DetectClassifyTTI<Traits>::classify_coplanar_edge_intersections(
 	{
 		if (ev1_in_seg == (ev0_in_vtx + 1) % 3) // ea crosses tb
 		{
-			add_symbolic_segment(ha.v_id[ev0], ha.v_id[ev1], ha, ea, hb, InvalidIndex);
+			add_symbolic_segment(ha.v_id[ev0], ha.v_id[ev1], ha, ea, hb,
+			                     InvalidIndex);
 			ts.addCoplanarEdge(hb.t_id, get_e_id(ha, ea), ha.v_id[ev0], ha.v_id[ev1]);
 		}
 		else // ea is totally contained in an edge of tb
@@ -1843,7 +1846,8 @@ bool DetectClassifyTTI<Traits>::classify_coplanar_edge_intersections(
 		}
 		if (vb2_in_ea)
 		{ // cross eb0 and (opposite vertex) vb2
-			add_symbolic_segment(hb.v_id[/*vb*/ 2], seg0_cross, ha, ea, hb, InvalidIndex);
+			add_symbolic_segment(hb.v_id[/*vb*/ 2], seg0_cross, ha, ea, hb,
+			                     InvalidIndex);
 			ts.addCoplanarEdge(hb.t_id, get_e_id(ha, ea), hb.v_id[2], seg0_cross);
 			return true;
 		}
@@ -1877,7 +1881,8 @@ bool DetectClassifyTTI<Traits>::classify_coplanar_edge_intersections(
 		}
 		if (vb0_in_ea)
 		{ // cross eb1 and (opposite vertex) vb0
-			add_symbolic_segment(hb.v_id[/*vb*/ 0], seg1_cross, ha, ea, hb, InvalidIndex);
+			add_symbolic_segment(hb.v_id[/*vb*/ 0], seg1_cross, ha, ea, hb,
+			                     InvalidIndex);
 			ts.addCoplanarEdge(hb.t_id, get_e_id(ha, ea), hb.v_id[0], seg1_cross);
 			return true;
 		}
@@ -1911,7 +1916,8 @@ bool DetectClassifyTTI<Traits>::classify_coplanar_edge_intersections(
 		}
 		if (vb1_in_ea)
 		{ // cross eb2 and (opposite vertex) vb1
-			add_symbolic_segment(hb.v_id[/*vb*/ 1], seg2_cross, ha, ea, hb, InvalidIndex);
+			add_symbolic_segment(hb.v_id[/*vb*/ 1], seg2_cross, ha, ea, hb,
+			                     InvalidIndex);
 			ts.addCoplanarEdge(hb.t_id, get_e_id(ha, ea), hb.v_id[1], seg2_cross);
 			return true;
 		}
@@ -2273,8 +2279,8 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_noncoplanar_edge(
 
 		for (size_t i = 0; i < 12; i += 3)
 		{
-			if (CollinearPoints3D().misaligned(_pnts[_tri[i]], _pnts[_tri[i + 1]],
-			                                   _pnts[_tri[i + 2]]))
+			if (CollinearPoints3().misaligned(_pnts[_tri[i]], _pnts[_tri[i + 1]],
+			                                  _pnts[_tri[i + 2]]))
 			{
 				plane = MaxCompInTriNormal()(_pnts[_tri[i]], _pnts[_tri[i + 1]],
 				                             _pnts[_tri[i + 2]]);

@@ -43,8 +43,8 @@ public: /* Types **************************************************************/
 	using OrientOn2D         = typename Traits::OrientOn2D;
 	using LessThan3D         = typename Traits::LessThan3D;
 	using LongestAxis        = typename Traits::LongestAxis;
-	using CollinearPoints3D  = typename Traits::CollinearPoints3D;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
+	using CollinearPoints3   = typename Traits::CollinearPoints3;
 
 	using PntArena = ArrPointArena<Traits>;
 

@@ -126,13 +126,6 @@ Sign OrientOn2D_GNR<NT>::on_zx(const PointT &a, const PointT &b,
 }
 
 template <typename NT>
-bool CollinearPoints2D_GNR<NT>::operator()(const PointT &p, const PointT &q,
-                                           const PointT &r)
-{
-	return Orient2D()(p, q, r) == Sign::ZERO;
-}
-
-template <typename NT>
 Sign LessThan2D_GNR<NT>::operator()(const PointT &p, const PointT &q)
 {
 	Sign ret = on_x(p, q);
@@ -181,76 +174,6 @@ template <typename NT>
 Sign LessThan3D_GNR<NT>::on_z(const PointT &p, const PointT &q)
 {
 	return static_cast<Sign>(((p.z() > q.z()) - (p.z() < q.z())));
-}
-
-template <typename NT>
-bool CollinearPoints3D_GNR<NT>::operator()(const PointT &p, const PointT &q,
-                                           const PointT &r)
-{
-	Orient2D orient2d;
-	return orient2d(p.x(), p.y(), q.x(), q.y(), r.x(), r.y()) == Sign::ZERO &&
-	       orient2d(p.x(), p.z(), q.x(), q.z(), r.x(), r.z()) == Sign::ZERO &&
-	       orient2d(p.y(), p.z(), q.y(), q.z(), r.y(), r.z()) == Sign::ZERO;
-}
-
-template <typename NT>
-bool CollinearOrdered3D_GNR<NT>::operator()(const PointT &p, const PointT &q,
-                                            const PointT &r)
-{
-	if (p.x() < q.x())
-		return !(r.x() < q.x());
-	if (q.x() < p.x())
-		return !(q.x() < r.x());
-	if (p.y() < q.y())
-		return !(r.y() < q.y());
-	if (q.y() < p.y())
-		return !(q.y() < r.y());
-	if (p.z() < q.z())
-		return !(r.z() < q.z());
-	if (q.z() < p.z())
-		return !(q.z() < r.z());
-	return true; // p==q
-}
-
-template <typename NT>
-auto CollinearSort3D_GNR<NT>::operator()(const PointT &p, const PointT &q,
-                                         const PointT &r)
-  -> std::tuple<const PointT &, const PointT &, const PointT &>
-{
-	using CR = const PointT &;
-	using CP = const PointT *;
-
-#define SORT_ON_AXIS(axis)   \
-	if (a->axis() > b->axis()) \
-		std::swap(a, b);         \
-	if (b->axis() > c->axis()) \
-		std::swap(b, c);         \
-	if (a->axis() > c->axis()) \
-		std::swap(a, c);
-
-	CP a = &p, b = &q, c = &r;
-	if (p.x() != q.x() || p.x() != r.x() || q.x() != r.x())
-	{
-		SORT_ON_AXIS(x);
-	}
-	else if (p.y() != q.y() || p.y() != r.y() || q.y() != r.y())
-	{
-		SORT_ON_AXIS(y);
-	}
-	else if (p.z() != q.z() || p.z() != r.z() || q.z() != r.z())
-	{
-		SORT_ON_AXIS(z);
-	}
-#undef SORT_ON_AXIS
-
-	return std::make_tuple<CR, CR, CR>(*a, *b, *c);
-}
-
-template <typename NT>
-bool CoplanarPoints3D_GNR<NT>::operator()(const PointT &p, const PointT &q,
-                                          const PointT &r, const PointT &s)
-{
-	return Orient3D()(p, q, r, s) == Sign::ZERO;
 }
 
 template <typename NT>
