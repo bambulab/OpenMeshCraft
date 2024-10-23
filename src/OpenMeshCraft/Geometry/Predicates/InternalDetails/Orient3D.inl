@@ -548,8 +548,9 @@ inline Sign orient3d_with_cached_minors(const double *pa, const double *pb,
 /*********************************************************************/
 
 template <typename IT, typename ET>
-Sign orient3D_IEEE_interval(const GenericPoint3T<IT, ET> &p1, IT ax, IT ay,
-                            IT az, IT bx, IT by, IT bz, IT cx, IT cy, IT cz)
+Sign orient3D_IEEE_interval(const GenericPoint3T<IT, ET> &p1, IT p2x, IT p2y,
+                            IT p2z, IT p3x, IT p3y, IT p3z, IT p4x, IT p4y,
+                            IT p4z)
 {
 	IT l1x, l1y, l1z, d1;
 	if (!p1.getIntervalLambda(l1x, l1y, l1z, d1))
@@ -557,76 +558,76 @@ Sign orient3D_IEEE_interval(const GenericPoint3T<IT, ET> &p1, IT ax, IT ay,
 
 	typename IT::Protector P;
 
-	IT dcx   = d1 * cx;
-	IT dcy   = d1 * cy;
-	IT dcz   = d1 * cz;
-	IT ix_cx = l1x - dcx;
-	IT iy_cy = l1y - dcy;
-	IT ax_cx = ax - cx;
-	IT ay_cy = ay - cy;
-	IT az_cz = az - cz;
-	IT iz_cz = l1z - dcz;
-	IT bx_cx = bx - cx;
-	IT by_cy = by - cy;
-	IT bz_cz = bz - cz;
-	IT tmc_a = ix_cx * ay_cy;
-	IT tmc_b = iy_cy * ax_cx;
-	IT m01   = tmc_a - tmc_b;
-	IT tmi_a = ix_cx * az_cz;
-	IT tmi_b = iz_cz * ax_cx;
-	IT m02   = tmi_a - tmi_b;
-	IT tma_a = iy_cy * az_cz;
-	IT tma_b = iz_cz * ay_cy;
-	IT m12   = tma_a - tma_b;
-	IT mt1   = m01 * bz_cz;
-	IT mt2   = m02 * by_cy;
-	IT mt3   = m12 * bx_cx;
-	IT mtt   = mt2 - mt1;
-	IT m012  = mtt - mt3;
+	IT dp4x    = d1 * p4x;
+	IT dp4y    = d1 * p4y;
+	IT dp4z    = d1 * p4z;
+	IT ix_p4x  = l1x - dp4x;
+	IT iy_p4y  = l1y - dp4y;
+	IT iz_p4z  = l1z - dp4z;
+	IT p2x_p4x = p2x - p4x;
+	IT p2y_p4y = p2y - p4y;
+	IT p2z_p4z = p2z - p4z;
+	IT p3x_p4x = p3x - p4x;
+	IT p3y_p4y = p3y - p4y;
+	IT p3z_p4z = p3z - p4z;
+	IT t0      = ix_p4x * p2y_p4y;
+	IT t1      = iy_p4y * p2x_p4x;
+	IT m01     = t0 - t1;
+	IT t2      = ix_p4x * p2z_p4z;
+	IT t3      = iz_p4z * p2x_p4x;
+	IT m02     = t2 - t3;
+	IT t4      = iy_p4y * p2z_p4z;
+	IT t5      = iz_p4z * p2y_p4y;
+	IT m12     = t4 - t5;
+	IT mt1     = m01 * p3z_p4z;
+	IT mt2     = m02 * p3y_p4y;
+	IT mt3     = m12 * p3x_p4x;
+	IT mtt     = mt2 - mt1;
+	IT m012    = mtt - mt3;
 	if (!m012.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(m012);
 }
 
 template <typename IT, typename ET>
-Sign orient3D_IEEE_exact(const GenericPoint3T<IT, ET> &p1, ET ax, ET ay, ET az,
-                         ET bx, ET by, ET bz, ET cx, ET cy, ET cz)
+Sign orient3D_IEEE_exact(const GenericPoint3T<IT, ET> &p1, ET p2x, ET p2y,
+                         ET p2z, ET p3x, ET p3y, ET p3z, ET p4x, ET p4y, ET p4z)
 {
 	ET l1x, l1y, l1z, d1;
 	p1.getExactLambda(l1x, l1y, l1z, d1);
-	ET dcx   = d1 * cx;
-	ET dcy   = d1 * cy;
-	ET dcz   = d1 * cz;
-	ET ix_cx = l1x - dcx;
-	ET iy_cy = l1y - dcy;
-	ET ax_cx = ax - cx;
-	ET ay_cy = ay - cy;
-	ET az_cz = az - cz;
-	ET iz_cz = l1z - dcz;
-	ET bx_cx = bx - cx;
-	ET by_cy = by - cy;
-	ET bz_cz = bz - cz;
-	ET tmc_a = ix_cx * ay_cy;
-	ET tmc_b = iy_cy * ax_cx;
-	ET m01   = tmc_a - tmc_b;
-	ET tmi_a = ix_cx * az_cz;
-	ET tmi_b = iz_cz * ax_cx;
-	ET m02   = tmi_a - tmi_b;
-	ET tma_a = iy_cy * az_cz;
-	ET tma_b = iz_cz * ay_cy;
-	ET m12   = tma_a - tma_b;
-	ET mt1   = m01 * bz_cz;
-	ET mt2   = m02 * by_cy;
-	ET mt3   = m12 * bx_cx;
-	ET mtt   = mt2 - mt1;
-	ET m012  = mtt - mt3;
+	ET dp4x    = d1 * p4x;
+	ET dp4y    = d1 * p4y;
+	ET dp4z    = d1 * p4z;
+	ET ix_p4x  = l1x - dp4x;
+	ET iy_p4y  = l1y - dp4y;
+	ET iz_p4z  = l1z - dp4z;
+	ET p2x_p4x = p2x - p4x;
+	ET p2y_p4y = p2y - p4y;
+	ET p2z_p4z = p2z - p4z;
+	ET p3x_p4x = p3x - p4x;
+	ET p3y_p4y = p3y - p4y;
+	ET p3z_p4z = p3z - p4z;
+	ET t0      = ix_p4x * p2y_p4y;
+	ET t1      = iy_p4y * p2x_p4x;
+	ET m01     = t0 - t1;
+	ET t2      = ix_p4x * p2z_p4z;
+	ET t3      = iz_p4z * p2x_p4x;
+	ET m02     = t2 - t3;
+	ET t4      = iy_p4y * p2z_p4z;
+	ET t5      = iz_p4z * p2y_p4y;
+	ET m12     = t4 - t5;
+	ET mt1     = m01 * p3z_p4z;
+	ET mt2     = m02 * p3y_p4y;
+	ET mt3     = m12 * p3x_p4x;
+	ET mtt     = mt2 - mt1;
+	ET m012    = mtt - mt3;
 	return OMC::sign(m012);
 }
 
 template <typename IT, typename ET>
-Sign orient3D_IEEE_expansion(const GenericPoint3T<IT, ET> &p1, double ax,
-                             double ay, double az, double bx, double by,
-                             double bz, double cx, double cy, double cz)
+Sign orient3D_IEEE_expansion(const GenericPoint3T<IT, ET> &p1, double p2x,
+                             double p2y, double p2z, double p3x, double p3y,
+                             double p3z, double p4x, double p4y, double p4z)
 {
 	double return_value = NAN;
 #ifdef CHECK_FOR_XYZERFLOWS
@@ -640,66 +641,66 @@ Sign orient3D_IEEE_expansion(const GenericPoint3T<IT, ET> &p1, double ax,
 	if ((d1[d1_len - 1] != 0))
 	{
 		expansionObject o;
-		double          dcx_p[64], *dcx = dcx_p;
-		int    dcx_len = o.Gen_Scale_With_PreAlloc(d1_len, d1, cx, &dcx, 64);
-		double dcy_p[64], *dcy = dcy_p;
-		int    dcy_len = o.Gen_Scale_With_PreAlloc(d1_len, d1, cy, &dcy, 64);
-		double dcz_p[64], *dcz = dcz_p;
-		int    dcz_len = o.Gen_Scale_With_PreAlloc(d1_len, d1, cz, &dcz, 64);
-		double ix_cx_p[64], *ix_cx = ix_cx_p;
-		int    ix_cx_len =
-		  o.Gen_Diff_With_PreAlloc(l1x_len, l1x, dcx_len, dcx, &ix_cx, 64);
-		double iy_cy_p[64], *iy_cy = iy_cy_p;
-		int    iy_cy_len =
-		  o.Gen_Diff_With_PreAlloc(l1y_len, l1y, dcy_len, dcy, &iy_cy, 64);
-		double ax_cx[2];
-		o.Two_Diff(ax, cx, ax_cx);
-		double ay_cy[2];
-		o.Two_Diff(ay, cy, ay_cy);
-		double az_cz[2];
-		o.Two_Diff(az, cz, az_cz);
-		double iz_cz_p[64], *iz_cz = iz_cz_p;
-		int    iz_cz_len =
-		  o.Gen_Diff_With_PreAlloc(l1z_len, l1z, dcz_len, dcz, &iz_cz, 64);
-		double bx_cx[2];
-		o.Two_Diff(bx, cx, bx_cx);
-		double by_cy[2];
-		o.Two_Diff(by, cy, by_cy);
-		double bz_cz[2];
-		o.Two_Diff(bz, cz, bz_cz);
-		double tmc_a_p[64], *tmc_a = tmc_a_p;
-		int    tmc_a_len =
-		  o.Gen_Product_With_PreAlloc(ix_cx_len, ix_cx, 2, ay_cy, &tmc_a, 64);
-		double tmc_b_p[64], *tmc_b = tmc_b_p;
-		int    tmc_b_len =
-		  o.Gen_Product_With_PreAlloc(iy_cy_len, iy_cy, 2, ax_cx, &tmc_b, 64);
+		double          dp4x_p[64], *dp4x = dp4x_p;
+		int    dp4x_len = o.Gen_Scale_With_PreAlloc(d1_len, d1, p4x, &dp4x, 64);
+		double dp4y_p[64], *dp4y = dp4y_p;
+		int    dp4y_len = o.Gen_Scale_With_PreAlloc(d1_len, d1, p4y, &dp4y, 64);
+		double dp4z_p[64], *dp4z = dp4z_p;
+		int    dp4z_len = o.Gen_Scale_With_PreAlloc(d1_len, d1, p4z, &dp4z, 64);
+		double ix_p4x_p[64], *ix_p4x = ix_p4x_p;
+		int    ix_p4x_len =
+		  o.Gen_Diff_With_PreAlloc(l1x_len, l1x, dp4x_len, dp4x, &ix_p4x, 64);
+		double iy_p4y_p[64], *iy_p4y = iy_p4y_p;
+		int    iy_p4y_len =
+		  o.Gen_Diff_With_PreAlloc(l1y_len, l1y, dp4y_len, dp4y, &iy_p4y, 64);
+		double iz_p4z_p[64], *iz_p4z = iz_p4z_p;
+		int    iz_p4z_len =
+		  o.Gen_Diff_With_PreAlloc(l1z_len, l1z, dp4z_len, dp4z, &iz_p4z, 64);
+		double p2x_p4x[2];
+		o.Two_Diff(p2x, p4x, p2x_p4x);
+		double p2y_p4y[2];
+		o.Two_Diff(p2y, p4y, p2y_p4y);
+		double p2z_p4z[2];
+		o.Two_Diff(p2z, p4z, p2z_p4z);
+		double p3x_p4x[2];
+		o.Two_Diff(p3x, p4x, p3x_p4x);
+		double p3y_p4y[2];
+		o.Two_Diff(p3y, p4y, p3y_p4y);
+		double p3z_p4z[2];
+		o.Two_Diff(p3z, p4z, p3z_p4z);
+		double t0_p[64], *t0 = t0_p;
+		int    t0_len =
+		  o.Gen_Product_With_PreAlloc(ix_p4x_len, ix_p4x, 2, p2y_p4y, &t0, 64);
+		double t1_p[64], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Product_With_PreAlloc(iy_p4y_len, iy_p4y, 2, p2x_p4x, &t1, 64);
 		double m01_p[64], *m01 = m01_p;
-		int    m01_len =
-		  o.Gen_Diff_With_PreAlloc(tmc_a_len, tmc_a, tmc_b_len, tmc_b, &m01, 64);
-		double tmi_a_p[64], *tmi_a = tmi_a_p;
-		int    tmi_a_len =
-		  o.Gen_Product_With_PreAlloc(ix_cx_len, ix_cx, 2, az_cz, &tmi_a, 64);
-		double tmi_b_p[64], *tmi_b = tmi_b_p;
-		int    tmi_b_len =
-		  o.Gen_Product_With_PreAlloc(iz_cz_len, iz_cz, 2, ax_cx, &tmi_b, 64);
+		int    m01_len = o.Gen_Diff_With_PreAlloc(t0_len, t0, t1_len, t1, &m01, 64);
+		double t2_p[64], *t2 = t2_p;
+		int    t2_len =
+		  o.Gen_Product_With_PreAlloc(ix_p4x_len, ix_p4x, 2, p2z_p4z, &t2, 64);
+		double t3_p[64], *t3 = t3_p;
+		int    t3_len =
+		  o.Gen_Product_With_PreAlloc(iz_p4z_len, iz_p4z, 2, p2x_p4x, &t3, 64);
 		double m02_p[64], *m02 = m02_p;
-		int    m02_len =
-		  o.Gen_Diff_With_PreAlloc(tmi_a_len, tmi_a, tmi_b_len, tmi_b, &m02, 64);
-		double tma_a_p[64], *tma_a = tma_a_p;
-		int    tma_a_len =
-		  o.Gen_Product_With_PreAlloc(iy_cy_len, iy_cy, 2, az_cz, &tma_a, 64);
-		double tma_b_p[64], *tma_b = tma_b_p;
-		int    tma_b_len =
-		  o.Gen_Product_With_PreAlloc(iz_cz_len, iz_cz, 2, ay_cy, &tma_b, 64);
+		int    m02_len = o.Gen_Diff_With_PreAlloc(t2_len, t2, t3_len, t3, &m02, 64);
+		double t4_p[64], *t4 = t4_p;
+		int    t4_len =
+		  o.Gen_Product_With_PreAlloc(iy_p4y_len, iy_p4y, 2, p2z_p4z, &t4, 64);
+		double t5_p[64], *t5 = t5_p;
+		int    t5_len =
+		  o.Gen_Product_With_PreAlloc(iz_p4z_len, iz_p4z, 2, p2y_p4y, &t5, 64);
 		double m12_p[64], *m12 = m12_p;
-		int    m12_len =
-		  o.Gen_Diff_With_PreAlloc(tma_a_len, tma_a, tma_b_len, tma_b, &m12, 64);
+		int    m12_len = o.Gen_Diff_With_PreAlloc(t4_len, t4, t5_len, t5, &m12, 64);
 		double mt1_p[64], *mt1 = mt1_p;
-		int mt1_len = o.Gen_Product_With_PreAlloc(m01_len, m01, 2, bz_cz, &mt1, 64);
+		int    mt1_len =
+		  o.Gen_Product_With_PreAlloc(m01_len, m01, 2, p3z_p4z, &mt1, 64);
 		double mt2_p[64], *mt2 = mt2_p;
-		int mt2_len = o.Gen_Product_With_PreAlloc(m02_len, m02, 2, by_cy, &mt2, 64);
+		int    mt2_len =
+		  o.Gen_Product_With_PreAlloc(m02_len, m02, 2, p3y_p4y, &mt2, 64);
 		double mt3_p[64], *mt3 = mt3_p;
-		int mt3_len = o.Gen_Product_With_PreAlloc(m12_len, m12, 2, bx_cx, &mt3, 64);
+		int    mt3_len =
+		  o.Gen_Product_With_PreAlloc(m12_len, m12, 2, p3x_p4x, &mt3, 64);
 		double mtt_p[64], *mtt = mtt_p;
 		int    mtt_len =
 		  o.Gen_Diff_With_PreAlloc(mt2_len, mt2, mt1_len, mt1, &mtt, 64);
@@ -720,34 +721,34 @@ Sign orient3D_IEEE_expansion(const GenericPoint3T<IT, ET> &p1, double ax,
 			FreeDoubles(mt1);
 		if (m12_p != m12)
 			FreeDoubles(m12);
-		if (tma_b_p != tma_b)
-			FreeDoubles(tma_b);
-		if (tma_a_p != tma_a)
-			FreeDoubles(tma_a);
+		if (t5_p != t5)
+			FreeDoubles(t5);
+		if (t4_p != t4)
+			FreeDoubles(t4);
 		if (m02_p != m02)
 			FreeDoubles(m02);
-		if (tmi_b_p != tmi_b)
-			FreeDoubles(tmi_b);
-		if (tmi_a_p != tmi_a)
-			FreeDoubles(tmi_a);
+		if (t3_p != t3)
+			FreeDoubles(t3);
+		if (t2_p != t2)
+			FreeDoubles(t2);
 		if (m01_p != m01)
 			FreeDoubles(m01);
-		if (tmc_b_p != tmc_b)
-			FreeDoubles(tmc_b);
-		if (tmc_a_p != tmc_a)
-			FreeDoubles(tmc_a);
-		if (iz_cz_p != iz_cz)
-			FreeDoubles(iz_cz);
-		if (iy_cy_p != iy_cy)
-			FreeDoubles(iy_cy);
-		if (ix_cx_p != ix_cx)
-			FreeDoubles(ix_cx);
-		if (dcz_p != dcz)
-			FreeDoubles(dcz);
-		if (dcy_p != dcy)
-			FreeDoubles(dcy);
-		if (dcx_p != dcx)
-			FreeDoubles(dcx);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (t0_p != t0)
+			FreeDoubles(t0);
+		if (iz_p4z_p != iz_p4z)
+			FreeDoubles(iz_p4z);
+		if (iy_p4y_p != iy_p4y)
+			FreeDoubles(iy_p4y);
+		if (ix_p4x_p != ix_p4x)
+			FreeDoubles(ix_p4x);
+		if (dp4z_p != dp4z)
+			FreeDoubles(dp4z);
+		if (dp4y_p != dp4y)
+			FreeDoubles(dp4y);
+		if (dp4x_p != dp4x)
+			FreeDoubles(dp4x);
 	}
 
 	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
@@ -764,7 +765,8 @@ Sign orient3D_IEEE_expansion(const GenericPoint3T<IT, ET> &p1, double ax,
 
 #ifdef CHECK_FOR_XYZERFLOWS
 	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
-		return orient3D_IEEE_exact<IT, ET>(p1, ax, ay, az, bx, by, bz, cx, cy, cz);
+		return orient3D_IEEE_exact<IT, ET>(p1, p2x, p2y, p2z, p3x, p3y, p3z, p4x,
+		                                   p4y, p4z);
 #endif
 
 	if (return_value > 0)
@@ -777,26 +779,27 @@ Sign orient3D_IEEE_expansion(const GenericPoint3T<IT, ET> &p1, double ax,
 }
 
 template <typename IT, typename ET>
-Sign orient3D_IEEE(const GenericPoint3T<IT, ET> &p1, double ax, double ay,
-                   double az, double bx, double by, double bz, double cx,
-                   double cy, double cz)
+Sign orient3D_IEEE(const GenericPoint3T<IT, ET> &p1, double p2x, double p2y,
+                   double p2z, double p3x, double p3y, double p3z, double p4x,
+                   double p4y, double p4z)
 {
 	Sign ret;
-	ret = orient3D_IEEE_interval<IT, ET>(p1, ax, ay, az, bx, by, bz, cx, cy, cz);
+	ret = orient3D_IEEE_interval<IT, ET>(p1, p2x, p2y, p2z, p3x, p3y, p3z, p4x,
+	                                     p4y, p4z);
 	if (is_sign_reliable(ret))
 		return ret;
-	return orient3D_IEEE_expansion<IT, ET>(p1, ax, ay, az, bx, by, bz, cx, cy,
-	                                       cz);
+	return orient3D_IEEE_expansion<IT, ET>(p1, p2x, p2y, p2z, p3x, p3y, p3z, p4x,
+	                                       p4y, p4z);
 }
 
 template <typename IT, typename ET>
 Sign orient3D_IEEE(const GenericPoint3T<IT, ET> &p1,
-                   const GenericPoint3T<IT, ET> &a,
-                   const GenericPoint3T<IT, ET> &b,
-                   const GenericPoint3T<IT, ET> &c)
+                   const GenericPoint3T<IT, ET> &p2,
+                   const GenericPoint3T<IT, ET> &p3,
+                   const GenericPoint3T<IT, ET> &p4)
 {
-	return orient3D_IEEE<IT, ET>(p1, a.x(), a.y(), a.z(), b.x(), b.y(), b.z(),
-	                             c.x(), c.y(), c.z());
+	return orient3D_IEEE<IT, ET>(p1, p2.x(), p2.y(), p2.z(), p3.x(), p3.y(),
+	                             p3.z(), p4.x(), p4.y(), p4.z());
 }
 
 template <typename IT, typename ET>
@@ -826,15 +829,15 @@ Sign orient3D_IIEE_interval(const GenericPoint3T<IT, ET> &p1,
 	IT p3p4x = p3x - p4x;
 	IT p3p4y = p3y - p4y;
 	IT p3p4z = p3z - p4z;
-	IT tmc_a = p1p4x * p2p4y;
-	IT tmc_b = p1p4y * p2p4x;
-	IT m01   = tmc_a - tmc_b;
-	IT tmi_a = p1p4x * p2p4z;
-	IT tmi_b = p1p4z * p2p4x;
-	IT m02   = tmi_a - tmi_b;
-	IT tma_a = p1p4y * p2p4z;
-	IT tma_b = p1p4z * p2p4y;
-	IT m12   = tma_a - tma_b;
+	IT t0    = p1p4x * p2p4y;
+	IT t1    = p1p4y * p2p4x;
+	IT m01   = t0 - t1;
+	IT t2    = p1p4x * p2p4z;
+	IT t3    = p1p4z * p2p4x;
+	IT m02   = t2 - t3;
+	IT t4    = p1p4y * p2p4z;
+	IT t5    = p1p4z * p2p4y;
+	IT m12   = t4 - t5;
 	IT mt1   = m01 * p3p4z;
 	IT mt2   = m02 * p3p4y;
 	IT mt3   = m12 * p3p4x;
@@ -868,15 +871,15 @@ Sign orient3D_IIEE_exact(const GenericPoint3T<IT, ET> &p1,
 	ET p3p4x = p3x - p4x;
 	ET p3p4y = p3y - p4y;
 	ET p3p4z = p3z - p4z;
-	ET tmc_a = p1p4x * p2p4y;
-	ET tmc_b = p1p4y * p2p4x;
-	ET m01   = tmc_a - tmc_b;
-	ET tmi_a = p1p4x * p2p4z;
-	ET tmi_b = p1p4z * p2p4x;
-	ET m02   = tmi_a - tmi_b;
-	ET tma_a = p1p4y * p2p4z;
-	ET tma_b = p1p4z * p2p4y;
-	ET m12   = tma_a - tma_b;
+	ET t0    = p1p4x * p2p4y;
+	ET t1    = p1p4y * p2p4x;
+	ET m01   = t0 - t1;
+	ET t2    = p1p4x * p2p4z;
+	ET t3    = p1p4z * p2p4x;
+	ET m02   = t2 - t3;
+	ET t4    = p1p4y * p2p4z;
+	ET t5    = p1p4z * p2p4y;
+	ET m12   = t4 - t5;
 	ET mt1   = m01 * p3p4z;
 	ET mt2   = m02 * p3p4y;
 	ET mt3   = m12 * p3p4x;
@@ -944,33 +947,30 @@ Sign orient3D_IIEE_expansion(const GenericPoint3T<IT, ET> &p1,
 		o.Two_Diff(p3y, p4y, p3p4y);
 		double p3p4z[2];
 		o.Two_Diff(p3z, p4z, p3p4z);
-		double tmc_a_p[32], *tmc_a = tmc_a_p;
-		int    tmc_a_len = o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4y_len,
-		                                               p2p4y, &tmc_a, 32);
-		double tmc_b_p[32], *tmc_b = tmc_b_p;
-		int    tmc_b_len = o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4x_len,
-		                                               p2p4x, &tmc_b, 32);
+		double t0_p[32], *t0 = t0_p;
+		int    t0_len =
+		  o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4y_len, p2p4y, &t0, 32);
+		double t1_p[32], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4x_len, p2p4x, &t1, 32);
 		double m01_p[32], *m01 = m01_p;
-		int    m01_len =
-		  o.Gen_Diff_With_PreAlloc(tmc_a_len, tmc_a, tmc_b_len, tmc_b, &m01, 32);
-		double tmi_a_p[32], *tmi_a = tmi_a_p;
-		int    tmi_a_len = o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4z_len,
-		                                               p2p4z, &tmi_a, 32);
-		double tmi_b_p[32], *tmi_b = tmi_b_p;
-		int    tmi_b_len = o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4x_len,
-		                                               p2p4x, &tmi_b, 32);
+		int    m01_len = o.Gen_Diff_With_PreAlloc(t0_len, t0, t1_len, t1, &m01, 32);
+		double t2_p[32], *t2 = t2_p;
+		int    t2_len =
+		  o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4z_len, p2p4z, &t2, 32);
+		double t3_p[32], *t3 = t3_p;
+		int    t3_len =
+		  o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4x_len, p2p4x, &t3, 32);
 		double m02_p[32], *m02 = m02_p;
-		int    m02_len =
-		  o.Gen_Diff_With_PreAlloc(tmi_a_len, tmi_a, tmi_b_len, tmi_b, &m02, 32);
-		double tma_a_p[32], *tma_a = tma_a_p;
-		int    tma_a_len = o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4z_len,
-		                                               p2p4z, &tma_a, 32);
-		double tma_b_p[32], *tma_b = tma_b_p;
-		int    tma_b_len = o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4y_len,
-		                                               p2p4y, &tma_b, 32);
+		int    m02_len = o.Gen_Diff_With_PreAlloc(t2_len, t2, t3_len, t3, &m02, 32);
+		double t4_p[32], *t4 = t4_p;
+		int    t4_len =
+		  o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4z_len, p2p4z, &t4, 32);
+		double t5_p[32], *t5 = t5_p;
+		int    t5_len =
+		  o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4y_len, p2p4y, &t5, 32);
 		double m12_p[32], *m12 = m12_p;
-		int    m12_len =
-		  o.Gen_Diff_With_PreAlloc(tma_a_len, tma_a, tma_b_len, tma_b, &m12, 32);
+		int    m12_len = o.Gen_Diff_With_PreAlloc(t4_len, t4, t5_len, t5, &m12, 32);
 		double mt1_p[32], *mt1 = mt1_p;
 		int mt1_len = o.Gen_Product_With_PreAlloc(m01_len, m01, 2, p3p4z, &mt1, 32);
 		double mt2_p[32], *mt2 = mt2_p;
@@ -997,22 +997,22 @@ Sign orient3D_IIEE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(mt1);
 		if (m12_p != m12)
 			FreeDoubles(m12);
-		if (tma_b_p != tma_b)
-			FreeDoubles(tma_b);
-		if (tma_a_p != tma_a)
-			FreeDoubles(tma_a);
+		if (t5_p != t5)
+			FreeDoubles(t5);
+		if (t4_p != t4)
+			FreeDoubles(t4);
 		if (m02_p != m02)
 			FreeDoubles(m02);
-		if (tmi_b_p != tmi_b)
-			FreeDoubles(tmi_b);
-		if (tmi_a_p != tmi_a)
-			FreeDoubles(tmi_a);
+		if (t3_p != t3)
+			FreeDoubles(t3);
+		if (t2_p != t2)
+			FreeDoubles(t2);
 		if (m01_p != m01)
 			FreeDoubles(m01);
-		if (tmc_b_p != tmc_b)
-			FreeDoubles(tmc_b);
-		if (tmc_a_p != tmc_a)
-			FreeDoubles(tmc_a);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (t0_p != t0)
+			FreeDoubles(t0);
 		if (p2p4z_p != p2p4z)
 			FreeDoubles(p2p4z);
 		if (p2p4y_p != p2p4y)
@@ -1049,10 +1049,6 @@ Sign orient3D_IIEE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -1131,15 +1127,15 @@ Sign orient3D_IIIE_interval(const GenericPoint3T<IT, ET> &p1,
 	IT p3p4x = l3x - d3p4x;
 	IT p3p4y = l3y - d3p4y;
 	IT p3p4z = l3z - d3p4z;
-	IT tmc_a = p1p4x * p2p4y;
-	IT tmc_b = p1p4y * p2p4x;
-	IT m01   = tmc_a - tmc_b;
-	IT tmi_a = p1p4x * p2p4z;
-	IT tmi_b = p1p4z * p2p4x;
-	IT m02   = tmi_a - tmi_b;
-	IT tma_a = p1p4y * p2p4z;
-	IT tma_b = p1p4z * p2p4y;
-	IT m12   = tma_a - tma_b;
+	IT t0    = p1p4x * p2p4y;
+	IT t1    = p1p4y * p2p4x;
+	IT m01   = t0 - t1;
+	IT t2    = p1p4x * p2p4z;
+	IT t3    = p1p4z * p2p4x;
+	IT m02   = t2 - t3;
+	IT t4    = p1p4y * p2p4z;
+	IT t5    = p1p4z * p2p4y;
+	IT m12   = t4 - t5;
 	IT mt1   = m01 * p3p4z;
 	IT mt2   = m02 * p3p4y;
 	IT mt3   = m12 * p3p4x;
@@ -1178,15 +1174,15 @@ Sign orient3D_IIIE_exact(const GenericPoint3T<IT, ET> &p1,
 	ET p3p4x = l3x - d3p4x;
 	ET p3p4y = l3y - d3p4y;
 	ET p3p4z = l3z - d3p4z;
-	ET tmc_a = p1p4x * p2p4y;
-	ET tmc_b = p1p4y * p2p4x;
-	ET m01   = tmc_a - tmc_b;
-	ET tmi_a = p1p4x * p2p4z;
-	ET tmi_b = p1p4z * p2p4x;
-	ET m02   = tmi_a - tmi_b;
-	ET tma_a = p1p4y * p2p4z;
-	ET tma_b = p1p4z * p2p4y;
-	ET m12   = tma_a - tma_b;
+	ET t0    = p1p4x * p2p4y;
+	ET t1    = p1p4y * p2p4x;
+	ET m01   = t0 - t1;
+	ET t2    = p1p4x * p2p4z;
+	ET t3    = p1p4z * p2p4x;
+	ET m02   = t2 - t3;
+	ET t4    = p1p4y * p2p4z;
+	ET t5    = p1p4z * p2p4y;
+	ET m12   = t4 - t5;
 	ET mt1   = m01 * p3p4z;
 	ET mt2   = m02 * p3p4y;
 	ET mt3   = m12 * p3p4x;
@@ -1267,33 +1263,30 @@ Sign orient3D_IIIE_expansion(const GenericPoint3T<IT, ET> &p1,
 		double p3p4z_p[32], *p3p4z = p3p4z_p;
 		int    p3p4z_len =
 		  o.Gen_Diff_With_PreAlloc(l3z_len, l3z, d3p4z_len, d3p4z, &p3p4z, 32);
-		double tmc_a_p[32], *tmc_a = tmc_a_p;
-		int    tmc_a_len = o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4y_len,
-		                                               p2p4y, &tmc_a, 32);
-		double tmc_b_p[32], *tmc_b = tmc_b_p;
-		int    tmc_b_len = o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4x_len,
-		                                               p2p4x, &tmc_b, 32);
+		double t0_p[32], *t0 = t0_p;
+		int    t0_len =
+		  o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4y_len, p2p4y, &t0, 32);
+		double t1_p[32], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4x_len, p2p4x, &t1, 32);
 		double m01_p[32], *m01 = m01_p;
-		int    m01_len =
-		  o.Gen_Diff_With_PreAlloc(tmc_a_len, tmc_a, tmc_b_len, tmc_b, &m01, 32);
-		double tmi_a_p[32], *tmi_a = tmi_a_p;
-		int    tmi_a_len = o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4z_len,
-		                                               p2p4z, &tmi_a, 32);
-		double tmi_b_p[32], *tmi_b = tmi_b_p;
-		int    tmi_b_len = o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4x_len,
-		                                               p2p4x, &tmi_b, 32);
+		int    m01_len = o.Gen_Diff_With_PreAlloc(t0_len, t0, t1_len, t1, &m01, 32);
+		double t2_p[32], *t2 = t2_p;
+		int    t2_len =
+		  o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4z_len, p2p4z, &t2, 32);
+		double t3_p[32], *t3 = t3_p;
+		int    t3_len =
+		  o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4x_len, p2p4x, &t3, 32);
 		double m02_p[32], *m02 = m02_p;
-		int    m02_len =
-		  o.Gen_Diff_With_PreAlloc(tmi_a_len, tmi_a, tmi_b_len, tmi_b, &m02, 32);
-		double tma_a_p[32], *tma_a = tma_a_p;
-		int    tma_a_len = o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4z_len,
-		                                               p2p4z, &tma_a, 32);
-		double tma_b_p[32], *tma_b = tma_b_p;
-		int    tma_b_len = o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4y_len,
-		                                               p2p4y, &tma_b, 32);
+		int    m02_len = o.Gen_Diff_With_PreAlloc(t2_len, t2, t3_len, t3, &m02, 32);
+		double t4_p[32], *t4 = t4_p;
+		int    t4_len =
+		  o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4z_len, p2p4z, &t4, 32);
+		double t5_p[32], *t5 = t5_p;
+		int    t5_len =
+		  o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4y_len, p2p4y, &t5, 32);
 		double m12_p[32], *m12 = m12_p;
-		int    m12_len =
-		  o.Gen_Diff_With_PreAlloc(tma_a_len, tma_a, tma_b_len, tma_b, &m12, 32);
+		int    m12_len = o.Gen_Diff_With_PreAlloc(t4_len, t4, t5_len, t5, &m12, 32);
 		double mt1_p[32], *mt1 = mt1_p;
 		int    mt1_len =
 		  o.Gen_Product_With_PreAlloc(m01_len, m01, p3p4z_len, p3p4z, &mt1, 32);
@@ -1323,22 +1316,22 @@ Sign orient3D_IIIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(mt1);
 		if (m12_p != m12)
 			FreeDoubles(m12);
-		if (tma_b_p != tma_b)
-			FreeDoubles(tma_b);
-		if (tma_a_p != tma_a)
-			FreeDoubles(tma_a);
+		if (t5_p != t5)
+			FreeDoubles(t5);
+		if (t4_p != t4)
+			FreeDoubles(t4);
 		if (m02_p != m02)
 			FreeDoubles(m02);
-		if (tmi_b_p != tmi_b)
-			FreeDoubles(tmi_b);
-		if (tmi_a_p != tmi_a)
-			FreeDoubles(tmi_a);
+		if (t3_p != t3)
+			FreeDoubles(t3);
+		if (t2_p != t2)
+			FreeDoubles(t2);
 		if (m01_p != m01)
 			FreeDoubles(m01);
-		if (tmc_b_p != tmc_b)
-			FreeDoubles(tmc_b);
-		if (tmc_a_p != tmc_a)
-			FreeDoubles(tmc_a);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (t0_p != t0)
+			FreeDoubles(t0);
 		if (p3p4z_p != p3p4z)
 			FreeDoubles(p3p4z);
 		if (p3p4y_p != p3p4y)
@@ -1387,10 +1380,6 @@ Sign orient3D_IIIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -1399,10 +1388,6 @@ Sign orient3D_IIIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l2z);
 		if (d2_p != d2)
 			FreeDoubles(d2);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l3x_p != l3x)
 			FreeDoubles(l3x);
 		if (l3y_p != l3y)
@@ -1491,15 +1476,15 @@ Sign orient3D_IIII_interval(const GenericPoint3T<IT, ET> &p1,
 	IT p3p4x = d4l3x - d3p4x;
 	IT p3p4y = d4l3y - d3p4y;
 	IT p3p4z = d4l3z - d3p4z;
-	IT tmc_a = p1p4x * p2p4y;
-	IT tmc_b = p1p4y * p2p4x;
-	IT m01   = tmc_a - tmc_b;
-	IT tmi_a = p1p4x * p2p4z;
-	IT tmi_b = p1p4z * p2p4x;
-	IT m02   = tmi_a - tmi_b;
-	IT tma_a = p1p4y * p2p4z;
-	IT tma_b = p1p4z * p2p4y;
-	IT m12   = tma_a - tma_b;
+	IT t0    = p1p4x * p2p4y;
+	IT t1    = p1p4y * p2p4x;
+	IT m01   = t0 - t1;
+	IT t2    = p1p4x * p2p4z;
+	IT t3    = p1p4z * p2p4x;
+	IT m02   = t2 - t3;
+	IT t4    = p1p4y * p2p4z;
+	IT t5    = p1p4z * p2p4y;
+	IT m12   = t4 - t5;
 	IT mt1   = m01 * p3p4z;
 	IT mt2   = m02 * p3p4y;
 	IT mt3   = m12 * p3p4x;
@@ -1548,15 +1533,15 @@ Sign orient3D_IIII_exact(const GenericPoint3T<IT, ET> &p1,
 	ET p3p4x = d4l3x - d3p4x;
 	ET p3p4y = d4l3y - d3p4y;
 	ET p3p4z = d4l3z - d3p4z;
-	ET tmc_a = p1p4x * p2p4y;
-	ET tmc_b = p1p4y * p2p4x;
-	ET m01   = tmc_a - tmc_b;
-	ET tmi_a = p1p4x * p2p4z;
-	ET tmi_b = p1p4z * p2p4x;
-	ET m02   = tmi_a - tmi_b;
-	ET tma_a = p1p4y * p2p4z;
-	ET tma_b = p1p4z * p2p4y;
-	ET m12   = tma_a - tma_b;
+	ET t0    = p1p4x * p2p4y;
+	ET t1    = p1p4y * p2p4x;
+	ET m01   = t0 - t1;
+	ET t2    = p1p4x * p2p4z;
+	ET t3    = p1p4z * p2p4x;
+	ET m02   = t2 - t3;
+	ET t4    = p1p4y * p2p4z;
+	ET t5    = p1p4z * p2p4y;
+	ET m12   = t4 - t5;
 	ET mt1   = m01 * p3p4z;
 	ET mt2   = m02 * p3p4y;
 	ET mt3   = m12 * p3p4x;
@@ -1679,33 +1664,30 @@ Sign orient3D_IIII_expansion(const GenericPoint3T<IT, ET> &p1,
 		double p3p4z_p[32], *p3p4z = p3p4z_p;
 		int    p3p4z_len =
 		  o.Gen_Diff_With_PreAlloc(d4l3z_len, d4l3z, d3p4z_len, d3p4z, &p3p4z, 32);
-		double tmc_a_p[32], *tmc_a = tmc_a_p;
-		int    tmc_a_len = o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4y_len,
-		                                               p2p4y, &tmc_a, 32);
-		double tmc_b_p[32], *tmc_b = tmc_b_p;
-		int    tmc_b_len = o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4x_len,
-		                                               p2p4x, &tmc_b, 32);
+		double t0_p[32], *t0 = t0_p;
+		int    t0_len =
+		  o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4y_len, p2p4y, &t0, 32);
+		double t1_p[32], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4x_len, p2p4x, &t1, 32);
 		double m01_p[32], *m01 = m01_p;
-		int    m01_len =
-		  o.Gen_Diff_With_PreAlloc(tmc_a_len, tmc_a, tmc_b_len, tmc_b, &m01, 32);
-		double tmi_a_p[32], *tmi_a = tmi_a_p;
-		int    tmi_a_len = o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4z_len,
-		                                               p2p4z, &tmi_a, 32);
-		double tmi_b_p[32], *tmi_b = tmi_b_p;
-		int    tmi_b_len = o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4x_len,
-		                                               p2p4x, &tmi_b, 32);
+		int    m01_len = o.Gen_Diff_With_PreAlloc(t0_len, t0, t1_len, t1, &m01, 32);
+		double t2_p[32], *t2 = t2_p;
+		int    t2_len =
+		  o.Gen_Product_With_PreAlloc(p1p4x_len, p1p4x, p2p4z_len, p2p4z, &t2, 32);
+		double t3_p[32], *t3 = t3_p;
+		int    t3_len =
+		  o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4x_len, p2p4x, &t3, 32);
 		double m02_p[32], *m02 = m02_p;
-		int    m02_len =
-		  o.Gen_Diff_With_PreAlloc(tmi_a_len, tmi_a, tmi_b_len, tmi_b, &m02, 32);
-		double tma_a_p[32], *tma_a = tma_a_p;
-		int    tma_a_len = o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4z_len,
-		                                               p2p4z, &tma_a, 32);
-		double tma_b_p[32], *tma_b = tma_b_p;
-		int    tma_b_len = o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4y_len,
-		                                               p2p4y, &tma_b, 32);
+		int    m02_len = o.Gen_Diff_With_PreAlloc(t2_len, t2, t3_len, t3, &m02, 32);
+		double t4_p[32], *t4 = t4_p;
+		int    t4_len =
+		  o.Gen_Product_With_PreAlloc(p1p4y_len, p1p4y, p2p4z_len, p2p4z, &t4, 32);
+		double t5_p[32], *t5 = t5_p;
+		int    t5_len =
+		  o.Gen_Product_With_PreAlloc(p1p4z_len, p1p4z, p2p4y_len, p2p4y, &t5, 32);
 		double m12_p[32], *m12 = m12_p;
-		int    m12_len =
-		  o.Gen_Diff_With_PreAlloc(tma_a_len, tma_a, tma_b_len, tma_b, &m12, 32);
+		int    m12_len = o.Gen_Diff_With_PreAlloc(t4_len, t4, t5_len, t5, &m12, 32);
 		double mt1_p[32], *mt1 = mt1_p;
 		int    mt1_len =
 		  o.Gen_Product_With_PreAlloc(m01_len, m01, p3p4z_len, p3p4z, &mt1, 32);
@@ -1735,22 +1717,22 @@ Sign orient3D_IIII_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(mt1);
 		if (m12_p != m12)
 			FreeDoubles(m12);
-		if (tma_b_p != tma_b)
-			FreeDoubles(tma_b);
-		if (tma_a_p != tma_a)
-			FreeDoubles(tma_a);
+		if (t5_p != t5)
+			FreeDoubles(t5);
+		if (t4_p != t4)
+			FreeDoubles(t4);
 		if (m02_p != m02)
 			FreeDoubles(m02);
-		if (tmi_b_p != tmi_b)
-			FreeDoubles(tmi_b);
-		if (tmi_a_p != tmi_a)
-			FreeDoubles(tmi_a);
+		if (t3_p != t3)
+			FreeDoubles(t3);
+		if (t2_p != t2)
+			FreeDoubles(t2);
 		if (m01_p != m01)
 			FreeDoubles(m01);
-		if (tmc_b_p != tmc_b)
-			FreeDoubles(tmc_b);
-		if (tmc_a_p != tmc_a)
-			FreeDoubles(tmc_a);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (t0_p != t0)
+			FreeDoubles(t0);
 		if (p3p4z_p != p3p4z)
 			FreeDoubles(p3p4z);
 		if (p3p4y_p != p3p4y)
@@ -1817,10 +1799,6 @@ Sign orient3D_IIII_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -1829,10 +1807,6 @@ Sign orient3D_IIII_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l2z);
 		if (d2_p != d2)
 			FreeDoubles(d2);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l3x_p != l3x)
 			FreeDoubles(l3x);
 		if (l3y_p != l3y)
@@ -1841,10 +1815,6 @@ Sign orient3D_IIII_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l3z);
 		if (d3_p != d3)
 			FreeDoubles(d3);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l4x_p != l4x)
 			FreeDoubles(l4x);
 		if (l4y_p != l4y)

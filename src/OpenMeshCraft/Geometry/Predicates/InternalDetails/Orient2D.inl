@@ -488,10 +488,6 @@ Sign orient2D_IIE_expansion(const GenericPoint2T<IT, ET> &p1,
 			FreeDoubles(l1y);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -689,20 +685,12 @@ Sign orient2D_III_expansion(const GenericPoint2T<IT, ET> &p1,
 			FreeDoubles(l1y);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
 			FreeDoubles(l2y);
 		if (d2_p != d2)
 			FreeDoubles(d2);
-	}
-
-	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l3x_p != l3x)
 			FreeDoubles(l3x);
 		if (l3y_p != l3y)

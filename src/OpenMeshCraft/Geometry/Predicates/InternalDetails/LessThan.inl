@@ -447,10 +447,6 @@ Sign lessThanOnX_II_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -667,10 +663,6 @@ Sign lessThanOnY_II_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -887,10 +879,6 @@ Sign lessThanOnZ_II_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)

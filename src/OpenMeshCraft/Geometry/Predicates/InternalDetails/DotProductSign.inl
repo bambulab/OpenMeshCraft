@@ -1330,17 +1330,17 @@ Sign dotProductSign2D_EEI_interval(const GenericPoint2T<IT, ET> &q, IT px,
 
 	typename IT::Protector P;
 
-	IT pxq = px * dq;
-	IT pyq = py * dq;
-	IT rxq = rx * dq;
-	IT ryq = ry * dq;
-	IT lx  = pxq - lqx;
-	IT ly  = pyq - lqy;
-	IT gx  = rxq - lqx;
-	IT gy  = ryq - lqy;
-	IT dx  = lx * gx;
-	IT dy  = ly * gy;
-	IT d   = dx + dy;
+	IT pxdq = px * dq;
+	IT pydq = py * dq;
+	IT rxdq = rx * dq;
+	IT rydq = ry * dq;
+	IT lx   = pxdq - lqx;
+	IT ly   = pydq - lqy;
+	IT gx   = rxdq - lqx;
+	IT gy   = rydq - lqy;
+	IT dx   = lx * gx;
+	IT dy   = ly * gy;
+	IT d    = dx + dy;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -1352,17 +1352,17 @@ Sign dotProductSign2D_EEI_exact(const GenericPoint2T<IT, ET> &q, ET px, ET py,
 {
 	ET lqx, lqy, dq;
 	q.getExactLambda(lqx, lqy, dq);
-	ET pxq = px * dq;
-	ET pyq = py * dq;
-	ET rxq = rx * dq;
-	ET ryq = ry * dq;
-	ET lx  = pxq - lqx;
-	ET ly  = pyq - lqy;
-	ET gx  = rxq - lqx;
-	ET gy  = ryq - lqy;
-	ET dx  = lx * gx;
-	ET dy  = ly * gy;
-	ET d   = dx + dy;
+	ET pxdq = px * dq;
+	ET pydq = py * dq;
+	ET rxdq = rx * dq;
+	ET rydq = ry * dq;
+	ET lx   = pxdq - lqx;
+	ET ly   = pydq - lqy;
+	ET gx   = rxdq - lqx;
+	ET gy   = rydq - lqy;
+	ET dx   = lx * gx;
+	ET dy   = ly * gy;
+	ET d    = dx + dy;
 	return OMC::sign(d);
 }
 
@@ -1381,22 +1381,26 @@ Sign dotProductSign2D_EEI_expansion(const GenericPoint2T<IT, ET> &q, double px,
 	if ((dq[dq_len - 1] != 0))
 	{
 		expansionObject o;
-		double          pxq_p[128], *pxq = pxq_p;
-		int    pxq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, px, &pxq, 128);
-		double pyq_p[128], *pyq = pyq_p;
-		int    pyq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, py, &pyq, 128);
-		double rxq_p[128], *rxq = rxq_p;
-		int    rxq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rx, &rxq, 128);
-		double ryq_p[128], *ryq = ryq_p;
-		int    ryq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, ry, &ryq, 128);
+		double          pxdq_p[128], *pxdq = pxdq_p;
+		int    pxdq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, px, &pxdq, 128);
+		double pydq_p[128], *pydq = pydq_p;
+		int    pydq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, py, &pydq, 128);
+		double rxdq_p[128], *rxdq = rxdq_p;
+		int    rxdq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rx, &rxdq, 128);
+		double rydq_p[128], *rydq = rydq_p;
+		int    rydq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, ry, &rydq, 128);
 		double lx_p[128], *lx = lx_p;
-		int lx_len = o.Gen_Diff_With_PreAlloc(pxq_len, pxq, lqx_len, lqx, &lx, 128);
+		int    lx_len =
+		  o.Gen_Diff_With_PreAlloc(pxdq_len, pxdq, lqx_len, lqx, &lx, 128);
 		double ly_p[128], *ly = ly_p;
-		int ly_len = o.Gen_Diff_With_PreAlloc(pyq_len, pyq, lqy_len, lqy, &ly, 128);
+		int    ly_len =
+		  o.Gen_Diff_With_PreAlloc(pydq_len, pydq, lqy_len, lqy, &ly, 128);
 		double gx_p[128], *gx = gx_p;
-		int gx_len = o.Gen_Diff_With_PreAlloc(rxq_len, rxq, lqx_len, lqx, &gx, 128);
+		int    gx_len =
+		  o.Gen_Diff_With_PreAlloc(rxdq_len, rxdq, lqx_len, lqx, &gx, 128);
 		double gy_p[128], *gy = gy_p;
-		int gy_len = o.Gen_Diff_With_PreAlloc(ryq_len, ryq, lqy_len, lqy, &gy, 128);
+		int    gy_len =
+		  o.Gen_Diff_With_PreAlloc(rydq_len, rydq, lqy_len, lqy, &gy, 128);
 		double dx_p[128], *dx = dx_p;
 		int dx_len = o.Gen_Product_With_PreAlloc(lx_len, lx, gx_len, gx, &dx, 128);
 		double dy_p[128], *dy = dy_p;
@@ -1419,14 +1423,14 @@ Sign dotProductSign2D_EEI_expansion(const GenericPoint2T<IT, ET> &q, double px,
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (ryq_p != ryq)
-			FreeDoubles(ryq);
-		if (rxq_p != rxq)
-			FreeDoubles(rxq);
-		if (pyq_p != pyq)
-			FreeDoubles(pyq);
-		if (pxq_p != pxq)
-			FreeDoubles(pxq);
+		if (rydq_p != rydq)
+			FreeDoubles(rydq);
+		if (rxdq_p != rxdq)
+			FreeDoubles(rxdq);
+		if (pydq_p != pydq)
+			FreeDoubles(pydq);
+		if (pxdq_p != pxdq)
+			FreeDoubles(pxdq);
 	}
 
 	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
@@ -1482,15 +1486,15 @@ Sign dotProductSign2D_IEE_interval(const GenericPoint2T<IT, ET> &p, IT rx,
 
 	typename IT::Protector P;
 
-	IT qxd = qx * dp;
-	IT qyd = qy * dp;
-	IT lx  = lpx - qxd;
-	IT ly  = lpy - qyd;
-	IT gx  = rx - qx;
-	IT gy  = ry - qy;
-	IT dx  = lx * gx;
-	IT dy  = ly * gy;
-	IT d   = dx + dy;
+	IT qxdp = qx * dp;
+	IT qydp = qy * dp;
+	IT lx   = lpx - qxdp;
+	IT ly   = lpy - qydp;
+	IT gx   = rx - qx;
+	IT gy   = ry - qy;
+	IT dx   = lx * gx;
+	IT dy   = ly * gy;
+	IT d    = dx + dy;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -1502,15 +1506,15 @@ Sign dotProductSign2D_IEE_exact(const GenericPoint2T<IT, ET> &p, ET rx, ET ry,
 {
 	ET lpx, lpy, dp;
 	p.getExactLambda(lpx, lpy, dp);
-	ET qxd = qx * dp;
-	ET qyd = qy * dp;
-	ET lx  = lpx - qxd;
-	ET ly  = lpy - qyd;
-	ET gx  = rx - qx;
-	ET gy  = ry - qy;
-	ET dx  = lx * gx;
-	ET dy  = ly * gy;
-	ET d   = dx + dy;
+	ET qxdp = qx * dp;
+	ET qydp = qy * dp;
+	ET lx   = lpx - qxdp;
+	ET ly   = lpy - qydp;
+	ET gx   = rx - qx;
+	ET gy   = ry - qy;
+	ET dx   = lx * gx;
+	ET dy   = ly * gy;
+	ET d    = dx + dy;
 	return OMC::sign(d);
 }
 
@@ -1529,14 +1533,16 @@ Sign dotProductSign2D_IEE_expansion(const GenericPoint2T<IT, ET> &p, double rx,
 	if ((dp[dp_len - 1] != 0))
 	{
 		expansionObject o;
-		double          qxd_p[128], *qxd = qxd_p;
-		int    qxd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qx, &qxd, 128);
-		double qyd_p[128], *qyd = qyd_p;
-		int    qyd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qy, &qyd, 128);
+		double          qxdp_p[128], *qxdp = qxdp_p;
+		int    qxdp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qx, &qxdp, 128);
+		double qydp_p[128], *qydp = qydp_p;
+		int    qydp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qy, &qydp, 128);
 		double lx_p[128], *lx = lx_p;
-		int lx_len = o.Gen_Diff_With_PreAlloc(lpx_len, lpx, qxd_len, qxd, &lx, 128);
+		int    lx_len =
+		  o.Gen_Diff_With_PreAlloc(lpx_len, lpx, qxdp_len, qxdp, &lx, 128);
 		double ly_p[128], *ly = ly_p;
-		int ly_len = o.Gen_Diff_With_PreAlloc(lpy_len, lpy, qyd_len, qyd, &ly, 128);
+		int    ly_len =
+		  o.Gen_Diff_With_PreAlloc(lpy_len, lpy, qydp_len, qydp, &ly, 128);
 		double gx[2];
 		o.Two_Diff(rx, qx, gx);
 		double gy[2];
@@ -1559,10 +1565,10 @@ Sign dotProductSign2D_IEE_expansion(const GenericPoint2T<IT, ET> &p, double rx,
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (qyd_p != qyd)
-			FreeDoubles(qyd);
-		if (qxd_p != qxd)
-			FreeDoubles(qxd);
+		if (qydp_p != qydp)
+			FreeDoubles(qydp);
+		if (qxdp_p != qxdp)
+			FreeDoubles(qxdp);
 	}
 
 	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
@@ -1619,20 +1625,19 @@ Sign dotProductSign2D_IEI_interval(const GenericPoint2T<IT, ET> &p,
 
 	typename IT::Protector P;
 
-	IT dqp  = dq * dp;
-	IT pxq  = lpx * dqp;
-	IT pyq  = lpy * dqp;
-	IT rxq  = rx * dq;
-	IT ryq  = ry * dq;
-	IT lqxd = lqx * dp;
-	IT lqyd = lqy * dp;
-	IT lx   = pxq - lqxd;
-	IT ly   = pyq - lqyd;
-	IT gx   = rxq - lqx;
-	IT gy   = ryq - lqy;
-	IT dx   = lx * gx;
-	IT dy   = ly * gy;
-	IT d    = dx + dy;
+	IT lpxdq = lpx * dq;
+	IT lpydq = lpy * dq;
+	IT lqxdp = lqx * dp;
+	IT lqydp = lqy * dp;
+	IT rxq   = rx * dq;
+	IT ryq   = ry * dq;
+	IT lx    = lpxdq - lqxdp;
+	IT ly    = lpydq - lqydp;
+	IT gx    = rxq - lqx;
+	IT gy    = ryq - lqy;
+	IT dx    = lx * gx;
+	IT dy    = ly * gy;
+	IT d     = dx + dy;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -1645,20 +1650,19 @@ Sign dotProductSign2D_IEI_exact(const GenericPoint2T<IT, ET> &p,
 	ET lpx, lpy, dp, lqx, lqy, dq;
 	p.getExactLambda(lpx, lpy, dp);
 	q.getExactLambda(lqx, lqy, dq);
-	ET dqp  = dq * dp;
-	ET pxq  = lpx * dqp;
-	ET pyq  = lpy * dqp;
-	ET rxq  = rx * dq;
-	ET ryq  = ry * dq;
-	ET lqxd = lqx * dp;
-	ET lqyd = lqy * dp;
-	ET lx   = pxq - lqxd;
-	ET ly   = pyq - lqyd;
-	ET gx   = rxq - lqx;
-	ET gy   = ryq - lqy;
-	ET dx   = lx * gx;
-	ET dy   = ly * gy;
-	ET d    = dx + dy;
+	ET lpxdq = lpx * dq;
+	ET lpydq = lpy * dq;
+	ET lqxdp = lqx * dp;
+	ET lqydp = lqy * dp;
+	ET rxq   = rx * dq;
+	ET ryq   = ry * dq;
+	ET lx    = lpxdq - lqxdp;
+	ET ly    = lpydq - lqydp;
+	ET gx    = rxq - lqx;
+	ET gy    = ryq - lqy;
+	ET dx    = lx * gx;
+	ET dy    = ly * gy;
+	ET d     = dx + dy;
 	return OMC::sign(d);
 }
 
@@ -1681,30 +1685,28 @@ Sign dotProductSign2D_IEI_expansion(const GenericPoint2T<IT, ET> &p,
 	if ((dp[dp_len - 1] != 0) && (dq[dq_len - 1] != 0))
 	{
 		expansionObject o;
-		double          dqp_p[64], *dqp = dqp_p;
-		int dqp_len = o.Gen_Product_With_PreAlloc(dq_len, dq, dp_len, dp, &dqp, 64);
-		double pxq_p[64], *pxq = pxq_p;
-		int    pxq_len =
-		  o.Gen_Product_With_PreAlloc(lpx_len, lpx, dqp_len, dqp, &pxq, 64);
-		double pyq_p[64], *pyq = pyq_p;
-		int    pyq_len =
-		  o.Gen_Product_With_PreAlloc(lpy_len, lpy, dqp_len, dqp, &pyq, 64);
+		double          lpxdq_p[64], *lpxdq = lpxdq_p;
+		int             lpxdq_len =
+		  o.Gen_Product_With_PreAlloc(lpx_len, lpx, dq_len, dq, &lpxdq, 64);
+		double lpydq_p[64], *lpydq = lpydq_p;
+		int    lpydq_len =
+		  o.Gen_Product_With_PreAlloc(lpy_len, lpy, dq_len, dq, &lpydq, 64);
+		double lqxdp_p[64], *lqxdp = lqxdp_p;
+		int    lqxdp_len =
+		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dp_len, dp, &lqxdp, 64);
+		double lqydp_p[64], *lqydp = lqydp_p;
+		int    lqydp_len =
+		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dp_len, dp, &lqydp, 64);
 		double rxq_p[64], *rxq = rxq_p;
 		int    rxq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rx, &rxq, 64);
 		double ryq_p[64], *ryq = ryq_p;
 		int    ryq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, ry, &ryq, 64);
-		double lqxd_p[64], *lqxd = lqxd_p;
-		int    lqxd_len =
-		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dp_len, dp, &lqxd, 64);
-		double lqyd_p[64], *lqyd = lqyd_p;
-		int    lqyd_len =
-		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dp_len, dp, &lqyd, 64);
 		double lx_p[64], *lx = lx_p;
 		int    lx_len =
-		  o.Gen_Diff_With_PreAlloc(pxq_len, pxq, lqxd_len, lqxd, &lx, 64);
+		  o.Gen_Diff_With_PreAlloc(lpxdq_len, lpxdq, lqxdp_len, lqxdp, &lx, 64);
 		double ly_p[64], *ly = ly_p;
 		int    ly_len =
-		  o.Gen_Diff_With_PreAlloc(pyq_len, pyq, lqyd_len, lqyd, &ly, 64);
+		  o.Gen_Diff_With_PreAlloc(lpydq_len, lpydq, lqydp_len, lqydp, &ly, 64);
 		double gx_p[64], *gx = gx_p;
 		int gx_len = o.Gen_Diff_With_PreAlloc(rxq_len, rxq, lqx_len, lqx, &gx, 64);
 		double gy_p[64], *gy = gy_p;
@@ -1731,20 +1733,18 @@ Sign dotProductSign2D_IEI_expansion(const GenericPoint2T<IT, ET> &p,
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (lqyd_p != lqyd)
-			FreeDoubles(lqyd);
-		if (lqxd_p != lqxd)
-			FreeDoubles(lqxd);
 		if (ryq_p != ryq)
 			FreeDoubles(ryq);
 		if (rxq_p != rxq)
 			FreeDoubles(rxq);
-		if (pyq_p != pyq)
-			FreeDoubles(pyq);
-		if (pxq_p != pxq)
-			FreeDoubles(pxq);
-		if (dqp_p != dqp)
-			FreeDoubles(dqp);
+		if (lqydp_p != lqydp)
+			FreeDoubles(lqydp);
+		if (lqxdp_p != lqxdp)
+			FreeDoubles(lqxdp);
+		if (lpydq_p != lpydq)
+			FreeDoubles(lpydq);
+		if (lpxdq_p != lpxdq)
+			FreeDoubles(lpxdq);
 	}
 
 	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
@@ -1755,10 +1755,6 @@ Sign dotProductSign2D_IEI_expansion(const GenericPoint2T<IT, ET> &p,
 			FreeDoubles(lpy);
 		if (dp_p != dp)
 			FreeDoubles(dp);
-	}
-
-	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
-	{
 		if (lqx_p != lqx)
 			FreeDoubles(lqx);
 		if (lqy_p != lqy)
@@ -1811,17 +1807,17 @@ Sign dotProductSign2D_IIE_interval(const GenericPoint2T<IT, ET> &p,
 
 	typename IT::Protector P;
 
-	IT qxd = qx * dp;
-	IT qyd = qy * dp;
-	IT lx  = lpx - qxd;
-	IT ly  = lpy - qyd;
-	IT qxr = qx * dr;
-	IT qyr = qy * dr;
-	IT gx  = lrx - qxr;
-	IT gy  = lry - qyr;
-	IT dx  = lx * gx;
-	IT dy  = ly * gy;
-	IT d   = dx + dy;
+	IT qxdp = qx * dp;
+	IT qydp = qy * dp;
+	IT lx   = lpx - qxdp;
+	IT ly   = lpy - qydp;
+	IT qxdr = qx * dr;
+	IT qydr = qy * dr;
+	IT gx   = lrx - qxdr;
+	IT gy   = lry - qydr;
+	IT dx   = lx * gx;
+	IT dy   = ly * gy;
+	IT d    = dx + dy;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -1834,17 +1830,17 @@ Sign dotProductSign2D_IIE_exact(const GenericPoint2T<IT, ET> &p,
 	ET lpx, lpy, dp, lrx, lry, dr;
 	p.getExactLambda(lpx, lpy, dp);
 	r.getExactLambda(lrx, lry, dr);
-	ET qxd = qx * dp;
-	ET qyd = qy * dp;
-	ET lx  = lpx - qxd;
-	ET ly  = lpy - qyd;
-	ET qxr = qx * dr;
-	ET qyr = qy * dr;
-	ET gx  = lrx - qxr;
-	ET gy  = lry - qyr;
-	ET dx  = lx * gx;
-	ET dy  = ly * gy;
-	ET d   = dx + dy;
+	ET qxdp = qx * dp;
+	ET qydp = qy * dp;
+	ET lx   = lpx - qxdp;
+	ET ly   = lpy - qydp;
+	ET qxdr = qx * dr;
+	ET qydr = qy * dr;
+	ET gx   = lrx - qxdr;
+	ET gy   = lry - qydr;
+	ET dx   = lx * gx;
+	ET dy   = ly * gy;
+	ET d    = dx + dy;
 	return OMC::sign(d);
 }
 
@@ -1867,22 +1863,26 @@ Sign dotProductSign2D_IIE_expansion(const GenericPoint2T<IT, ET> &p,
 	if ((dp[dp_len - 1] != 0) && (dr[dr_len - 1] != 0))
 	{
 		expansionObject o;
-		double          qxd_p[64], *qxd = qxd_p;
-		int    qxd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qx, &qxd, 64);
-		double qyd_p[64], *qyd = qyd_p;
-		int    qyd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qy, &qyd, 64);
+		double          qxdp_p[64], *qxdp = qxdp_p;
+		int    qxdp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qx, &qxdp, 64);
+		double qydp_p[64], *qydp = qydp_p;
+		int    qydp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qy, &qydp, 64);
 		double lx_p[64], *lx = lx_p;
-		int lx_len = o.Gen_Diff_With_PreAlloc(lpx_len, lpx, qxd_len, qxd, &lx, 64);
+		int    lx_len =
+		  o.Gen_Diff_With_PreAlloc(lpx_len, lpx, qxdp_len, qxdp, &lx, 64);
 		double ly_p[64], *ly = ly_p;
-		int ly_len = o.Gen_Diff_With_PreAlloc(lpy_len, lpy, qyd_len, qyd, &ly, 64);
-		double qxr_p[64], *qxr = qxr_p;
-		int    qxr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qx, &qxr, 64);
-		double qyr_p[64], *qyr = qyr_p;
-		int    qyr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qy, &qyr, 64);
+		int    ly_len =
+		  o.Gen_Diff_With_PreAlloc(lpy_len, lpy, qydp_len, qydp, &ly, 64);
+		double qxdr_p[64], *qxdr = qxdr_p;
+		int    qxdr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qx, &qxdr, 64);
+		double qydr_p[64], *qydr = qydr_p;
+		int    qydr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qy, &qydr, 64);
 		double gx_p[64], *gx = gx_p;
-		int gx_len = o.Gen_Diff_With_PreAlloc(lrx_len, lrx, qxr_len, qxr, &gx, 64);
+		int    gx_len =
+		  o.Gen_Diff_With_PreAlloc(lrx_len, lrx, qxdr_len, qxdr, &gx, 64);
 		double gy_p[64], *gy = gy_p;
-		int gy_len = o.Gen_Diff_With_PreAlloc(lry_len, lry, qyr_len, qyr, &gy, 64);
+		int    gy_len =
+		  o.Gen_Diff_With_PreAlloc(lry_len, lry, qydr_len, qydr, &gy, 64);
 		double dx_p[64], *dx = dx_p;
 		int dx_len = o.Gen_Product_With_PreAlloc(lx_len, lx, gx_len, gx, &dx, 64);
 		double dy_p[64], *dy = dy_p;
@@ -1901,18 +1901,18 @@ Sign dotProductSign2D_IIE_expansion(const GenericPoint2T<IT, ET> &p,
 			FreeDoubles(gy);
 		if (gx_p != gx)
 			FreeDoubles(gx);
-		if (qyr_p != qyr)
-			FreeDoubles(qyr);
-		if (qxr_p != qxr)
-			FreeDoubles(qxr);
+		if (qydr_p != qydr)
+			FreeDoubles(qydr);
+		if (qxdr_p != qxdr)
+			FreeDoubles(qxdr);
 		if (ly_p != ly)
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (qyd_p != qyd)
-			FreeDoubles(qyd);
-		if (qxd_p != qxd)
-			FreeDoubles(qxd);
+		if (qydp_p != qydp)
+			FreeDoubles(qydp);
+		if (qxdp_p != qxdp)
+			FreeDoubles(qxdp);
 	}
 
 	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
@@ -1923,10 +1923,6 @@ Sign dotProductSign2D_IIE_expansion(const GenericPoint2T<IT, ET> &p,
 			FreeDoubles(lpy);
 		if (dp_p != dp)
 			FreeDoubles(dp);
-	}
-
-	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
-	{
 		if (lrx_p != lrx)
 			FreeDoubles(lrx);
 		if (lry_p != lry)
@@ -1980,21 +1976,21 @@ Sign dotProductSign2D_III_interval(const GenericPoint2T<IT, ET> &p,
 
 	typename IT::Protector P;
 
-	IT qxd  = lqx * dp;
-	IT qyd  = lqy * dp;
-	IT lpxq = lpx * dq;
-	IT lpyq = lpy * dq;
-	IT lx   = lpxq - qxd;
-	IT ly   = lpyq - qyd;
-	IT qxr  = lqx * dr;
-	IT qyr  = lqy * dr;
-	IT lrxq = lrx * dq;
-	IT lryq = lry * dq;
-	IT gx   = lrxq - qxr;
-	IT gy   = lryq - qyr;
-	IT dx   = lx * gx;
-	IT dy   = ly * gy;
-	IT d    = dx + dy;
+	IT lqxdp = lqx * dp;
+	IT lqydp = lqy * dp;
+	IT lpxdq = lpx * dq;
+	IT lpydq = lpy * dq;
+	IT lx    = lpxdq - lqxdp;
+	IT ly    = lpydq - lqydp;
+	IT lqxdr = lqx * dr;
+	IT lqydr = lqy * dr;
+	IT lrxdq = lrx * dq;
+	IT lrydq = lry * dq;
+	IT gx    = lrxdq - lqxdr;
+	IT gy    = lrydq - lqydr;
+	IT dx    = lx * gx;
+	IT dy    = ly * gy;
+	IT d     = dx + dy;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -2009,21 +2005,21 @@ Sign dotProductSign2D_III_exact(const GenericPoint2T<IT, ET> &p,
 	p.getExactLambda(lpx, lpy, dp);
 	r.getExactLambda(lrx, lry, dr);
 	q.getExactLambda(lqx, lqy, dq);
-	ET qxd  = lqx * dp;
-	ET qyd  = lqy * dp;
-	ET lpxq = lpx * dq;
-	ET lpyq = lpy * dq;
-	ET lx   = lpxq - qxd;
-	ET ly   = lpyq - qyd;
-	ET qxr  = lqx * dr;
-	ET qyr  = lqy * dr;
-	ET lrxq = lrx * dq;
-	ET lryq = lry * dq;
-	ET gx   = lrxq - qxr;
-	ET gy   = lryq - qyr;
-	ET dx   = lx * gx;
-	ET dy   = ly * gy;
-	ET d    = dx + dy;
+	ET lqxdp = lqx * dp;
+	ET lqydp = lqy * dp;
+	ET lpxdq = lpx * dq;
+	ET lpydq = lpy * dq;
+	ET lx    = lpxdq - lqxdp;
+	ET ly    = lpydq - lqydp;
+	ET lqxdr = lqx * dr;
+	ET lqydr = lqy * dr;
+	ET lrxdq = lrx * dq;
+	ET lrydq = lry * dq;
+	ET gx    = lrxdq - lqxdr;
+	ET gy    = lrydq - lqydr;
+	ET dx    = lx * gx;
+	ET dy    = ly * gy;
+	ET d     = dx + dy;
 	return OMC::sign(d);
 }
 
@@ -2048,42 +2044,42 @@ Sign dotProductSign2D_III_expansion(const GenericPoint2T<IT, ET> &p,
 	if ((dp[dp_len - 1] != 0) && (dr[dr_len - 1] != 0) && (dq[dq_len - 1] != 0))
 	{
 		expansionObject o;
-		double          qxd_p[64], *qxd = qxd_p;
-		int             qxd_len =
-		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dp_len, dp, &qxd, 64);
-		double qyd_p[64], *qyd = qyd_p;
-		int    qyd_len =
-		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dp_len, dp, &qyd, 64);
-		double lpxq_p[64], *lpxq = lpxq_p;
-		int    lpxq_len =
-		  o.Gen_Product_With_PreAlloc(lpx_len, lpx, dq_len, dq, &lpxq, 64);
-		double lpyq_p[64], *lpyq = lpyq_p;
-		int    lpyq_len =
-		  o.Gen_Product_With_PreAlloc(lpy_len, lpy, dq_len, dq, &lpyq, 64);
+		double          lqxdp_p[64], *lqxdp = lqxdp_p;
+		int             lqxdp_len =
+		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dp_len, dp, &lqxdp, 64);
+		double lqydp_p[64], *lqydp = lqydp_p;
+		int    lqydp_len =
+		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dp_len, dp, &lqydp, 64);
+		double lpxdq_p[64], *lpxdq = lpxdq_p;
+		int    lpxdq_len =
+		  o.Gen_Product_With_PreAlloc(lpx_len, lpx, dq_len, dq, &lpxdq, 64);
+		double lpydq_p[64], *lpydq = lpydq_p;
+		int    lpydq_len =
+		  o.Gen_Product_With_PreAlloc(lpy_len, lpy, dq_len, dq, &lpydq, 64);
 		double lx_p[64], *lx = lx_p;
 		int    lx_len =
-		  o.Gen_Diff_With_PreAlloc(lpxq_len, lpxq, qxd_len, qxd, &lx, 64);
+		  o.Gen_Diff_With_PreAlloc(lpxdq_len, lpxdq, lqxdp_len, lqxdp, &lx, 64);
 		double ly_p[64], *ly = ly_p;
 		int    ly_len =
-		  o.Gen_Diff_With_PreAlloc(lpyq_len, lpyq, qyd_len, qyd, &ly, 64);
-		double qxr_p[64], *qxr = qxr_p;
-		int    qxr_len =
-		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dr_len, dr, &qxr, 64);
-		double qyr_p[64], *qyr = qyr_p;
-		int    qyr_len =
-		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dr_len, dr, &qyr, 64);
-		double lrxq_p[64], *lrxq = lrxq_p;
-		int    lrxq_len =
-		  o.Gen_Product_With_PreAlloc(lrx_len, lrx, dq_len, dq, &lrxq, 64);
-		double lryq_p[64], *lryq = lryq_p;
-		int    lryq_len =
-		  o.Gen_Product_With_PreAlloc(lry_len, lry, dq_len, dq, &lryq, 64);
+		  o.Gen_Diff_With_PreAlloc(lpydq_len, lpydq, lqydp_len, lqydp, &ly, 64);
+		double lqxdr_p[64], *lqxdr = lqxdr_p;
+		int    lqxdr_len =
+		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dr_len, dr, &lqxdr, 64);
+		double lqydr_p[64], *lqydr = lqydr_p;
+		int    lqydr_len =
+		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dr_len, dr, &lqydr, 64);
+		double lrxdq_p[64], *lrxdq = lrxdq_p;
+		int    lrxdq_len =
+		  o.Gen_Product_With_PreAlloc(lrx_len, lrx, dq_len, dq, &lrxdq, 64);
+		double lrydq_p[64], *lrydq = lrydq_p;
+		int    lrydq_len =
+		  o.Gen_Product_With_PreAlloc(lry_len, lry, dq_len, dq, &lrydq, 64);
 		double gx_p[64], *gx = gx_p;
 		int    gx_len =
-		  o.Gen_Diff_With_PreAlloc(lrxq_len, lrxq, qxr_len, qxr, &gx, 64);
+		  o.Gen_Diff_With_PreAlloc(lrxdq_len, lrxdq, lqxdr_len, lqxdr, &gx, 64);
 		double gy_p[64], *gy = gy_p;
 		int    gy_len =
-		  o.Gen_Diff_With_PreAlloc(lryq_len, lryq, qyr_len, qyr, &gy, 64);
+		  o.Gen_Diff_With_PreAlloc(lrydq_len, lrydq, lqydr_len, lqydr, &gy, 64);
 		double dx_p[64], *dx = dx_p;
 		int dx_len = o.Gen_Product_With_PreAlloc(lx_len, lx, gx_len, gx, &dx, 64);
 		double dy_p[64], *dy = dy_p;
@@ -2102,26 +2098,26 @@ Sign dotProductSign2D_III_expansion(const GenericPoint2T<IT, ET> &p,
 			FreeDoubles(gy);
 		if (gx_p != gx)
 			FreeDoubles(gx);
-		if (lryq_p != lryq)
-			FreeDoubles(lryq);
-		if (lrxq_p != lrxq)
-			FreeDoubles(lrxq);
-		if (qyr_p != qyr)
-			FreeDoubles(qyr);
-		if (qxr_p != qxr)
-			FreeDoubles(qxr);
+		if (lrydq_p != lrydq)
+			FreeDoubles(lrydq);
+		if (lrxdq_p != lrxdq)
+			FreeDoubles(lrxdq);
+		if (lqydr_p != lqydr)
+			FreeDoubles(lqydr);
+		if (lqxdr_p != lqxdr)
+			FreeDoubles(lqxdr);
 		if (ly_p != ly)
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (lpyq_p != lpyq)
-			FreeDoubles(lpyq);
-		if (lpxq_p != lpxq)
-			FreeDoubles(lpxq);
-		if (qyd_p != qyd)
-			FreeDoubles(qyd);
-		if (qxd_p != qxd)
-			FreeDoubles(qxd);
+		if (lpydq_p != lpydq)
+			FreeDoubles(lpydq);
+		if (lpxdq_p != lpxdq)
+			FreeDoubles(lpxdq);
+		if (lqydp_p != lqydp)
+			FreeDoubles(lqydp);
+		if (lqxdp_p != lqxdp)
+			FreeDoubles(lqxdp);
 	}
 
 	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
@@ -2132,20 +2128,12 @@ Sign dotProductSign2D_III_expansion(const GenericPoint2T<IT, ET> &p,
 			FreeDoubles(lpy);
 		if (dp_p != dp)
 			FreeDoubles(dp);
-	}
-
-	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
-	{
 		if (lrx_p != lrx)
 			FreeDoubles(lrx);
 		if (lry_p != lry)
 			FreeDoubles(lry);
 		if (dr_p != dr)
 			FreeDoubles(dr);
-	}
-
-	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
-	{
 		if (lqx_p != lqx)
 			FreeDoubles(lqx);
 		if (lqy_p != lqy)
@@ -2190,23 +2178,23 @@ Sign dotProductSign3D_EEI_interval(const GenericPoint3T<IT, ET> &q, IT px,
 
 	typename IT::Protector P;
 
-	IT pxq = px * dq;
-	IT pyq = py * dq;
-	IT pzq = pz * dq;
-	IT rxq = rx * dq;
-	IT ryq = ry * dq;
-	IT rzq = rz * dq;
-	IT lx  = pxq - lqx;
-	IT ly  = pyq - lqy;
-	IT lz  = pzq - lqz;
-	IT gx  = rxq - lqx;
-	IT gy  = ryq - lqy;
-	IT gz  = rzq - lqz;
-	IT dx  = lx * gx;
-	IT dy  = ly * gy;
-	IT dz  = lz * gz;
-	IT d1  = dx + dy;
-	IT d   = d1 + dz;
+	IT pxdq = px * dq;
+	IT pydq = py * dq;
+	IT pzdq = pz * dq;
+	IT rxdq = rx * dq;
+	IT rydq = ry * dq;
+	IT rzdq = rz * dq;
+	IT lx   = pxdq - lqx;
+	IT ly   = pydq - lqy;
+	IT lz   = pzdq - lqz;
+	IT gx   = rxdq - lqx;
+	IT gy   = rydq - lqy;
+	IT gz   = rzdq - lqz;
+	IT dx   = lx * gx;
+	IT dy   = ly * gy;
+	IT dz   = lz * gz;
+	IT d1   = dx + dy;
+	IT d    = d1 + dz;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -2218,23 +2206,23 @@ Sign dotProductSign3D_EEI_exact(const GenericPoint3T<IT, ET> &q, ET px, ET py,
 {
 	ET lqx, lqy, lqz, dq;
 	q.getExactLambda(lqx, lqy, lqz, dq);
-	ET pxq = px * dq;
-	ET pyq = py * dq;
-	ET pzq = pz * dq;
-	ET rxq = rx * dq;
-	ET ryq = ry * dq;
-	ET rzq = rz * dq;
-	ET lx  = pxq - lqx;
-	ET ly  = pyq - lqy;
-	ET lz  = pzq - lqz;
-	ET gx  = rxq - lqx;
-	ET gy  = ryq - lqy;
-	ET gz  = rzq - lqz;
-	ET dx  = lx * gx;
-	ET dy  = ly * gy;
-	ET dz  = lz * gz;
-	ET d1  = dx + dy;
-	ET d   = d1 + dz;
+	ET pxdq = px * dq;
+	ET pydq = py * dq;
+	ET pzdq = pz * dq;
+	ET rxdq = rx * dq;
+	ET rydq = ry * dq;
+	ET rzdq = rz * dq;
+	ET lx   = pxdq - lqx;
+	ET ly   = pydq - lqy;
+	ET lz   = pzdq - lqz;
+	ET gx   = rxdq - lqx;
+	ET gy   = rydq - lqy;
+	ET gz   = rzdq - lqz;
+	ET dx   = lx * gx;
+	ET dy   = ly * gy;
+	ET dz   = lz * gz;
+	ET d1   = dx + dy;
+	ET d    = d1 + dz;
 	return OMC::sign(d);
 }
 
@@ -2255,30 +2243,36 @@ Sign dotProductSign3D_EEI_expansion(const GenericPoint3T<IT, ET> &q, double px,
 	if ((dq[dq_len - 1] != 0))
 	{
 		expansionObject o;
-		double          pxq_p[64], *pxq = pxq_p;
-		int    pxq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, px, &pxq, 64);
-		double pyq_p[64], *pyq = pyq_p;
-		int    pyq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, py, &pyq, 64);
-		double pzq_p[64], *pzq = pzq_p;
-		int    pzq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, pz, &pzq, 64);
-		double rxq_p[64], *rxq = rxq_p;
-		int    rxq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rx, &rxq, 64);
-		double ryq_p[64], *ryq = ryq_p;
-		int    ryq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, ry, &ryq, 64);
-		double rzq_p[64], *rzq = rzq_p;
-		int    rzq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rz, &rzq, 64);
+		double          pxdq_p[64], *pxdq = pxdq_p;
+		int    pxdq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, px, &pxdq, 64);
+		double pydq_p[64], *pydq = pydq_p;
+		int    pydq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, py, &pydq, 64);
+		double pzdq_p[64], *pzdq = pzdq_p;
+		int    pzdq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, pz, &pzdq, 64);
+		double rxdq_p[64], *rxdq = rxdq_p;
+		int    rxdq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rx, &rxdq, 64);
+		double rydq_p[64], *rydq = rydq_p;
+		int    rydq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, ry, &rydq, 64);
+		double rzdq_p[64], *rzdq = rzdq_p;
+		int    rzdq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rz, &rzdq, 64);
 		double lx_p[64], *lx = lx_p;
-		int lx_len = o.Gen_Diff_With_PreAlloc(pxq_len, pxq, lqx_len, lqx, &lx, 64);
+		int    lx_len =
+		  o.Gen_Diff_With_PreAlloc(pxdq_len, pxdq, lqx_len, lqx, &lx, 64);
 		double ly_p[64], *ly = ly_p;
-		int ly_len = o.Gen_Diff_With_PreAlloc(pyq_len, pyq, lqy_len, lqy, &ly, 64);
+		int    ly_len =
+		  o.Gen_Diff_With_PreAlloc(pydq_len, pydq, lqy_len, lqy, &ly, 64);
 		double lz_p[64], *lz = lz_p;
-		int lz_len = o.Gen_Diff_With_PreAlloc(pzq_len, pzq, lqz_len, lqz, &lz, 64);
+		int    lz_len =
+		  o.Gen_Diff_With_PreAlloc(pzdq_len, pzdq, lqz_len, lqz, &lz, 64);
 		double gx_p[64], *gx = gx_p;
-		int gx_len = o.Gen_Diff_With_PreAlloc(rxq_len, rxq, lqx_len, lqx, &gx, 64);
+		int    gx_len =
+		  o.Gen_Diff_With_PreAlloc(rxdq_len, rxdq, lqx_len, lqx, &gx, 64);
 		double gy_p[64], *gy = gy_p;
-		int gy_len = o.Gen_Diff_With_PreAlloc(ryq_len, ryq, lqy_len, lqy, &gy, 64);
+		int    gy_len =
+		  o.Gen_Diff_With_PreAlloc(rydq_len, rydq, lqy_len, lqy, &gy, 64);
 		double gz_p[64], *gz = gz_p;
-		int gz_len = o.Gen_Diff_With_PreAlloc(rzq_len, rzq, lqz_len, lqz, &gz, 64);
+		int    gz_len =
+		  o.Gen_Diff_With_PreAlloc(rzdq_len, rzdq, lqz_len, lqz, &gz, 64);
 		double dx_p[64], *dx = dx_p;
 		int dx_len = o.Gen_Product_With_PreAlloc(lx_len, lx, gx_len, gx, &dx, 64);
 		double dy_p[64], *dy = dy_p;
@@ -2313,18 +2307,18 @@ Sign dotProductSign3D_EEI_expansion(const GenericPoint3T<IT, ET> &q, double px,
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (rzq_p != rzq)
-			FreeDoubles(rzq);
-		if (ryq_p != ryq)
-			FreeDoubles(ryq);
-		if (rxq_p != rxq)
-			FreeDoubles(rxq);
-		if (pzq_p != pzq)
-			FreeDoubles(pzq);
-		if (pyq_p != pyq)
-			FreeDoubles(pyq);
-		if (pxq_p != pxq)
-			FreeDoubles(pxq);
+		if (rzdq_p != rzdq)
+			FreeDoubles(rzdq);
+		if (rydq_p != rydq)
+			FreeDoubles(rydq);
+		if (rxdq_p != rxdq)
+			FreeDoubles(rxdq);
+		if (pzdq_p != pzdq)
+			FreeDoubles(pzdq);
+		if (pydq_p != pydq)
+			FreeDoubles(pydq);
+		if (pxdq_p != pxdq)
+			FreeDoubles(pxdq);
 	}
 
 	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
@@ -2383,20 +2377,20 @@ Sign dotProductSign3D_IEE_interval(const GenericPoint3T<IT, ET> &p, IT rx,
 
 	typename IT::Protector P;
 
-	IT qxd = qx * dp;
-	IT qyd = qy * dp;
-	IT qzd = qz * dp;
-	IT lx  = lpx - qxd;
-	IT ly  = lpy - qyd;
-	IT lz  = lpz - qzd;
-	IT gx  = rx - qx;
-	IT gy  = ry - qy;
-	IT gz  = rz - qz;
-	IT dx  = lx * gx;
-	IT dy  = ly * gy;
-	IT dz  = lz * gz;
-	IT d1  = dx + dy;
-	IT d   = d1 + dz;
+	IT qxdp = qx * dp;
+	IT qydp = qy * dp;
+	IT qzdp = qz * dp;
+	IT lx   = lpx - qxdp;
+	IT ly   = lpy - qydp;
+	IT lz   = lpz - qzdp;
+	IT gx   = rx - qx;
+	IT gy   = ry - qy;
+	IT gz   = rz - qz;
+	IT dx   = lx * gx;
+	IT dy   = ly * gy;
+	IT dz   = lz * gz;
+	IT d1   = dx + dy;
+	IT d    = d1 + dz;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -2408,20 +2402,20 @@ Sign dotProductSign3D_IEE_exact(const GenericPoint3T<IT, ET> &p, ET rx, ET ry,
 {
 	ET lpx, lpy, lpz, dp;
 	p.getExactLambda(lpx, lpy, lpz, dp);
-	ET qxd = qx * dp;
-	ET qyd = qy * dp;
-	ET qzd = qz * dp;
-	ET lx  = lpx - qxd;
-	ET ly  = lpy - qyd;
-	ET lz  = lpz - qzd;
-	ET gx  = rx - qx;
-	ET gy  = ry - qy;
-	ET gz  = rz - qz;
-	ET dx  = lx * gx;
-	ET dy  = ly * gy;
-	ET dz  = lz * gz;
-	ET d1  = dx + dy;
-	ET d   = d1 + dz;
+	ET qxdp = qx * dp;
+	ET qydp = qy * dp;
+	ET qzdp = qz * dp;
+	ET lx   = lpx - qxdp;
+	ET ly   = lpy - qydp;
+	ET lz   = lpz - qzdp;
+	ET gx   = rx - qx;
+	ET gy   = ry - qy;
+	ET gz   = rz - qz;
+	ET dx   = lx * gx;
+	ET dy   = ly * gy;
+	ET dz   = lz * gz;
+	ET d1   = dx + dy;
+	ET d    = d1 + dz;
 	return OMC::sign(d);
 }
 
@@ -2442,18 +2436,21 @@ Sign dotProductSign3D_IEE_expansion(const GenericPoint3T<IT, ET> &p, double rx,
 	if ((dp[dp_len - 1] != 0))
 	{
 		expansionObject o;
-		double          qxd_p[128], *qxd = qxd_p;
-		int    qxd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qx, &qxd, 128);
-		double qyd_p[128], *qyd = qyd_p;
-		int    qyd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qy, &qyd, 128);
-		double qzd_p[128], *qzd = qzd_p;
-		int    qzd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qz, &qzd, 128);
+		double          qxdp_p[128], *qxdp = qxdp_p;
+		int    qxdp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qx, &qxdp, 128);
+		double qydp_p[128], *qydp = qydp_p;
+		int    qydp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qy, &qydp, 128);
+		double qzdp_p[128], *qzdp = qzdp_p;
+		int    qzdp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qz, &qzdp, 128);
 		double lx_p[128], *lx = lx_p;
-		int lx_len = o.Gen_Diff_With_PreAlloc(lpx_len, lpx, qxd_len, qxd, &lx, 128);
+		int    lx_len =
+		  o.Gen_Diff_With_PreAlloc(lpx_len, lpx, qxdp_len, qxdp, &lx, 128);
 		double ly_p[128], *ly = ly_p;
-		int ly_len = o.Gen_Diff_With_PreAlloc(lpy_len, lpy, qyd_len, qyd, &ly, 128);
+		int    ly_len =
+		  o.Gen_Diff_With_PreAlloc(lpy_len, lpy, qydp_len, qydp, &ly, 128);
 		double lz_p[128], *lz = lz_p;
-		int lz_len = o.Gen_Diff_With_PreAlloc(lpz_len, lpz, qzd_len, qzd, &lz, 128);
+		int    lz_len =
+		  o.Gen_Diff_With_PreAlloc(lpz_len, lpz, qzdp_len, qzdp, &lz, 128);
 		double gx[2];
 		o.Two_Diff(rx, qx, gx);
 		double gy[2];
@@ -2488,12 +2485,12 @@ Sign dotProductSign3D_IEE_expansion(const GenericPoint3T<IT, ET> &p, double rx,
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (qzd_p != qzd)
-			FreeDoubles(qzd);
-		if (qyd_p != qyd)
-			FreeDoubles(qyd);
-		if (qxd_p != qxd)
-			FreeDoubles(qxd);
+		if (qzdp_p != qzdp)
+			FreeDoubles(qzdp);
+		if (qydp_p != qydp)
+			FreeDoubles(qydp);
+		if (qxdp_p != qxdp)
+			FreeDoubles(qxdp);
 	}
 
 	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
@@ -2554,27 +2551,26 @@ Sign dotProductSign3D_IEI_interval(const GenericPoint3T<IT, ET> &p,
 
 	typename IT::Protector P;
 
-	IT dqp  = dq * dp;
-	IT pxq  = lpx * dqp;
-	IT pyq  = lpy * dqp;
-	IT pzq  = lpz * dqp;
-	IT rxq  = rx * dq;
-	IT ryq  = ry * dq;
-	IT rzq  = rz * dq;
-	IT lqxd = lqx * dp;
-	IT lqyd = lqy * dp;
-	IT lqzd = lqz * dp;
-	IT lx   = pxq - lqxd;
-	IT ly   = pyq - lqyd;
-	IT lz   = pzq - lqzd;
-	IT gx   = rxq - lqx;
-	IT gy   = ryq - lqy;
-	IT gz   = rzq - lqz;
-	IT dx   = lx * gx;
-	IT dy   = ly * gy;
-	IT dz   = lz * gz;
-	IT d1   = dx + dy;
-	IT d    = d1 + dz;
+	IT lpxdq = lpx * dq;
+	IT lpydq = lpy * dq;
+	IT lpzdq = lpz * dq;
+	IT rxdq  = rx * dq;
+	IT rydq  = ry * dq;
+	IT rzdq  = rz * dq;
+	IT lqxdp = lqx * dp;
+	IT lqydp = lqy * dp;
+	IT lqzdp = lqz * dp;
+	IT lx    = lpxdq - lqxdp;
+	IT ly    = lpydq - lqydp;
+	IT lz    = lpzdq - lqzdp;
+	IT gx    = rxdq - lqx;
+	IT gy    = rydq - lqy;
+	IT gz    = rzdq - lqz;
+	IT dx    = lx * gx;
+	IT dy    = ly * gy;
+	IT dz    = lz * gz;
+	IT d1    = dx + dy;
+	IT d     = d1 + dz;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -2588,27 +2584,26 @@ Sign dotProductSign3D_IEI_exact(const GenericPoint3T<IT, ET> &p,
 	ET lpx, lpy, lpz, dp, lqx, lqy, lqz, dq;
 	p.getExactLambda(lpx, lpy, lpz, dp);
 	q.getExactLambda(lqx, lqy, lqz, dq);
-	ET dqp  = dq * dp;
-	ET pxq  = lpx * dqp;
-	ET pyq  = lpy * dqp;
-	ET pzq  = lpz * dqp;
-	ET rxq  = rx * dq;
-	ET ryq  = ry * dq;
-	ET rzq  = rz * dq;
-	ET lqxd = lqx * dp;
-	ET lqyd = lqy * dp;
-	ET lqzd = lqz * dp;
-	ET lx   = pxq - lqxd;
-	ET ly   = pyq - lqyd;
-	ET lz   = pzq - lqzd;
-	ET gx   = rxq - lqx;
-	ET gy   = ryq - lqy;
-	ET gz   = rzq - lqz;
-	ET dx   = lx * gx;
-	ET dy   = ly * gy;
-	ET dz   = lz * gz;
-	ET d1   = dx + dy;
-	ET d    = d1 + dz;
+	ET lpxdq = lpx * dq;
+	ET lpydq = lpy * dq;
+	ET lpzdq = lpz * dq;
+	ET rxdq  = rx * dq;
+	ET rydq  = ry * dq;
+	ET rzdq  = rz * dq;
+	ET lqxdp = lqx * dp;
+	ET lqydp = lqy * dp;
+	ET lqzdp = lqz * dp;
+	ET lx    = lpxdq - lqxdp;
+	ET ly    = lpydq - lqydp;
+	ET lz    = lpzdq - lqzdp;
+	ET gx    = rxdq - lqx;
+	ET gy    = rydq - lqy;
+	ET gz    = rzdq - lqz;
+	ET dx    = lx * gx;
+	ET dy    = ly * gy;
+	ET dz    = lz * gz;
+	ET d1    = dx + dy;
+	ET d     = d1 + dz;
 	return OMC::sign(d);
 }
 
@@ -2634,47 +2629,48 @@ Sign dotProductSign3D_IEI_expansion(const GenericPoint3T<IT, ET> &p,
 	if ((dp[dp_len - 1] != 0) && (dq[dq_len - 1] != 0))
 	{
 		expansionObject o;
-		double          dqp_p[64], *dqp = dqp_p;
-		int dqp_len = o.Gen_Product_With_PreAlloc(dq_len, dq, dp_len, dp, &dqp, 64);
-		double pxq_p[64], *pxq = pxq_p;
-		int    pxq_len =
-		  o.Gen_Product_With_PreAlloc(lpx_len, lpx, dqp_len, dqp, &pxq, 64);
-		double pyq_p[64], *pyq = pyq_p;
-		int    pyq_len =
-		  o.Gen_Product_With_PreAlloc(lpy_len, lpy, dqp_len, dqp, &pyq, 64);
-		double pzq_p[64], *pzq = pzq_p;
-		int    pzq_len =
-		  o.Gen_Product_With_PreAlloc(lpz_len, lpz, dqp_len, dqp, &pzq, 64);
-		double rxq_p[64], *rxq = rxq_p;
-		int    rxq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rx, &rxq, 64);
-		double ryq_p[64], *ryq = ryq_p;
-		int    ryq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, ry, &ryq, 64);
-		double rzq_p[64], *rzq = rzq_p;
-		int    rzq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rz, &rzq, 64);
-		double lqxd_p[64], *lqxd = lqxd_p;
-		int    lqxd_len =
-		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dp_len, dp, &lqxd, 64);
-		double lqyd_p[64], *lqyd = lqyd_p;
-		int    lqyd_len =
-		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dp_len, dp, &lqyd, 64);
-		double lqzd_p[64], *lqzd = lqzd_p;
-		int    lqzd_len =
-		  o.Gen_Product_With_PreAlloc(lqz_len, lqz, dp_len, dp, &lqzd, 64);
+		double          lpxdq_p[64], *lpxdq = lpxdq_p;
+		int             lpxdq_len =
+		  o.Gen_Product_With_PreAlloc(lpx_len, lpx, dq_len, dq, &lpxdq, 64);
+		double lpydq_p[64], *lpydq = lpydq_p;
+		int    lpydq_len =
+		  o.Gen_Product_With_PreAlloc(lpy_len, lpy, dq_len, dq, &lpydq, 64);
+		double lpzdq_p[64], *lpzdq = lpzdq_p;
+		int    lpzdq_len =
+		  o.Gen_Product_With_PreAlloc(lpz_len, lpz, dq_len, dq, &lpzdq, 64);
+		double rxdq_p[64], *rxdq = rxdq_p;
+		int    rxdq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rx, &rxdq, 64);
+		double rydq_p[64], *rydq = rydq_p;
+		int    rydq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, ry, &rydq, 64);
+		double rzdq_p[64], *rzdq = rzdq_p;
+		int    rzdq_len = o.Gen_Scale_With_PreAlloc(dq_len, dq, rz, &rzdq, 64);
+		double lqxdp_p[64], *lqxdp = lqxdp_p;
+		int    lqxdp_len =
+		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dp_len, dp, &lqxdp, 64);
+		double lqydp_p[64], *lqydp = lqydp_p;
+		int    lqydp_len =
+		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dp_len, dp, &lqydp, 64);
+		double lqzdp_p[64], *lqzdp = lqzdp_p;
+		int    lqzdp_len =
+		  o.Gen_Product_With_PreAlloc(lqz_len, lqz, dp_len, dp, &lqzdp, 64);
 		double lx_p[64], *lx = lx_p;
 		int    lx_len =
-		  o.Gen_Diff_With_PreAlloc(pxq_len, pxq, lqxd_len, lqxd, &lx, 64);
+		  o.Gen_Diff_With_PreAlloc(lpxdq_len, lpxdq, lqxdp_len, lqxdp, &lx, 64);
 		double ly_p[64], *ly = ly_p;
 		int    ly_len =
-		  o.Gen_Diff_With_PreAlloc(pyq_len, pyq, lqyd_len, lqyd, &ly, 64);
+		  o.Gen_Diff_With_PreAlloc(lpydq_len, lpydq, lqydp_len, lqydp, &ly, 64);
 		double lz_p[64], *lz = lz_p;
 		int    lz_len =
-		  o.Gen_Diff_With_PreAlloc(pzq_len, pzq, lqzd_len, lqzd, &lz, 64);
+		  o.Gen_Diff_With_PreAlloc(lpzdq_len, lpzdq, lqzdp_len, lqzdp, &lz, 64);
 		double gx_p[64], *gx = gx_p;
-		int gx_len = o.Gen_Diff_With_PreAlloc(rxq_len, rxq, lqx_len, lqx, &gx, 64);
+		int    gx_len =
+		  o.Gen_Diff_With_PreAlloc(rxdq_len, rxdq, lqx_len, lqx, &gx, 64);
 		double gy_p[64], *gy = gy_p;
-		int gy_len = o.Gen_Diff_With_PreAlloc(ryq_len, ryq, lqy_len, lqy, &gy, 64);
+		int    gy_len =
+		  o.Gen_Diff_With_PreAlloc(rydq_len, rydq, lqy_len, lqy, &gy, 64);
 		double gz_p[64], *gz = gz_p;
-		int gz_len = o.Gen_Diff_With_PreAlloc(rzq_len, rzq, lqz_len, lqz, &gz, 64);
+		int    gz_len =
+		  o.Gen_Diff_With_PreAlloc(rzdq_len, rzdq, lqz_len, lqz, &gz, 64);
 		double dx_p[64], *dx = dx_p;
 		int dx_len = o.Gen_Product_With_PreAlloc(lx_len, lx, gx_len, gx, &dx, 64);
 		double dy_p[64], *dy = dy_p;
@@ -2709,26 +2705,24 @@ Sign dotProductSign3D_IEI_expansion(const GenericPoint3T<IT, ET> &p,
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (lqzd_p != lqzd)
-			FreeDoubles(lqzd);
-		if (lqyd_p != lqyd)
-			FreeDoubles(lqyd);
-		if (lqxd_p != lqxd)
-			FreeDoubles(lqxd);
-		if (rzq_p != rzq)
-			FreeDoubles(rzq);
-		if (ryq_p != ryq)
-			FreeDoubles(ryq);
-		if (rxq_p != rxq)
-			FreeDoubles(rxq);
-		if (pzq_p != pzq)
-			FreeDoubles(pzq);
-		if (pyq_p != pyq)
-			FreeDoubles(pyq);
-		if (pxq_p != pxq)
-			FreeDoubles(pxq);
-		if (dqp_p != dqp)
-			FreeDoubles(dqp);
+		if (lqzdp_p != lqzdp)
+			FreeDoubles(lqzdp);
+		if (lqydp_p != lqydp)
+			FreeDoubles(lqydp);
+		if (lqxdp_p != lqxdp)
+			FreeDoubles(lqxdp);
+		if (rzdq_p != rzdq)
+			FreeDoubles(rzdq);
+		if (rydq_p != rydq)
+			FreeDoubles(rydq);
+		if (rxdq_p != rxdq)
+			FreeDoubles(rxdq);
+		if (lpzdq_p != lpzdq)
+			FreeDoubles(lpzdq);
+		if (lpydq_p != lpydq)
+			FreeDoubles(lpydq);
+		if (lpxdq_p != lpxdq)
+			FreeDoubles(lpxdq);
 	}
 
 	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
@@ -2741,10 +2735,6 @@ Sign dotProductSign3D_IEI_expansion(const GenericPoint3T<IT, ET> &p,
 			FreeDoubles(lpz);
 		if (dp_p != dp)
 			FreeDoubles(dp);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (lqx_p != lqx)
 			FreeDoubles(lqx);
 		if (lqy_p != lqy)
@@ -2801,23 +2791,23 @@ Sign dotProductSign3D_IIE_interval(const GenericPoint3T<IT, ET> &p,
 
 	typename IT::Protector P;
 
-	IT qxd = qx * dp;
-	IT qyd = qy * dp;
-	IT qzd = qz * dp;
-	IT lx  = lpx - qxd;
-	IT ly  = lpy - qyd;
-	IT lz  = lpz - qzd;
-	IT qxr = qx * dr;
-	IT qyr = qy * dr;
-	IT qzr = qz * dr;
-	IT gx  = lrx - qxr;
-	IT gy  = lry - qyr;
-	IT gz  = lrz - qzr;
-	IT dx  = lx * gx;
-	IT dy  = ly * gy;
-	IT dz  = lz * gz;
-	IT d1  = dx + dy;
-	IT d   = d1 + dz;
+	IT qxdp = qx * dp;
+	IT qydp = qy * dp;
+	IT qzdp = qz * dp;
+	IT lx   = lpx - qxdp;
+	IT ly   = lpy - qydp;
+	IT lz   = lpz - qzdp;
+	IT qxdr = qx * dr;
+	IT qydr = qy * dr;
+	IT qzdr = qz * dr;
+	IT gx   = lrx - qxdr;
+	IT gy   = lry - qydr;
+	IT gz   = lrz - qzdr;
+	IT dx   = lx * gx;
+	IT dy   = ly * gy;
+	IT dz   = lz * gz;
+	IT d1   = dx + dy;
+	IT d    = d1 + dz;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -2831,23 +2821,23 @@ Sign dotProductSign3D_IIE_exact(const GenericPoint3T<IT, ET> &p,
 	ET lpx, lpy, lpz, dp, lrx, lry, lrz, dr;
 	p.getExactLambda(lpx, lpy, lpz, dp);
 	r.getExactLambda(lrx, lry, lrz, dr);
-	ET qxd = qx * dp;
-	ET qyd = qy * dp;
-	ET qzd = qz * dp;
-	ET lx  = lpx - qxd;
-	ET ly  = lpy - qyd;
-	ET lz  = lpz - qzd;
-	ET qxr = qx * dr;
-	ET qyr = qy * dr;
-	ET qzr = qz * dr;
-	ET gx  = lrx - qxr;
-	ET gy  = lry - qyr;
-	ET gz  = lrz - qzr;
-	ET dx  = lx * gx;
-	ET dy  = ly * gy;
-	ET dz  = lz * gz;
-	ET d1  = dx + dy;
-	ET d   = d1 + dz;
+	ET qxdp = qx * dp;
+	ET qydp = qy * dp;
+	ET qzdp = qz * dp;
+	ET lx   = lpx - qxdp;
+	ET ly   = lpy - qydp;
+	ET lz   = lpz - qzdp;
+	ET qxdr = qx * dr;
+	ET qydr = qy * dr;
+	ET qzdr = qz * dr;
+	ET gx   = lrx - qxdr;
+	ET gy   = lry - qydr;
+	ET gz   = lrz - qzdr;
+	ET dx   = lx * gx;
+	ET dy   = ly * gy;
+	ET dz   = lz * gz;
+	ET d1   = dx + dy;
+	ET d    = d1 + dz;
 	return OMC::sign(d);
 }
 
@@ -2873,30 +2863,36 @@ Sign dotProductSign3D_IIE_expansion(const GenericPoint3T<IT, ET> &p,
 	if ((dp[dp_len - 1] != 0) && (dr[dr_len - 1] != 0))
 	{
 		expansionObject o;
-		double          qxd_p[64], *qxd = qxd_p;
-		int    qxd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qx, &qxd, 64);
-		double qyd_p[64], *qyd = qyd_p;
-		int    qyd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qy, &qyd, 64);
-		double qzd_p[64], *qzd = qzd_p;
-		int    qzd_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qz, &qzd, 64);
+		double          qxdp_p[64], *qxdp = qxdp_p;
+		int    qxdp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qx, &qxdp, 64);
+		double qydp_p[64], *qydp = qydp_p;
+		int    qydp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qy, &qydp, 64);
+		double qzdp_p[64], *qzdp = qzdp_p;
+		int    qzdp_len = o.Gen_Scale_With_PreAlloc(dp_len, dp, qz, &qzdp, 64);
 		double lx_p[64], *lx = lx_p;
-		int lx_len = o.Gen_Diff_With_PreAlloc(lpx_len, lpx, qxd_len, qxd, &lx, 64);
+		int    lx_len =
+		  o.Gen_Diff_With_PreAlloc(lpx_len, lpx, qxdp_len, qxdp, &lx, 64);
 		double ly_p[64], *ly = ly_p;
-		int ly_len = o.Gen_Diff_With_PreAlloc(lpy_len, lpy, qyd_len, qyd, &ly, 64);
+		int    ly_len =
+		  o.Gen_Diff_With_PreAlloc(lpy_len, lpy, qydp_len, qydp, &ly, 64);
 		double lz_p[64], *lz = lz_p;
-		int lz_len = o.Gen_Diff_With_PreAlloc(lpz_len, lpz, qzd_len, qzd, &lz, 64);
-		double qxr_p[64], *qxr = qxr_p;
-		int    qxr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qx, &qxr, 64);
-		double qyr_p[64], *qyr = qyr_p;
-		int    qyr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qy, &qyr, 64);
-		double qzr_p[64], *qzr = qzr_p;
-		int    qzr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qz, &qzr, 64);
+		int    lz_len =
+		  o.Gen_Diff_With_PreAlloc(lpz_len, lpz, qzdp_len, qzdp, &lz, 64);
+		double qxdr_p[64], *qxdr = qxdr_p;
+		int    qxdr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qx, &qxdr, 64);
+		double qydr_p[64], *qydr = qydr_p;
+		int    qydr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qy, &qydr, 64);
+		double qzdr_p[64], *qzdr = qzdr_p;
+		int    qzdr_len = o.Gen_Scale_With_PreAlloc(dr_len, dr, qz, &qzdr, 64);
 		double gx_p[64], *gx = gx_p;
-		int gx_len = o.Gen_Diff_With_PreAlloc(lrx_len, lrx, qxr_len, qxr, &gx, 64);
+		int    gx_len =
+		  o.Gen_Diff_With_PreAlloc(lrx_len, lrx, qxdr_len, qxdr, &gx, 64);
 		double gy_p[64], *gy = gy_p;
-		int gy_len = o.Gen_Diff_With_PreAlloc(lry_len, lry, qyr_len, qyr, &gy, 64);
+		int    gy_len =
+		  o.Gen_Diff_With_PreAlloc(lry_len, lry, qydr_len, qydr, &gy, 64);
 		double gz_p[64], *gz = gz_p;
-		int gz_len = o.Gen_Diff_With_PreAlloc(lrz_len, lrz, qzr_len, qzr, &gz, 64);
+		int    gz_len =
+		  o.Gen_Diff_With_PreAlloc(lrz_len, lrz, qzdr_len, qzdr, &gz, 64);
 		double dx_p[64], *dx = dx_p;
 		int dx_len = o.Gen_Product_With_PreAlloc(lx_len, lx, gx_len, gx, &dx, 64);
 		double dy_p[64], *dy = dy_p;
@@ -2925,24 +2921,24 @@ Sign dotProductSign3D_IIE_expansion(const GenericPoint3T<IT, ET> &p,
 			FreeDoubles(gy);
 		if (gx_p != gx)
 			FreeDoubles(gx);
-		if (qzr_p != qzr)
-			FreeDoubles(qzr);
-		if (qyr_p != qyr)
-			FreeDoubles(qyr);
-		if (qxr_p != qxr)
-			FreeDoubles(qxr);
+		if (qzdr_p != qzdr)
+			FreeDoubles(qzdr);
+		if (qydr_p != qydr)
+			FreeDoubles(qydr);
+		if (qxdr_p != qxdr)
+			FreeDoubles(qxdr);
 		if (lz_p != lz)
 			FreeDoubles(lz);
 		if (ly_p != ly)
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (qzd_p != qzd)
-			FreeDoubles(qzd);
-		if (qyd_p != qyd)
-			FreeDoubles(qyd);
-		if (qxd_p != qxd)
-			FreeDoubles(qxd);
+		if (qzdp_p != qzdp)
+			FreeDoubles(qzdp);
+		if (qydp_p != qydp)
+			FreeDoubles(qydp);
+		if (qxdp_p != qxdp)
+			FreeDoubles(qxdp);
 	}
 
 	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
@@ -2955,10 +2951,6 @@ Sign dotProductSign3D_IIE_expansion(const GenericPoint3T<IT, ET> &p,
 			FreeDoubles(lpz);
 		if (dp_p != dp)
 			FreeDoubles(dp);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (lrx_p != lrx)
 			FreeDoubles(lrx);
 		if (lry_p != lry)
@@ -3016,29 +3008,29 @@ Sign dotProductSign3D_III_interval(const GenericPoint3T<IT, ET> &p,
 
 	typename IT::Protector P;
 
-	IT qxd  = lqx * dp;
-	IT qyd  = lqy * dp;
-	IT qzd  = lqz * dp;
-	IT lpxq = lpx * dq;
-	IT lpyq = lpy * dq;
-	IT lpzq = lpz * dq;
-	IT lx   = lpxq - qxd;
-	IT ly   = lpyq - qyd;
-	IT lz   = lpzq - qzd;
-	IT qxr  = lqx * dr;
-	IT qyr  = lqy * dr;
-	IT qzr  = lqz * dr;
-	IT lrxq = lrx * dq;
-	IT lryq = lry * dq;
-	IT lrzq = lrz * dq;
-	IT gx   = lrxq - qxr;
-	IT gy   = lryq - qyr;
-	IT gz   = lrzq - qzr;
-	IT dx   = lx * gx;
-	IT dy   = ly * gy;
-	IT dz   = lz * gz;
-	IT d1   = dx + dy;
-	IT d    = d1 + dz;
+	IT lqxdp = lqx * dp;
+	IT lqydp = lqy * dp;
+	IT lqzdp = lqz * dp;
+	IT lpxdq = lpx * dq;
+	IT lpydq = lpy * dq;
+	IT lpzdq = lpz * dq;
+	IT lqxdr = lqx * dr;
+	IT lqydr = lqy * dr;
+	IT lqzdr = lqz * dr;
+	IT lrxdq = lrx * dq;
+	IT lrydq = lry * dq;
+	IT lrzdq = lrz * dq;
+	IT lx    = lpxdq - lqxdp;
+	IT ly    = lpydq - lqydp;
+	IT lz    = lpzdq - lqzdp;
+	IT gx    = lrxdq - lqxdr;
+	IT gy    = lrydq - lqydr;
+	IT gz    = lrzdq - lqzdr;
+	IT dx    = lx * gx;
+	IT dy    = ly * gy;
+	IT dz    = lz * gz;
+	IT d1    = dx + dy;
+	IT d     = d1 + dz;
 	if (!d.is_sign_reliable())
 		return Sign::UNCERTAIN;
 	return OMC::sign(d);
@@ -3053,29 +3045,29 @@ Sign dotProductSign3D_III_exact(const GenericPoint3T<IT, ET> &p,
 	p.getExactLambda(lpx, lpy, lpz, dp);
 	r.getExactLambda(lrx, lry, lrz, dr);
 	q.getExactLambda(lqx, lqy, lqz, dq);
-	ET qxd  = lqx * dp;
-	ET qyd  = lqy * dp;
-	ET qzd  = lqz * dp;
-	ET lpxq = lpx * dq;
-	ET lpyq = lpy * dq;
-	ET lpzq = lpz * dq;
-	ET lx   = lpxq - qxd;
-	ET ly   = lpyq - qyd;
-	ET lz   = lpzq - qzd;
-	ET qxr  = lqx * dr;
-	ET qyr  = lqy * dr;
-	ET qzr  = lqz * dr;
-	ET lrxq = lrx * dq;
-	ET lryq = lry * dq;
-	ET lrzq = lrz * dq;
-	ET gx   = lrxq - qxr;
-	ET gy   = lryq - qyr;
-	ET gz   = lrzq - qzr;
-	ET dx   = lx * gx;
-	ET dy   = ly * gy;
-	ET dz   = lz * gz;
-	ET d1   = dx + dy;
-	ET d    = d1 + dz;
+	ET lqxdp = lqx * dp;
+	ET lqydp = lqy * dp;
+	ET lqzdp = lqz * dp;
+	ET lpxdq = lpx * dq;
+	ET lpydq = lpy * dq;
+	ET lpzdq = lpz * dq;
+	ET lqxdr = lqx * dr;
+	ET lqydr = lqy * dr;
+	ET lqzdr = lqz * dr;
+	ET lrxdq = lrx * dq;
+	ET lrydq = lry * dq;
+	ET lrzdq = lrz * dq;
+	ET lx    = lpxdq - lqxdp;
+	ET ly    = lpydq - lqydp;
+	ET lz    = lpzdq - lqzdp;
+	ET gx    = lrxdq - lqxdr;
+	ET gy    = lrydq - lqydr;
+	ET gz    = lrzdq - lqzdr;
+	ET dx    = lx * gx;
+	ET dy    = ly * gy;
+	ET dz    = lz * gz;
+	ET d1    = dx + dy;
+	ET d     = d1 + dz;
 	return OMC::sign(d);
 }
 
@@ -3105,60 +3097,60 @@ Sign dotProductSign3D_III_expansion(const GenericPoint3T<IT, ET> &p,
 	if ((dp[dp_len - 1] != 0) && (dr[dr_len - 1] != 0) && (dq[dq_len - 1] != 0))
 	{
 		expansionObject o;
-		double          qxd_p[32], *qxd = qxd_p;
-		int             qxd_len =
-		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dp_len, dp, &qxd, 32);
-		double qyd_p[32], *qyd = qyd_p;
-		int    qyd_len =
-		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dp_len, dp, &qyd, 32);
-		double qzd_p[32], *qzd = qzd_p;
-		int    qzd_len =
-		  o.Gen_Product_With_PreAlloc(lqz_len, lqz, dp_len, dp, &qzd, 32);
-		double lpxq_p[32], *lpxq = lpxq_p;
-		int    lpxq_len =
-		  o.Gen_Product_With_PreAlloc(lpx_len, lpx, dq_len, dq, &lpxq, 32);
-		double lpyq_p[32], *lpyq = lpyq_p;
-		int    lpyq_len =
-		  o.Gen_Product_With_PreAlloc(lpy_len, lpy, dq_len, dq, &lpyq, 32);
-		double lpzq_p[32], *lpzq = lpzq_p;
-		int    lpzq_len =
-		  o.Gen_Product_With_PreAlloc(lpz_len, lpz, dq_len, dq, &lpzq, 32);
+		double          lqxdp_p[32], *lqxdp = lqxdp_p;
+		int             lqxdp_len =
+		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dp_len, dp, &lqxdp, 32);
+		double lqydp_p[32], *lqydp = lqydp_p;
+		int    lqydp_len =
+		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dp_len, dp, &lqydp, 32);
+		double lqzdp_p[32], *lqzdp = lqzdp_p;
+		int    lqzdp_len =
+		  o.Gen_Product_With_PreAlloc(lqz_len, lqz, dp_len, dp, &lqzdp, 32);
+		double lpxdq_p[32], *lpxdq = lpxdq_p;
+		int    lpxdq_len =
+		  o.Gen_Product_With_PreAlloc(lpx_len, lpx, dq_len, dq, &lpxdq, 32);
+		double lpydq_p[32], *lpydq = lpydq_p;
+		int    lpydq_len =
+		  o.Gen_Product_With_PreAlloc(lpy_len, lpy, dq_len, dq, &lpydq, 32);
+		double lpzdq_p[32], *lpzdq = lpzdq_p;
+		int    lpzdq_len =
+		  o.Gen_Product_With_PreAlloc(lpz_len, lpz, dq_len, dq, &lpzdq, 32);
+		double lqxdr_p[32], *lqxdr = lqxdr_p;
+		int    lqxdr_len =
+		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dr_len, dr, &lqxdr, 32);
+		double lqydr_p[32], *lqydr = lqydr_p;
+		int    lqydr_len =
+		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dr_len, dr, &lqydr, 32);
+		double lqzdr_p[32], *lqzdr = lqzdr_p;
+		int    lqzdr_len =
+		  o.Gen_Product_With_PreAlloc(lqz_len, lqz, dr_len, dr, &lqzdr, 32);
+		double lrxdq_p[32], *lrxdq = lrxdq_p;
+		int    lrxdq_len =
+		  o.Gen_Product_With_PreAlloc(lrx_len, lrx, dq_len, dq, &lrxdq, 32);
+		double lrydq_p[32], *lrydq = lrydq_p;
+		int    lrydq_len =
+		  o.Gen_Product_With_PreAlloc(lry_len, lry, dq_len, dq, &lrydq, 32);
+		double lrzdq_p[32], *lrzdq = lrzdq_p;
+		int    lrzdq_len =
+		  o.Gen_Product_With_PreAlloc(lrz_len, lrz, dq_len, dq, &lrzdq, 32);
 		double lx_p[32], *lx = lx_p;
 		int    lx_len =
-		  o.Gen_Diff_With_PreAlloc(lpxq_len, lpxq, qxd_len, qxd, &lx, 32);
+		  o.Gen_Diff_With_PreAlloc(lpxdq_len, lpxdq, lqxdp_len, lqxdp, &lx, 32);
 		double ly_p[32], *ly = ly_p;
 		int    ly_len =
-		  o.Gen_Diff_With_PreAlloc(lpyq_len, lpyq, qyd_len, qyd, &ly, 32);
+		  o.Gen_Diff_With_PreAlloc(lpydq_len, lpydq, lqydp_len, lqydp, &ly, 32);
 		double lz_p[32], *lz = lz_p;
 		int    lz_len =
-		  o.Gen_Diff_With_PreAlloc(lpzq_len, lpzq, qzd_len, qzd, &lz, 32);
-		double qxr_p[32], *qxr = qxr_p;
-		int    qxr_len =
-		  o.Gen_Product_With_PreAlloc(lqx_len, lqx, dr_len, dr, &qxr, 32);
-		double qyr_p[32], *qyr = qyr_p;
-		int    qyr_len =
-		  o.Gen_Product_With_PreAlloc(lqy_len, lqy, dr_len, dr, &qyr, 32);
-		double qzr_p[32], *qzr = qzr_p;
-		int    qzr_len =
-		  o.Gen_Product_With_PreAlloc(lqz_len, lqz, dr_len, dr, &qzr, 32);
-		double lrxq_p[32], *lrxq = lrxq_p;
-		int    lrxq_len =
-		  o.Gen_Product_With_PreAlloc(lrx_len, lrx, dq_len, dq, &lrxq, 32);
-		double lryq_p[32], *lryq = lryq_p;
-		int    lryq_len =
-		  o.Gen_Product_With_PreAlloc(lry_len, lry, dq_len, dq, &lryq, 32);
-		double lrzq_p[32], *lrzq = lrzq_p;
-		int    lrzq_len =
-		  o.Gen_Product_With_PreAlloc(lrz_len, lrz, dq_len, dq, &lrzq, 32);
+		  o.Gen_Diff_With_PreAlloc(lpzdq_len, lpzdq, lqzdp_len, lqzdp, &lz, 32);
 		double gx_p[32], *gx = gx_p;
 		int    gx_len =
-		  o.Gen_Diff_With_PreAlloc(lrxq_len, lrxq, qxr_len, qxr, &gx, 32);
+		  o.Gen_Diff_With_PreAlloc(lrxdq_len, lrxdq, lqxdr_len, lqxdr, &gx, 32);
 		double gy_p[32], *gy = gy_p;
 		int    gy_len =
-		  o.Gen_Diff_With_PreAlloc(lryq_len, lryq, qyr_len, qyr, &gy, 32);
+		  o.Gen_Diff_With_PreAlloc(lrydq_len, lrydq, lqydr_len, lqydr, &gy, 32);
 		double gz_p[32], *gz = gz_p;
 		int    gz_len =
-		  o.Gen_Diff_With_PreAlloc(lrzq_len, lrzq, qzr_len, qzr, &gz, 32);
+		  o.Gen_Diff_With_PreAlloc(lrzdq_len, lrzdq, lqzdr_len, lqzdr, &gz, 32);
 		double dx_p[32], *dx = dx_p;
 		int dx_len = o.Gen_Product_With_PreAlloc(lx_len, lx, gx_len, gx, &dx, 32);
 		double dy_p[32], *dy = dy_p;
@@ -3187,36 +3179,36 @@ Sign dotProductSign3D_III_expansion(const GenericPoint3T<IT, ET> &p,
 			FreeDoubles(gy);
 		if (gx_p != gx)
 			FreeDoubles(gx);
-		if (lrzq_p != lrzq)
-			FreeDoubles(lrzq);
-		if (lryq_p != lryq)
-			FreeDoubles(lryq);
-		if (lrxq_p != lrxq)
-			FreeDoubles(lrxq);
-		if (qzr_p != qzr)
-			FreeDoubles(qzr);
-		if (qyr_p != qyr)
-			FreeDoubles(qyr);
-		if (qxr_p != qxr)
-			FreeDoubles(qxr);
 		if (lz_p != lz)
 			FreeDoubles(lz);
 		if (ly_p != ly)
 			FreeDoubles(ly);
 		if (lx_p != lx)
 			FreeDoubles(lx);
-		if (lpzq_p != lpzq)
-			FreeDoubles(lpzq);
-		if (lpyq_p != lpyq)
-			FreeDoubles(lpyq);
-		if (lpxq_p != lpxq)
-			FreeDoubles(lpxq);
-		if (qzd_p != qzd)
-			FreeDoubles(qzd);
-		if (qyd_p != qyd)
-			FreeDoubles(qyd);
-		if (qxd_p != qxd)
-			FreeDoubles(qxd);
+		if (lrzdq_p != lrzdq)
+			FreeDoubles(lrzdq);
+		if (lrydq_p != lrydq)
+			FreeDoubles(lrydq);
+		if (lrxdq_p != lrxdq)
+			FreeDoubles(lrxdq);
+		if (lqzdr_p != lqzdr)
+			FreeDoubles(lqzdr);
+		if (lqydr_p != lqydr)
+			FreeDoubles(lqydr);
+		if (lqxdr_p != lqxdr)
+			FreeDoubles(lqxdr);
+		if (lpzdq_p != lpzdq)
+			FreeDoubles(lpzdq);
+		if (lpydq_p != lpydq)
+			FreeDoubles(lpydq);
+		if (lpxdq_p != lpxdq)
+			FreeDoubles(lpxdq);
+		if (lqzdp_p != lqzdp)
+			FreeDoubles(lqzdp);
+		if (lqydp_p != lqydp)
+			FreeDoubles(lqydp);
+		if (lqxdp_p != lqxdp)
+			FreeDoubles(lqxdp);
 	}
 
 	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
@@ -3229,10 +3221,6 @@ Sign dotProductSign3D_III_expansion(const GenericPoint3T<IT, ET> &p,
 			FreeDoubles(lpz);
 		if (dp_p != dp)
 			FreeDoubles(dp);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (lrx_p != lrx)
 			FreeDoubles(lrx);
 		if (lry_p != lry)
@@ -3241,10 +3229,6 @@ Sign dotProductSign3D_III_expansion(const GenericPoint3T<IT, ET> &p,
 			FreeDoubles(lrz);
 		if (dr_p != dr)
 			FreeDoubles(dr);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (lqx_p != lqx)
 			FreeDoubles(lqx);
 		if (lqy_p != lqy)

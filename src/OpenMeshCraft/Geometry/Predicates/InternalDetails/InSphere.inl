@@ -1983,10 +1983,6 @@ Sign inSphere_IIEEE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -2717,10 +2713,6 @@ Sign inSphere_IIIEE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -2729,10 +2721,6 @@ Sign inSphere_IIIEE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l2z);
 		if (d2_p != d2)
 			FreeDoubles(d2);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l3x_p != l3x)
 			FreeDoubles(l3x);
 		if (l3y_p != l3y)
@@ -3531,10 +3519,6 @@ Sign inSphere_IIIIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -3543,10 +3527,6 @@ Sign inSphere_IIIIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l2z);
 		if (d2_p != d2)
 			FreeDoubles(d2);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l3x_p != l3x)
 			FreeDoubles(l3x);
 		if (l3y_p != l3y)
@@ -3555,10 +3535,6 @@ Sign inSphere_IIIIE_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l3z);
 		if (d3_p != d3)
 			FreeDoubles(d3);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l4x_p != l4x)
 			FreeDoubles(l4x);
 		if (l4y_p != l4y)
@@ -4454,10 +4430,6 @@ Sign inSphere_IIIII_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l1z);
 		if (d1_p != d1)
 			FreeDoubles(d1);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l2x_p != l2x)
 			FreeDoubles(l2x);
 		if (l2y_p != l2y)
@@ -4466,10 +4438,6 @@ Sign inSphere_IIIII_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l2z);
 		if (d2_p != d2)
 			FreeDoubles(d2);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l3x_p != l3x)
 			FreeDoubles(l3x);
 		if (l3y_p != l3y)
@@ -4478,10 +4446,6 @@ Sign inSphere_IIIII_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l3z);
 		if (d3_p != d3)
 			FreeDoubles(d3);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l4x_p != l4x)
 			FreeDoubles(l4x);
 		if (l4y_p != l4y)
@@ -4490,10 +4454,6 @@ Sign inSphere_IIIII_expansion(const GenericPoint3T<IT, ET> &p1,
 			FreeDoubles(l4z);
 		if (d4_p != d4)
 			FreeDoubles(d4);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (l5x_p != l5x)
 			FreeDoubles(l5x);
 		if (l5y_p != l5y)

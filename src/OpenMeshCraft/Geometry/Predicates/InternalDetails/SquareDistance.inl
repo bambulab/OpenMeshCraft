@@ -661,10 +661,6 @@ Sign squareDistance2D_II_expansion(const GenericPoint2T<IT, ET> &p,
 			FreeDoubles(py);
 		if (dp_p != dp)
 			FreeDoubles(dp);
-	}
-
-	if (!GenericPoint2T<IT, ET>::global_cached_values_enabled())
-	{
 		if (qx_p != qx)
 			FreeDoubles(qx);
 		if (qy_p != qy)
@@ -1048,10 +1044,6 @@ Sign squareDistance3D_II_expansion(const GenericPoint3T<IT, ET> &p,
 			FreeDoubles(pz);
 		if (dp_p != dp)
 			FreeDoubles(dp);
-	}
-
-	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
-	{
 		if (qx_p != qx)
 			FreeDoubles(qx);
 		if (qy_p != qy)
