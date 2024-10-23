@@ -23,7 +23,7 @@ template <typename IT_, typename ET_>
 class ImplicitPoint2T_SSI : public GenericPoint2T<IT_, ET_>
 {
 public: /* types *************************************************************/
-	using FT = double; ///< floating point type
+	using NT = double; ///< floating point type
 	using IT = IT_;    ///< interval type
 	using ET = ET_;    ///< exact type
 
@@ -74,7 +74,7 @@ public: /* Lambdas ***********************************************************/
 	/**
 	 * @brief Get the Lambda values represented by expansion numbers.
 	 */
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **d,
+	void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **d,
 	                        int &d_len) const;
 
 public: /* Cache *************************************************************/

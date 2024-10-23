@@ -186,10 +186,10 @@ void ImplicitPoint3T_TPI<IT, ET>::getExactLambda(ET &lx, ET &ly, ET &lz,
 }
 
 template <typename IT, typename ET>
-void ImplicitPoint3T_TPI<IT, ET>::getExpansionLambda(FT **lx, int &lx_len,
-                                                     FT **ly, int &ly_len,
-                                                     FT **lz, int &lz_len,
-                                                     FT **d, int &d_len) const
+void ImplicitPoint3T_TPI<IT, ET>::getExpansionLambda(NT **lx, int &lx_len,
+                                                     NT **ly, int &ly_len,
+                                                     NT **lz, int &lz_len,
+                                                     NT **d, int &d_len) const
 {
 	bool gcv_enabled = gcv().is_enabled();
 

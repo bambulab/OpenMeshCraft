@@ -104,6 +104,7 @@ public:
 	using ToEP       = ToExplicitPoint_Ex<NT>;
 	using CreateSSI2 = CreateImplicitSSI2_Ex<NT>;
 	using CreateSSI3 = CreateImplicitSSI3_Ex<NT>;
+	using CreateLNC  = CreateImplicitLNC_Ex<NT>;
 	using CreateLPI  = CreateImplicitLPI_Ex<NT>;
 	using CreateTPI  = CreateImplicitTPI_Ex<NT>;
 	/// @}

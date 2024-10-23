@@ -101,9 +101,10 @@ public:
 	using IPoint2T_SSI = ImplicitPoint2T_SSI<IT, ET>;
 
 	using GPoint3      = GenericPoint3T<IT, ET>;
-	// Point3 and SSI/LPI/TPI inherit from GP3
+	// Point3 and SSI/LNC/LPI/TPI inherit from GP3
 	using EPoint3      = ExplicitPoint3T<IT, ET>;
 	using IPoint3T_SSI = ImplicitPoint3T_SSI<IT, ET>;
+	using IPoint3T_LNC = ImplicitPoint3T_LNC<IT, ET>;
 	using IPoint3T_LPI = ImplicitPoint3T_LPI<IT, ET>;
 	using IPoint3T_TPI = ImplicitPoint3T_TPI<IT, ET>;
 
@@ -120,6 +121,7 @@ public:
 	using ToEP       = ToExplicitPoint_Im<IT, ET>;
 	using CreateSSI2 = CreateImplicitSSI2_Im<IT, ET>;
 	using CreateSSI3 = CreateImplicitSSI3_Im<IT, ET>;
+	using CreateLNC  = CreateImplicitLNC_Im<IT, ET>;
 	using CreateLPI  = CreateImplicitLPI_Im<IT, ET>;
 	using CreateTPI  = CreateImplicitTPI_Im<IT, ET>;
 	/// @}
@@ -155,6 +157,9 @@ public:
 	using DotProductSign2D   = DotProductSign2D_Indirect<FT, IT, ET>;
 	using DotProductSign3D   = DotProductSign3D_Indirect<FT, IT, ET>;
 	using DotProductSignOn2D = DotProductSignOn2D_Indirect<FT, IT, ET>;
+
+	using SquaredDistance2D = SquaredDistance2D_Indirect<FT, IT, ET>;
+	using SquaredDistance3D = SquaredDistance3D_Indirect<FT, IT, ET>;
 
 	using Orient2D   = Orient2D_Indirect<FT, IT, ET>;
 	using Orient3D   = Orient3D_Indirect<FT, IT, ET>;

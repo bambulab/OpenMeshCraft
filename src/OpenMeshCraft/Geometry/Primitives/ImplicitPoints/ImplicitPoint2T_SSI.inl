@@ -131,9 +131,9 @@ void ImplicitPoint2T_SSI<IT, ET>::getExactLambda(ET &lx, ET &ly, ET &d) const
 }
 
 template <typename IT, typename ET>
-void ImplicitPoint2T_SSI<IT, ET>::getExpansionLambda(FT **lx, int &lx_len,
-                                                     FT **ly, int &ly_len,
-                                                     FT **d, int &d_len) const
+void ImplicitPoint2T_SSI<IT, ET>::getExpansionLambda(NT **lx, int &lx_len,
+                                                     NT **ly, int &ly_len,
+                                                     NT **d, int &d_len) const
 {
 	bool gcv_enabled = gcv().is_enabled();
 

@@ -26,7 +26,7 @@ template <typename IT_, typename ET_>
 class ImplicitPoint3T_SSI : public GenericPoint3T<IT_, ET_>
 {
 public: /* Types *************************************************************/
-	using FT = double; ///< floating point type
+	using NT = double; ///< floating point type
 	using IT = IT_;    ///< interval type
 	using ET = ET_;    ///< exact type
 
@@ -81,8 +81,8 @@ public: /* Lambdas ***********************************************************/
 	/**
 	 * @brief Get the Lambda values represented by expansion numbers.
 	 */
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len) const;
+	void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **lz,
+	                        int &lz_len, NT **d, int &d_len) const;
 
 public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
@@ -120,7 +120,7 @@ template <typename IT_, typename ET_>
 class ImplicitPoint3T_LNC : public GenericPoint3T<IT_, ET_>
 {
 public: /* Types *************************************************************/
-	using FT = double; ///< floating point type
+	using NT = double; ///< floating point type
 	using IT = IT_;    ///< interval type
 	using ET = ET_;    ///< exact type
 
@@ -139,7 +139,7 @@ public: /* Constructors ******************************************************/
 	ImplicitPoint3T_LNC() noexcept;
 
 	/// @brief init LNC point with segment(p,q) and interpolation parameter t
-	ImplicitPoint3T_LNC(const EP &_p, const EP &_q, FT _t) noexcept;
+	ImplicitPoint3T_LNC(const EP &_p, const EP &_q, NT _t) noexcept;
 
 	~ImplicitPoint3T_LNC() noexcept;
 
@@ -152,7 +152,7 @@ public: /* Constructors ******************************************************/
 public: /* Members ***********************************************************/
 	const EP &P() const { return *ip; }
 	const EP &Q() const { return *iq; }
-	FT T() const { return it; }
+	NT T() const { return it; }
 
 public: /* Lambdas ***********************************************************/
 	/**
@@ -169,15 +169,15 @@ public: /* Lambdas ***********************************************************/
 	/**
 	 * @brief Get the Lambda values represented by expansion numbers.
 	 */
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len) const;
+	void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **lz,
+	                        int &lz_len, NT **d, int &d_len) const;
 
 public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
 
 private:
 	const EP *ip, *iq; ///< The two points (segment) to interpolate
-	const FT  it;      ///< The interpolation parameter
+	const NT  it;      ///< The interpolation parameter
 
 #ifdef OMC_CACHE_DF
 	mutable IT m_lx, m_ly, m_lz, m_d;
@@ -202,7 +202,7 @@ template <typename IT_, typename ET_>
 class ImplicitPoint3T_LPI : public GenericPoint3T<IT_, ET_>
 {
 public: /* Types *************************************************************/
-	using FT = double; ///< floating point type
+	using NT = double; ///< floating point type
 	using IT = IT_;    ///< interval type
 	using ET = ET_;    ///< exact type
 
@@ -254,8 +254,8 @@ public: /* Lambdas ***********************************************************/
 	/**
 	 * @brief Get the Lambda values represented by expansion numbers.
 	 */
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len) const;
+	void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **lz,
+	                        int &lz_len, NT **d, int &d_len) const;
 
 public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
@@ -286,7 +286,7 @@ template <typename IT_, typename ET_>
 class ImplicitPoint3T_TPI : public GenericPoint3T<IT_, ET_>
 {
 public: /* Types *************************************************************/
-	using FT = double; ///< floating point type
+	using NT = double; ///< floating point type
 	using IT = IT_;    ///< interval type
 	using ET = ET_;    ///< exact type
 
@@ -343,8 +343,8 @@ public: /* Lambdas ***********************************************************/
 	/**
 	 * @brief Get the Lambda values represented by expansion numbers.
 	 */
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len) const;
+	void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **lz,
+	                        int &lz_len, NT **d, int &d_len) const;
 
 public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }

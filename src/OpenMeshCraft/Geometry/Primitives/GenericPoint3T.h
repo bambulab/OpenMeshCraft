@@ -32,8 +32,8 @@ template <typename IT, typename ET>
 class GenericPoint3T : public Primitive3<double>
 {
 public: /* types *************************************************************/
-	using FT   = double;
-	using VecT = Vec3T<FT>;
+	using NT   = double;
+	using VecT = Vec3T<NT>;
 
 	using EP     = ExplicitPoint3T<IT, ET>;
 	using IP_SSI = ImplicitPoint3T_SSI<IT, ET>;
@@ -158,8 +158,8 @@ public: /* get lambda values from implicit points ****************************/
 	/**
 	 * @brief Get the Lambda values represented by expansion numbers.
 	 */
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
-	                        int &lz_len, FT **d, int &d_len) const
+	void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **lz,
+	                        int &lz_len, NT **d, int &d_len) const
 	{
 		OMC_EXPENSIVE_ASSERT(point_type() != PointType::Explicit,
 		                     "no lambda for explicit point");
@@ -186,7 +186,7 @@ public: /* Convert to other point types ************************************/
 			e = EXP();
 		else
 		{
-			FT lx, ly, lz, d;
+			NT lx, ly, lz, d;
 			if constexpr (!std::is_void_v<IT>)
 			{
 				// calculate approximate lambda values by interval arithmetic
@@ -230,7 +230,7 @@ public: /* Convert to other point types ************************************/
 	 * @param aeap abbreviates "as exact as possible". If true, the exact
 	 * value is calculated and rounded to the nearest floating point number.
 	 */
-	void get_coordinates(FT &x, FT &y, FT &z, bool aeap = false) const
+	void get_coordinates(NT &x, NT &y, NT &z, bool aeap = false) const
 	{
 		EP e_;
 		get_explicit(e_, aeap);
@@ -246,27 +246,27 @@ public:
 	 ***********************************************************************/
 
 	/// @brief Access value on x. Assume this is explicit when call the func.
-	FT       &x() { return EXP().x(); }
+	NT       &x() { return EXP().x(); }
 	/// @brief Access value on x. Assume this is explicit when call the func.
-	const FT &x() const { return EXP().x(); }
+	const NT &x() const { return EXP().x(); }
 
 	/// @brief Access value on y. Assume this is explicit when call the func.
-	FT       &y() { return EXP().y(); }
+	NT       &y() { return EXP().y(); }
 	/// @brief Access value on y. Assume this is explicit when call the func.
-	const FT &y() const { return EXP().y(); }
+	const NT &y() const { return EXP().y(); }
 
 	/// @brief Access value on z. Assume this is explicit when call the func.
-	FT       &z() { return EXP().z(); }
+	NT       &z() { return EXP().z(); }
 	/// @brief Access value on x. Assume this is explicit when call the func.
-	const FT &z() const { return EXP().z(); }
+	const NT &z() const { return EXP().z(); }
 
 	/// @brief Get the value on dimension \p i. Assume this is explicit point.
-	FT       &operator[](size_t i) { return EXP()[i]; }
+	NT       &operator[](size_t i) { return EXP()[i]; }
 	/// @brief Get the value on dimension \p i. Assume this is explicit point.
-	const FT &operator[](size_t i) const { return EXP()[i]; }
+	const NT &operator[](size_t i) const { return EXP()[i]; }
 
 	/// @brief Get the coordinate pointer.
-	const FT *data() const { return EXP().data(); }
+	const NT *data() const { return EXP().data(); }
 
 	/// @brief use point as vector
 	VecT &as_vec() { return EXP().as_vec(); }
@@ -325,13 +325,13 @@ public:
 		return *this;
 	}
 	/// @brief multiply a scalar
-	GenericPoint3T &operator*=(const FT &scale_factor)
+	GenericPoint3T &operator*=(const NT &scale_factor)
 	{
 		as_vec() *= scale_factor;
 		return *this;
 	}
 	/// @brief divide a scalar
-	GenericPoint3T &operator/=(const FT &scale_factor)
+	GenericPoint3T &operator/=(const NT &scale_factor)
 	{
 		as_vec() /= scale_factor;
 		return *this;
@@ -348,7 +348,7 @@ public:
 	{                                                        \
 		return as_vec() op rhs.as_vec();                       \
 	}                                                        \
-	inline bool operator op(const FT &rhs) const { return as_vec() op rhs; }
+	inline bool operator op(const NT &rhs) const { return as_vec() op rhs; }
 
 	ELEMENT_WISELY_COMPARE(==);
 	ELEMENT_WISELY_COMPARE(!=);

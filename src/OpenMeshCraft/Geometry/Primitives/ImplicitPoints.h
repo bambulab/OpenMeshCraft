@@ -24,6 +24,7 @@ public:
 	// below points inherit from GP3
 	using EP3     = ExplicitPoint3T<IT, ET>;
 	using IP3_SSI = ImplicitPoint3T_SSI<IT, ET>;
+	using IP3_LNC = ImplicitPoint3T_LNC<IT, ET>;
 	using IP3_LPI = ImplicitPoint3T_LPI<IT, ET>;
 	using IP3_TPI = ImplicitPoint3T_TPI<IT, ET>;
 
@@ -40,6 +41,9 @@ public:
 
 	GP3       &operator()(      IP3_SSI& src) { return *static_cast<GP3 *>(&src); }
 	const GP3 &operator()(const IP3_SSI& src) { return *static_cast<const GP3 *>(&src); }
+
+	GP3       &operator()(      IP3_LNC& src) { return *static_cast<GP3 *>(&src); }
+	const GP3 &operator()(const IP3_LNC& src) { return *static_cast<const GP3 *>(&src); }
 
 	GP3       &operator()(      IP3_LPI& src) { return *static_cast<GP3 *>(&src); }
 	const GP3 &operator()(const IP3_LPI& src) { return *static_cast<const GP3 *>(&src); }
@@ -84,6 +88,7 @@ public:
 	// below points inherit from GP3
 	using EP3     = ExplicitPoint3T<IT, ET>;
 	using IP3_SSI = ImplicitPoint3T_SSI<IT, ET>;
+	using IP3_LNC = ImplicitPoint3T_LNC<IT, ET>;
 	using IP3_LPI = ImplicitPoint3T_LPI<IT, ET>;
 	using IP3_TPI = ImplicitPoint3T_TPI<IT, ET>;
 
@@ -93,6 +98,7 @@ public:
 
 	EP2 operator()(const IP2_SSI &src) { return src.to_explicit(); }
 	EP3 operator()(const IP3_SSI &src) { return src.to_explicit(); }
+	EP3 operator()(const IP3_LNC &src) { return src.to_explicit(); }
 	EP3 operator()(const IP3_LPI &src) { return src.to_explicit(); }
 	EP3 operator()(const IP3_TPI &src) { return src.to_explicit(); }
 };
@@ -145,6 +151,31 @@ public:
 	{
 		OMC_EXPENSIVE_ASSERT(plane >= 0 && plane <= 2, "wrong plane.");
 		return IP3_SSI(a, b, p, q, plane);
+	}
+};
+
+template <typename IT, typename ET>
+class CreateImplicitLNC_Im
+{
+public:
+	using GP3     = GenericPoint3T<IT, ET>;
+	// below points inherit from GP3
+	using EP3     = ExplicitPoint3T<IT, ET>;
+	using IP3_LNC = ImplicitPoint3T_LNC<IT, ET>;
+
+	using NT = typename IP3_LNC::NT;
+
+public:
+	IP3_LNC operator()(const GP3 &p, const GP3 &q, const NT t)
+	{
+		OMC_EXPENSIVE_ASSERT((p.is_explicit() && q.is_explicit()),
+		                     "Must initialize implicit point by explicit points.");
+		return IP3_LNC(p.EXP(), q.EXP(), t);
+	}
+
+	IP3_LNC operator()(const EP3 &p, const EP3 &q, const NT t)
+	{
+		return IP3_LNC(p, q, t);
 	}
 };
 

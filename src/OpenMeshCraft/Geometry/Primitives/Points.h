@@ -94,6 +94,22 @@ public:
 };
 
 template <typename NT>
+class CreateImplicitLNC_Ex
+{
+public:
+	using GP3     = Point3T<NT>;
+	using EP3     = Point3T<NT>;
+	using IP3_LNC = Point3T<NT>;
+
+public:
+	IP3_LNC operator()(const GP3 &p, const GP3 &q, const NT t)
+	{
+		OMC_THROW_NOT_IMPLEMENTED();
+		return IP3_LNC();
+	}
+};
+
+template <typename NT>
 class CreateImplicitLPI_Ex
 {
 public:
