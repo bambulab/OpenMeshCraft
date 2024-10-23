@@ -116,10 +116,10 @@ public:
 /******************************************************************************/
 
 /**
- * @brief Compare Square distance of two 2D points with given distances.
+ * @brief Compare squared distance of two 2D points with given distances.
  */
 TEMPLATE_DECL
-class SquareDistance2D_Indirect
+class SquaredDistance2D_Indirect
 {
 public:
 	using VecT   = Vec2T<FT>;
@@ -127,20 +127,20 @@ public:
 
 public:
 	/**
-	 * @brief Calculate the square distance between `p` and `q`, then compare with
-	 * `sqr_dis`.
-	 * @retval NEGATIVE, calculated square distance is less than `sqr_dis`.
-	 * @retval ZERO, calculated square distance is equal to `sqr_dis`.
-	 * @retval POSITIVE, calculated square distance is larger than `sqr_dis`.
+	 * @brief Calculate the squared distance between `p` and `q`, then compare
+	 * with `sqr_dis`.
+	 * @retval NEGATIVE, calculated squared distance is less than `sqr_dis`.
+	 * @retval ZERO, calculated squared distance is equal to `sqr_dis`.
+	 * @retval POSITIVE, calculated squared distance is larger than `sqr_dis`.
 	 */
 	Sign operator()(const PointT &p, const PointT &q, FT sqr_dis);
 };
 
 /**
- * @brief Compare Square distance of two 3D points with given distances.
+ * @brief Compare squared distance of two 3D points with given distances.
  */
 TEMPLATE_DECL
-class SquareDistance3D_Indirect
+class SquaredDistance3D_Indirect
 {
 public:
 	using VecT   = Vec3T<FT>;
@@ -148,19 +148,19 @@ public:
 
 public:
 	/**
-	 * @brief Calculate the square distance between `p` and `q`, then compare with
-	 * `sqr_dis`.
-	 * @retval NEGATIVE, calculated square distance is less than `sqr_dis`.
-	 * @retval ZERO, calculated square distance is equal to `sqr_dis`.
-	 * @retval POSITIVE, calculated square distance is larger than `sqr_dis`.
+	 * @brief Calculate the squared distance between `p` and `q`, then compare
+	 * with `sqr_dis`.
+	 * @retval NEGATIVE, calculated squared distance is less than `sqr_dis`.
+	 * @retval ZERO, calculated squared distance is equal to `sqr_dis`.
+	 * @retval POSITIVE, calculated squared distance is larger than `sqr_dis`.
 	 */
 	Sign operator()(const PointT &p, const PointT &q, FT sqr_dis);
 
 	/**
-	 * @brief Calculate the square distance `ab` between `a` and `b`, and `ac`
+	 * @brief Calculate the squared distance `ab` between `a` and `b`, and `ac`
 	 * between `a` and `c`. Then comprare `ab` with `ac`. If ab_scale is given,
 	 * `ab` is scaled by `ab_scale`.
-	 * @param ab_scale A power of 2, used to scale the square distance of `ab`.
+	 * @param ab_scale A power of 2, used to scale the squared distance of `ab`.
 	 * @retval NEGATIVE, `ab` * ab_scale < `ac`.
 	 * @retval ZERO, `ab` * ab_scale == `ac`.
 	 * @retval POSITIVE, `ab` * ab_scale > `ac`.

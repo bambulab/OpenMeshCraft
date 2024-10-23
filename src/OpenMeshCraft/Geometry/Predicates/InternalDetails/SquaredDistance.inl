@@ -19,161 +19,163 @@ namespace OMC {
 
 /*===================================================================*/
 
-inline Sign squareDistance2D_filtered(double px, double py, double qx,
-                                      double qy, double dis);
-
-template <typename IT>
-Sign squareDistance2D_interval(IT px, IT py, IT qx, IT qy, IT dis);
-
-template <typename ET>
-Sign squareDistance2D_exact(ET px, ET py, ET qx, ET qy, ET dis);
-
-inline Sign squareDistance2D_expansion(double px, double py, double qx,
+inline Sign squaredDistance2D_filtered(double px, double py, double qx,
                                        double qy, double dis);
 
-template <typename IT, typename ET>
-Sign squareDistance2D(double px, double py, double qx, double qy, double dis);
+template <typename IT>
+Sign squaredDistance2D_interval(IT px, IT py, IT qx, IT qy, IT dis);
+
+template <typename ET>
+Sign squaredDistance2D_exact(ET px, ET py, ET qx, ET qy, ET dis);
+
+inline Sign squaredDistance2D_expansion(double px, double py, double qx,
+                                        double qy, double dis);
 
 template <typename IT, typename ET>
-Sign squareDistance2D(const GenericPoint2T<IT, ET> &p,
-                      const GenericPoint2T<IT, ET> &q, double dis);
+Sign squaredDistance2D(double px, double py, double qx, double qy, double dis);
+
+template <typename IT, typename ET>
+Sign squaredDistance2D(const GenericPoint2T<IT, ET> &p,
+                       const GenericPoint2T<IT, ET> &q, double dis);
 
 /*===================================================================*/
 
-inline Sign squareDistance3D_filtered(double px, double py, double pz,
-                                      double qx, double qy, double qz,
-                                      double dis);
-
-template <typename IT>
-Sign squareDistance3D_interval(IT px, IT py, IT pz, IT qx, IT qy, IT qz,
-                               IT dis);
-
-template <typename ET>
-Sign squareDistance3D_exact(ET px, ET py, ET pz, ET qx, ET qy, ET qz, ET dis);
-
-inline Sign squareDistance3D_expansion(double px, double py, double pz,
+inline Sign squaredDistance3D_filtered(double px, double py, double pz,
                                        double qx, double qy, double qz,
                                        double dis);
 
-template <typename IT, typename ET>
-Sign squareDistance3D(double px, double py, double pz, double qx, double qy,
-                      double qz, double dis);
+template <typename IT>
+Sign squaredDistance3D_interval(IT px, IT py, IT pz, IT qx, IT qy, IT qz,
+                                IT dis);
+
+template <typename ET>
+Sign squaredDistance3D_exact(ET px, ET py, ET pz, ET qx, ET qy, ET qz, ET dis);
+
+inline Sign squaredDistance3D_expansion(double px, double py, double pz,
+                                        double qx, double qy, double qz,
+                                        double dis);
 
 template <typename IT, typename ET>
-Sign squareDistance3D(const GenericPoint3T<IT, ET> &p,
-                      const GenericPoint3T<IT, ET> &q, double dis);
+Sign squaredDistance3D(double px, double py, double pz, double qx, double qy,
+                       double qz, double dis);
+
+template <typename IT, typename ET>
+Sign squaredDistance3D(const GenericPoint3T<IT, ET> &p,
+                       const GenericPoint3T<IT, ET> &q, double dis);
 
 /*===================================================================*/
 
 template <typename IT>
-Sign squareDistance3D3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz,
-                                 IT pcx, IT pcy, IT pcz, int ab_scale);
+Sign squaredDistance3D3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby,
+                                  IT pbz, IT pcx, IT pcy, IT pcz, int ab_scale);
 
 template <typename ET>
-Sign squareDistance3D3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
-                              ET pcx, ET pcy, ET pcz, int ab_scale);
+Sign squaredDistance3D3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
+                               ET pcx, ET pcy, ET pcz, int ab_scale);
 
-inline Sign squareDistance3D3p_expansion(double pax, double pay, double paz,
-                                         double pbx, double pby, double pbz,
-                                         double pcx, double pcy, double pcz,
-                                         int ab_scale);
-
-template <typename IT, typename ET>
-Sign squareDistance3D3p(double pax, double pay, double paz, double pbx,
-                        double pby, double pbz, double pcx, double pcy,
-                        double pcz, int ab_scale);
+inline Sign squaredDistance3D3p_expansion(double pax, double pay, double paz,
+                                          double pbx, double pby, double pbz,
+                                          double pcx, double pcy, double pcz,
+                                          int ab_scale);
 
 template <typename IT, typename ET>
-Sign squareDistance3D3p(const GenericPoint3T<IT, ET> &pa,
-                        const GenericPoint3T<IT, ET> &pb,
-                        const GenericPoint3T<IT, ET> &pc, int ab_scale);
+Sign squaredDistance3D3p(double pax, double pay, double paz, double pbx,
+                         double pby, double pbz, double pcx, double pcy,
+                         double pcz, int ab_scale);
+
+template <typename IT, typename ET>
+Sign squaredDistance3D3p(const GenericPoint3T<IT, ET> &pa,
+                         const GenericPoint3T<IT, ET> &pb,
+                         const GenericPoint3T<IT, ET> &pc, int ab_scale);
 
 /*===================================================================*/
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE_interval(const GenericPoint2T<IT, ET> &p, IT qx, IT qy,
-                                  IT dis);
+Sign squaredDistance2D_IE_interval(const GenericPoint2T<IT, ET> &p, IT qx,
+                                   IT qy, IT dis);
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE_exact(const GenericPoint2T<IT, ET> &p, ET qx, ET qy,
-                               ET dis);
+Sign squaredDistance2D_IE_exact(const GenericPoint2T<IT, ET> &p, ET qx, ET qy,
+                                ET dis);
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE_expansion(const GenericPoint2T<IT, ET> &p, double qx,
-                                   double qy, double dis);
+Sign squaredDistance2D_IE_expansion(const GenericPoint2T<IT, ET> &p, double qx,
+                                    double qy, double dis);
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE(const GenericPoint2T<IT, ET> &p, double qx, double qy,
-                         double dis);
+Sign squaredDistance2D_IE(const GenericPoint2T<IT, ET> &p, double qx, double qy,
+                          double dis);
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE(const GenericPoint2T<IT, ET> &p,
-                         const GenericPoint2T<IT, ET> &q, double dis);
+Sign squaredDistance2D_IE(const GenericPoint2T<IT, ET> &p,
+                          const GenericPoint2T<IT, ET> &q, double dis);
 
 /*===================================================================*/
 
 template <typename IT, typename ET>
-Sign squareDistance2D_II_interval(const GenericPoint2T<IT, ET> &p,
-                                  const GenericPoint2T<IT, ET> &q, IT dis);
+Sign squaredDistance2D_II_interval(const GenericPoint2T<IT, ET> &p,
+                                   const GenericPoint2T<IT, ET> &q, IT dis);
 
 template <typename IT, typename ET>
-Sign squareDistance2D_II_exact(const GenericPoint2T<IT, ET> &p,
-                               const GenericPoint2T<IT, ET> &q, ET dis);
+Sign squaredDistance2D_II_exact(const GenericPoint2T<IT, ET> &p,
+                                const GenericPoint2T<IT, ET> &q, ET dis);
 
 template <typename IT, typename ET>
-Sign squareDistance2D_II_expansion(const GenericPoint2T<IT, ET> &p,
-                                   const GenericPoint2T<IT, ET> &q, double dis);
+Sign squaredDistance2D_II_expansion(const GenericPoint2T<IT, ET> &p,
+                                    const GenericPoint2T<IT, ET> &q,
+                                    double                        dis);
 
 template <typename IT, typename ET>
-Sign squareDistance2D_II(const GenericPoint2T<IT, ET> &p,
-                         const GenericPoint2T<IT, ET> &q, double dis);
+Sign squaredDistance2D_II(const GenericPoint2T<IT, ET> &p,
+                          const GenericPoint2T<IT, ET> &q, double dis);
 
 /*===================================================================*/
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE_interval(const GenericPoint3T<IT, ET> &p, IT qx, IT qy,
-                                  IT qz, IT dis);
+Sign squaredDistance3D_IE_interval(const GenericPoint3T<IT, ET> &p, IT qx,
+                                   IT qy, IT qz, IT dis);
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE_exact(const GenericPoint3T<IT, ET> &p, ET qx, ET qy,
-                               ET qz, ET dis);
+Sign squaredDistance3D_IE_exact(const GenericPoint3T<IT, ET> &p, ET qx, ET qy,
+                                ET qz, ET dis);
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE_expansion(const GenericPoint3T<IT, ET> &p, double qx,
-                                   double qy, double qz, double dis);
+Sign squaredDistance3D_IE_expansion(const GenericPoint3T<IT, ET> &p, double qx,
+                                    double qy, double qz, double dis);
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE(const GenericPoint3T<IT, ET> &p, double qx, double qy,
-                         double qz, double dis);
+Sign squaredDistance3D_IE(const GenericPoint3T<IT, ET> &p, double qx, double qy,
+                          double qz, double dis);
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE(const GenericPoint3T<IT, ET> &p,
-                         const GenericPoint3T<IT, ET> &q, double dis);
+Sign squaredDistance3D_IE(const GenericPoint3T<IT, ET> &p,
+                          const GenericPoint3T<IT, ET> &q, double dis);
 
 /*===================================================================*/
 
 template <typename IT, typename ET>
-Sign squareDistance3D_II_interval(const GenericPoint3T<IT, ET> &p,
-                                  const GenericPoint3T<IT, ET> &q, IT dis);
+Sign squaredDistance3D_II_interval(const GenericPoint3T<IT, ET> &p,
+                                   const GenericPoint3T<IT, ET> &q, IT dis);
 
 template <typename IT, typename ET>
-Sign squareDistance3D_II_exact(const GenericPoint3T<IT, ET> &p,
-                               const GenericPoint3T<IT, ET> &q, ET dis);
+Sign squaredDistance3D_II_exact(const GenericPoint3T<IT, ET> &p,
+                                const GenericPoint3T<IT, ET> &q, ET dis);
 
 template <typename IT, typename ET>
-Sign squareDistance3D_II_expansion(const GenericPoint3T<IT, ET> &p,
-                                   const GenericPoint3T<IT, ET> &q, double dis);
+Sign squaredDistance3D_II_expansion(const GenericPoint3T<IT, ET> &p,
+                                    const GenericPoint3T<IT, ET> &q,
+                                    double                        dis);
 
 template <typename IT, typename ET>
-Sign squareDistance3D_II(const GenericPoint3T<IT, ET> &p,
-                         const GenericPoint3T<IT, ET> &q, double dis);
+Sign squaredDistance3D_II(const GenericPoint3T<IT, ET> &p,
+                          const GenericPoint3T<IT, ET> &q, double dis);
 
 /*********************************************************************/
 /* Implementations (mostly auto-generated)****************************/
 /*********************************************************************/
 
-inline Sign squareDistance2D_filtered(double px, double py, double qx,
-                                      double qy, double dis)
+inline Sign squaredDistance2D_filtered(double px, double py, double qx,
+                                       double qy, double dis)
 {
 	double lx      = px - qx;
 	double ly      = py - qy;
@@ -199,7 +201,7 @@ inline Sign squareDistance2D_filtered(double px, double py, double qx,
 }
 
 template <typename IT>
-Sign squareDistance2D_interval(IT px, IT py, IT qx, IT qy, IT dis)
+Sign squaredDistance2D_interval(IT px, IT py, IT qx, IT qy, IT dis)
 {
 	typename IT::Protector P;
 
@@ -215,7 +217,7 @@ Sign squareDistance2D_interval(IT px, IT py, IT qx, IT qy, IT dis)
 }
 
 template <typename ET>
-Sign squareDistance2D_exact(ET px, ET py, ET qx, ET qy, ET dis)
+Sign squaredDistance2D_exact(ET px, ET py, ET qx, ET qy, ET dis)
 {
 	ET lx      = px - qx;
 	ET ly      = py - qy;
@@ -226,8 +228,8 @@ Sign squareDistance2D_exact(ET px, ET py, ET qx, ET qy, ET dis)
 	return OMC::sign(diff);
 }
 
-Sign squareDistance2D_expansion(double px, double py, double qx, double qy,
-                                double dis)
+Sign squaredDistance2D_expansion(double px, double py, double qx, double qy,
+                                 double dis)
 {
 	expansionObject o;
 	double          lx[2];
@@ -255,28 +257,28 @@ Sign squareDistance2D_expansion(double px, double py, double qx, double qy,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D(double px, double py, double qx, double qy, double dis)
+Sign squaredDistance2D(double px, double py, double qx, double qy, double dis)
 {
 	Sign ret;
-	ret = squareDistance2D_filtered(px, py, qx, qy, dis);
+	ret = squaredDistance2D_filtered(px, py, qx, qy, dis);
 	if (is_sign_reliable(ret))
 		return ret;
-	ret = squareDistance2D_interval<IT>(px, py, qx, qy, dis);
+	ret = squaredDistance2D_interval<IT>(px, py, qx, qy, dis);
 	if (is_sign_reliable(ret))
 		return ret;
-	return squareDistance2D_expansion(px, py, qx, qy, dis);
+	return squaredDistance2D_expansion(px, py, qx, qy, dis);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D(const GenericPoint2T<IT, ET> &p,
-                      const GenericPoint2T<IT, ET> &q, double dis)
+Sign squaredDistance2D(const GenericPoint2T<IT, ET> &p,
+                       const GenericPoint2T<IT, ET> &q, double dis)
 {
-	return squareDistance2D<IT, ET>(p.x(), p.y(), q.x(), q.y(), dis);
+	return squaredDistance2D<IT, ET>(p.x(), p.y(), q.x(), q.y(), dis);
 }
 
-inline Sign squareDistance3D_filtered(double px, double py, double pz,
-                                      double qx, double qy, double qz,
-                                      double dis)
+inline Sign squaredDistance3D_filtered(double px, double py, double pz,
+                                       double qx, double qy, double qz,
+                                       double dis)
 {
 	double lx        = px - qx;
 	double ly        = py - qy;
@@ -307,7 +309,8 @@ inline Sign squareDistance3D_filtered(double px, double py, double pz,
 }
 
 template <typename IT>
-Sign squareDistance3D_interval(IT px, IT py, IT pz, IT qx, IT qy, IT qz, IT dis)
+Sign squaredDistance3D_interval(IT px, IT py, IT pz, IT qx, IT qy, IT qz,
+                                IT dis)
 {
 	typename IT::Protector P;
 
@@ -326,7 +329,7 @@ Sign squareDistance3D_interval(IT px, IT py, IT pz, IT qx, IT qy, IT qz, IT dis)
 }
 
 template <typename ET>
-Sign squareDistance3D_exact(ET px, ET py, ET pz, ET qx, ET qy, ET qz, ET dis)
+Sign squaredDistance3D_exact(ET px, ET py, ET pz, ET qx, ET qy, ET qz, ET dis)
 {
 	ET lx        = px - qx;
 	ET ly        = py - qy;
@@ -340,8 +343,8 @@ Sign squareDistance3D_exact(ET px, ET py, ET pz, ET qx, ET qy, ET qz, ET dis)
 	return OMC::sign(diff);
 }
 
-Sign squareDistance3D_expansion(double px, double py, double pz, double qx,
-                                double qy, double qz, double dis)
+Sign squaredDistance3D_expansion(double px, double py, double pz, double qx,
+                                 double qy, double qz, double dis)
 {
 	expansionObject o;
 	double          lx[2];
@@ -375,30 +378,30 @@ Sign squareDistance3D_expansion(double px, double py, double pz, double qx,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D(double px, double py, double pz, double qx, double qy,
-                      double qz, double dis)
+Sign squaredDistance3D(double px, double py, double pz, double qx, double qy,
+                       double qz, double dis)
 {
 	Sign ret;
-	ret = squareDistance3D_filtered(px, py, pz, qx, qy, qz, dis);
+	ret = squaredDistance3D_filtered(px, py, pz, qx, qy, qz, dis);
 	if (is_sign_reliable(ret))
 		return ret;
-	ret = squareDistance3D_interval<IT>(px, py, pz, qx, qy, qz, dis);
+	ret = squaredDistance3D_interval<IT>(px, py, pz, qx, qy, qz, dis);
 	if (is_sign_reliable(ret))
 		return ret;
-	return squareDistance3D_expansion(px, py, pz, qx, qy, qz, dis);
+	return squaredDistance3D_expansion(px, py, pz, qx, qy, qz, dis);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D(const GenericPoint3T<IT, ET> &p,
-                      const GenericPoint3T<IT, ET> &q, double dis)
+Sign squaredDistance3D(const GenericPoint3T<IT, ET> &p,
+                       const GenericPoint3T<IT, ET> &q, double dis)
 {
-	return squareDistance3D<IT, ET>(p.x(), p.y(), p.z(), q.x(), q.y(), q.z(),
-	                                dis);
+	return squaredDistance3D<IT, ET>(p.x(), p.y(), p.z(), q.x(), q.y(), q.z(),
+	                                 dis);
 }
 
 template <typename IT>
-Sign squareDistance3D3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz,
-                                 IT pcx, IT pcy, IT pcz, int ab_scale)
+Sign squaredDistance3D3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby,
+                                  IT pbz, IT pcx, IT pcy, IT pcz, int ab_scale)
 {
 	typename IT::Protector P;
 
@@ -426,8 +429,8 @@ Sign squareDistance3D3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz,
 }
 
 template <typename ET>
-Sign squareDistance3D3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
-                              ET pcx, ET pcy, ET pcz, int ab_scale)
+Sign squaredDistance3D3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
+                               ET pcx, ET pcy, ET pcz, int ab_scale)
 {
 	ET abx   = pbx - pax;
 	ET aby   = pby - pay;
@@ -450,10 +453,10 @@ Sign squareDistance3D3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
 	return OMC::sign(d);
 }
 
-Sign squareDistance3D3p_expansion(double pax, double pay, double paz,
-                                  double pbx, double pby, double pbz,
-                                  double pcx, double pcy, double pcz,
-                                  int ab_scale)
+Sign squaredDistance3D3p_expansion(double pax, double pay, double paz,
+                                   double pbx, double pby, double pbz,
+                                   double pcx, double pcy, double pcz,
+                                   int ab_scale)
 {
 	expansionObject o;
 	double          abx[2];
@@ -506,31 +509,31 @@ Sign squareDistance3D3p_expansion(double pax, double pay, double paz,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D3p(double pax, double pay, double paz, double pbx,
-                        double pby, double pbz, double pcx, double pcy,
-                        double pcz, int ab_scale)
+Sign squaredDistance3D3p(double pax, double pay, double paz, double pbx,
+                         double pby, double pbz, double pcx, double pcy,
+                         double pcz, int ab_scale)
 {
 	Sign ret;
-	ret = squareDistance3D3p_interval<IT>(pax, pay, paz, pbx, pby, pbz, pcx, pcy,
-	                                      pcz, ab_scale);
+	ret = squaredDistance3D3p_interval<IT>(pax, pay, paz, pbx, pby, pbz, pcx, pcy,
+	                                       pcz, ab_scale);
 	if (is_sign_reliable(ret))
 		return ret;
-	return squareDistance3D3p_expansion(pax, pay, paz, pbx, pby, pbz, pcx, pcy,
-	                                    pcz, ab_scale);
+	return squaredDistance3D3p_expansion(pax, pay, paz, pbx, pby, pbz, pcx, pcy,
+	                                     pcz, ab_scale);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D3p(const GenericPoint3T<IT, ET> &pa,
-                        const GenericPoint3T<IT, ET> &pb,
-                        const GenericPoint3T<IT, ET> &pc, const int ab_scale)
+Sign squaredDistance3D3p(const GenericPoint3T<IT, ET> &pa,
+                         const GenericPoint3T<IT, ET> &pb,
+                         const GenericPoint3T<IT, ET> &pc, const int ab_scale)
 {
-	return squareDistance3D3p<IT, ET>(pa.x(), pa.y(), pa.z(), pb.x(), pb.y(),
-	                                  pb.z(), pc.x(), pc.y(), pc.z(), ab_scale);
+	return squaredDistance3D3p<IT, ET>(pa.x(), pa.y(), pa.z(), pb.x(), pb.y(),
+	                                   pb.z(), pc.x(), pc.y(), pc.z(), ab_scale);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE_interval(const GenericPoint2T<IT, ET> &p, IT qx, IT qy,
-                                  IT dis)
+Sign squaredDistance2D_IE_interval(const GenericPoint2T<IT, ET> &p, IT qx,
+                                   IT qy, IT dis)
 {
 	IT px, py, d;
 	if (!p.getIntervalLambda(px, py, d))
@@ -554,8 +557,8 @@ Sign squareDistance2D_IE_interval(const GenericPoint2T<IT, ET> &p, IT qx, IT qy,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE_exact(const GenericPoint2T<IT, ET> &p, ET qx, ET qy,
-                               ET dis)
+Sign squaredDistance2D_IE_exact(const GenericPoint2T<IT, ET> &p, ET qx, ET qy,
+                                ET dis)
 {
 	ET px, py, d;
 	p.getExactLambda(px, py, d);
@@ -573,8 +576,8 @@ Sign squareDistance2D_IE_exact(const GenericPoint2T<IT, ET> &p, ET qx, ET qy,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE_expansion(const GenericPoint2T<IT, ET> &p, double qx,
-                                   double qy, double dis)
+Sign squaredDistance2D_IE_expansion(const GenericPoint2T<IT, ET> &p, double qx,
+                                    double qy, double dis)
 {
 	double return_value = NAN;
 #ifdef CHECK_FOR_XYZERFLOWS
@@ -646,7 +649,7 @@ Sign squareDistance2D_IE_expansion(const GenericPoint2T<IT, ET> &p, double qx,
 
 #ifdef CHECK_FOR_XYZERFLOWS
 	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
-		return squareDistance2D_IE_exact<IT, ET>(p, qx, qy, dis);
+		return squaredDistance2D_IE_exact<IT, ET>(p, qx, qy, dis);
 #endif
 
 	if (return_value > 0)
@@ -659,26 +662,26 @@ Sign squareDistance2D_IE_expansion(const GenericPoint2T<IT, ET> &p, double qx,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE(const GenericPoint2T<IT, ET> &p, double qx, double qy,
-                         double dis)
+Sign squaredDistance2D_IE(const GenericPoint2T<IT, ET> &p, double qx, double qy,
+                          double dis)
 {
 	Sign ret;
-	ret = squareDistance2D_IE_interval<IT, ET>(p, qx, qy, dis);
+	ret = squaredDistance2D_IE_interval<IT, ET>(p, qx, qy, dis);
 	if (is_sign_reliable(ret))
 		return ret;
-	return squareDistance2D_IE_expansion<IT, ET>(p, qx, qy, dis);
+	return squaredDistance2D_IE_expansion<IT, ET>(p, qx, qy, dis);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_IE(const GenericPoint2T<IT, ET> &p,
-                         const GenericPoint2T<IT, ET> &q, double dis)
+Sign squaredDistance2D_IE(const GenericPoint2T<IT, ET> &p,
+                          const GenericPoint2T<IT, ET> &q, double dis)
 {
-	return squareDistance2D_IE<IT, ET>(p, q.x(), q.y(), dis);
+	return squaredDistance2D_IE<IT, ET>(p, q.x(), q.y(), dis);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_II_interval(const GenericPoint2T<IT, ET> &p,
-                                  const GenericPoint2T<IT, ET> &q, IT dis)
+Sign squaredDistance2D_II_interval(const GenericPoint2T<IT, ET> &p,
+                                   const GenericPoint2T<IT, ET> &q, IT dis)
 {
 	IT px, py, dp, qx, qy, dq;
 	if (!p.getIntervalLambda(px, py, dp) || !q.getIntervalLambda(qx, qy, dq))
@@ -706,8 +709,8 @@ Sign squareDistance2D_II_interval(const GenericPoint2T<IT, ET> &p,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_II_exact(const GenericPoint2T<IT, ET> &p,
-                               const GenericPoint2T<IT, ET> &q, ET dis)
+Sign squaredDistance2D_II_exact(const GenericPoint2T<IT, ET> &p,
+                                const GenericPoint2T<IT, ET> &q, ET dis)
 {
 	ET px, py, dp, qx, qy, dq;
 	p.getExactLambda(px, py, dp);
@@ -730,8 +733,8 @@ Sign squareDistance2D_II_exact(const GenericPoint2T<IT, ET> &p,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_II_expansion(const GenericPoint2T<IT, ET> &p,
-                                   const GenericPoint2T<IT, ET> &q, double dis)
+Sign squaredDistance2D_II_expansion(const GenericPoint2T<IT, ET> &p,
+                                    const GenericPoint2T<IT, ET> &q, double dis)
 {
 	double return_value = NAN;
 #ifdef CHECK_FOR_XYZERFLOWS
@@ -828,7 +831,7 @@ Sign squareDistance2D_II_expansion(const GenericPoint2T<IT, ET> &p,
 
 #ifdef CHECK_FOR_XYZERFLOWS
 	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
-		return squareDistance2D_II_exact<IT, ET>(p, q, dis);
+		return squaredDistance2D_II_exact<IT, ET>(p, q, dis);
 #endif
 
 	if (return_value > 0)
@@ -841,19 +844,19 @@ Sign squareDistance2D_II_expansion(const GenericPoint2T<IT, ET> &p,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance2D_II(const GenericPoint2T<IT, ET> &p,
-                         const GenericPoint2T<IT, ET> &q, double dis)
+Sign squaredDistance2D_II(const GenericPoint2T<IT, ET> &p,
+                          const GenericPoint2T<IT, ET> &q, double dis)
 {
 	Sign ret;
-	ret = squareDistance2D_II_interval<IT, ET>(p, q, dis);
+	ret = squaredDistance2D_II_interval<IT, ET>(p, q, dis);
 	if (is_sign_reliable(ret))
 		return ret;
-	return squareDistance2D_II_expansion<IT, ET>(p, q, dis);
+	return squaredDistance2D_II_expansion<IT, ET>(p, q, dis);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE_interval(const GenericPoint3T<IT, ET> &p, IT qx, IT qy,
-                                  IT qz, IT dis)
+Sign squaredDistance3D_IE_interval(const GenericPoint3T<IT, ET> &p, IT qx,
+                                   IT qy, IT qz, IT dis)
 {
 	IT px, py, pz, d;
 	if (!p.getIntervalLambda(px, py, pz, d))
@@ -881,8 +884,8 @@ Sign squareDistance3D_IE_interval(const GenericPoint3T<IT, ET> &p, IT qx, IT qy,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE_exact(const GenericPoint3T<IT, ET> &p, ET qx, ET qy,
-                               ET qz, ET dis)
+Sign squaredDistance3D_IE_exact(const GenericPoint3T<IT, ET> &p, ET qx, ET qy,
+                                ET qz, ET dis)
 {
 	ET px, py, pz, d;
 	p.getExactLambda(px, py, pz, d);
@@ -904,8 +907,8 @@ Sign squareDistance3D_IE_exact(const GenericPoint3T<IT, ET> &p, ET qx, ET qy,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE_expansion(const GenericPoint3T<IT, ET> &p, double qx,
-                                   double qy, double qz, double dis)
+Sign squaredDistance3D_IE_expansion(const GenericPoint3T<IT, ET> &p, double qx,
+                                    double qy, double qz, double dis)
 {
 	double return_value = NAN;
 #ifdef CHECK_FOR_XYZERFLOWS
@@ -995,7 +998,7 @@ Sign squareDistance3D_IE_expansion(const GenericPoint3T<IT, ET> &p, double qx,
 
 #ifdef CHECK_FOR_XYZERFLOWS
 	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
-		return squareDistance3D_IE_exact<IT, ET>(p, qx, qy, qz, dis);
+		return squaredDistance3D_IE_exact<IT, ET>(p, qx, qy, qz, dis);
 #endif
 
 	if (return_value > 0)
@@ -1008,26 +1011,26 @@ Sign squareDistance3D_IE_expansion(const GenericPoint3T<IT, ET> &p, double qx,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE(const GenericPoint3T<IT, ET> &p, double qx, double qy,
-                         double qz, double dis)
+Sign squaredDistance3D_IE(const GenericPoint3T<IT, ET> &p, double qx, double qy,
+                          double qz, double dis)
 {
 	Sign ret;
-	ret = squareDistance3D_IE_interval<IT, ET>(p, qx, qy, qz, dis);
+	ret = squaredDistance3D_IE_interval<IT, ET>(p, qx, qy, qz, dis);
 	if (is_sign_reliable(ret))
 		return ret;
-	return squareDistance3D_IE_expansion<IT, ET>(p, qx, qy, qz, dis);
+	return squaredDistance3D_IE_expansion<IT, ET>(p, qx, qy, qz, dis);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_IE(const GenericPoint3T<IT, ET> &p,
-                         const GenericPoint3T<IT, ET> &q, double dis)
+Sign squaredDistance3D_IE(const GenericPoint3T<IT, ET> &p,
+                          const GenericPoint3T<IT, ET> &q, double dis)
 {
-	return squareDistance3D_IE<IT, ET>(p, q.x(), q.y(), q.z(), dis);
+	return squaredDistance3D_IE<IT, ET>(p, q.x(), q.y(), q.z(), dis);
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_II_interval(const GenericPoint3T<IT, ET> &p,
-                                  const GenericPoint3T<IT, ET> &q, IT dis)
+Sign squaredDistance3D_II_interval(const GenericPoint3T<IT, ET> &p,
+                                   const GenericPoint3T<IT, ET> &q, IT dis)
 {
 	IT px, py, pz, dp, qx, qy, qz, dq;
 	if (!p.getIntervalLambda(px, py, pz, dp) ||
@@ -1061,8 +1064,8 @@ Sign squareDistance3D_II_interval(const GenericPoint3T<IT, ET> &p,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_II_exact(const GenericPoint3T<IT, ET> &p,
-                               const GenericPoint3T<IT, ET> &q, ET dis)
+Sign squaredDistance3D_II_exact(const GenericPoint3T<IT, ET> &p,
+                                const GenericPoint3T<IT, ET> &q, ET dis)
 {
 	ET px, py, pz, dp, qx, qy, qz, dq;
 	p.getExactLambda(px, py, pz, dp);
@@ -1090,8 +1093,8 @@ Sign squareDistance3D_II_exact(const GenericPoint3T<IT, ET> &p,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_II_expansion(const GenericPoint3T<IT, ET> &p,
-                                   const GenericPoint3T<IT, ET> &q, double dis)
+Sign squaredDistance3D_II_expansion(const GenericPoint3T<IT, ET> &p,
+                                    const GenericPoint3T<IT, ET> &q, double dis)
 {
 	double return_value = NAN;
 #ifdef CHECK_FOR_XYZERFLOWS
@@ -1213,7 +1216,7 @@ Sign squareDistance3D_II_expansion(const GenericPoint3T<IT, ET> &p,
 
 #ifdef CHECK_FOR_XYZERFLOWS
 	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
-		return squareDistance3D_II_exact<IT, ET>(p, q, dis);
+		return squaredDistance3D_II_exact<IT, ET>(p, q, dis);
 #endif
 
 	if (return_value > 0)
@@ -1226,13 +1229,13 @@ Sign squareDistance3D_II_expansion(const GenericPoint3T<IT, ET> &p,
 }
 
 template <typename IT, typename ET>
-Sign squareDistance3D_II(const GenericPoint3T<IT, ET> &p,
-                         const GenericPoint3T<IT, ET> &q, double dis)
+Sign squaredDistance3D_II(const GenericPoint3T<IT, ET> &p,
+                          const GenericPoint3T<IT, ET> &q, double dis)
 {
 	Sign ret;
-	ret = squareDistance3D_II_interval<IT, ET>(p, q, dis);
+	ret = squaredDistance3D_II_interval<IT, ET>(p, q, dis);
 	if (is_sign_reliable(ret))
 		return ret;
-	return squareDistance3D_II_expansion<IT, ET>(p, q, dis);
+	return squaredDistance3D_II_expansion<IT, ET>(p, q, dis);
 }
 } // namespace OMC

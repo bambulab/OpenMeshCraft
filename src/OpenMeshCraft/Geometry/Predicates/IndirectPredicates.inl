@@ -10,7 +10,7 @@
 #include "InternalDetails/Orient2D.inl"
 #include "InternalDetails/Orient3D.inl"
 #include "InternalDetails/OrientOn2D.inl"
-#include "InternalDetails/SquareDistance.inl"
+#include "InternalDetails/SquaredDistance.inl"
 #include "InternalDetails/TriangleNormal.inl"
 
 #include "OpenMeshCraft/Utils/Exception.h"
@@ -206,22 +206,22 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_zx(const PointT &p,
 /******************************************************************************/
 
 TEMPLATE_DECL
-Sign SquareDistance2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
-                                                       const PointT &q,
-                                                       FT            sqr_dis)
+Sign SquaredDistance2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
+                                                        const PointT &q,
+                                                        FT            sqr_dis)
 {
 	PntArr2 arr = get_pnts_arr2(PntType(p), PntType(q));
-	// SquareDistance is simple now, expand it by hand.
+	// SquaredDistance is simple now, expand it by hand.
 	switch (arr)
 	{
 	case PntArr2::EE:
-		return squareDistance2D<TP>(p, q, sqr_dis);
+		return squaredDistance2D<TP>(p, q, sqr_dis);
 	case PntArr2::EI:
-		return squareDistance2D_IE<TP>(q, p, sqr_dis);
+		return squaredDistance2D_IE<TP>(q, p, sqr_dis);
 	case PntArr2::IE:
-		return squareDistance2D_IE<TP>(p, q, sqr_dis);
+		return squaredDistance2D_IE<TP>(p, q, sqr_dis);
 	case PntArr2::II:
-		return squareDistance2D_II<TP>(q, p, sqr_dis);
+		return squaredDistance2D_II<TP>(q, p, sqr_dis);
 	default:
 		OMC_ASSERT(false, "SquaredDistance2D - should not happen");
 		return Sign::ZERO; // warning killer
@@ -229,22 +229,22 @@ Sign SquareDistance2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 }
 
 TEMPLATE_DECL
-Sign SquareDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
-                                                       const PointT &q,
-                                                       FT            sqr_dis)
+Sign SquaredDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
+                                                        const PointT &q,
+                                                        FT            sqr_dis)
 {
 	PntArr3 arr = get_pnts_arr3(PntType(p), PntType(q));
-	// SquareDistance is simple now, expand it by hand.
+	// SquaredDistance is simple now, expand it by hand.
 	switch (arr)
 	{
 	case PntArr3::EE:
-		return squareDistance3D<TP>(p, q, sqr_dis);
+		return squaredDistance3D<TP>(p, q, sqr_dis);
 	case PntArr3::EI:
-		return squareDistance3D_IE<TP>(q, p, sqr_dis);
+		return squaredDistance3D_IE<TP>(q, p, sqr_dis);
 	case PntArr3::IE:
-		return squareDistance3D_IE<TP>(p, q, sqr_dis);
+		return squaredDistance3D_IE<TP>(p, q, sqr_dis);
 	case PntArr3::II:
-		return squareDistance3D_II<TP>(q, p, sqr_dis);
+		return squaredDistance3D_II<TP>(q, p, sqr_dis);
 	default:
 		OMC_ASSERT(false, "SquaredDistance3D - should not happen");
 		return Sign::ZERO; // warning killer
@@ -252,13 +252,13 @@ Sign SquareDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 }
 
 TEMPLATE_DECL
-Sign SquareDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &a,
-                                                       const PointT &b,
-                                                       const PointT &c,
-                                                       int           ab_scale)
+Sign SquaredDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &a,
+                                                        const PointT &b,
+                                                        const PointT &c,
+                                                        int           ab_scale)
 {
 	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
-		return squareDistance3D3p(a, b, c, ab_scale);
+		return squaredDistance3D3p(a, b, c, ab_scale);
 
 	OMC_ASSERT(false, "SquaredDistance3D3p - should not happen");
 	return Sign::ZERO; // warning killer

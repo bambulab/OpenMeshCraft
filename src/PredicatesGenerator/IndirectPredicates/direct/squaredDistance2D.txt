@@ -2,7 +2,7 @@ explicitPoint2D(p:px,py)
 explicitPoint2D(q:qx,qy)
 dis
 
-// squareDistance2D: (p-q).squareNorm - dis
+// squaredDistance2D: (p-q).squareNorm - dis
 
 lx = px - qx
 ly = py - qy
