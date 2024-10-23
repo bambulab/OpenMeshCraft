@@ -3,6 +3,8 @@
 #include "Primitive3.h"
 #include "Vector3T.h"
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+
 #include <cassert>
 #include <variant>
 
@@ -14,6 +16,9 @@ class ExplicitPoint3T;
 
 template <typename IT, typename ET>
 class ImplicitPoint3T_SSI;
+
+template <typename IT, typename ET>
+class ImplicitPoint3T_LNC;
 
 template <typename IT, typename ET>
 class ImplicitPoint3T_LPI;
@@ -32,6 +37,7 @@ public: /* types *************************************************************/
 
 	using EP     = ExplicitPoint3T<IT, ET>;
 	using IP_SSI = ImplicitPoint3T_SSI<IT, ET>;
+	using IP_LNC = ImplicitPoint3T_LNC<IT, ET>;
 	using IP_LPI = ImplicitPoint3T_LPI<IT, ET>;
 	using IP_TPI = ImplicitPoint3T_TPI<IT, ET>;
 
@@ -40,8 +46,9 @@ public: /* types *************************************************************/
 		Explicit = 0,
 		Implicit = 1,
 		SSI      = 2,
-		LPI      = 3,
-		TPI      = 4,
+		LNC      = 3,
+		LPI      = 4,
+		TPI      = 5,
 	};
 
 public: /* members ************************************************************/
@@ -72,6 +79,7 @@ public: /* functions about types **********************************************/
 	bool is_explicit() const { return point_type() == PointType::Explicit; }
 	bool is_implicit() const { return point_type() > PointType::Implicit; }
 	bool is_SSI() const { return point_type() == PointType::SSI; }
+	bool is_LNC() const { return point_type() == PointType::LNC; }
 	bool is_LPI() const { return point_type() == PointType::LPI; }
 	bool is_TPI() const { return point_type() == PointType::TPI; }
 
@@ -88,44 +96,24 @@ public: /* functions about types **********************************************/
 		return *static_cast<const EP *>(this);
 	}
 
-	/// @brief Convert to SSI point, won't check type again.
-	IP_SSI &SSI()
-	{
-		OMC_EXPENSIVE_ASSERT(is_SSI(), "point type mismatch.");
-		return *static_cast<IP_SSI *>(this);
-	}
-	/// @brief Convert to SSI point, won't check type again.
-	const IP_SSI &SSI() const
-	{
-		OMC_EXPENSIVE_ASSERT(is_SSI(), "point type mismatch.");
-		return *static_cast<const IP_SSI *>(this);
-	}
-
-	/// @brief Convert to LPI point, won't check type again.
-	IP_LPI &LPI()
-	{
-		OMC_EXPENSIVE_ASSERT(is_LPI(), "point type mismatch.");
-		return *static_cast<IP_LPI *>(this);
-	}
-	/// @brief Convert to LPI point, won't check type again.
-	const IP_LPI &LPI() const
-	{
-		OMC_EXPENSIVE_ASSERT(is_LPI(), "point type mismatch.");
-		return *static_cast<const IP_LPI *>(this);
+#define CONVERT_AS_FUNC(name)                                  \
+	IP_##name &name()                                            \
+	{                                                            \
+		OMC_EXPENSIVE_ASSERT(is_##name(), "point type mismatch."); \
+		return *static_cast<IP_##name *>(this);                    \
+	}                                                            \
+	const IP_##name &name() const                                \
+	{                                                            \
+		OMC_EXPENSIVE_ASSERT(is_##name(), "point type mismatch."); \
+		return *static_cast<const IP_##name *>(this);              \
 	}
 
-	/// @brief Convert to TPI point, won't check type again.
-	IP_TPI &TPI()
-	{
-		OMC_EXPENSIVE_ASSERT(is_TPI(), "point type mismatch.");
-		return *static_cast<IP_TPI *>(this);
-	}
-	/// @brief Convert to TPI point, won't check type again.
-	const IP_TPI &TPI() const
-	{
-		OMC_EXPENSIVE_ASSERT(is_TPI(), "point type mismatch.");
-		return *static_cast<const IP_TPI *>(this);
-	}
+	CONVERT_AS_FUNC(SSI);
+	CONVERT_AS_FUNC(LNC);
+	CONVERT_AS_FUNC(LPI);
+	CONVERT_AS_FUNC(TPI);
+
+#undef CONVERT_AS_FUNC
 
 public: /* get lambda values from implicit points ****************************/
 	/**
@@ -140,6 +128,8 @@ public: /* get lambda values from implicit points ****************************/
 		                     "no lambda for explicit point");
 		if (point_type() == PointType::SSI)
 			return SSI().getIntervalLambda(lx, ly, lz, d);
+		else if (point_type() == PointType::LNC)
+			return LNC().getIntervalLambda(lx, ly, lz, d);
 		else if (point_type() == PointType::LPI)
 			return LPI().getIntervalLambda(lx, ly, lz, d);
 		else // if (point_type() == PointType::TPI)
@@ -157,6 +147,8 @@ public: /* get lambda values from implicit points ****************************/
 		                     "no lambda for explicit point");
 		if (point_type() == PointType::SSI)
 			SSI().getExactLambda(lx, ly, lz, d);
+		else if (point_type() == PointType::LNC)
+			LNC().getExactLambda(lx, ly, lz, d);
 		else if (point_type() == PointType::LPI)
 			LPI().getExactLambda(lx, ly, lz, d);
 		else // if (point_type() == PointType::TPI)
@@ -173,6 +165,8 @@ public: /* get lambda values from implicit points ****************************/
 		                     "no lambda for explicit point");
 		if (point_type() == PointType::SSI)
 			SSI().getExpansionLambda(lx, lx_len, ly, ly_len, lz, lz_len, d, d_len);
+		else if (point_type() == PointType::LNC)
+			LNC().getExpansionLambda(lx, lx_len, ly, ly_len, lz, lz_len, d, d_len);
 		else if (point_type() == PointType::LPI)
 			LPI().getExpansionLambda(lx, lx_len, ly, ly_len, lz, lz_len, d, d_len);
 		else // if (point_type() == PointType::TPI)
@@ -190,12 +184,32 @@ public: /* Convert to other point types ************************************/
 	{
 		if (point_type() == PointType::Explicit)
 			e = EXP();
-		else if (point_type() == PointType::SSI)
-			SSI().get_explicit(e, aeap);
-		else if (point_type() == PointType::LPI)
-			LPI().get_explicit(e, aeap);
-		else if (point_type() == PointType::TPI)
-			TPI().get_explicit(e, aeap);
+		else
+		{
+			FT lx, ly, lz, d;
+			if constexpr (!std::is_void_v<IT>)
+			{
+				// calculate approximate lambda values by interval arithmetic
+				IT ilx, ily, ilz, id;
+				if (!aeap && getIntervalLambda(ilx, ily, ilz, id))
+				{
+					lx = ilx.sup() + ilx.inf();
+					ly = ily.sup() + ily.inf();
+					lz = ilz.sup() + ilz.inf();
+					d  = id.sup() + id.inf();
+					e  = EP(lx / d, ly / d, lz / d);
+					return;
+				}
+			}
+			// calculate more accurate lambda values by exact arithmetic
+			ET elx, ely, elz, ed;
+			getExactLambda(elx, ely, elz, ed);
+			lx = OMC::to_double(elx);
+			ly = OMC::to_double(ely);
+			lz = OMC::to_double(elz);
+			d  = OMC::to_double(ed);
+			e  = EP(lx / d, ly / d, lz / d);
+		}
 	}
 
 	/**
@@ -348,6 +362,7 @@ public: /* Global cache lambda values ****************************************/
 	static void enable_global_cached_values(size_t s = 0)
 	{
 		IP_SSI::gcv().enable();
+		IP_LNC::gcv().enable();
 		IP_LPI::gcv().enable();
 		IP_TPI::gcv().enable();
 		if (s != 0)
@@ -357,6 +372,7 @@ public: /* Global cache lambda values ****************************************/
 	static void disable_global_cached_values()
 	{
 		IP_SSI::gcv().disable();
+		IP_LNC::gcv().disable();
 		IP_LPI::gcv().disable();
 		IP_TPI::gcv().disable();
 	}
@@ -364,6 +380,7 @@ public: /* Global cache lambda values ****************************************/
 	static void clear_global_cached_values()
 	{
 		IP_SSI::gcv().clear_cached_values();
+		IP_LNC::gcv().clear_cached_values();
 		IP_LPI::gcv().clear_cached_values();
 		IP_TPI::gcv().clear_cached_values();
 	}
@@ -371,6 +388,7 @@ public: /* Global cache lambda values ****************************************/
 	static void resize_global_cached_values(size_t s)
 	{
 		IP_SSI::gcv().resize(s);
+		IP_LNC::gcv().resize(s);
 		IP_LPI::gcv().resize(s);
 		IP_TPI::gcv().resize(s);
 	}

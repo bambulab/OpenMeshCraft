@@ -77,23 +77,6 @@ public: /* Lambdas ***********************************************************/
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **d,
 	                        int &d_len) const;
 
-public: /* convert other points **********************************************/
-	/**
-	 * @brief get the explicit reprensentation of the point.
-	 * @param e the explicit point to store the result.
-	 * @param aeap abbreviates "as exact as possible". If true, the exact
-	 * value is calculated and rounded to the nearest floating point number.
-	 */
-	void get_explicit(EP &e, bool aeap = false) const;
-
-	/**
-	 * @brief get the explicit reprensentation of the point.
-	 * @param aeap abbreviates "as exact as possible". If true, the exact
-	 * value is calculated and rounded to the nearest floating point number.
-	 * @return the explicit point.
-	 */
-	EP to_explicit(bool aeap = false) const;
-
 public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
 

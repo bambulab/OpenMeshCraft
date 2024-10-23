@@ -84,23 +84,6 @@ public: /* Lambdas ***********************************************************/
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
 	                        int &lz_len, FT **d, int &d_len) const;
 
-public: /* convert other points **********************************************/
-	/**
-	 * @brief get the explicit reprensentation of the point.
-	 * @param e the explicit point to store the result.
-	 * @param aeap abbreviates "as exact as possible". If true, the exact
-	 * value is calculated and rounded to the nearest floating point number.
-	 */
-	void get_explicit(EP &e, bool aeap = false) const;
-
-	/**
-	 * @brief get the explicit reprensentation of the point.
-	 * @param aeap abbreviates "as exact as possible". If true, the exact
-	 * value is calculated and rounded to the nearest floating point number.
-	 * @return the explicit point.
-	 */
-	EP to_explicit(bool aeap = false) const;
-
 public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
 
@@ -114,6 +97,87 @@ private:
 	/// plane == 1 -> ZX plane;
 	/// plane == 2 -> XY plane.
 	int plane;
+
+#ifdef OMC_CACHE_DF
+	mutable IT m_lx, m_ly, m_lz, m_d;
+#endif
+
+	/// global cached lambda values
+	static GCV global_cached_values;
+};
+
+/**
+ * @brief Implicit point defined by the interpolation of two points (one
+ * segment).
+ *
+ * The point has a homogeneous representation (lx, ly, lz, d), which defines the
+ * coordinates of the point as (x, y, z) = (lx, ly, lz) / d.
+ *
+ * The homogeneous representation avoids the division operation, which enables
+ * efficient exact arithmetic operations.
+ */
+template <typename IT_, typename ET_>
+class ImplicitPoint3T_LNC : public GenericPoint3T<IT_, ET_>
+{
+public: /* Types *************************************************************/
+	using FT = double; ///< floating point type
+	using IT = IT_;    ///< interval type
+	using ET = ET_;    ///< exact type
+
+	using EP = ExplicitPoint3T<IT, ET>;
+	using IP = ImplicitPoint3T_LNC<IT, ET>;
+	using GP = GenericPoint3T<IT, ET>;
+
+	/// An enum class to indicate the type of the point.
+	using PointType = typename GP::PointType;
+
+	/// A class to store cached values for one point.
+	using GCV = GlobalCachedValues<OnePointCachedValues3<IT, ET>>;
+
+public: /* Constructors ******************************************************/
+	/// @brief default constructor
+	ImplicitPoint3T_LNC() noexcept;
+
+	/// @brief init LNC point with segment(p,q) and interpolation parameter t
+	ImplicitPoint3T_LNC(const EP &_p, const EP &_q, FT _t) noexcept;
+
+	~ImplicitPoint3T_LNC() noexcept;
+
+	ImplicitPoint3T_LNC(const IP &rhs) noexcept;
+	ImplicitPoint3T_LNC(IP &&rhs) noexcept;
+
+	IP &operator=(const IP &rhs);
+	IP &operator=(IP &&rhs);
+
+public: /* Members ***********************************************************/
+	const EP &P() const { return *ip; }
+	const EP &Q() const { return *iq; }
+	FT T() const { return it; }
+
+public: /* Lambdas ***********************************************************/
+	/**
+	 * @brief Get the Lambda values represented by interval numbers.
+	 * @return true if the sign of d is reliable.
+	 */
+	bool getIntervalLambda(IT &lx, IT &ly, IT &lz, IT &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by exact numbers.
+	 */
+	void getExactLambda(ET &lx, ET &ly, ET &lz, ET &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by expansion numbers.
+	 */
+	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
+	                        int &lz_len, FT **d, int &d_len) const;
+
+public: /* Cache *************************************************************/
+	static GCV &gcv() { return global_cached_values; }
+
+private:
+	const EP *ip, *iq; ///< The two points (segment) to interpolate
+	const FT  it;      ///< The interpolation parameter
 
 #ifdef OMC_CACHE_DF
 	mutable IT m_lx, m_ly, m_lz, m_d;
@@ -192,23 +256,6 @@ public: /* Lambdas ***********************************************************/
 	 */
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
 	                        int &lz_len, FT **d, int &d_len) const;
-
-public: /* convert other points **********************************************/
-	/**
-	 * @brief get the explicit reprensentation of the point.
-	 * @param e the explicit point to store the result.
-	 * @param aeap abbreviates "as exact as possible". If true, the exact
-	 * value is calculated and rounded to the nearest floating point number.
-	 */
-	void get_explicit(EP &e, bool aeap = false) const;
-
-	/**
-	 * @brief get the explicit reprensentation of the point.
-	 * @param aeap abbreviates "as exact as possible". If true, the exact
-	 * value is calculated and rounded to the nearest floating point number.
-	 * @return the explicit point.
-	 */
-	EP to_explicit(bool aeap = false) const;
 
 public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
@@ -299,23 +346,6 @@ public: /* Lambdas ***********************************************************/
 	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **lz,
 	                        int &lz_len, FT **d, int &d_len) const;
 
-public: /* functions about types *********************************************/
-	/**
-	 * @brief get the explicit reprensentation of the point.
-	 * @param e the explicit point to store the result.
-	 * @param aeap abbreviates "as exact as possible". If true, the exact
-	 * value is calculated and rounded to the nearest floating point number.
-	 */
-	void get_explicit(EP &e, bool aeap = false) const;
-
-	/**
-	 * @brief get the explicit reprensentation of the point.
-	 * @param aeap abbreviates "as exact as possible". If true, the exact
-	 * value is calculated and rounded to the nearest floating point number.
-	 * @return the explicit point.
-	 */
-	EP to_explicit(bool aeap = false) const;
-
 public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
 
@@ -337,6 +367,11 @@ template <typename IT_, typename ET_>
 typename ImplicitPoint3T_SSI<IT_, ET_>::GCV
   ImplicitPoint3T_SSI<IT_, ET_>::global_cached_values =
     ImplicitPoint3T_SSI<IT_, ET_>::GCV();
+
+template <typename IT_, typename ET_>
+typename ImplicitPoint3T_LNC<IT_, ET_>::GCV
+  ImplicitPoint3T_LNC<IT_, ET_>::global_cached_values =
+    ImplicitPoint3T_LNC<IT_, ET_>::GCV();
 
 template <typename IT_, typename ET_>
 typename ImplicitPoint3T_LPI<IT_, ET_>::GCV
@@ -385,6 +420,7 @@ inline void normalizeLambda3D(double *lx, int &lxl, double *ly, int &lyl,
 
 #ifdef OMC_HAS_IMPL
 	#include "ImplicitPoints/ImplicitPoint3T_SSI.inl"
+	#include "ImplicitPoints/ImplicitPoint3T_LNC.inl"
 	#include "ImplicitPoints/ImplicitPoint3T_LPI.inl"
 	#include "ImplicitPoints/ImplicitPoint3T_TPI.inl"
 #endif

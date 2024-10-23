@@ -3,6 +3,8 @@
 #include "Primitive2.h"
 #include "Vector2T.h"
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+
 #include <cassert>
 #include <variant>
 
@@ -140,8 +142,30 @@ public: /* Convert to other point types ************************************/
 	{
 		if (point_type() == PointType::Explicit)
 			e = EXP();
-		else if (point_type() == PointType::SSI)
-			SSI().get_explicit(e, aeap);
+		else
+		{
+			FT lx, ly, d;
+			if constexpr (!std::is_void_v<IT>)
+			{
+				// calculate approximate lambda values by interval arithmetic
+				IT ilx, ily, id;
+				if (!aeap && getIntervalLambda(ilx, ily, id))
+				{
+					lx = ilx.sup() + ilx.inf();
+					ly = ily.sup() + ily.inf();
+					d  = id.sup() + id.inf();
+					e  = EP(lx / d, ly / d);
+					return;
+				}
+			}
+			// calculate more accurate lambda values by exact arithmetic
+			ET elx, ely, ed;
+			getExactLambda(elx, ely, ed);
+			lx = OMC::to_double(elx);
+			ly = OMC::to_double(ely);
+			d  = OMC::to_double(ed);
+			e  = EP(lx / d, ly / d);
+		}
 	}
 
 	/**
@@ -169,8 +193,6 @@ public: /* Convert to other point types ************************************/
 		x = e_.x();
 		y = e_.y();
 	}
-
-
 
 public:
 	/***********************************************************************

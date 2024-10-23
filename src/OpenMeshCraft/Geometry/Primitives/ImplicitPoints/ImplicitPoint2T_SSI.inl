@@ -173,35 +173,4 @@ void ImplicitPoint2T_SSI<IT, ET>::getExpansionLambda(FT **lx, int &lx_len,
 	}
 }
 
-template <typename IT, typename ET>
-void ImplicitPoint2T_SSI<IT, ET>::get_explicit(EP &e, bool aeap) const
-{
-	FT lx, ly, d;
-	// calculate approximate lambda values by interval arithmetic
-	IT ilx, ily, id;
-	if (!aeap && getIntervalLambda(ilx, ily, id))
-	{
-		lx = ilx.sup() + ilx.inf();
-		ly = ily.sup() + ily.inf();
-		d  = id.sup() + id.inf();
-		e  = EP(lx / d, ly / d);
-		return;
-	}
-	// calculate more accurate lambda values by exact arithmetic
-	ET elx, ely, ed;
-	getExactLambda(elx, ely, ed);
-	lx = OMC::to_double(elx);
-	ly = OMC::to_double(ely);
-	d  = OMC::to_double(ed);
-	e  = EP(lx / d, ly / d);
-}
-
-template <typename IT, typename ET>
-auto ImplicitPoint2T_SSI<IT, ET>::to_explicit(bool aeap) const -> EP
-{
-	EP e;
-	get_Explicit(e, aeap);
-	return e;
-}
-
 } // namespace OMC

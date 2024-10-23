@@ -6,27 +6,22 @@
 namespace OMC {
 
 template <typename IT, typename ET>
-ImplicitPoint3T_LPI<IT, ET>::ImplicitPoint3T_LPI() noexcept
-  : GP(PointType::LPI)
+ImplicitPoint3T_LNC<IT, ET>::ImplicitPoint3T_LNC() noexcept
+  : GP(PointType::LNC)
 {
 }
 
 template <typename IT, typename ET>
-ImplicitPoint3T_LPI<IT, ET>::ImplicitPoint3T_LPI(const EP &_p, const EP &_q,
-                                                 const EP &_r, const EP &_s,
-                                                 const EP &_t) noexcept
-  : GP(PointType::LPI)
+ImplicitPoint3T_LNC<IT, ET>::ImplicitPoint3T_LNC(const EP &_p, const EP &_q,
+                                                 FT _t) noexcept
+  : GP(PointType::LNC)
   , ip(&_p)
   , iq(&_q)
-  , ir(&_r)
-  , is(&_s)
-  , it(&_t)
+  , it(_t)
 {
 #ifdef OMC_CACHE_DF
-	if (!lambda3d_LPI_interval<IT>(P().x(), P().y(), P().z(), Q().x(), Q().y(),
-	                               Q().z(), R().x(), R().y(), R().z(), S().x(),
-	                               S().y(), S().z(), T().x(), T().y(), T().z(),
-	                               m_d, m_lx, m_ly, m_lz))
+	if (!lambda3d_LNC_interval<IT>(P().x(), P().y(), P().z(), Q().x(), Q().y(),
+	                               Q().z(), T(), m_d, m_lx, m_ly, m_lz))
 		m_d = 0;
 
 	if (m_d.is_negative())
@@ -35,17 +30,15 @@ ImplicitPoint3T_LPI<IT, ET>::ImplicitPoint3T_LPI(const EP &_p, const EP &_q,
 }
 
 template <typename IT, typename ET>
-ImplicitPoint3T_LPI<IT, ET>::~ImplicitPoint3T_LPI() noexcept
+ImplicitPoint3T_LNC<IT, ET>::~ImplicitPoint3T_LNC() noexcept
 {
 }
 
 template <typename IT, typename ET>
-ImplicitPoint3T_LPI<IT, ET>::ImplicitPoint3T_LPI(const IP &rhs) noexcept
+ImplicitPoint3T_LNC<IT, ET>::ImplicitPoint3T_LNC(const IP &rhs) noexcept
   : GP(static_cast<const GP &>(rhs))
   , ip(rhs.ip)
   , iq(rhs.iq)
-  , ir(rhs.ir)
-  , is(rhs.is)
   , it(rhs.it)
 {
 #ifdef OMC_CACHE_DF
@@ -54,12 +47,10 @@ ImplicitPoint3T_LPI<IT, ET>::ImplicitPoint3T_LPI(const IP &rhs) noexcept
 }
 
 template <typename IT, typename ET>
-ImplicitPoint3T_LPI<IT, ET>::ImplicitPoint3T_LPI(IP &&rhs) noexcept
+ImplicitPoint3T_LNC<IT, ET>::ImplicitPoint3T_LNC(IP &&rhs) noexcept
   : GP(static_cast<GP &&>(rhs))
   , ip(rhs.ip)
   , iq(rhs.iq)
-  , ir(rhs.ir)
-  , is(rhs.is)
   , it(rhs.it)
 {
 #ifdef OMC_CACHE_DF
@@ -68,10 +59,10 @@ ImplicitPoint3T_LPI<IT, ET>::ImplicitPoint3T_LPI(IP &&rhs) noexcept
 }
 
 template <typename IT, typename ET>
-auto ImplicitPoint3T_LPI<IT, ET>::operator=(const IP &rhs) -> IP &
+auto ImplicitPoint3T_LNC<IT, ET>::operator=(const IP &rhs) -> IP &
 {
 	*static_cast<GP *>(this) = (static_cast<const GP &>(rhs));
-	ip = rhs.ip, iq = rhs.iq, ir = rhs.ir, is = rhs.is, it = rhs.it;
+	ip = rhs.ip, iq = rhs.iq, it = rhs.it;
 #ifdef OMC_CACHE_DF
 	m_lx = rhs.m_lx, m_ly = rhs.m_ly, m_lz = rhs.m_lz, m_d = rhs.m_d;
 #endif
@@ -79,10 +70,10 @@ auto ImplicitPoint3T_LPI<IT, ET>::operator=(const IP &rhs) -> IP &
 }
 
 template <typename IT, typename ET>
-auto ImplicitPoint3T_LPI<IT, ET>::operator=(IP &&rhs) -> IP &
+auto ImplicitPoint3T_LNC<IT, ET>::operator=(IP &&rhs) -> IP &
 {
 	*static_cast<GP *>(this) = (static_cast<GP &&>(rhs));
-	ip = rhs.ip, iq = rhs.iq, ir = rhs.ir, is = rhs.is, it = rhs.it;
+	ip = rhs.ip, iq = rhs.iq, it = rhs.it;
 #ifdef OMC_CACHE_DF
 	m_lx = rhs.m_lx, m_ly = rhs.m_ly, m_lz = rhs.m_lz, m_d = rhs.m_d;
 #endif
@@ -90,7 +81,7 @@ auto ImplicitPoint3T_LPI<IT, ET>::operator=(IP &&rhs) -> IP &
 }
 
 template <typename IT, typename ET>
-bool ImplicitPoint3T_LPI<IT, ET>::getIntervalLambda(IT &lx, IT &ly, IT &lz,
+bool ImplicitPoint3T_LNC<IT, ET>::getIntervalLambda(IT &lx, IT &ly, IT &lz,
                                                     IT &d) const
 {
 #ifdef OMC_CACHE_DF
@@ -111,10 +102,8 @@ bool ImplicitPoint3T_LPI<IT, ET>::getIntervalLambda(IT &lx, IT &ly, IT &lz,
 	}
 
 	// otherwise, calculate the lambda values
-	lambda3d_LPI_interval<IT>(P().x(), P().y(), P().z(), Q().x(), Q().y(),
-	                          Q().z(), R().x(), R().y(), R().z(), S().x(),
-	                          S().y(), S().z(), T().x(), T().y(), T().z(), d, lx,
-	                          ly, lz);
+	lambda3d_LNC_interval<IT>(P().x(), P().y(), P().z(), Q().x(), Q().y(),
+	                          Q().z(), T(), d, lx, ly, lz);
 	if (d.is_negative())
 		lx.invert(), ly.invert(), lz.invert(), d.invert();
 
@@ -130,7 +119,7 @@ bool ImplicitPoint3T_LPI<IT, ET>::getIntervalLambda(IT &lx, IT &ly, IT &lz,
 }
 
 template <typename IT, typename ET>
-void ImplicitPoint3T_LPI<IT, ET>::getExactLambda(ET &lx, ET &ly, ET &lz,
+void ImplicitPoint3T_LNC<IT, ET>::getExactLambda(ET &lx, ET &ly, ET &lz,
                                                  ET &d) const
 {
 	bool gcv_enabled = gcv().is_enabled();
@@ -147,9 +136,8 @@ void ImplicitPoint3T_LPI<IT, ET>::getExactLambda(ET &lx, ET &ly, ET &lz,
 	}
 
 	// otherwise, calculate the lambda values
-	lambda3d_LPI_exact<ET>(P().x(), P().y(), P().z(), Q().x(), Q().y(), Q().z(),
-	                       R().x(), R().y(), R().z(), S().x(), S().y(), S().z(),
-	                       T().x(), T().y(), T().z(), d, lx, ly, lz);
+	lambda3d_LNC_exact<ET>(P().x(), P().y(), P().z(), Q().x(), Q().y(), Q().z(),
+	                       T(), d, lx, ly, lz);
 	if (OMC::sign(d) == Sign::NEGATIVE)
 		lx = -lx, ly = -ly, lz = -lz, d = -d;
 
@@ -163,7 +151,7 @@ void ImplicitPoint3T_LPI<IT, ET>::getExactLambda(ET &lx, ET &ly, ET &lz,
 }
 
 template <typename IT, typename ET>
-void ImplicitPoint3T_LPI<IT, ET>::getExpansionLambda(FT **lx, int &lx_len,
+void ImplicitPoint3T_LNC<IT, ET>::getExpansionLambda(FT **lx, int &lx_len,
                                                      FT **ly, int &ly_len,
                                                      FT **lz, int &lz_len,
                                                      FT **d, int &d_len) const
@@ -188,10 +176,8 @@ void ImplicitPoint3T_LPI<IT, ET>::getExpansionLambda(FT **lx, int &lx_len,
 		lx_len = 0, ly_len = 0, lz_len = 0, d_len = 0;
 
 	// otherwise, calculate the lambda values
-	lambda3d_LPI_expansion(P().x(), P().y(), P().z(), Q().x(), Q().y(), Q().z(),
-	                       R().x(), R().y(), R().z(), S().x(), S().y(), S().z(),
-	                       T().x(), T().y(), T().z(), d, d_len, lx, lx_len, ly,
-	                       ly_len, lz, lz_len);
+	lambda3d_LNC_expansion(P().x(), P().y(), P().z(), Q().x(), Q().y(), Q().z(),
+	                       T(), d, d_len, lx, lx_len, ly, ly_len, lz, lz_len);
 	expansionObject o;
 
 	// compress the expansion if necessary

@@ -268,37 +268,4 @@ void ImplicitPoint3T_TPI<IT, ET>::getExpansionLambda(FT **lx, int &lx_len,
 	}
 }
 
-template <typename IT, typename ET>
-void ImplicitPoint3T_TPI<IT, ET>::get_explicit(EP &e, bool aeap) const
-{
-	FT lx, ly, lz, d;
-	// calculate approximate lambda values by interval arithmetic
-	IT ilx, ily, ilz, id;
-	if (!aeap && getIntervalLambda(ilx, ily, ilz, id))
-	{
-		lx = ilx.sup() + ilx.inf();
-		ly = ily.sup() + ily.inf();
-		lz = ilz.sup() + ilz.inf();
-		d  = id.sup() + id.inf();
-		e  = EP(lx / d, ly / d, lz / d);
-		return;
-	}
-	// calculate more accurate lambda values by exact arithmetic
-	ET elx, ely, elz, ed;
-	getExactLambda(elx, ely, elz, ed);
-	lx = OMC::to_double(elx);
-	ly = OMC::to_double(ely);
-	lz = OMC::to_double(elz);
-	d  = OMC::to_double(ed);
-	e  = EP(lx / d, ly / d, lz / d);
-}
-
-template <typename IT, typename ET>
-auto ImplicitPoint3T_TPI<IT, ET>::to_explicit(bool aeap) const -> EP
-{
-	EP e;
-	get_Explicit(e, aeap);
-	return e;
-}
-
 } // namespace OMC

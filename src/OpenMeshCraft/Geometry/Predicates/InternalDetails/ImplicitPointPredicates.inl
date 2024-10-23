@@ -128,6 +128,74 @@ void lambda3d_SSI_exact(ET xa, ET ya, ET za, ET xb, ET yb, ET zb, ET xp, ET yp,
 }
 
 template <typename IT>
+bool lambda3d_LNC_interval(IT px, IT py, IT pz, IT qx, IT qy, IT qz, IT t,
+                           IT &lambda_x, IT &lambda_y, IT &lambda_z,
+                           IT &lambda_d)
+{
+	typename IT::Protector P;
+
+	IT vx    = px - qx;
+	IT vy    = py - qy;
+	IT vz    = pz - qz;
+	IT vxt   = vx * t;
+	IT vyt   = vy * t;
+	IT vzt   = vz * t;
+	lambda_x = px - vxt;
+	lambda_y = py - vyt;
+	lambda_z = pz - vzt;
+	lambda_d = 1;
+	return true;
+}
+
+template <typename ET>
+void lambda3d_LNC_exact(ET px, ET py, ET pz, ET qx, ET qy, ET qz, ET t,
+                        ET &lambda_x, ET &lambda_y, ET &lambda_z, ET &lambda_d)
+{
+	ET vx    = px - qx;
+	ET vy    = py - qy;
+	ET vz    = pz - qz;
+	ET vxt   = vx * t;
+	ET vyt   = vy * t;
+	ET vzt   = vz * t;
+	lambda_x = px - vxt;
+	lambda_y = py - vyt;
+	lambda_z = pz - vzt;
+	lambda_d = 1;
+}
+
+inline void lambda3d_LNC_expansion(double px, double py, double pz, double qx,
+                                   double qy, double qz, double t,
+                                   double **lambda_x, int &lambda_x_len,
+                                   double **lambda_y, int &lambda_y_len,
+                                   double **lambda_z, int &lambda_z_len,
+                                   double **lambda_d, int &lambda_d_len)
+{
+	expansionObject o;
+	double          vx[2];
+	o.Two_Diff(px, qx, vx);
+	double vy[2];
+	o.Two_Diff(py, qy, vy);
+	double vz[2];
+	o.Two_Diff(pz, qz, vz);
+	double vxt[4];
+	o.Two_One_Prod(vx, t, vxt);
+	double vyt[4];
+	o.Two_One_Prod(vy, t, vyt);
+	double vzt[4];
+	o.Two_One_Prod(vz, t, vzt);
+	lambda_x_len =
+	  o.Gen_Diff_With_PreAlloc(1, &px, 4, vxt, lambda_x, lambda_x_len);
+	lambda_y_len =
+	  o.Gen_Diff_With_PreAlloc(1, &py, 4, vyt, lambda_y, lambda_y_len);
+	lambda_z_len =
+	  o.Gen_Diff_With_PreAlloc(1, &pz, 4, vzt, lambda_z, lambda_z_len);
+	if (lambda_d_len == 0)
+		*lambda_d = AllocDoubles(1);
+	(*lambda_d)[0] = 1;
+	lambda_d_len   = 1;
+}
+
+template <typename IT>
 bool lambda3d_LPI_interval(IT px, IT py, IT pz, IT qx, IT qy, IT qz, IT rx,
                            IT ry, IT rz, IT sx, IT sy, IT sz, IT tx, IT ty,
                            IT tz, IT &lambda_d, IT &lambda_x, IT &lambda_y,

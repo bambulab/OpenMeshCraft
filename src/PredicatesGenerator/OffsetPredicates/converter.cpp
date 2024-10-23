@@ -515,8 +515,10 @@ Predicate::Predicate(bool _append, bool _output_filtered, bool _output_interval,
 
 	// "2" is a special variable representing the constant 2
 	all_vars.push_back(Variable(std::string("2")));
+	name_2_vars["2"] = &all_vars[0];
 	// "1" is a special variable representing the constant 1
 	all_vars.push_back(Variable(std::string("1")));
+	name_2_vars["1"] = &all_vars[1];
 }
 
 Variable *Predicate::getVarByName(const std::string &name)
