@@ -251,6 +251,19 @@ Sign SquareDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 	}
 }
 
+TEMPLATE_DECL
+Sign SquareDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &a,
+                                                       const PointT &b,
+                                                       const PointT &c,
+                                                       int           ab_scale)
+{
+	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
+		return squareDistance3D3p(a, b, c, ab_scale);
+
+	OMC_ASSERT(false, "SquaredDistance3D3p - should not happen");
+	return Sign::ZERO; // warning killer
+}
+
 /******************************************************************************/
 /* Orientation ****************************************************************/
 /******************************************************************************/
@@ -816,6 +829,30 @@ Sign InSphere_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
                                                const FT *e)
 {
 	return inSphere<TP>(a, b, c, d, e);
+}
+
+TEMPLATE_DECL
+Sign InSphere_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
+                                               const PointT &c)
+{
+	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
+		return inSphere3p<TP>(a, b, c);
+
+	OMC_ASSERT(false, "InSphere3p - should not happen");
+	return Sign::ZERO; // warning killer
+}
+
+TEMPLATE_DECL
+Sign InSphere_Indirect<FT, IT, ET>::largerSphere(const PointT &a,
+                                                 const PointT &b,
+                                                 const PointT &c,
+                                                 const PointT &d)
+{
+	if (a.is_explicit() && b.is_explicit() && c.is_explicit() && d.is_explicit())
+		return largerSphere3p(a, b, c, d);
+
+	OMC_ASSERT(false, "largerSphere - should not happen");
+	return Sign::ZERO; // warning killer
 }
 
 #undef TEMPLATE_TYPE

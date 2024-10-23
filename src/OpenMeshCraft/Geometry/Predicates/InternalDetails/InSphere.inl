@@ -67,6 +67,8 @@ Sign inSphere(const GenericPoint3T<IT, ET> &pa,
               const GenericPoint3T<IT, ET> &pd,
               const GenericPoint3T<IT, ET> &pe);
 
+/*===================================================================*/
+
 template <typename IT, typename ET>
 Sign inSphere_IEEEE_interval(const GenericPoint3T<IT, ET> &p1, IT pbx, IT pby,
                              IT pbz, IT pcx, IT pcy, IT pcz, IT pdx, IT pdy,
@@ -94,6 +96,8 @@ Sign inSphere_IEEEE(const GenericPoint3T<IT, ET> &p1,
                     const GenericPoint3T<IT, ET> &pc,
                     const GenericPoint3T<IT, ET> &pd,
                     const GenericPoint3T<IT, ET> &pe);
+
+/*===================================================================*/
 
 template <typename IT, typename ET>
 Sign inSphere_IIEEE_interval(const GenericPoint3T<IT, ET> &p1,
@@ -126,6 +130,8 @@ Sign inSphere_IIEEE(const GenericPoint3T<IT, ET> &p1,
                     const GenericPoint3T<IT, ET> &pd,
                     const GenericPoint3T<IT, ET> &pe);
 
+/*===================================================================*/
+
 template <typename IT, typename ET>
 Sign inSphere_IIIEE_interval(const GenericPoint3T<IT, ET> &p1,
                              const GenericPoint3T<IT, ET> &p2,
@@ -157,6 +163,8 @@ Sign inSphere_IIIEE(const GenericPoint3T<IT, ET> &p1,
                     const GenericPoint3T<IT, ET> &p3,
                     const GenericPoint3T<IT, ET> &pd,
                     const GenericPoint3T<IT, ET> &pe);
+
+/*===================================================================*/
 
 template <typename IT, typename ET>
 Sign inSphere_IIIIE_interval(const GenericPoint3T<IT, ET> &p1,
@@ -193,6 +201,8 @@ Sign inSphere_IIIIE(const GenericPoint3T<IT, ET> &p1,
                     const GenericPoint3T<IT, ET> &p4,
                     const GenericPoint3T<IT, ET> &pe);
 
+/*===================================================================*/
+
 template <typename IT, typename ET>
 Sign inSphere_IIIII_interval(const GenericPoint3T<IT, ET> &p1,
                              const GenericPoint3T<IT, ET> &p2,
@@ -220,6 +230,55 @@ Sign inSphere_IIIII(const GenericPoint3T<IT, ET> &p1,
                     const GenericPoint3T<IT, ET> &p3,
                     const GenericPoint3T<IT, ET> &p4,
                     const GenericPoint3T<IT, ET> &p5);
+
+/*===================================================================*/
+
+template <typename IT>
+Sign inSphere3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz, IT pcx,
+                         IT pcy, IT pcz);
+
+template <typename ET>
+Sign inSphere3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz, ET pcx,
+                      ET pcy, ET pcz);
+
+inline Sign inSphere3p_expansion(double pax, double pay, double paz, double pbx,
+                                 double pby, double pbz, double pcx, double pcy,
+                                 double pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p(double pax, double pay, double paz, double pbx, double pby,
+                double pbz, double pcx, double pcy, double pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p(const GenericPoint3T<IT, ET> &pa,
+                const GenericPoint3T<IT, ET> &pb,
+                const GenericPoint3T<IT, ET> &pc);
+
+/*===================================================================*/
+
+template <typename IT>
+Sign largerSphere3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz,
+                             IT pcx, IT pcy, IT pcz, IT pdx, IT pdy, IT pdz);
+
+template <typename ET>
+Sign largerSphere3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
+                          ET pcx, ET pcy, ET pcz, ET pdx, ET pdy, ET pdz);
+
+inline Sign largerSphere3p_expansion(double pax, double pay, double paz,
+                                     double pbx, double pby, double pbz,
+                                     double pcx, double pcy, double pcz,
+                                     double pdx, double pdy, double pdz);
+
+template <typename IT, typename ET>
+Sign largerSphere3p(double pax, double pay, double paz, double pbx, double pby,
+                    double pbz, double pcx, double pcy, double pcz, double pdx,
+                    double pdy, double pdz);
+
+template <typename IT, typename ET>
+Sign largerSphere3p(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb,
+                    const GenericPoint3T<IT, ET> &pc,
+                    const GenericPoint3T<IT, ET> &pd);
 
 /*********************************************************************/
 /* Implementations (hand)*********************************************/
@@ -4490,6 +4549,441 @@ Sign inSphere_IIIII(const GenericPoint3T<IT, ET> &p1,
 	if (is_sign_reliable(ret))
 		return ret;
 	return inSphere_IIIII_expansion<IT, ET>(p1, p2, p3, p4, p5);
+}
+
+template <typename IT>
+Sign inSphere3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz, IT pcx,
+                         IT pcy, IT pcz)
+{
+	typename IT::Protector P;
+
+	IT abx   = pbx - pax;
+	IT aby   = pby - pay;
+	IT abz   = pbz - paz;
+	IT abx2  = abx * abx;
+	IT aby2  = aby * aby;
+	IT abz2  = abz * abz;
+	IT t0    = abx2 + aby2;
+	IT absqr = t0 + abz2;
+	IT acx   = pcx - pax;
+	IT acy   = pcy - pay;
+	IT acz   = pcz - paz;
+	IT acx2  = acx * acx;
+	IT acy2  = acy * acy;
+	IT acz2  = acz * acz;
+	IT t1    = acx2 + acy2;
+	IT acsqr = t1 + acz2;
+	IT bcx   = pcx - pbx;
+	IT bcy   = pcy - pby;
+	IT bcz   = pcz - pbz;
+	IT bcx2  = bcx * bcx;
+	IT bcy2  = bcy * bcy;
+	IT bcz2  = bcz * bcz;
+	IT t2    = bcx2 + bcy2;
+	IT bcsqr = t2 + bcz2;
+	IT ac_bc = acsqr + bcsqr;
+	IT d     = absqr - ac_bc;
+	if (!d.is_sign_reliable())
+		return Sign::UNCERTAIN;
+	return OMC::sign(d);
+}
+
+template <typename ET>
+Sign inSphere3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz, ET pcx,
+                      ET pcy, ET pcz)
+{
+	ET abx   = pbx - pax;
+	ET aby   = pby - pay;
+	ET abz   = pbz - paz;
+	ET abx2  = abx * abx;
+	ET aby2  = aby * aby;
+	ET abz2  = abz * abz;
+	ET t0    = abx2 + aby2;
+	ET absqr = t0 + abz2;
+	ET acx   = pcx - pax;
+	ET acy   = pcy - pay;
+	ET acz   = pcz - paz;
+	ET acx2  = acx * acx;
+	ET acy2  = acy * acy;
+	ET acz2  = acz * acz;
+	ET t1    = acx2 + acy2;
+	ET acsqr = t1 + acz2;
+	ET bcx   = pcx - pbx;
+	ET bcy   = pcy - pby;
+	ET bcz   = pcz - pbz;
+	ET bcx2  = bcx * bcx;
+	ET bcy2  = bcy * bcy;
+	ET bcz2  = bcz * bcz;
+	ET t2    = bcx2 + bcy2;
+	ET bcsqr = t2 + bcz2;
+	ET ac_bc = acsqr + bcsqr;
+	ET d     = absqr - ac_bc;
+	return OMC::sign(d);
+}
+
+Sign inSphere3p_expansion(double pax, double pay, double paz, double pbx,
+                          double pby, double pbz, double pcx, double pcy,
+                          double pcz)
+{
+	expansionObject o;
+	double          abx[2];
+	o.Two_Diff(pbx, pax, abx);
+	double aby[2];
+	o.Two_Diff(pby, pay, aby);
+	double abz[2];
+	o.Two_Diff(pbz, paz, abz);
+	double abx2[8];
+	int    abx2_len = o.Gen_Product(2, abx, 2, abx, abx2);
+	double aby2[8];
+	int    aby2_len = o.Gen_Product(2, aby, 2, aby, aby2);
+	double abz2[8];
+	int    abz2_len = o.Gen_Product(2, abz, 2, abz, abz2);
+	double t0[16];
+	int    t0_len = o.Gen_Sum(abx2_len, abx2, aby2_len, aby2, t0);
+	double absqr[24];
+	int    absqr_len = o.Gen_Sum(t0_len, t0, abz2_len, abz2, absqr);
+	double acx[2];
+	o.Two_Diff(pcx, pax, acx);
+	double acy[2];
+	o.Two_Diff(pcy, pay, acy);
+	double acz[2];
+	o.Two_Diff(pcz, paz, acz);
+	double acx2[8];
+	int    acx2_len = o.Gen_Product(2, acx, 2, acx, acx2);
+	double acy2[8];
+	int    acy2_len = o.Gen_Product(2, acy, 2, acy, acy2);
+	double acz2[8];
+	int    acz2_len = o.Gen_Product(2, acz, 2, acz, acz2);
+	double t1[16];
+	int    t1_len = o.Gen_Sum(acx2_len, acx2, acy2_len, acy2, t1);
+	double acsqr[24];
+	int    acsqr_len = o.Gen_Sum(t1_len, t1, acz2_len, acz2, acsqr);
+	double bcx[2];
+	o.Two_Diff(pcx, pbx, bcx);
+	double bcy[2];
+	o.Two_Diff(pcy, pby, bcy);
+	double bcz[2];
+	o.Two_Diff(pcz, pbz, bcz);
+	double bcx2[8];
+	int    bcx2_len = o.Gen_Product(2, bcx, 2, bcx, bcx2);
+	double bcy2[8];
+	int    bcy2_len = o.Gen_Product(2, bcy, 2, bcy, bcy2);
+	double bcz2[8];
+	int    bcz2_len = o.Gen_Product(2, bcz, 2, bcz, bcz2);
+	double t2[16];
+	int    t2_len = o.Gen_Sum(bcx2_len, bcx2, bcy2_len, bcy2, t2);
+	double bcsqr[24];
+	int    bcsqr_len = o.Gen_Sum(t2_len, t2, bcz2_len, bcz2, bcsqr);
+	double ac_bc[48];
+	int    ac_bc_len = o.Gen_Sum(acsqr_len, acsqr, bcsqr_len, bcsqr, ac_bc);
+	double d[72];
+	int    d_len = o.Gen_Diff(absqr_len, absqr, ac_bc_len, ac_bc, d);
+
+	double return_value = d[d_len - 1];
+
+	if (return_value > 0)
+		return Sign::POSITIVE;
+	if (return_value < 0)
+		return Sign::NEGATIVE;
+	if (return_value == 0)
+		return Sign::ZERO;
+	OMC_EXIT("Should not happen.");
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p(double pax, double pay, double paz, double pbx, double pby,
+                double pbz, double pcx, double pcy, double pcz)
+{
+	Sign ret;
+	ret = inSphere3p_interval<IT>(pax, pay, paz, pbx, pby, pbz, pcx, pcy, pcz);
+	if (is_sign_reliable(ret))
+		return ret;
+	return inSphere3p_expansion(pax, pay, paz, pbx, pby, pbz, pcx, pcy, pcz);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p(const GenericPoint3T<IT, ET> &pa,
+                const GenericPoint3T<IT, ET> &pb,
+                const GenericPoint3T<IT, ET> &pc)
+{
+	return inSphere3p<IT, ET>(pa.x(), pa.y(), pa.z(), pb.x(), pb.y(), pb.z(),
+	                          pc.x(), pc.y(), pc.z());
+}
+
+template <typename IT>
+Sign largerSphere3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz,
+                             IT pcx, IT pcy, IT pcz, IT pdx, IT pdy, IT pdz)
+{
+	typename IT::Protector P;
+
+	IT acx   = pcx - pax;
+	IT acy   = pcy - pay;
+	IT acz   = pcz - paz;
+	IT acx2  = acx * acx;
+	IT acy2  = acy * acy;
+	IT acz2  = acz * acz;
+	IT t0    = acx2 + acy2;
+	IT acsqr = t0 + acz2;
+	IT bcx   = pcx - pbx;
+	IT bcy   = pcy - pby;
+	IT bcz   = pcz - pbz;
+	IT bcx2  = bcx * bcx;
+	IT bcy2  = bcy * bcy;
+	IT bcz2  = bcz * bcz;
+	IT t1    = bcx2 + bcy2;
+	IT bcsqr = t1 + bcz2;
+	IT adx   = pdx - pax;
+	IT ady   = pdy - pay;
+	IT adz   = pdz - paz;
+	IT adx2  = adx * adx;
+	IT ady2  = ady * ady;
+	IT adz2  = adz * adz;
+	IT t2    = adx2 + ady2;
+	IT adsqr = t2 + adz2;
+	IT bdx   = pdx - pbx;
+	IT bdy   = pdy - pby;
+	IT bdz   = pdz - pbz;
+	IT bdx2  = bdx * bdx;
+	IT bdy2  = bdy * bdy;
+	IT bdz2  = bdz * bdz;
+	IT t3    = bdx2 + bdy2;
+	IT bdsqr = t3 + bdz2;
+	IT dotcx = acx * bcx;
+	IT dotcy = acy * bcy;
+	IT dotcz = acz * bcz;
+	IT t4    = dotcx + dotcy;
+	IT dotc  = t4 + dotcz;
+	IT dotc2 = dotc * dotc;
+	IT dotdx = adx * bdx;
+	IT dotdy = ady * bdy;
+	IT dotdz = adz * bdz;
+	IT t5    = dotdx + dotdy;
+	IT dotd  = t5 + dotdz;
+	IT dotd2 = dotd * dotd;
+	IT t6    = acsqr * bcsqr;
+	IT beta  = t6 * dotd2;
+	IT t7    = adsqr * bdsqr;
+	IT alpha = t7 * dotc2;
+	IT d     = beta - alpha;
+	if (!d.is_sign_reliable())
+		return Sign::UNCERTAIN;
+	return OMC::sign(d);
+}
+
+template <typename ET>
+Sign largerSphere3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
+                          ET pcx, ET pcy, ET pcz, ET pdx, ET pdy, ET pdz)
+{
+	ET acx   = pcx - pax;
+	ET acy   = pcy - pay;
+	ET acz   = pcz - paz;
+	ET acx2  = acx * acx;
+	ET acy2  = acy * acy;
+	ET acz2  = acz * acz;
+	ET t0    = acx2 + acy2;
+	ET acsqr = t0 + acz2;
+	ET bcx   = pcx - pbx;
+	ET bcy   = pcy - pby;
+	ET bcz   = pcz - pbz;
+	ET bcx2  = bcx * bcx;
+	ET bcy2  = bcy * bcy;
+	ET bcz2  = bcz * bcz;
+	ET t1    = bcx2 + bcy2;
+	ET bcsqr = t1 + bcz2;
+	ET adx   = pdx - pax;
+	ET ady   = pdy - pay;
+	ET adz   = pdz - paz;
+	ET adx2  = adx * adx;
+	ET ady2  = ady * ady;
+	ET adz2  = adz * adz;
+	ET t2    = adx2 + ady2;
+	ET adsqr = t2 + adz2;
+	ET bdx   = pdx - pbx;
+	ET bdy   = pdy - pby;
+	ET bdz   = pdz - pbz;
+	ET bdx2  = bdx * bdx;
+	ET bdy2  = bdy * bdy;
+	ET bdz2  = bdz * bdz;
+	ET t3    = bdx2 + bdy2;
+	ET bdsqr = t3 + bdz2;
+	ET dotcx = acx * bcx;
+	ET dotcy = acy * bcy;
+	ET dotcz = acz * bcz;
+	ET t4    = dotcx + dotcy;
+	ET dotc  = t4 + dotcz;
+	ET dotc2 = dotc * dotc;
+	ET dotdx = adx * bdx;
+	ET dotdy = ady * bdy;
+	ET dotdz = adz * bdz;
+	ET t5    = dotdx + dotdy;
+	ET dotd  = t5 + dotdz;
+	ET dotd2 = dotd * dotd;
+	ET t6    = acsqr * bcsqr;
+	ET beta  = t6 * dotd2;
+	ET t7    = adsqr * bdsqr;
+	ET alpha = t7 * dotc2;
+	ET d     = beta - alpha;
+	return OMC::sign(d);
+}
+
+Sign largerSphere3p_expansion(double pax, double pay, double paz, double pbx,
+                              double pby, double pbz, double pcx, double pcy,
+                              double pcz, double pdx, double pdy, double pdz)
+{
+	expansionObject o;
+	double          acx[2];
+	o.Two_Diff(pcx, pax, acx);
+	double acy[2];
+	o.Two_Diff(pcy, pay, acy);
+	double acz[2];
+	o.Two_Diff(pcz, paz, acz);
+	double acx2[8];
+	int    acx2_len = o.Gen_Product(2, acx, 2, acx, acx2);
+	double acy2[8];
+	int    acy2_len = o.Gen_Product(2, acy, 2, acy, acy2);
+	double acz2[8];
+	int    acz2_len = o.Gen_Product(2, acz, 2, acz, acz2);
+	double t0[16];
+	int    t0_len = o.Gen_Sum(acx2_len, acx2, acy2_len, acy2, t0);
+	double acsqr[24];
+	int    acsqr_len = o.Gen_Sum(t0_len, t0, acz2_len, acz2, acsqr);
+	double bcx[2];
+	o.Two_Diff(pcx, pbx, bcx);
+	double bcy[2];
+	o.Two_Diff(pcy, pby, bcy);
+	double bcz[2];
+	o.Two_Diff(pcz, pbz, bcz);
+	double bcx2[8];
+	int    bcx2_len = o.Gen_Product(2, bcx, 2, bcx, bcx2);
+	double bcy2[8];
+	int    bcy2_len = o.Gen_Product(2, bcy, 2, bcy, bcy2);
+	double bcz2[8];
+	int    bcz2_len = o.Gen_Product(2, bcz, 2, bcz, bcz2);
+	double t1[16];
+	int    t1_len = o.Gen_Sum(bcx2_len, bcx2, bcy2_len, bcy2, t1);
+	double bcsqr[24];
+	int    bcsqr_len = o.Gen_Sum(t1_len, t1, bcz2_len, bcz2, bcsqr);
+	double adx[2];
+	o.Two_Diff(pdx, pax, adx);
+	double ady[2];
+	o.Two_Diff(pdy, pay, ady);
+	double adz[2];
+	o.Two_Diff(pdz, paz, adz);
+	double adx2[8];
+	int    adx2_len = o.Gen_Product(2, adx, 2, adx, adx2);
+	double ady2[8];
+	int    ady2_len = o.Gen_Product(2, ady, 2, ady, ady2);
+	double adz2[8];
+	int    adz2_len = o.Gen_Product(2, adz, 2, adz, adz2);
+	double t2[16];
+	int    t2_len = o.Gen_Sum(adx2_len, adx2, ady2_len, ady2, t2);
+	double adsqr[24];
+	int    adsqr_len = o.Gen_Sum(t2_len, t2, adz2_len, adz2, adsqr);
+	double bdx[2];
+	o.Two_Diff(pdx, pbx, bdx);
+	double bdy[2];
+	o.Two_Diff(pdy, pby, bdy);
+	double bdz[2];
+	o.Two_Diff(pdz, pbz, bdz);
+	double bdx2[8];
+	int    bdx2_len = o.Gen_Product(2, bdx, 2, bdx, bdx2);
+	double bdy2[8];
+	int    bdy2_len = o.Gen_Product(2, bdy, 2, bdy, bdy2);
+	double bdz2[8];
+	int    bdz2_len = o.Gen_Product(2, bdz, 2, bdz, bdz2);
+	double t3[16];
+	int    t3_len = o.Gen_Sum(bdx2_len, bdx2, bdy2_len, bdy2, t3);
+	double bdsqr[24];
+	int    bdsqr_len = o.Gen_Sum(t3_len, t3, bdz2_len, bdz2, bdsqr);
+	double dotcx[8];
+	int    dotcx_len = o.Gen_Product(2, acx, 2, bcx, dotcx);
+	double dotcy[8];
+	int    dotcy_len = o.Gen_Product(2, acy, 2, bcy, dotcy);
+	double dotcz[8];
+	int    dotcz_len = o.Gen_Product(2, acz, 2, bcz, dotcz);
+	double t4[16];
+	int    t4_len = o.Gen_Sum(dotcx_len, dotcx, dotcy_len, dotcy, t4);
+	double dotc[24];
+	int    dotc_len = o.Gen_Sum(t4_len, t4, dotcz_len, dotcz, dotc);
+	double dotc2_p[128], *dotc2 = dotc2_p;
+	int    dotc2_len =
+	  o.Gen_Product_With_PreAlloc(dotc_len, dotc, dotc_len, dotc, &dotc2, 128);
+	double dotdx[8];
+	int    dotdx_len = o.Gen_Product(2, adx, 2, bdx, dotdx);
+	double dotdy[8];
+	int    dotdy_len = o.Gen_Product(2, ady, 2, bdy, dotdy);
+	double dotdz[8];
+	int    dotdz_len = o.Gen_Product(2, adz, 2, bdz, dotdz);
+	double t5[16];
+	int    t5_len = o.Gen_Sum(dotdx_len, dotdx, dotdy_len, dotdy, t5);
+	double dotd[24];
+	int    dotd_len = o.Gen_Sum(t5_len, t5, dotdz_len, dotdz, dotd);
+	double dotd2_p[128], *dotd2 = dotd2_p;
+	int    dotd2_len =
+	  o.Gen_Product_With_PreAlloc(dotd_len, dotd, dotd_len, dotd, &dotd2, 128);
+	double t6_p[128], *t6 = t6_p;
+	int    t6_len =
+	  o.Gen_Product_With_PreAlloc(acsqr_len, acsqr, bcsqr_len, bcsqr, &t6, 128);
+	double beta_p[128], *beta = beta_p;
+	int    beta_len =
+	  o.Gen_Product_With_PreAlloc(t6_len, t6, dotd2_len, dotd2, &beta, 128);
+	double t7_p[128], *t7 = t7_p;
+	int    t7_len =
+	  o.Gen_Product_With_PreAlloc(adsqr_len, adsqr, bdsqr_len, bdsqr, &t7, 128);
+	double alpha_p[128], *alpha = alpha_p;
+	int    alpha_len =
+	  o.Gen_Product_With_PreAlloc(t7_len, t7, dotc2_len, dotc2, &alpha, 128);
+	double d_p[128], *d = d_p;
+	int    d_len =
+	  o.Gen_Diff_With_PreAlloc(beta_len, beta, alpha_len, alpha, &d, 128);
+
+	double return_value = d[d_len - 1];
+	if (d_p != d)
+		FreeDoubles(d);
+	if (alpha_p != alpha)
+		FreeDoubles(alpha);
+	if (t7_p != t7)
+		FreeDoubles(t7);
+	if (beta_p != beta)
+		FreeDoubles(beta);
+	if (t6_p != t6)
+		FreeDoubles(t6);
+	if (dotd2_p != dotd2)
+		FreeDoubles(dotd2);
+	if (dotc2_p != dotc2)
+		FreeDoubles(dotc2);
+
+	if (return_value > 0)
+		return Sign::POSITIVE;
+	if (return_value < 0)
+		return Sign::NEGATIVE;
+	if (return_value == 0)
+		return Sign::ZERO;
+	OMC_EXIT("Should not happen.");
+}
+
+template <typename IT, typename ET>
+Sign largerSphere3p(double pax, double pay, double paz, double pbx, double pby,
+                    double pbz, double pcx, double pcy, double pcz, double pdx,
+                    double pdy, double pdz)
+{
+	Sign ret;
+	ret = largerSphere3p_interval<IT>(pax, pay, paz, pbx, pby, pbz, pcx, pcy, pcz,
+	                                  pdx, pdy, pdz);
+	if (is_sign_reliable(ret))
+		return ret;
+	return largerSphere3p_expansion(pax, pay, paz, pbx, pby, pbz, pcx, pcy, pcz,
+	                                pdx, pdy, pdz);
+}
+
+template <typename IT, typename ET>
+Sign largerSphere3p(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb,
+                    const GenericPoint3T<IT, ET> &pc,
+                    const GenericPoint3T<IT, ET> &pd)
+{
+	return largerSphere3p<IT, ET>(pa.x(), pa.y(), pa.z(), pb.x(), pb.y(), pb.z(),
+	                              pc.x(), pc.y(), pc.z(), pd.x(), pd.y(), pd.z());
 }
 
 } // namespace OMC

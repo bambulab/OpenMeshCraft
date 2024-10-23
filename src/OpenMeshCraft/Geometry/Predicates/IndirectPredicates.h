@@ -155,6 +155,18 @@ public:
 	 * @retval POSITIVE, calculated square distance is larger than `sqr_dis`.
 	 */
 	Sign operator()(const PointT &p, const PointT &q, FT sqr_dis);
+
+	/**
+	 * @brief Calculate the square distance `ab` between `a` and `b`, and `ac`
+	 * between `a` and `c`. Then comprare `ab` with `ac`. If ab_scale is given,
+	 * `ab` is scaled by `ab_scale`.
+	 * @param ab_scale A power of 2, used to scale the square distance of `ab`.
+	 * @retval NEGATIVE, `ab` * ab_scale < `ac`.
+	 * @retval ZERO, `ab` * ab_scale == `ac`.
+	 * @retval POSITIVE, `ab` * ab_scale > `ac`.
+	 */
+	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+	                int ab_scale = 1);
 };
 
 /******************************************************************************/
@@ -588,6 +600,27 @@ public:
 	 */
 	Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d,
 	                const FT *e);
+
+	/**
+	 * @brief In 3D, test a point `c` is inside the smallest (diametral)
+	 * sphere of two points `a` and `b`.
+	 * @param points Given in generic points.
+	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+	 */
+	Sign operator()(const PointT &a, const PointT &b, const PointT &c);
+
+	/**
+	 * @brief Points `a`, `b` and `c` form a smallest sphere S(abc), and points
+	 * `a`, `b` and `d` form another smallest sphere S(abd). We want to know if
+	 * S(abc) is larger than S(abd).
+	 * REFACTOR perhaps better to put into a separate class.
+	 * @param points Given in generic points.
+	 * @retval POSITIVE-> S(abc) is larger.
+	 * @retval ZERO-> S(abc) and S(abd) are same large.
+	 * @retval NEGATIVE-> S(abc) is smaller.
+	 */
+	Sign largerSphere(const PointT &a, const PointT &b, const PointT &c,
+	                  const PointT &d);
 };
 
 #undef TEMPLATE_DECL

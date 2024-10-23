@@ -1,0 +1,98 @@
+explicitPoint3D(pa:pax,pay,paz)
+explicitPoint3D(pb:pbx,pby,pbz)
+explicitPoint3D(pc:pcx,pcy,pcz)
+explicitPoint3D(pd:pdx,pdy,pdz)
+
+// pa and pb are the two points of the segment.
+// pa, pb and pc form a smallest sphere, so as pa, pb and pd.
+// This predicate compares the radius of the two spheres.
+
+// Let alpha be the angle of the corner at pc of the triangle abc,
+// and beta be the angle of the corner at pd of the triangle abd.
+// If cos(alpha) < cos(beta), then the sphere of abc is larger than the sphere of abd.
+// sign = cos(beta) - cos(alpha)
+// -- POSITIVE: sphere of abc is larger
+// -- ZERO: sphere of abc is equal to the sphere of abd
+// -- NEGATIVE: sphere of abc is smaller
+
+// We calculate cos(alpha) as follows:
+//    cos(alpha) = (ac dot bc) / (|ac| * |bc|),
+// so as cos(beta):
+//    cos(beta) = (ad dot bd) / (|ad| * |bd|).
+
+// Since only add, minus and multiply are allowed, we calculate the square of the cosines.
+// Assume that pc and pd do not coincide with pa and pb.
+
+// -- c - a
+acx = pcx - pax
+acy = pcy - pay
+acz = pcz - paz
+
+// -- (c - a).squaredNorm
+acx2 = acx * acx
+acy2 = acy * acy
+acz2 = acz * acz
+t0 = acx2 + acy2
+acsqr = t0 + acz2
+
+// -- c - b
+bcx = pcx - pbx
+bcy = pcy - pby
+bcz = pcz - pbz
+
+// -- (c - b).squaredNorm
+bcx2 = bcx * bcx
+bcy2 = bcy * bcy
+bcz2 = bcz * bcz
+t1 = bcx2 + bcy2
+bcsqr = t1 + bcz2
+
+// -- d - a
+adx = pdx - pax
+ady = pdy - pay
+adz = pdz - paz
+
+// -- (d - a).squaredNorm
+adx2 = adx * adx
+ady2 = ady * ady
+adz2 = adz * adz
+t2 = adx2 + ady2
+adsqr = t2 + adz2
+
+// -- d - b
+bdx = pdx - pbx
+bdy = pdy - pby
+bdz = pdz - pbz
+
+// -- (d - b).squaredNorm
+bdx2 = bdx * bdx
+bdy2 = bdy * bdy
+bdz2 = bdz * bdz
+t3 = bdx2 + bdy2
+bdsqr = t3 + bdz2
+
+// -- (c - a) dot (c - b)
+dotcx = acx * bcx
+dotcy = acy * bcy
+dotcz = acz * bcz
+t4 = dotcx + dotcy
+dotc = t4 + dotcz
+dotc2 = dotc * dotc
+
+// -- (d - a) dot (d - b)
+dotdx = adx * bdx
+dotdy = ady * bdy
+dotdz = adz * bdz
+t5 = dotdx + dotdy
+dotd = t5 + dotdz
+dotd2 = dotd * dotd
+
+// -- ((d - a) dot (d - b))^2 * (c - a).squaredNorm * (c - b).squaredNorm
+t6 = acsqr * bcsqr
+beta = t6 * dotd2
+
+// -- ((c - a) dot (c - b))^2 * (d - a).squaredNorm * (d - b).squaredNorm
+t7 = adsqr * bdsqr
+alpha = t7 * dotc2
+
+d = beta - alpha

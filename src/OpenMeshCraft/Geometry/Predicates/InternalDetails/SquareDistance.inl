@@ -65,6 +65,31 @@ Sign squareDistance3D(const GenericPoint3T<IT, ET> &p,
 
 /*===================================================================*/
 
+template <typename IT>
+Sign squareDistance3D3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz,
+                                 IT pcx, IT pcy, IT pcz, int ab_scale);
+
+template <typename ET>
+Sign squareDistance3D3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
+                              ET pcx, ET pcy, ET pcz, int ab_scale);
+
+inline Sign squareDistance3D3p_expansion(double pax, double pay, double paz,
+                                         double pbx, double pby, double pbz,
+                                         double pcx, double pcy, double pcz,
+                                         int ab_scale);
+
+template <typename IT, typename ET>
+Sign squareDistance3D3p(double pax, double pay, double paz, double pbx,
+                        double pby, double pbz, double pcx, double pcy,
+                        double pcz, int ab_scale);
+
+template <typename IT, typename ET>
+Sign squareDistance3D3p(const GenericPoint3T<IT, ET> &pa,
+                        const GenericPoint3T<IT, ET> &pb,
+                        const GenericPoint3T<IT, ET> &pc, int ab_scale);
+
+/*===================================================================*/
+
 template <typename IT, typename ET>
 Sign squareDistance2D_IE_interval(const GenericPoint2T<IT, ET> &p, IT qx, IT qy,
                                   IT dis);
@@ -369,6 +394,138 @@ Sign squareDistance3D(const GenericPoint3T<IT, ET> &p,
 {
 	return squareDistance3D<IT, ET>(p.x(), p.y(), p.z(), q.x(), q.y(), q.z(),
 	                                dis);
+}
+
+template <typename IT>
+Sign squareDistance3D3p_interval(IT pax, IT pay, IT paz, IT pbx, IT pby, IT pbz,
+                                 IT pcx, IT pcy, IT pcz, int ab_scale)
+{
+	typename IT::Protector P;
+
+	IT abx   = pbx - pax;
+	IT aby   = pby - pay;
+	IT abz   = pbz - paz;
+	IT abx2  = abx * abx;
+	IT aby2  = aby * aby;
+	IT abz2  = abz * abz;
+	IT t0    = abx2 + aby2;
+	IT absqr = t0 + abz2;
+	IT acx   = pcx - pax;
+	IT acy   = pcy - pay;
+	IT acz   = pcz - paz;
+	IT acx2  = acx * acx;
+	IT acy2  = acy * acy;
+	IT acz2  = acz * acz;
+	IT t1    = acx2 + acy2;
+	IT acsqr = t1 + acz2;
+	absqr    = absqr * ab_scale; // add by hand
+	IT d     = absqr - acsqr;
+	if (!d.is_sign_reliable())
+		return Sign::UNCERTAIN;
+	return OMC::sign(d);
+}
+
+template <typename ET>
+Sign squareDistance3D3p_exact(ET pax, ET pay, ET paz, ET pbx, ET pby, ET pbz,
+                              ET pcx, ET pcy, ET pcz, int ab_scale)
+{
+	ET abx   = pbx - pax;
+	ET aby   = pby - pay;
+	ET abz   = pbz - paz;
+	ET abx2  = abx * abx;
+	ET aby2  = aby * aby;
+	ET abz2  = abz * abz;
+	ET t0    = abx2 + aby2;
+	ET absqr = t0 + abz2;
+	ET acx   = pcx - pax;
+	ET acy   = pcy - pay;
+	ET acz   = pcz - paz;
+	ET acx2  = acx * acx;
+	ET acy2  = acy * acy;
+	ET acz2  = acz * acz;
+	ET t1    = acx2 + acy2;
+	ET acsqr = t1 + acz2;
+	absqr    = absqr * ab_scale; // add by hand
+	ET d     = absqr - acsqr;
+	return OMC::sign(d);
+}
+
+Sign squareDistance3D3p_expansion(double pax, double pay, double paz,
+                                  double pbx, double pby, double pbz,
+                                  double pcx, double pcy, double pcz,
+                                  int ab_scale)
+{
+	expansionObject o;
+	double          abx[2];
+	o.Two_Diff(pbx, pax, abx);
+	double aby[2];
+	o.Two_Diff(pby, pay, aby);
+	double abz[2];
+	o.Two_Diff(pbz, paz, abz);
+	double abx2[8];
+	int    abx2_len = o.Gen_Product(2, abx, 2, abx, abx2);
+	double aby2[8];
+	int    aby2_len = o.Gen_Product(2, aby, 2, aby, aby2);
+	double abz2[8];
+	int    abz2_len = o.Gen_Product(2, abz, 2, abz, abz2);
+	double t0[16];
+	int    t0_len = o.Gen_Sum(abx2_len, abx2, aby2_len, aby2, t0);
+	double absqr[24];
+	int    absqr_len = o.Gen_Sum(t0_len, t0, abz2_len, abz2, absqr);
+	double acx[2];
+	o.Two_Diff(pcx, pax, acx);
+	double acy[2];
+	o.Two_Diff(pcy, pay, acy);
+	double acz[2];
+	o.Two_Diff(pcz, paz, acz);
+	double acx2[8];
+	int    acx2_len = o.Gen_Product(2, acx, 2, acx, acx2);
+	double acy2[8];
+	int    acy2_len = o.Gen_Product(2, acy, 2, acy, acy2);
+	double acz2[8];
+	int    acz2_len = o.Gen_Product(2, acz, 2, acz, acz2);
+	double t1[16];
+	int    t1_len = o.Gen_Sum(acx2_len, acx2, acy2_len, acy2, t1);
+	double acsqr[24];
+	int    acsqr_len = o.Gen_Sum(t1_len, t1, acz2_len, acz2, acsqr);
+	// Add by hand
+	if (ab_scale > 1) // exactly if ab_scale is power of 2.
+		o.ExactScale(absqr_len, absqr, ab_scale);
+	double d[48];
+	int    d_len = o.Gen_Diff(absqr_len, absqr, acsqr_len, acsqr, d);
+
+	double return_value = d[d_len - 1];
+
+	if (return_value > 0)
+		return Sign::POSITIVE;
+	if (return_value < 0)
+		return Sign::NEGATIVE;
+	if (return_value == 0)
+		return Sign::ZERO;
+	OMC_EXIT("Should not happen.");
+}
+
+template <typename IT, typename ET>
+Sign squareDistance3D3p(double pax, double pay, double paz, double pbx,
+                        double pby, double pbz, double pcx, double pcy,
+                        double pcz, int ab_scale)
+{
+	Sign ret;
+	ret = squareDistance3D3p_interval<IT>(pax, pay, paz, pbx, pby, pbz, pcx, pcy,
+	                                      pcz, ab_scale);
+	if (is_sign_reliable(ret))
+		return ret;
+	return squareDistance3D3p_expansion(pax, pay, paz, pbx, pby, pbz, pcx, pcy,
+	                                    pcz, ab_scale);
+}
+
+template <typename IT, typename ET>
+Sign squareDistance3D3p(const GenericPoint3T<IT, ET> &pa,
+                        const GenericPoint3T<IT, ET> &pb,
+                        const GenericPoint3T<IT, ET> &pc, const int ab_scale)
+{
+	return squareDistance3D3p<IT, ET>(pa.x(), pa.y(), pa.z(), pb.x(), pb.y(),
+	                                  pb.z(), pc.x(), pc.y(), pc.z(), ab_scale);
 }
 
 template <typename IT, typename ET>

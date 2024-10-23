@@ -149,7 +149,7 @@ public:
 			h[i] = 2 * e[i];
 	}
 
-	// [h] = [e] * 2		Multiplies an expansion by n
+	// [h] = [e] * n		Multiplies an expansion by n
 	// If 'n' is a power of two, the multiplication is exact
 	inline void ExactScale(const int elen, double *e, const double n)
 	{
