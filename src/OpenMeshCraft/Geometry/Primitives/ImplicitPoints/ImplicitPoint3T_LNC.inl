@@ -8,6 +8,9 @@ namespace OMC {
 template <typename IT, typename ET>
 ImplicitPoint3T_LNC<IT, ET>::ImplicitPoint3T_LNC() noexcept
   : GP(PointType::LNC)
+	, ip(nullptr)
+	, iq(nullptr)
+	, it(0)
 {
 }
 

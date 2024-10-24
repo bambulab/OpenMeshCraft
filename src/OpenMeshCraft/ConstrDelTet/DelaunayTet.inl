@@ -461,6 +461,8 @@ bool DelaunayTet<Traits>::verify(bool verbose) const
 		for (index_t first = 0; first < check_tets.size(); first++)
 		{
 			index_t tid = check_tets[first];
+			if (!mesh.isFiniteTet(tid))
+				continue;
 
 			// Check the Delaunay condition for this tetrahedron
 			if (!mesh.tetHasVertex(tid, vid))

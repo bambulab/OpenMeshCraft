@@ -8,6 +8,11 @@ namespace OMC {
 template <typename IT, typename ET>
 ImplicitPoint3T_SSI<IT, ET>::ImplicitPoint3T_SSI() noexcept
   : GP(PointType::SSI)
+  , ia(nullptr)
+  , ib(nullptr)
+  , ip(nullptr)
+  , iq(nullptr)
+  , plane(-1)
 {
 }
 

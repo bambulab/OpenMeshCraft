@@ -8,6 +8,15 @@ namespace OMC {
 template <typename IT, typename ET>
 ImplicitPoint3T_TPI<IT, ET>::ImplicitPoint3T_TPI() noexcept
   : GP(PointType::TPI)
+  , iv1(nullptr)
+  , iv2(nullptr)
+  , iv3(nullptr)
+  , iw1(nullptr)
+  , iw2(nullptr)
+  , iw3(nullptr)
+  , iu1(nullptr)
+  , iu2(nullptr)
+  , iu3(nullptr)
 {
 }
 

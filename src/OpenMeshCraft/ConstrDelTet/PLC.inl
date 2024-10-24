@@ -623,11 +623,6 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		  "Duplicate vertices in PLC face.");
 #endif
 	}
-
-	// TODO face convexity?
-	// TODO flat PLC edges of each PLC face.
-	// TODO For each face, for each of its vertices, set of incident face
-	// triangles
 }
 
 /**

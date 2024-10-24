@@ -22,18 +22,31 @@ class ConstraintsRecover
 public: /* Traits **********************************************************/
 	using Self = DelaunayTet<Traits>;
 
-	using NT     = typename Traits::NT;
-	using EPoint = typename Traits::EPoint;
-	using GPoint = typename Traits::GPoint;
+	using NT         = typename Traits::NT;
+	using Vec2       = typename Traits::Vec2;
+	using Vec3       = typename Traits::Vec3;
+	using EPoint     = typename Traits::EPoint;
+	using GPoint     = typename Traits::GPoint;
+	using IPoint_SSI = typename Traits::IPoint_SSI;
+	using IPoint_LNC = typename Traits::IPoint_LNC;
+	using IPoint_LPI = typename Traits::IPoint_LPI;
+	using IPoint_TPI = typename Traits::IPoint_TPI;
 
 	using AsGP = typename Traits::AsGP;
 	using AsEP = typename Traits::AsEP;
 	using ToEP = typename Traits::ToEP;
 
+	using CreateSSI = typename Traits::CreateSSI;
+	using CreateLNC = typename Traits::CreateLNC;
+	using CreateLPI = typename Traits::CreateLPI;
+	using CreateTPI = typename Traits::CreateTPI;
+
 	using Orient3D           = typename Traits::Orient3D;
 	using OrientOn2D         = typename Traits::OrientOn2D;
+	using LessThan3D         = typename Traits::LessThan3D;
 	using InSphere           = typename Traits::InSphere;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
+	using SquaredDistance3D  = typename Traits::SquaredDistance3D;
 	using CollinearPoints3   = typename Traits::CollinearPoints3;
 
 	// clang-format off
@@ -51,16 +64,19 @@ public: /* Traits **********************************************************/
 	using TET_MARK = typename TetMesh::TET_MARK;
 	using VTX_MARK = typename TetMesh::VTX_MARK;
 
-	using PLC     = PiecewiseLinearComplex<Traits>;
-	using PLCEdge = typename PLC::PLCEdge;
-	using PLCFace = typename PLC::PLCFace;
+	using PLC         = PiecewiseLinearComplex<Traits>;
+	using PLCEdge     = typename PLC::PLCEdge;
+	using PLCFace     = typename PLC::PLCFace;
+	using PLCEdgeType = typename PLC::PLCEdgeType;
 
 	using DelTet = DelaunayTet<Traits>;
 
+	using PntArena = CDTPointArena<Traits>;
+
 public: /* Constructor & Destructor ****************************************/
 	ConstraintsRecover() = delete;
-	ConstraintsRecover(std::vector<GPoint *> &_verts, TetMesh &_tet_mesh,
-	                   PLC &_plc);
+	ConstraintsRecover(std::vector<GPoint *> &_verts, std::vector<PntArena> &_ars,
+	                   TetMesh &_tet_mesh, PLC &_plc);
 
 public: /* Algorithms ******************************************************/
 	/* Recover constrained segments */
@@ -74,11 +90,34 @@ public: /* Algorithms ******************************************************/
 	void findReferenceEncroachingPoint(index_t eid, index_t &ref_vid,
 	                                   index_t &ref_tid) const;
 
-	GPoint *splitAtMiddle(index_t eid) const;
+	index_t splitAtMiddle(index_t eid);
 
-	GPoint *splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid) const;
+	index_t splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid);
 
-	GPoint *splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid) const;
+	index_t splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid);
+
+	/* Low level details for edge recovery (predicates, utils, marks...) */
+
+	static bool inSphere(const GPoint &a, const GPoint &b, const GPoint &c);
+
+	static bool largerSphere(const GPoint &a, const GPoint &b, const GPoint &c,
+	                         const GPoint &d);
+
+	static bool isLessThanDistance(const GPoint &a, const GPoint &b,
+	                               const GPoint &c);
+
+	static bool isLessThanHalfDistance(const GPoint &a, const GPoint &b,
+	                                   const GPoint &c);
+
+	std::pair<double, double> getInterpolateT(index_t oep0, index_t oep1,
+	                                          index_t ep0, index_t ep1) const;
+
+	IPoint_LNC middlePoint_bothAc(const PLCEdge &e) const;
+
+	IPoint_LNC lineSphereIntersection_noAc(index_t eid, bool reverse,
+	                                       index_t ref_vid) const;
+
+	IPoint_LNC lineSphereIntersection_oneAc(index_t eid, index_t ref_vid) const;
 
 	/* Recover constrained faces */
 
@@ -104,7 +143,9 @@ public: /* Algorithms ******************************************************/
 	void embedMeshedCavity(TetMesh                    &local_mesh,
 	                       const AuxVector64<index_t> &vertices,
 	                       const AuxVector64<index_t> &faces,
-												 AuxVector64<index_t>& base);
+	                       AuxVector64<index_t>       &base);
+
+	/* Low level details for face recovery (predicates, utils, marks...) */
 
 	bool tetIntersectsFace(index_t tet_idoff, const PLCFace &face);
 
@@ -120,11 +161,14 @@ public: /* Algorithms ******************************************************/
 	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
 	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
 
-	index_t newVtx(GPoint *new_pnt);
+	template <typename PointType>
+	index_t newVtx(PointType new_pnt);
 
 public: /* Data ************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
 	std::vector<GPoint *> &verts;
+	/// All generated points in algorithm are stored in pnt_arena
+	std::vector<PntArena> &pnt_arenas;
 	/// Tetrahedral mesh
 	TetMesh               &tet_mesh;
 	/// Constrained piecewise linear complex

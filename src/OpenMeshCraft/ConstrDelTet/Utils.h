@@ -56,9 +56,126 @@ struct ConstrDelTet_Stats
 	double face_elapsed = 0.; // timings of face recovery
 };
 
-// TODO Move this to Arrangements/Utils.h after merging the git branch
-template<typename T>
+// TODO Rename to InlinedVector2, and extract both Arrangements and CDT's
+// AuxVector to a common place.
+template <typename T>
 using AuxVector2 = boost::container::small_vector<index_t, 2>;
+
+template <typename Traits>
+struct CDTPointArena
+{
+public:
+	using EPoint     = typename Traits::EPoint;
+	using GPoint     = typename Traits::GPoint;
+	using IPoint_SSI = typename Traits::IPoint_SSI;
+	using IPoint_LNC = typename Traits::IPoint_LNC;
+	using IPoint_LPI = typename Traits::IPoint_LPI;
+	using IPoint_TPI = typename Traits::IPoint_TPI;
+
+public:
+	std::deque<IPoint_SSI> ssi; // SSI points
+	std::deque<IPoint_LNC> lnc; // LNC points
+	std::deque<IPoint_LPI> lpi; // LPI points
+	std::deque<IPoint_TPI> tpi; // TPI points
+
+public:
+	void recycle(IPoint_SSI *ssi_ptr) { recycled_ssi.push(ssi_ptr); }
+	void recycle(IPoint_LNC *lnc_ptr) { recycled_lnc.push(lnc_ptr); }
+	void recycle(IPoint_LPI *lpi_ptr) { recycled_lpi.push(lpi_ptr); }
+	void recycle(IPoint_TPI *tpi_ptr) { recycled_tpi.push(tpi_ptr); }
+
+	IPoint_SSI *emplace(IPoint_SSI &&p)
+	{
+		IPoint_SSI *ssi_ptr = nullptr;
+		if (recycled_ssi.empty())
+		{
+			ssi.emplace_back(std::move(p));
+			ssi_ptr = &ssi.back();
+		}
+		else
+		{
+			ssi_ptr = recycled_ssi.front();
+			recycled_ssi.pop();
+			*ssi_ptr = std::move(p);
+		}
+		return ssi_ptr;
+	}
+
+	IPoint_LNC *emplace(IPoint_LNC &&p)
+	{
+		IPoint_LNC *lnc_ptr = nullptr;
+		if (recycled_lnc.empty())
+		{
+			lnc.emplace_back(std::move(p));
+			lnc_ptr = &lnc.back();
+		}
+		else
+		{
+			lnc_ptr = recycled_lnc.front();
+			recycled_lnc.pop();
+			*lnc_ptr = std::move(p);
+		}
+		return lnc_ptr;
+	}
+
+	IPoint_LPI *emplace(IPoint_LPI &&p)
+	{
+		IPoint_LPI *lpi_ptr = nullptr;
+		if (recycled_lpi.empty())
+		{
+			lpi.emplace_back(std::move(p));
+			lpi_ptr = &lpi.back();
+		}
+		else
+		{
+			lpi_ptr = recycled_lpi.front();
+			recycled_lpi.pop();
+			*lpi_ptr = std::move(p);
+		}
+		return lpi_ptr;
+	}
+
+	IPoint_TPI *emplace(IPoint_TPI &&p)
+	{
+		IPoint_TPI *tpi_ptr = nullptr;
+		if (recycled_tpi.empty())
+		{
+			tpi.emplace_back(std::move(p));
+			tpi_ptr = &tpi.back();
+		}
+		else
+		{
+			tpi_ptr = recycled_tpi.front();
+			recycled_tpi.pop();
+			*tpi_ptr = std::move(p);
+		}
+		return tpi_ptr;
+	}
+
+	void reserve_ssi(size_t new_n)
+	{
+		for (size_t i = 0; i < new_n; i++)
+			recycle(&ssi.emplace_back());
+	}
+
+	void reserve_lpi(size_t new_n)
+	{
+		for (size_t i = 0; i < new_n; i++)
+			recycle(&lpi.emplace_back());
+	}
+
+	void reserve_tpi(size_t new_n)
+	{
+		for (size_t i = 0; i < new_n; i++)
+			recycle(&tpi.emplace_back());
+	}
+
+private:
+	std::queue<IPoint_SSI *> recycled_ssi;
+	std::queue<IPoint_LNC *> recycled_lnc;
+	std::queue<IPoint_LPI *> recycled_lpi;
+	std::queue<IPoint_TPI *> recycled_tpi;
+};
 
 #define OMC_CDT_START_ELAPSE(name) auto name = OMC::Logger::elapse_reset();
 

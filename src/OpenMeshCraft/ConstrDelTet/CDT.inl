@@ -27,9 +27,12 @@ public:
 	using K = Kernel;
 
 	using NT         = typename K::NT;
+	using Vec2       = typename K::Vec2;
+	using Vec3       = typename K::Vec3;
 	using EPoint     = typename K::EPoint3;
 	using GPoint     = typename K::GPoint3;
 	using IPoint_SSI = typename K::IPoint3T_SSI;
+	using IPoint_LNC = typename K::IPoint3T_LNC;
 	using IPoint_LPI = typename K::IPoint3T_LPI;
 	using IPoint_TPI = typename K::IPoint3T_TPI;
 
@@ -37,6 +40,7 @@ public:
 	using AsEP      = typename K::AsEP;
 	using ToEP      = typename K::ToEP;
 	using CreateSSI = typename K::CreateSSI3;
+	using CreateLNC = typename K::CreateLNC;
 	using CreateLPI = typename K::CreateLPI;
 	using CreateTPI = typename K::CreateTPI;
 
@@ -48,6 +52,7 @@ public:
 	using Orient3D           = typename K::Orient3D;
 	using OrientOn2D         = typename K::OrientOn2D;
 	using LessThan3D         = typename K::LessThan3D;
+	using SquaredDistance3D  = typename K::SquaredDistance3D;
 	using LongestAxis        = typename K::LongestAxis;
 	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
 	using InCircle           = typename K::InCircle;
@@ -77,9 +82,12 @@ class ConstrDelTet_Impl
 public: /* Traits ************************************************************/
 	// primitives
 	using NT         = typename Traits::NT;
+	using Vec2       = typename Traits::Vec2;
+	using Vec3       = typename Traits::Vec3;
 	using EPoint     = typename Traits::EPoint;
 	using GPoint     = typename Traits::GPoint;
 	using IPoint_SSI = typename Traits::IPoint_SSI;
+	using IPoint_LNC = typename Traits::IPoint_LNC;
 	using IPoint_LPI = typename Traits::IPoint_LPI;
 	using IPoint_TPI = typename Traits::IPoint_TPI;
 
@@ -87,6 +95,7 @@ public: /* Traits ************************************************************/
 	using AsEP      = typename Traits::AsEP;
 	using ToEP      = typename Traits::ToEP;
 	using CreateSSI = typename Traits::CreateSSI;
+	using CreateLNC = typename Traits::CreateLNC;
 	using CreateLPI = typename Traits::CreateLPI;
 	using CreateTPI = typename Traits::CreateTPI;
 
@@ -100,6 +109,7 @@ public: /* Traits ************************************************************/
 	using LessThan3D         = typename Traits::LessThan3D;
 	using CollinearPoints3   = typename Traits::CollinearPoints3;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
+	using SquaredDistance3D  = typename Traits::SquaredDistance3D;
 	using InCircle           = typename Traits::InCircle;
 	using InSphere           = typename Traits::InSphere;
 
@@ -110,7 +120,7 @@ public: /* Traits ************************************************************/
 
 public: /* Auxiliary data structures *****************************************/
 	// point arena
-	using PntArena = ArrPointArena<Traits>;
+	using PntArena = CDTPointArena<Traits>;
 
 public: /* Constructors ******************************************************/
 	ConstrDelTet_Impl(ConstrDelTet_Stats *_stats = nullptr)
@@ -201,33 +211,27 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	/***** Delaunay tetrahedralization *****/
 
-	OMC_CDT_START_ELAPSE(start_dt);
-
 	tet_mesh = std::make_unique<TetMesh>(cdt_out_verts);
-
 	DelaunayTet<Traits> DT(*tet_mesh);
-	DT.tetrahedralize(/*remove_infinite_tets*/ true);
+
+	OMC_CDT_START_ELAPSE(start_dt);
+	DT.tetrahedralize(/*remove_infinite_tets*/ false);
+	OMC_CDT_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
 
 	OMC_EXPENSIVE_ASSERT(DT.verify(/*verbose*/ true),
 	                     "The Delaunay tetrahedralization is incorrect.");
 
-	OMC_CDT_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
-
 	/***** Constraints Recovery *****/
 
-	OMC_CDT_START_ELAPSE(start_seg);
-
 	plc = std::make_unique<PLC>(cdt_out_verts, cdt_in_edges, cdt_in_tris);
+	ConstraintsRecover<Traits> CR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc);
 
-	ConstraintsRecover<Traits> CR(cdt_out_verts, *tet_mesh, *plc);
+	OMC_CDT_START_ELAPSE(start_seg);
 	CR.segmentRecovery();
-
 	OMC_CDT_SAVE_ELAPSED(start_seg, seg_elapsed, "Segment recovery");
 
 	OMC_CDT_START_ELAPSE(start_face);
-
 	CR.faceRecovery();
-
 	OMC_CDT_SAVE_ELAPSED(start_face, face_elapsed, "Face recovery");
 }
 

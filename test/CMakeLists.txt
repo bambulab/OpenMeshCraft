@@ -61,7 +61,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC OpenMeshCraft CGAL::CGAL
 set(OMC_CONFIG_TARGET ${PROJECT_NAME})
 
 set(OMC_CONFIGDEP_BOOST ON)
-set(OMC_CONFIGDEP_BOOST_COMPONENTS filesystem)
 # finally configure...
 include(OpenMeshCraft_ConfigureDeps)
 
@@ -141,7 +140,6 @@ foreach(_TARGET OpenMeshCraft-Arrangements)
   set(OMC_CONFIG_TARGET ${_TARGET})
 
   set(OMC_CONFIGDEP_BOOST ON)
-  set(OMC_CONFIGDEP_BOOST_COMPONENTS filesystem)
   # finally configure...
   include(OpenMeshCraft_ConfigureDeps)
 

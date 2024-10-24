@@ -4,6 +4,11 @@
 
 namespace OMC {
 
+// In [Robust CDT 2023], some predicates are implemented in floating-point
+// numbers, I reimplemnted them in exact predicates. Define the below macro to
+// use the exact predicates.
+#define OMC_SEGMENT_RECOVERY_EXACT_PRED
+
 /**
  * @brief Initialize with the Delaunay tetrahedral mesh and the input
  * constrained triangles. Prepare for the constraits recovery.
@@ -11,9 +16,11 @@ namespace OMC {
  * @param _plc the input constrained piecewise linear complex
  */
 template <typename Traits>
-ConstraintsRecover<Traits>::ConstraintsRecover(std::vector<GPoint *> &_verts,
-                                               TetMesh &_tet_mesh, PLC &_plc)
+ConstraintsRecover<Traits>::ConstraintsRecover(
+  std::vector<GPoint *> &_verts, std::vector<PntArena> &_pnt_arenas,
+  TetMesh &_tet_mesh, PLC &_plc)
   : verts(_verts)
+  , pnt_arenas(_pnt_arenas)
   , tet_mesh(_tet_mesh)
   , plc(_plc)
 {
@@ -29,8 +36,8 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 	std::vector<index_t> missing_segments;
 	for (index_t eid = 0; eid < plc.numEdges(); eid++)
 	{
-		const PLC::PLCEdge &e = plc.edge(eid);
-		if (e.type != PLC::PLCEdgeType::FLAT_EDGE &&
+		const PLCEdge &e = plc.edge(eid);
+		if (e.type != PLCEdgeType::FLAT_EDGE &&
 		    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
 		{
 			missing_segments.push_back(eid);
@@ -68,8 +75,8 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 		// Find new missing edges around touched vertices
 		for (index_t eid = 0; eid < plc.numEdges(); eid++)
 		{
-			const PLC::PLCEdge &e = plc.edge(eid);
-			if (!is_valid_idx(e.child_id) && e.type != PLC::PLCEdgeType::FLAT_EDGE &&
+			const PLCEdge &e = plc.edge(eid);
+			if (!is_valid_idx(e.child_id) && e.type != PLCEdgeType::FLAT_EDGE &&
 			    tet_mesh.isMarked(e.ep0(), VTX_MARK::TOUCHED) &&
 			    tet_mesh.isMarked(e.ep1(), VTX_MARK::TOUCHED) &&
 			    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
@@ -88,16 +95,15 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 template <typename Traits>
 index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 {
-	GPoint *new_pnt;
 	index_t new_vid  = InvalidIndex;
 	index_t curr_tet = InvalidIndex;
 
 	PLCEdge &edge = plc.edge(eid);
 
-	if (edge.type == PLC::PLCEdgeType::BOTH_ACUTE_VERTEX)
+	if (edge.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
 		curr_tet = TetMesh::toIdOff(tet_mesh.incTet(edge.ep0()));
-		new_pnt  = splitAtMiddle(eid);
+		new_vid  = splitAtMiddle(eid);
 	}
 	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
 	{
@@ -107,20 +113,12 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 		OMC_EXPENSIVE_ASSERT(is_valid_idx(ref_vid),
 		                     "Could not find a valid reference encroaching point.");
 
-		if (edge.type == PLC::PLCEdgeType::NO_ACUTE_VERTEX)
-		{
-			new_pnt = splitSegment_NoAcuteVertex(eid, ref_vid);
-		}
+		if (edge.type == PLCEdgeType::NO_ACUTE_VERTEX)
+			new_vid = splitSegment_NoAcuteVertex(eid, ref_vid);
 		else // ONE_ACUTE_VERTEX
-		{
-			new_pnt = splitSegment_OneAcuteVertex(eid, ref_vid);
-		}
+			new_vid = splitSegment_OneAcuteVertex(eid, ref_vid);
 	}
 
-	// create the new vertex
-	new_vid = newVtx(new_pnt);
-	// split the PLC edge
-	plc.splitPLCEdge(eid, new_vid);
 	// insert the splitting point into the Delaunay tetrahedral mesh
 	DelTet DT(tet_mesh);
 	DT.insertVertex(new_vid, curr_tet);
@@ -167,17 +165,6 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 	ref_vid             = InvalidIndex;
 	ref_tid             = InvalidIndex;
 
-	// TODO An inSphere predicate, receiving 2 points to form the sphere, and 1
-	// query point.
-	auto inSphere = [](OMC_UNUSED const GPoint &a, OMC_UNUSED const GPoint &b,
-	                   OMC_UNUSED const GPoint &c) -> bool { return false; };
-
-	// TODO A LargerCircle predicate, receiving 3 points to form the circle, and 1
-	// query point to form another circle, and compare the radius.
-	auto largerCircle = [](OMC_UNUSED const GPoint &a, OMC_UNUSED const GPoint &b,
-	                       OMC_UNUSED const GPoint &c,
-	                       OMC_UNUSED const GPoint &d) -> bool { return false; };
-
 	for (index_t i = 0; i < encroach_tets.size(); i++)
 	{
 		index_t tet_idoff = encroach_tets[i];
@@ -197,7 +184,7 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 			{
 				tet_mesh.mark(vid, VTX_MARK::ENCROACHED);
 				// check if it is the reference encroaching point
-				if (ref_vid == InvalidIndex || largerCircle(p0, p1, *ref_p, gpnt(vid)))
+				if (ref_vid == InvalidIndex || largerSphere(p0, p1, *ref_p, gpnt(vid)))
 				{
 					ref_vid = vid;
 					ref_tid = tet_idoff;
@@ -260,22 +247,25 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 }
 
 /**
- * @brief Get the splitting point to split the constrained edge `eid` at the
- * middle point, but do not really split the edge.
+ * @brief Split the constrained edge `eid` at the middle point.
  *
- * This split strategy is used to split segment with two acute vertices.
- * @return The splitting point.
+ * This split strategy is used to split segment with two acute vertices, and
+ * generating two sub-edges with type `ONE_ACUTE_VERTEX`.
+ *
+ * @return The index to the splitting point.
  */
 template <typename Traits>
-auto ConstraintsRecover<Traits>::splitAtMiddle(index_t eid) const -> GPoint *
+index_t ConstraintsRecover<Traits>::splitAtMiddle(index_t eid)
 {
-	const PLCEdge &edge = plc.edge(eid);
+	const PLCEdge &edge    = plc.edge(eid);
+	// Get the new point
+	IPoint_LNC     new_pnt = middlePoint_bothAc(edge);
+	// Add the new point
+	index_t        new_vid = newVtx(new_pnt);
+	// Split edge by the new point
+	plc.splitPLCEdge(eid, new_vid);
 
-	// TODO get the middle point represented by LNC implicit point
-	auto    getMidPoint = [](OMC_UNUSED const PLCEdge &e) { return nullptr; };
-	GPoint *new_pnt     = getMidPoint(edge);
-
-	return new_pnt;
+	return new_vid;
 }
 
 /**
@@ -287,8 +277,8 @@ auto ConstraintsRecover<Traits>::splitAtMiddle(index_t eid) const -> GPoint *
  * @see The strategy is described in Section 3.3 of [Robust CDT].
  */
 template <typename Traits>
-auto ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(
-  index_t eid, index_t ref_vid) const -> GPoint *
+index_t ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
+                                                               index_t ref_vid)
 {
 	const PLCEdge &edge = plc.edge(eid);
 
@@ -296,46 +286,33 @@ auto ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(
 	const GPoint &ep1_pnt = gpnt(edge.ep1());
 	const GPoint &ref_pnt = gpnt(ref_vid);
 
-	GPoint *new_pnt   = nullptr;
-	index_t acute_vid = InvalidIndex;
-
-	// TODO get the middle point represented by LNC implicit point
-	auto getMidPoint = [](OMC_UNUSED const PLCEdge &e) { return nullptr; };
-
-	// TODO
-	// Check if the distance between `a` and `b` is less than half the distance
-	// between `a` and `c`.
-	auto isLessThanHalfDistance =
-	  [](OMC_UNUSED const GPoint &a, OMC_UNUSED const GPoint &b,
-	     OMC_UNUSED const GPoint &c) { return false; };
-
-	// TODO
-	// Get the intersection point between the line and the sphere, represented as
-	// an LNC implicit point.
-	// The line is defined by the constrained edge.
-	// The sphere is centered at one endpoint of the edge, with the radius being
-	// the distance between the endpoint and the reference encroaching point.
-	auto lineSphereIntersection =
-	  [](OMC_UNUSED index_t eid, OMC_UNUSED bool reverse_edge,
-	     OMC_UNUSED index_t ref_vid, OMC_UNUSED index_t &acute_vid,
-	     OMC_UNUSED GPoint *new_pnt) { return nullptr; };
+	IPoint_LNC new_pnt;
 
 	if (isLessThanHalfDistance(ep0_pnt, ref_pnt, ep1_pnt))
-	{
-		lineSphereIntersection(eid, /*reverse*/ false, ref_vid, acute_vid, new_pnt);
+	{ // The `ref_pnt` is closer to the endpoint `ep0`, and the distance between
+		// `ref_pnt` and `ep0` is less than half the distance between `ep0` and
+		// `ep1`.
+		new_pnt = lineSphereIntersection_noAc(eid, false, ref_vid);
 	}
 	else if (isLessThanHalfDistance(ep1_pnt, ref_pnt, ep0_pnt))
-	{
-		lineSphereIntersection(eid, /*reverse*/ true, ref_vid, acute_vid, new_pnt);
+	{ // The `ref_pnt` is closer to the endpoint `ep1`, and the distance between
+		// `ref_pnt` and `ep1` is less than half the distance between `ep0` and
+		// `ep1`.
+		new_pnt = lineSphereIntersection_noAc(eid, true, ref_vid);
 	}
 	else
-	{
-		// The reference encroaching point is the middle point.
+	{ // The distances between both <`ref_pnt`, `ep0`> and <`ref_pnt`, `ep1`>
+		// are larger than half the distance between `ep0` and `ep1`.
 		// Split the segment at the middle point.
-		new_pnt = getMidPoint(edge);
+		new_pnt = middlePoint_bothAc(edge);
 	}
 
-	return new_pnt;
+	// Add the new point
+	index_t new_vid = newVtx(new_pnt);
+	// Split edge by the new point
+	plc.splitPLCEdge(eid, new_vid);
+
+	return new_vid;
 }
 
 /**
@@ -346,38 +323,29 @@ auto ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(
  * @see The strategy is described in Section 3.3 of [Robust CDT].
  */
 template <typename Traits>
-auto ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(
-  index_t eid, index_t ref_vid) const -> GPoint *
+index_t ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
+                                                                index_t ref_vid)
 {
 	const PLCEdge &edge = plc.edge(eid);
 
-	// TODO get the middle point represented by LNC implicit point
-	auto getMidPoint = [](OMC_UNUSED const PLCEdge &e) { return nullptr; };
+	IPoint_LNC new_pnt;
 
-	// TODO
-	// Similar to but not the same as the one in splitSegment_NoAcuteVertex.
-	auto lineSphereIntersection =
-	  [](OMC_UNUSED index_t eid, OMC_UNUSED index_t ref_vid,
-	     OMC_UNUSED index_t &acute_vid, OMC_UNUSED GPoint *new_pnt)
-	{ return nullptr; };
+	new_pnt = lineSphereIntersection_oneAc(eid, ref_vid);
 
-	// TODO
-	// Check if `a` is closer to `b` than to `c`.
-	auto isCloserThan = [](OMC_UNUSED const GPoint &a, OMC_UNUSED const GPoint &b,
-	                       OMC_UNUSED const GPoint &c) { return true; };
-
-	index_t acute_vid = InvalidIndex;
-	GPoint *new_pnt   = nullptr;
-
-	new_pnt = lineSphereIntersection(eid, ref_vid, acute_vid, new_pnt);
-
-	if (isCloserThan(*new_pnt, gpnt(edge.ep1()), gpnt(ref_vid)))
-	{
-		// delete new_pnt, create a middle point
-		new_pnt = getMidPoint(edge);
+	if (isLessThanDistance(new_pnt, gpnt(edge.ep1()), gpnt(ref_vid)))
+	{ // The new point is closer to the non-acute endpoint `ep1` than the
+		// reference encroaching point, we should switch to another split strategy
+		// (described in Section 3.3 in [Robust CDT]), but it is not really
+		// necessary. Just using midpoint provides better performances
+		new_pnt = middlePoint_bothAc(edge);
 	}
 
-	return new_pnt;
+	// Add the new point
+	index_t new_vid = newVtx(new_pnt);
+	// Split edge by the new point
+	plc.splitPLCEdge(eid, new_vid);
+
+	return new_vid;
 }
 
 template <typename Traits>
@@ -427,6 +395,304 @@ void ConstraintsRecover<Traits>::faceRecovery()
 				need_recursion = true;
 		}
 	} while (need_recursion);
+}
+
+/**
+ * @brief Two points `a` and `b` form a smallest (diametral) sphere, check if
+ * the query point `c` lies inside or touches the sphere.
+ * @return True if the point lies inside or touches the sphere, false otherwise.
+ */
+template <typename Traits>
+bool ConstraintsRecover<Traits>::inSphere(const GPoint &a, const GPoint &b,
+                                          const GPoint &c)
+{
+#ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
+	return InSphere()(a, b, c) >= Sign::ZERO;
+#else
+	OMC_EXPENSIVE_ASSERT(a.is_explicit() && b.is_explicit() && c.is_explicit(),
+	                     "Input points contain implicit points.");
+	return (c - a).as_vec().sqrnorm() + (c - b).as_vec().sqrnorm() <=
+	       (a - b).as_vec().sqrnorm();
+#endif
+}
+
+/**
+ * @brief Points `a`, `b` and `c` form a smallest sphere S(abc), and points
+ * `a`, `b` and `d` form another smallest sphere S(abd). We want to know if
+ * S(abc) is larger than S(abd).
+ * @return true if S(abc) is larger than S(abd), false otherwise.
+ */
+template <typename Traits>
+bool ConstraintsRecover<Traits>::largerSphere(const GPoint &a, const GPoint &b,
+                                              const GPoint &c, const GPoint &d)
+{
+#ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
+	return InSphere().largerSphere(a, b, c, d) == Sign::POSITIVE;
+#else
+	OMC_EXPENSIVE_ASSERT((a.is_explicit() && b.is_explicit()) &&
+	                       (c.is_explicit() && d.is_explicit()),
+	                     "Input points contain implicit points.");
+
+	// calculate vectors between points
+	Vec3 ac = (c - a).to_vec(), bc = (c - b).to_vec();
+	Vec3 ad = (d - a).to_vec(), bd = (d - b).to_vec();
+
+	// let the angle between ac and bc be <abc>, and the angle between ad and bd
+	// be <abd>.
+	// cos(<abc>) = (ac dot bc) / (|ac| * |bc|), so as cos(<abd>).
+	// S(abc) is larger than S(abd) if and only if cos(<abc>) < cos(<abd>).
+
+	NT len_c = ac.sqrnorm() * bc.sqrnorm();
+	NT len_d = ad.sqrnorm() * bd.sqrnorm();
+	NT dot_c = ac.dot(bc);
+	NT dot_d = ad.dot(bd);
+
+	// cos(<abc>) < cos(<abd>) is equivalent to the below inequality.
+	return (dot_d * dot_d) * len_c < (dot_c * dot_c) * len_d;
+#endif
+}
+
+/**
+ * @brief Check if the distance between `a` and `b` is less than the distance
+ * between `a` and `c`.
+ * @return true if less, false otherwise.
+ */
+template <typename Traits>
+bool ConstraintsRecover<Traits>::isLessThanDistance(const GPoint &a,
+                                                    const GPoint &b,
+                                                    const GPoint &c)
+{
+#ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
+	return SquaredDistance3D()(a, b, c) == Sign::NEGATIVE;
+#else
+	OMC_EXPENSIVE_ASSERT(a.is_explicit() && b.is_explicit() && c.is_explicit(),
+	                     "Input points contain implicit points.");
+	return (b - a).as_vec().sqrnorm() < (c - a).as_vec().sqrnorm();
+#endif
+}
+
+/**
+ * @brief Check if the distance between `a` and `b` is less than half the
+ * distance between `a` and `c`.
+ * @return true if less, false otherwise.
+ */
+template <typename Traits>
+bool ConstraintsRecover<Traits>::isLessThanHalfDistance(const GPoint &a,
+                                                        const GPoint &b,
+                                                        const GPoint &c)
+{
+#ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
+	// scale the squared distance between a and b by 4 to avoid square root.
+	return SquaredDistance3D()(a, b, c, /*ab_scale*/ 4) == Sign::NEGATIVE;
+#else
+	OMC_EXPENSIVE_ASSERT(a.is_explicit() && b.is_explicit() && c.is_explicit(),
+	                     "Input points contain implicit points.");
+	return (b - a).as_vec().sqrnorm() * 4 < (c - a).as_vec().sqrnorm();
+#endif
+}
+
+/**
+ * @brief Given original PLC edge (oep0, oep1) and a sub-edge (ep0, ep1) of the
+ * original one, find the interpolation parameter t0 and t1 such that the
+ * sub-edge is the interpolation of the original edge:
+ * ep0 = oep0 + t0 * (oep1 - oep0),
+ * ep1 = oep0 + t1 * (oep1 - oep0).
+ *
+ * @param oep0 one endpoint of the original PLC edge
+ * @param oep1 the other endpoint of the original PLC edge
+ * @param ep0	one endpoint of the sub-edge
+ * @param ep1 the other endpoint of the sub-edge
+ * @return A pair of interpolation parameters t0 and t1.
+ */
+template <typename Traits>
+std::pair<double, double>
+ConstraintsRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1,
+                                            index_t ep0, index_t ep1) const
+{
+	OMC_EXPENSIVE_ASSERT(
+	  (oep0 != ep0 && oep0 != ep1) || (oep1 != ep0 && oep1 != ep1),
+	  "Endpoints of the original edge and the sub-edge are not distinct.");
+
+	double t0 = -1.0, t1 = -1.0;
+
+	// calculate the interpolation parameter for `ep0`
+	if (ep0 == oep0)
+		t0 = 0.0;
+	else if (ep0 == oep1)
+		t0 = 1.0;
+	else if (&(gpnt(ep0).LNC().P()) == &gpnt(oep0))
+		t0 = gpnt(ep0).LNC().T();
+	else if (&(gpnt(ep0).LNC().P()) == &gpnt(oep1))
+		t0 = 1.0 - gpnt(ep0).LNC().T();
+	else
+	{
+		OMC_ASSERT(false, "The sub-edge is not a part of the original edge.");
+	}
+
+	// calculate the interpolation parameter for `ep1`
+	if (ep1 == oep0)
+		t1 = 0.0;
+	else if (ep1 == oep1)
+		t1 = 1.0;
+	else if (&(gpnt(ep1).LNC().P()) == &gpnt(oep0))
+		t1 = gpnt(ep1).LNC().T();
+	else if (&(gpnt(ep1).LNC().P()) == &gpnt(oep1))
+		t1 = 1.0 - gpnt(ep1).LNC().T();
+	else
+	{
+		OMC_ASSERT(false, "The sub-edge is not a part of the original edge.");
+	}
+
+	OMC_EXPENSIVE_ASSERT(t0 >= 0.0 && t0 <= 1.0 && t1 >= 0.0 && t1 <= 1.0,
+	                     "Invalid interpolation parameters.");
+	return std::pair<double, double>(t0, t1);
+}
+
+/**
+ * @brief Get the middle point of a PLC edge represented by LNC implicit point.
+ * This function is used to split a PLC edge with two acute vertices.
+ * @param e The given PLC edge.
+ * @note bothAc means both acute vertices.
+ * @return IPoint_LNC The middle point of the edge.
+ */
+template <typename Traits>
+auto ConstraintsRecover<Traits>::middlePoint_bothAc(const PLCEdge &e) const
+  -> IPoint_LNC
+{
+	OMC_EXPENSIVE_ASSERT(!is_valid_idx(e.child_id), "The edge is already split.");
+
+	index_t ep0 = e.ep0(), ep1 = e.ep1();
+
+	if (is_valid_idx(e.ancestor_id)) // The edge is a sub-edge of a split edge.
+	{
+		const PLCEdge &oe   = plc.edge(e.ancestor_id);
+		index_t        oep0 = oe.ep0(), oep1 = oe.ep1();
+
+		auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+		return CreateLNC()(gpnt(oep0), gpnt(oep1), (t0 + t1) * 0.5);
+	}
+	else // The edge is not split yet.
+	{
+		return CreateLNC()(gpnt(ep0), gpnt(ep1), /*interpolation T*/ 0.5);
+	}
+}
+
+/**
+ * @brief Get the intersection point between the line and the sphere,
+ * represented as an LNC implicit point.
+ *
+ * - The line is defined by the constrained edge `eid`.
+ *
+ * - The sphere is centered at one endpoint (determined by `reverse`) of the
+ * edge, with the radius being the distance between the endpoint and the
+ * reference encroaching point `ref_vid`.
+ *
+ * @param [in] eid The index of the constrained edge.
+ * @param [in] reverse TRUE if the reference encroaching point is closer to the
+ * endpoint `ep1`, FALSE if it is closer to the endpoint `ep0`. The sphere
+ * centers at the endpoint that is closer to the reference encroaching point.
+ * @param [in] ref_vid The index of the reference encroaching point.
+ * @note `noAc` means no acute vertex.
+ * @return IPoint_LNC The intersection point represented in LNC.
+ */
+template <typename Traits>
+auto ConstraintsRecover<Traits>::lineSphereIntersection_noAc(
+  index_t eid, bool reverse, index_t ref_vid) const -> IPoint_LNC
+{
+	const PLCEdge &e   = plc.edge(eid);
+	// Get the endpoints of the edge and its original edge.
+	index_t        ep0 = e.ep0(), ep1 = e.ep1();
+	index_t        oep0 = InvalidIndex, oep1 = InvalidIndex;
+	if (is_valid_idx(e.ancestor_id))
+	{
+		const PLCEdge &oe = plc.edge(e.ancestor_id);
+		oep0 = oe.ep0(), oep1 = oe.ep1();
+	}
+	else
+	{
+		oep0 = ep0, oep1 = ep1;
+	}
+	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit() &&
+	                       gpnt(ref_vid).is_explicit(),
+	                     "Input points contain implicit points.");
+	// Get the vectors of related points.
+	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
+	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
+	Vec3 ref_v    = AsEP()(gpnt(ref_vid)).as_vec();
+	Vec3 end_v    = ToEP()(gpnt(reverse ? ep1 : ep0)).to_vec();
+	// Get the interpolation parameters
+	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+	// Parameterize the sphere radius to the original segment
+	double radius_t =
+	  std::sqrt((ref_v - end_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
+	// Get the parameter of the intersection point
+	double t = reverse ? t1 - radius_t : t0 + radius_t;
+	// Check if the intersection point is inside the edge
+	if (t <= t0 || t >= t1)
+	{ // if no (maybe caused by numerical error), return the middle point
+		t = (t0 + t1) * 0.5;
+	}
+
+	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
+}
+
+/**
+ * @brief  Get the intersection point between the line and the sphere,
+ * represented as an LNC implicit point.
+ *
+ * - The line is defined by the constrained edge `eid`.
+ *
+ * - The sphere is centered at the acute endpoint of the edge, with the radius
+ * being the distance between the acute endpoint and the reference encroaching
+ * point `ref_vid`.
+ *
+ * - Acute endpoint is always put in the first position.
+ *
+ * @param [in] eid The index of the constrained edge.
+ * @param [in] ref_vid The index of the reference encroaching point.
+ * @note `oneAc` means one acute vertex.
+ * @return IPoint_LNC The intersection point represented in LNC.
+ */
+template <typename Traits>
+auto ConstraintsRecover<Traits>::lineSphereIntersection_oneAc(
+  index_t eid, index_t ref_vid) const -> IPoint_LNC
+{
+	const PLCEdge &e   = plc.edge(eid);
+	// Get the endpoints of the edge and its original edge.
+	index_t        ep0 = e.ep0(), ep1 = e.ep1();
+	index_t        oep0 = InvalidIndex, oep1 = InvalidIndex;
+	if (is_valid_idx(e.ancestor_id))
+	{
+		const PLCEdge &oe = plc.edge(e.ancestor_id);
+		oep0 = oe.ep0(), oep1 = oe.ep1();
+	}
+	else
+	{
+		oep0 = ep0, oep1 = ep1;
+	}
+	OMC_EXPENSIVE_ASSERT(ep0 == oep0, "The acute vertex should be remembered in "
+	                                  "the first position in all sub-edges.");
+	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit() &&
+	                       gpnt(ref_vid).is_explicit(),
+	                     "Input points contain implicit points.");
+	// Get the vectors of related points.
+	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
+	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
+	Vec3 ref_v    = AsEP()(gpnt(ref_vid)).as_vec();
+	// Get the interpolation parameters
+	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+	OMC_EXPENSIVE_ASSERT(t0 == 0.0, "The acute vertex's t should be 0.");
+	// Parameterize the sphere radius to the original segment
+	double radius_t =
+	  std::sqrt((ref_v - oe0_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
+	// why?
+	double dv = (t1 - t0) * 0.2;
+	if (radius_t <= (t0 + dv) || radius_t >= (t1 - dv))
+	{
+		radius_t = (t0 + t1) * 0.5;
+	}
+
+	return CreateLNC()(gpnt(oep0), gpnt(oep1), radius_t);
 }
 
 /**
@@ -1445,12 +1711,15 @@ bool ConstraintsRecover<Traits>::segCrossesFace(index_t s0, index_t s1,
  * @return the index to the new vertex.
  */
 template <typename Traits>
-index_t ConstraintsRecover<Traits>::newVtx(GPoint *new_pnt)
+template <typename PointType>
+index_t ConstraintsRecover<Traits>::newVtx(PointType new_pnt)
 {
 	// create the new vertex
-	index_t new_vid = verts.size();
-	// TODO point arena
-	verts.push_back(new_pnt);
+	index_t new_vid     = verts.size();
+	// Put the new vertex into the point arena
+	auto   *new_pnt_ptr = pnt_arenas[0].emplace(std::move(new_pnt));
+	// Put the new vertex into the vertex list
+	verts.push_back(static_cast<GPoint *>(new_pnt_ptr));
 
 	// create auxiliary data in TetMesh & PLC
 	tet_mesh.newVtx(new_vid);

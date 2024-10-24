@@ -110,6 +110,9 @@ private:
  * @brief Implicit point defined by the interpolation of two points (one
  * segment).
  *
+ * Let two points be P and Q, and the interpolation parameter be t.
+ * The point is defined as P + t * (Q - P) = (1 - t) * P + t * Q.
+ *
  * The point has a homogeneous representation (lx, ly, lz, d), which defines the
  * coordinates of the point as (x, y, z) = (lx, ly, lz) / d.
  *
@@ -152,7 +155,7 @@ public: /* Constructors ******************************************************/
 public: /* Members ***********************************************************/
 	const EP &P() const { return *ip; }
 	const EP &Q() const { return *iq; }
-	NT T() const { return it; }
+	NT        T() const { return it; }
 
 public: /* Lambdas ***********************************************************/
 	/**
@@ -177,7 +180,7 @@ public: /* Cache *************************************************************/
 
 private:
 	const EP *ip, *iq; ///< The two points (segment) to interpolate
-	const NT  it;      ///< The interpolation parameter
+	NT        it;      ///< The interpolation parameter
 
 #ifdef OMC_CACHE_DF
 	mutable IT m_lx, m_ly, m_lz, m_d;
