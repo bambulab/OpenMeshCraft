@@ -81,7 +81,7 @@ public: /* Constructor & Destructor ****************************************/
 public: /* Algorithms ******************************************************/
 	/* Recover constrained segments */
 
-	void segmentRecovery();
+	void segmentRecovery(bool verbose = false);
 
 	/* sub-algorithms for segment recovery */
 

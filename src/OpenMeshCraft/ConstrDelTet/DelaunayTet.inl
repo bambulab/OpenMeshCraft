@@ -46,7 +46,7 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
 	index_t i = 0, j = 1;
 	k = InvalidIndex, l = InvalidIndex;
 	// Four vertices
-	const EPoint &vi = mesh.epnt(i), &vj = mesh.epnt(j);
+	const GPoint &vi = mesh.gpnt(i), &vj = mesh.gpnt(j);
 	// Orientation of the four vertices (i.e., the sign of the tetrahedron volume
 	// formed by the four vertices)
 	Sign          ori = Sign::ZERO;
@@ -54,15 +54,14 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
 	// Traversal all vertices
 	for (k = 2; ori == Sign::ZERO && k < n - 1; k++)
 	{
-		const EPoint &vk = mesh.epnt(k);
+		const GPoint &vk = mesh.gpnt(k);
 		// Find the third vertex to form a valid triangle
 		if (CollinearPoints3()(vi, vj, vk))
 			continue;
 		// Find the fourth vertex to form a valid tetrahedron
 		for (l = k + 1; ori == Sign::ZERO && l < n; l++)
 		{
-			const EPoint &vl = mesh.epnt(l);
-			// Since the input GPoints are always an EPoint, we will convert them.
+			const GPoint &vl = mesh.gpnt(l);
 			ori              = Orient3D()(vi, vj, vk, vl);
 		}
 	}
@@ -113,10 +112,11 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
  * @brief Incrementally inserts vertices into the Delaunay tetrahedralization.
  * @details When inserting a vertex, it first collects all tetrahedra
  * whose circumsphere contains the vertex and replaces them with a star of new
- * tetrahedra originating from the vertex.
+ * tetrahedra originating from the vertex. Old tetrahedra are marked as deleted.
  * @param vid The vertex to be inserted, represented in vertex index.
  * @param tet One newly constructed tetrahedron created during the insertion of
  * the last vertex, represented in `idoff`.
+ * @note Rely on mark `TOUCHED` to avoid redundant operations. Not thread safe.
  */
 template <typename Traits>
 void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
@@ -147,16 +147,16 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 				continue;
 			OMC_EXPENSIVE_ASSERT(
 			  !CollinearPoints3()(
-			    mesh.epnt(mesh.tetNode(tet + TetMesh::tetON1(off))),
-			    mesh.epnt(mesh.tetNode(tet + TetMesh::tetON2(off))),
-			    mesh.epnt(mesh.tetNode(tet + TetMesh::tetON3(off)))),
+			    mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON1(off))),
+			    mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON2(off))),
+			    mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON3(off)))),
 			  "Current face is degenerate.");
 
 			// check the orientation of `vid` with respect to the current face
-			if (Orient3D()(mesh.epnt(mesh.tetNode(tet + TetMesh::tetON1(off))),
-			               mesh.epnt(mesh.tetNode(tet + TetMesh::tetON2(off))),
-			               mesh.epnt(mesh.tetNode(tet + TetMesh::tetON3(off))),
-			               mesh.epnt(vid)) == Sign::NEGATIVE)
+			if (Orient3D()(mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON1(off))),
+			               mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON2(off))),
+			               mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON3(off))),
+			               mesh.gpnt(vid)) == Sign::NEGATIVE)
 			{
 				index_t neighbor_idoff = mesh.tetNeigh(tet + off);
 				// we are stepping into the neighbor tetrahedron.
@@ -167,19 +167,45 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 		}
 		// `vid` is inside the current tet, we have stepped into the target.
 		if (off == 4)
-		{
-			OMC_EXPENSIVE_ASSERT(
-			  InSphere()(
-			    mesh.epnt(mesh.tetNode(tet)), mesh.epnt(mesh.tetNode(tet + 1)),
-			    mesh.epnt(mesh.tetNode(tet + 2)), mesh.epnt(mesh.tetNode(tet + 3)),
-			    mesh.epnt(vid)) == Sign::POSITIVE,
-			  "`vid` is not inside the current tetrahedron's circumsphere.");
 			break; // break the while loop
-		}
 		// if we have stepped into an infinite tetrahedron, it is the target too.
-		if (mesh.tetNode(tet + 3) == TetMesh::INFINITE_VERTEX)
+		if (!mesh.isFiniteTet(tet))
 			break; // break the while loop
 	}
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	// clang-format off
+	if (mesh.isFiniteTet(tet))
+	{
+		OMC_ASSERT(
+		  !(LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 0))) ||
+		    LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 1))) ||
+		    LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 2))) ||
+		    LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 3)))),
+		  "The inserted vertex coincides with an existing vertex.");
+		Sign ori[4];
+		for (index_t i = 0; i < 4; i++)
+		{
+		 ori[i] = Orient3D()(mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON1(i))),
+		                     mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON2(i))),
+		                     mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON3(i))), mesh.gpnt(vid));
+		 OMC_ASSERT(ori[i] >= Sign::ZERO, "The vertex is not inside the target infinite tetrahedron.");
+		}
+	}
+	else
+	{
+		OMC_ASSERT(
+		  !(LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 0))) ||
+		    LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 1))) ||
+		    LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 2)))),
+		  "The inserted vertex coincides with an existing vertex.");
+		OMC_ASSERT(Orient3D()(mesh.gpnt(mesh.tetNode(tet)), mesh.gpnt(mesh.tetNode(tet + 1)), mesh.gpnt(mesh.tetNode(tet + 2)), mesh.gpnt(vid)) == Sign::POSITIVE,
+		           "The vertex is not inside the target infinite tetrahedron.");
+	}
+	OMC_ASSERT(mesh.vertexInTetSphere(tet, vid),
+	           "The vertex is not inside the target tetrahedron's circumsphere.");
+	// clang-format on
+#endif
 
 	// ==========================================================================
 	// Step 2: Cavity
@@ -241,6 +267,24 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 		}
 	}
 
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	// Check if the inserted vertex is coincident with the existing vertices.
+	boost::container::flat_set<index_t> cavity_verts;
+	// Collect vertices of the cavity
+	for (index_t tet_idoff : cavity_tets)
+	{
+		for (index_t j = 0; j < 4; j++)
+			if (is_valid_idx(mesh.tetNode(tet_idoff + j)))
+				cavity_verts.insert(mesh.tetNode(tet_idoff + j));
+	}
+	// Check coincident vertices
+	for (index_t cavity_vid : cavity_verts)
+	{
+		OMC_ASSERT(!LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(cavity_vid)),
+		           "Coincident vertices.");
+	}
+#endif
+
 	// ==========================================================================
 	// Step 3: Filling
 	// Fill the cavity by connecting `v_id` to the cavity's boundary and establish
@@ -272,13 +316,18 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 		mesh.tetNode(new_idoff + 2) = mesh.tetNode(corner_id + fi[corner_off][1]);
 		mesh.tetNode(new_idoff + 3) = mesh.tetNode(corner_id + fi[corner_off][2]);
 
-		OMC_EXPENSIVE_ASSERT(
-		  mesh.tetNode(new_idoff + 3) == TetMesh::INFINITE_VERTEX ||
-		    Orient3D()(mesh.epnt(mesh.tetNode(new_idoff)),
-		               mesh.epnt(mesh.tetNode(new_idoff + 1)),
-		               mesh.epnt(mesh.tetNode(new_idoff + 2)),
-		               mesh.epnt(mesh.tetNode(new_idoff + 3))) == Sign::POSITIVE,
-		  "The newly generated tetrahedron is either degenerate or flipped.");
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+		if (mesh.isFiniteTet(new_idoff))
+		{
+			Sign tet_volume = Orient3D()(mesh.gpnt(mesh.tetNode(new_idoff)),
+			                             mesh.gpnt(mesh.tetNode(new_idoff + 1)),
+			                             mesh.gpnt(mesh.tetNode(new_idoff + 2)),
+			                             mesh.gpnt(mesh.tetNode(new_idoff + 3)));
+			OMC_ASSERT(tet_volume == Sign::POSITIVE,
+			           "The newly generated tetrahedron has {} volume.",
+			           static_cast<int>(tet_volume));
+		}
+#endif
 
 		// build the neighbor relationship (`vid` and `corner` is a pair of
 		// neighbors).
@@ -382,122 +431,172 @@ void DelaunayTet<Traits>::markInfiniteTetsDeleted()
 }
 
 template <typename Traits>
-bool DelaunayTet<Traits>::verify(bool verbose) const
+bool DelaunayTet<Traits>::verify() const
 {
 	for (index_t id = 0; id < mesh.sizeTets() * 4; id += 4)
 	{
-		// skip the infinite tet
-		if (!mesh.isFiniteTet(id))
+		// skip the infinite tet and deleted tet
+		if (!mesh.isFiniteTet(id) ||
+		    mesh.isMarked(id, TetMesh::TET_MARK::TO_DELETE))
 			continue;
 
-		// 1. Check if the finite tetrahedra has positive volume
-		if (Orient3D()(mesh.epnt(mesh.tetNode(id)), mesh.epnt(mesh.tetNode(id + 1)),
-		               mesh.epnt(mesh.tetNode(id + 2)),
-		               mesh.epnt(mesh.tetNode(id + 3))) != Sign::POSITIVE)
-		{
-			if (verbose)
-				OMC::Logger::fatal(
-				  std::format("The tetrahedron {} has non-positive volume.", id / 4));
+		if (!verifyVolume(id) || !verifyNeighbor(id))
 			return false;
-		}
-
-		// 2. Check if all neighbors are well-connected
-		for (index_t off = 0; off < 4; off++)
-		{
-			index_t idoff       = id + off;
-			index_t neigh_idoff = mesh.tetNeigh(idoff);
-			if (neigh_idoff == InvalidIndex)
-				continue;
-			// the tet's neighbor's neighbor should be the tet itself
-			if (mesh.tetNeigh(neigh_idoff) != idoff)
-			{
-				if (verbose)
-					OMC::Logger::fatal(std::format(
-					  "The tetrahedron {} and its neighbor {} are not well-connected.",
-					  id >> 2, TetMesh::clipId(neigh_idoff) >> 2));
-				return false;
-			}
-			// two neighbors should have a common face with correct orientation
-			index_t                neigh_id  = TetMesh::clipId(neigh_idoff);
-			index_t                neigh_off = TetMesh::clipOff(neigh_idoff);
-			// get the nodes of the two faces
-			std::array<index_t, 3> this_face, neigh_face;
-			this_face  = {mesh.tetNode(id + TetMesh::tetON1(off)),
-			              mesh.tetNode(id + TetMesh::tetON2(off)),
-			              mesh.tetNode(id + TetMesh::tetON3(off))};
-			neigh_face = {mesh.tetNode(neigh_id + TetMesh::tetON3(neigh_off)),
-			              mesh.tetNode(neigh_id + TetMesh::tetON2(neigh_off)),
-			              mesh.tetNode(neigh_id + TetMesh::tetON1(neigh_off))};
-			// check the orientation of the two faces
-			bool common_and_well_oriented = false;
-			for (index_t i = 0; i < 3; i++)
-			{
-				if (this_face[0] == neigh_face[i] &&
-				    this_face[1] == neigh_face[(i + 1) % 3] &&
-				    this_face[2] == neigh_face[(i + 2) % 3])
-				{
-					common_and_well_oriented = true;
-					break;
-				}
-			}
-			if (!common_and_well_oriented)
-			{
-				if (verbose)
-					OMC::Logger::fatal(
-					  std::format("The common face between tetrahedron {} and its "
-					              "neighbor {} are not well-oriented.",
-					              id >> 2, neigh_id >> 2));
-				return false;
-			}
-		}
 	}
 
-	// 3. Check if the Delaunay condition is satisfied for all vertices
 	for (index_t vid = 0; vid < mesh.sizeVerts(); vid++)
 	{
-		AuxVector64<index_t> check_tets;
-		check_tets.push_back(TetMesh::toIdOff(mesh.incTet(vid)));
-
-		for (index_t first = 0; first < check_tets.size(); first++)
-		{
-			index_t tid = check_tets[first];
-			if (!mesh.isFiniteTet(tid))
-				continue;
-
-			// Check the Delaunay condition for this tetrahedron
-			if (!mesh.tetHasVertex(tid, vid))
-			{
-				if (mesh.vertexInTetSphere(tid, vid))
-				{
-					if (verbose)
-						OMC::Logger::fatal(std::format(
-						  "The vertex {} is inside the circumsphere of tetrahedron {}.",
-						  vid, tid >> 2));
-					return false;
-				}
-				else
-					continue; // check the next tetrahedron
-			}
-
-			// Add the neighbors of the tetrahedron to the check list
-			for (index_t off = 0; off < 4; off++)
-			{
-				index_t idoff       = tid + off;
-				index_t neigh_idoff = mesh.tetNeigh(idoff);
-				// if the neighbor does not exist or is infinite, skip it
-				if (neigh_idoff == InvalidIndex || mesh.isFiniteTet(neigh_idoff))
-					continue;
-				// if the neighbor has not been checked, add it to the check list
-				index_t neigh_id = TetMesh::clipId(neigh_idoff);
-				if (std::find(check_tets.begin(), check_tets.end(), neigh_id) ==
-				    check_tets.end())
-					check_tets.push_back(neigh_id);
-			}
-		}
+		if (!verifyDelaunay(vid))
+			return false;
 	}
 
-	if (verbose)
-		OMC::Logger::info("The Delaunay tetrahedralization is valid.");
+	return true;
+}
+
+template <typename Traits>
+bool DelaunayTet<Traits>::localVerify(index_t vid) const
+{
+	AuxVector64<index_t> tets;
+	mesh.VT(vid, tets);
+	for (index_t tet_idoff : tets)
+	{
+		if (!verifyVolume(tet_idoff) || !verifyNeighbor(tet_idoff))
+			return false;
+	}
+
+	if (!verifyDelaunay(vid))
+		return false;
+
+	return true;
+}
+
+/**
+ * @brief Verifies if the tetrahedron specified by the given index has a
+ * positive volume.
+ * @param tet_idoff The index offset of the tetrahedron to be verified.
+ * @return true if the tetrahedron has a positive volume, false otherwise.
+ */
+template <typename Traits>
+bool DelaunayTet<Traits>::verifyVolume(index_t tet_idoff) const
+{
+	if (Orient3D()(mesh.gpnt(mesh.tetNode(tet_idoff)),
+	               mesh.gpnt(mesh.tetNode(tet_idoff + 1)),
+	               mesh.gpnt(mesh.tetNode(tet_idoff + 2)),
+	               mesh.gpnt(mesh.tetNode(tet_idoff + 3))) != Sign::POSITIVE)
+	{
+		OMC_ASSERT(false, "The tetrahedron {} has non-positive volume.",
+		           tet_idoff / 4);
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Verifies if the tetrahedron's neighbors are well-connected.
+ * @param tet_idoff The index offset of the tetrahedron to be verified.
+ * @return true if neighbors are well-connected, false otherwise.
+ */
+template <typename Traits>
+bool DelaunayTet<Traits>::verifyNeighbor(index_t tet_id) const
+{
+	for (index_t off = 0; off < 4; off++)
+	{
+		index_t idoff       = tet_id + off;
+		index_t neigh_idoff = mesh.tetNeigh(idoff);
+		if (neigh_idoff == InvalidIndex)
+			continue;
+		// the tet's neighbor's neighbor should be the tet itself
+		if (mesh.tetNeigh(neigh_idoff) != idoff)
+		{
+			OMC_ASSERT(
+			  false, "The tetrahedron {} and its neighbor {} are not well-connected.",
+			  tet_id >> 2, TetMesh::clipId(neigh_idoff) >> 2);
+			return false;
+		}
+		// two neighbors should have a common face with correct orientation
+		index_t                neigh_id  = TetMesh::clipId(neigh_idoff);
+		index_t                neigh_off = TetMesh::clipOff(neigh_idoff);
+		// get the nodes of the two faces
+		std::array<index_t, 3> this_face, neigh_face;
+		this_face  = {mesh.tetNode(tet_id + TetMesh::tetON1(off)),
+		              mesh.tetNode(tet_id + TetMesh::tetON2(off)),
+		              mesh.tetNode(tet_id + TetMesh::tetON3(off))};
+		neigh_face = {mesh.tetNode(neigh_id + TetMesh::tetON3(neigh_off)),
+		              mesh.tetNode(neigh_id + TetMesh::tetON2(neigh_off)),
+		              mesh.tetNode(neigh_id + TetMesh::tetON1(neigh_off))};
+		// check the orientation of the two faces
+		bool common_and_well_oriented = false;
+		for (index_t i = 0; i < 3; i++)
+		{
+			if (this_face[0] == neigh_face[i] &&
+			    this_face[1] == neigh_face[(i + 1) % 3] &&
+			    this_face[2] == neigh_face[(i + 2) % 3])
+			{
+				common_and_well_oriented = true;
+				break;
+			}
+		}
+		if (!common_and_well_oriented)
+		{
+			OMC_ASSERT(false,
+			           "The common face between tetrahedron {} and its neighbor {} "
+			           "are not well-oriented.",
+			           tet_id >> 2, neigh_id >> 2);
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
+ * @brief Verifies if the Delaunay condition is satisfied for a given vertex.
+ * @param vid The index of the vertex to be checked.
+ * @return True if the Delaunay condition is satisfied for the vertex, false
+ * otherwise.
+ */
+template <typename Traits>
+bool DelaunayTet<Traits>::verifyDelaunay(index_t vid) const
+{
+	// 3. Check if the Delaunay condition is satisfied for all vertices
+	AuxVector64<index_t> check_tets;
+	check_tets.push_back(TetMesh::toIdOff(mesh.incTet(vid)));
+
+	for (index_t first = 0; first < check_tets.size(); first++)
+	{
+		index_t tid = check_tets[first];
+		if (!mesh.isFiniteTet(tid))
+			continue;
+
+		// Check the Delaunay condition for this tetrahedron
+		if (!mesh.tetHasVertex(tid, vid))
+		{
+			if (mesh.vertexInTetSphere(tid, vid))
+			{
+				OMC_ASSERT(
+				  false, "The vertex {} is inside the circumsphere of tetrahedron {}.",
+				  vid, tid >> 2);
+				// clang-format on
+				return false;
+			}
+			else
+				continue; // check the next tetrahedron
+		}
+
+		// Add the neighbors of the tetrahedron to the check list
+		for (index_t off = 0; off < 4; off++)
+		{
+			index_t idoff       = tid + off;
+			index_t neigh_idoff = mesh.tetNeigh(idoff);
+			// if the neighbor does not exist or is infinite, skip it
+			if (neigh_idoff == InvalidIndex || mesh.isFiniteTet(neigh_idoff))
+				continue;
+			// if the neighbor has not been checked, add it to the check list
+			index_t neigh_id = TetMesh::clipId(neigh_idoff);
+			if (std::find(check_tets.begin(), check_tets.end(), neigh_id) ==
+			    check_tets.end())
+				check_tets.push_back(neigh_id);
+		}
+	}
 	return true;
 }
 

@@ -28,9 +28,10 @@ public: /* Traits **********************************************************/
 	using AsEP = typename Traits::AsEP;
 	using ToEP = typename Traits::ToEP;
 
-	using Orient3D          = typename Traits::Orient3D;
-	using InSphere          = typename Traits::InSphere;
-	using CollinearPoints3  = typename Traits::CollinearPoints3;
+	using Orient3D         = typename Traits::Orient3D;
+	using LessThan3D       = typename Traits::LessThan3D;
+	using InSphere         = typename Traits::InSphere;
+	using CollinearPoints3 = typename Traits::CollinearPoints3;
 
 	using TetMesh = TetrahedralMesh<Traits>;
 
@@ -42,7 +43,6 @@ public: /* Constructor & Destructor ****************************************/
 	}
 
 public: /* Algorithm *******************************************************/
-
 	/* Pipeline of the algorithm
 	 * - Initialize the Delaunay tetrahedralization
 	 * - Insert vertices into the Delaunay tetrahedralization
@@ -61,9 +61,16 @@ public: /* Algorithm *******************************************************/
 	void markInfiniteTetsDeleted();
 
 public: /* Checks **********************************************************/
-
 	/* Verify the correctness of the Delaunay tetrahedralization */
-	bool verify(bool verbose) const;
+	bool verify() const;
+
+	bool localVerify(index_t vid) const;
+
+	bool verifyVolume(index_t tet_idoff) const;
+
+	bool verifyNeighbor(index_t tet_idoff) const;
+
+	bool verifyDelaunay(index_t vid) const;
 
 public: /* Data ************************************************************/
 	TetMesh &mesh;

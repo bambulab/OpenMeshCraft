@@ -554,8 +554,9 @@ public:
 public:
 	/**
 	 * @brief In 2D, test a point `d` is inside the circumcircle of three
-	 * points `a`, `b`, and `c`. We assume that `a`, `b` and `c` is given in
-	 * couter-clock-wise order.
+	 * points `a`, `b`, and `c`. `a`, `b` and `c` are given in couter-clock-wise
+	 * order (positive orientation defined by orient2D(a, b, c)), otherwise the
+	 * sign will be reversed.
 	 * @param points Given in generic points.
 	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
 	 */
@@ -564,8 +565,9 @@ public:
 
 	/**
 	 * @brief In 2D, test a point `d` is inside the circumcircle of three
-	 * points `a`, `b`, and `c`. We assume that `a`, `b` and `c` is given in
-	 * couter-clock-wise order.
+	 * points `a`, `b`, and `c`. `a`, `b` and `c` are given in couter-clock-wise
+	 * order (positive orientation defined by orient2D(a, b, c)), otherwise the
+	 * sign will be reversed.
 	 * @param points Given in number pointers.
 	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
 	 */
@@ -586,6 +588,10 @@ public:
 	/**
 	 * @brief In 3D, test a point `e` is inside the circumsphere of four
 	 * points `a`, `b`, `c`, and `d`.
+	 *
+	 * The first four points are must be ordered so that they have a positive
+	 * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
+	 * reversed.
 	 * @param points Given in generic points.
 	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
 	 */
@@ -595,6 +601,10 @@ public:
 	/**
 	 * @brief In 3D, test a point `e` is inside the circumsphere of four
 	 * points `a`, `b`, `c`, and `d`.
+	 *
+	 * The first four points are must be ordered so that they have a positive
+	 * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
+	 * reversed.
 	 * @param points Given in number pointers.
 	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
 	 */

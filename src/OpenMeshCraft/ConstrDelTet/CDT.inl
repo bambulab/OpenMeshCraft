@@ -218,16 +218,17 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	DT.tetrahedralize(/*remove_infinite_tets*/ false);
 	OMC_CDT_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
 
-	OMC_EXPENSIVE_ASSERT(DT.verify(/*verbose*/ true),
+	OMC_EXPENSIVE_ASSERT(DT.verify(),
 	                     "The Delaunay tetrahedralization is incorrect.");
 
 	/***** Constraints Recovery *****/
 
-	plc = std::make_unique<PLC>(cdt_out_verts, cdt_in_edges, cdt_in_tris);
+	pnt_arenas = std::vector<PntArena>(1);
+	plc        = std::make_unique<PLC>(cdt_out_verts, cdt_in_edges, cdt_in_tris);
 	ConstraintsRecover<Traits> CR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc);
 
 	OMC_CDT_START_ELAPSE(start_seg);
-	CR.segmentRecovery();
+	CR.segmentRecovery(/*verbose*/ true);
 	OMC_CDT_SAVE_ELAPSED(start_seg, seg_elapsed, "Segment recovery");
 
 	OMC_CDT_START_ELAPSE(start_face);

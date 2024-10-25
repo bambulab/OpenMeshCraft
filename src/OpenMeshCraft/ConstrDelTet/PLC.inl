@@ -650,26 +650,27 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 	PLCEdge &e   = edge(eid);
 	index_t  ep0 = e.ep0();
 	index_t  ep1 = e.ep1();
+
+	index_t ancestor_id = is_valid_idx(e.ancestor_id) ? e.ancestor_id : eid;
 	// create two new edge
 	if (e.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
 		// create two new edges with the type `ONE_ACUTE_VERTEX`
-		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep0, vid,
-		                       e.ancestor_id,
+		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep0, vid, ancestor_id,
 		                       /*child_id*/ InvalidIndex);
-		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep1, vid,
-		                       e.ancestor_id,
+		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep1, vid, ancestor_id,
 		                       /*child_id*/ InvalidIndex);
 	}
 	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
 	{
+		PLCEdgeType new_type = e.type;
 		// create two new edges inherit the same edge type
-		plc_edges.emplace_back(e.type, ep0, vid, e.ancestor_id,
+		plc_edges.emplace_back(new_type, ep0, vid, ancestor_id,
 		                       /*child_id*/ InvalidIndex);
-		plc_edges.emplace_back(e.type, vid, ep1, e.ancestor_id,
+		plc_edges.emplace_back(new_type, vid, ep1, ancestor_id,
 		                       /*child_id*/ InvalidIndex);
 	}
-	e.child_id = plc_edges.size() - 2;
+	edge(eid).child_id = plc_edges.size() - 2;
 }
 
 /**

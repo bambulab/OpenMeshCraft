@@ -308,7 +308,7 @@ Sign inSphere(const GenericPoint3T<IT, ET> &pa,
 	                        pe.x(), pe.y(), pe.z());
 #else
 	return OMC::sign(
-	  ::insphere(pa.data(), pb.data(), pc.data(), pd.data(), pe.data()));
+	  ::insphere(pd.data(), pb.data(), pc.data(), pa.data(), pe.data()));
 #endif
 }
 

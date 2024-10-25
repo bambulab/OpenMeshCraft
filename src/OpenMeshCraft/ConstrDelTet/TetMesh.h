@@ -24,9 +24,9 @@ public:
 	using AsEP = typename Traits::AsEP; ///< use as explicit point
 	using ToEP = typename Traits::ToEP; ///< convert to explicit point
 
-	using Orient3D          = typename Traits::Orient3D;
-	using InSphere          = typename Traits::InSphere;
-	using CollinearPoints3  = typename Traits::CollinearPoints3;
+	using Orient3D         = typename Traits::Orient3D;
+	using InSphere         = typename Traits::InSphere;
+	using CollinearPoints3 = typename Traits::CollinearPoints3;
 
 	/// Infinite vertex index
 	const static index_t INFINITE_VERTEX = InvalidIndex;
@@ -34,11 +34,13 @@ public:
 	/// Marks for each vertex
 	enum class VTX_MARK : uint32_t
 	{
-		NO_MARK    = 0, ///< No mark
-		TO_DELETE  = 1, ///< Marked for deletion
-		VISITED    = 2, ///< Marked as visited (internal use only)
-		TOUCHED    = 4, ///< Marked as touched (interface use)
-		ENCROACHED = 8, ///< Marked as encroached
+		NO_MARK    = 0,  ///< No mark
+		TO_DELETE  = 1,  ///< Marked for deletion
+		VISITED    = 2,  ///< Marked as visited (internal use only)
+		TOUCHED    = 4,  ///< Marked as touched (interface use)
+		MODIFIED   = 8,  ///< Marked as modified
+		TO_CHECK   = 16, ///< Marked to be checked
+		ENCROACHED = 32, ///< Marked as encroached
 	};
 
 	/// Marks for each tetrahedron
@@ -142,13 +144,13 @@ public:
 	/* Connectivity operations for adjacent tetrahedrons */
 
 	template <typename ContainerT>
-	void VT(index_t vid, ContainerT &tets) const;
+	void VT(index_t vid, ContainerT &adj_tets) const;
 
 	template <typename ContainerT>
-	void VV(index_t vid, ContainerT &verts) const;
+	void VV(index_t vid, ContainerT &adj_verts) const;
 
 	template <typename ContainerT>
-	void ET(index_t vid0, index_t vid1, ContainerT &tets) const;
+	void ET(index_t vid0, index_t vid1, ContainerT &adj_tets) const;
 
 	void faceAdjTets(index_t vid0, index_t vid1, index_t vid2, index_t &t0,
 	                 index_t &t1);
@@ -194,7 +196,6 @@ public:
 	uint32_t  vtxMark(index_t vid) const { return vtx_mark[vid]; }
 
 	// clang-format on
-
 
 	/* Operations about creation */
 

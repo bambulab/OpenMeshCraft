@@ -7,7 +7,8 @@ namespace OMC {
 // In [Robust CDT 2023], some predicates are implemented in floating-point
 // numbers, I reimplemnted them in exact predicates. Define the below macro to
 // use the exact predicates.
-#define OMC_SEGMENT_RECOVERY_EXACT_PRED
+// TODO Exact predicates with implicit points are not implemented yet.
+// #define OMC_SEGMENT_RECOVERY_EXACT_PRED
 
 /**
  * @brief Initialize with the Delaunay tetrahedral mesh and the input
@@ -27,7 +28,7 @@ ConstraintsRecover<Traits>::ConstraintsRecover(
 }
 
 template <typename Traits>
-void ConstraintsRecover<Traits>::segmentRecovery()
+void ConstraintsRecover<Traits>::segmentRecovery(bool verbose)
 {
 	// initialize the PLC edges
 	plc.initPLCEdges();
@@ -44,9 +45,14 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 		}
 	}
 
-	// clear the `TOUCHED` mark for all vertices
+	// Once a segment is split, new missing segments may appear near it.
+	// So, mark adjacent vertices as `TO_CHECK`, and check them after a loop.
+
+	// clear the `TO_CHECK` mark for all vertices
 	for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
-		tet_mesh.unmark(vid, VTX_MARK::TOUCHED);
+		tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
+
+	size_t split_count = 0;
 
 	// Main loop: split missing segments to recover them.
 	while (!missing_segments.empty())
@@ -57,37 +63,53 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 			// Get the constrained segment to split
 			index_t eid = missing_segments.back();
 			missing_segments.pop_back();
-			const PLCEdge &e = plc.edge(eid);
+			const PLCEdge &e   = plc.edge(eid);
+			index_t        ep0 = e.ep0(), ep1 = e.ep1();
+
 			// Check if the segment is still missing
-			if (tet_mesh.edgeExists(e.ep0(), e.ep1()))
+			if (tet_mesh.edgeExists(ep0, ep1))
 				continue;
+
 			// Split the segment
-			index_t              new_vid = splitMissingSegment(eid);
+			index_t new_vid = splitMissingSegment(eid);
+
 			// Touch the neighbor vertices
 			// New missing edges will appear near touched vertices
 			AuxVector64<index_t> local_vv;
-			local_vv.push_back(e.ep0());
-			local_vv.push_back(e.ep1());
+			local_vv.push_back(ep0);
+			local_vv.push_back(ep1);
 			tet_mesh.VV(new_vid, local_vv);
 			for (index_t vid : local_vv)
-				tet_mesh.mark(vid, VTX_MARK::TOUCHED);
+				tet_mesh.mark(vid, VTX_MARK::TO_CHECK);
+
+			// log and output
+			split_count++;
+			if (verbose && split_count % 100 == 0)
+			{
+				std::cout << std::format(
+				  "\r{} segments are split. {} segments are missing.", split_count,
+				  missing_segments.size());
+				std::fflush(stdout);
+			}
 		}
 		// Find new missing edges around touched vertices
 		for (index_t eid = 0; eid < plc.numEdges(); eid++)
 		{
 			const PLCEdge &e = plc.edge(eid);
 			if (!is_valid_idx(e.child_id) && e.type != PLCEdgeType::FLAT_EDGE &&
-			    tet_mesh.isMarked(e.ep0(), VTX_MARK::TOUCHED) &&
-			    tet_mesh.isMarked(e.ep1(), VTX_MARK::TOUCHED) &&
+			    tet_mesh.isMarked(e.ep0(), VTX_MARK::TO_CHECK) &&
+			    tet_mesh.isMarked(e.ep1(), VTX_MARK::TO_CHECK) &&
 			    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
 			{
 				missing_segments.push_back(eid);
 			}
 		}
-		// clear the `TOUCHED` mark for all vertices
+		// clear the `TO_CHECK` mark for all vertices
 		for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
-			tet_mesh.unmark(vid, VTX_MARK::TOUCHED);
+			tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
 	}
+	if (verbose) // output a new line
+		std::cout << std::endl;
 
 	tet_mesh.removeDeletedTets();
 }
@@ -123,6 +145,8 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 	DelTet DT(tet_mesh);
 	DT.insertVertex(new_vid, curr_tet);
 
+	OMC_EXPENSIVE_ASSERT(DT.localVerify(new_vid),
+	                     "Invalid Delaunay tetrahedralization.");
 	return new_vid;
 }
 
@@ -139,9 +163,11 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
  * @param ref_tid index to the tetrahedron containing the reference encroaching
  * point
  * @see Section 3.3 Segment recovery, in [Robust CDT].
- * @note Rely on mark `TOUCHED` to avoid visiting the same tetrahedron and the
+ * @note
+ * Rely on mark `TOUCHED` to avoid visiting the same tetrahedron and the
  * same vertex multiple times.
- * @note ==NOT THREAD SAFE==
+ * Relay on mark `ENCROACHED` to mark the encroaching vertices.
+ * Not thread safe.
  */
 template <typename Traits>
 void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
@@ -220,7 +246,7 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 			index_t neigh_idoff = tet_mesh.tetNeigh(tet_idoff + j);
 
 			if (tet_mesh.isMarked(neigh_idoff, TET_MARK::TOUCHED) ||
-			    tet_mesh.tetNode(neigh_idoff) == TetMesh::INFINITE_VERTEX)
+			    !tet_mesh.isFiniteTet(neigh_idoff))
 				continue;
 
 			if (total_encroached - is_encroached[j] > 0)
@@ -409,10 +435,9 @@ bool ConstraintsRecover<Traits>::inSphere(const GPoint &a, const GPoint &b,
 #ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
 	return InSphere()(a, b, c) >= Sign::ZERO;
 #else
-	OMC_EXPENSIVE_ASSERT(a.is_explicit() && b.is_explicit() && c.is_explicit(),
-	                     "Input points contain implicit points.");
-	return (c - a).as_vec().sqrnorm() + (c - b).as_vec().sqrnorm() <=
-	       (a - b).as_vec().sqrnorm();
+	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
+	return (c_ep - a_ep).sqrnorm() + (c_ep - b_ep).sqrnorm() <=
+	       (a_ep - b_ep).sqrnorm();
 #endif
 }
 
@@ -429,13 +454,10 @@ bool ConstraintsRecover<Traits>::largerSphere(const GPoint &a, const GPoint &b,
 #ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
 	return InSphere().largerSphere(a, b, c, d) == Sign::POSITIVE;
 #else
-	OMC_EXPENSIVE_ASSERT((a.is_explicit() && b.is_explicit()) &&
-	                       (c.is_explicit() && d.is_explicit()),
-	                     "Input points contain implicit points.");
-
 	// calculate vectors between points
-	Vec3 ac = (c - a).to_vec(), bc = (c - b).to_vec();
-	Vec3 ad = (d - a).to_vec(), bd = (d - b).to_vec();
+	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c), d_ep = ToEP()(d);
+	Vec3   ac = (c_ep - a_ep), bc = (c_ep - b_ep);
+	Vec3   ad = (d_ep - a_ep), bd = (d_ep - b_ep);
 
 	// let the angle between ac and bc be <abc>, and the angle between ad and bd
 	// be <abd>.
@@ -465,9 +487,8 @@ bool ConstraintsRecover<Traits>::isLessThanDistance(const GPoint &a,
 #ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
 	return SquaredDistance3D()(a, b, c) == Sign::NEGATIVE;
 #else
-	OMC_EXPENSIVE_ASSERT(a.is_explicit() && b.is_explicit() && c.is_explicit(),
-	                     "Input points contain implicit points.");
-	return (b - a).as_vec().sqrnorm() < (c - a).as_vec().sqrnorm();
+	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
+	return (b_ep - a_ep).sqrnorm() < (c_ep - a_ep).sqrnorm();
 #endif
 }
 
@@ -485,9 +506,8 @@ bool ConstraintsRecover<Traits>::isLessThanHalfDistance(const GPoint &a,
 	// scale the squared distance between a and b by 4 to avoid square root.
 	return SquaredDistance3D()(a, b, c, /*ab_scale*/ 4) == Sign::NEGATIVE;
 #else
-	OMC_EXPENSIVE_ASSERT(a.is_explicit() && b.is_explicit() && c.is_explicit(),
-	                     "Input points contain implicit points.");
-	return (b - a).as_vec().sqrnorm() * 4 < (c - a).as_vec().sqrnorm();
+	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
+	return (b_ep - a_ep).sqrnorm() * 4 < (c_ep - a_ep).sqrnorm();
 #endif
 }
 
@@ -509,10 +529,6 @@ std::pair<double, double>
 ConstraintsRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1,
                                             index_t ep0, index_t ep1) const
 {
-	OMC_EXPENSIVE_ASSERT(
-	  (oep0 != ep0 && oep0 != ep1) || (oep1 != ep0 && oep1 != ep1),
-	  "Endpoints of the original edge and the sub-edge are not distinct.");
-
 	double t0 = -1.0, t1 = -1.0;
 
 	// calculate the interpolation parameter for `ep0`
@@ -526,7 +542,7 @@ ConstraintsRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1,
 		t0 = 1.0 - gpnt(ep0).LNC().T();
 	else
 	{
-		OMC_ASSERT(false, "The sub-edge is not a part of the original edge.");
+		OMC_THROW_RUNTIME_ERROR("The sub-edge is not a part of the original edge.");
 	}
 
 	// calculate the interpolation parameter for `ep1`
@@ -540,7 +556,7 @@ ConstraintsRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1,
 		t1 = 1.0 - gpnt(ep1).LNC().T();
 	else
 	{
-		OMC_ASSERT(false, "The sub-edge is not a part of the original edge.");
+		OMC_THROW_RUNTIME_ERROR("The sub-edge is not a part of the original edge.");
 	}
 
 	OMC_EXPENSIVE_ASSERT(t0 >= 0.0 && t0 <= 1.0 && t1 >= 0.0 && t1 <= 1.0,
@@ -612,14 +628,13 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_noAc(
 	{
 		oep0 = ep0, oep1 = ep1;
 	}
-	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit() &&
-	                       gpnt(ref_vid).is_explicit(),
+	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
 	                     "Input points contain implicit points.");
 	// Get the vectors of related points.
 	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
 	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
-	Vec3 ref_v    = AsEP()(gpnt(ref_vid)).as_vec();
-	Vec3 end_v    = ToEP()(gpnt(reverse ? ep1 : ep0)).to_vec();
+	Vec3 ref_v    = ToEP()(gpnt(ref_vid)).as_vec();
+	Vec3 end_v    = ToEP()(gpnt(reverse ? ep1 : ep0)).as_vec();
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
 	// Parameterize the sphere radius to the original segment
@@ -670,25 +685,21 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_oneAc(
 	{
 		oep0 = ep0, oep1 = ep1;
 	}
-	OMC_EXPENSIVE_ASSERT(ep0 == oep0, "The acute vertex should be remembered in "
-	                                  "the first position in all sub-edges.");
-	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit() &&
-	                       gpnt(ref_vid).is_explicit(),
+	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
 	                     "Input points contain implicit points.");
 	// Get the vectors of related points.
 	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
 	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
-	Vec3 ref_v    = AsEP()(gpnt(ref_vid)).as_vec();
+	Vec3 ref_v    = ToEP()(gpnt(ref_vid)).as_vec();
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
-	OMC_EXPENSIVE_ASSERT(t0 == 0.0, "The acute vertex's t should be 0.");
 	// Parameterize the sphere radius to the original segment
 	double radius_t =
 	  std::sqrt((ref_v - oe0_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
-	// why?
-	double dv = (t1 - t0) * 0.2;
-	if (radius_t <= (t0 + dv) || radius_t >= (t1 - dv))
-	{
+	// Ensure that the intersection point is inside the edge
+	double eps = (t1 - t0) * 0.2;
+	if (radius_t <= (t0 + eps) || radius_t >= (t1 - eps))
+	{ // Otherwise return the middle point
 		radius_t = (t0 + t1) * 0.5;
 	}
 
@@ -1375,6 +1386,29 @@ void ConstraintsRecover<Traits>::expandCavity(const PLCFace        &plc_face,
 		new_vertex = InvalidIndex;
 }
 
+/**
+ * @brief Embeds a meshed cavity into the global tetrahedral mesh.
+ *
+ * This function takes a local tetrahedral mesh representing a cavity and embeds
+ * it into a global tetrahedral mesh. It performs the following steps:
+ *
+ * 1. Maps global corners to local ones and identifies boundary corners.
+ *
+ * 2. Classifies local tetrahedra as inside or outside based on boundary
+ * corners.
+ *
+ * 3. Removes outside tetrahedra from the local mesh.
+ *
+ * 4. Embeds the local mesh into the global mesh.
+ *
+ * 5. Collects base faces (corners) that are boundary faces of the cavity.
+ *
+ * @tparam Traits The traits class providing necessary types and constants.
+ * @param local_mesh The local tetrahedral mesh representing the cavity.
+ * @param vertices A vector of vertex indices in the global mesh.
+ * @param faces A vector of face indices in the global mesh.
+ * @param base A vector to store the base faces (corners) of the cavity.
+ */
 template <typename Traits>
 void ConstraintsRecover<Traits>::embedMeshedCavity(
   TetMesh &local_mesh, const AuxVector64<index_t> &vertices,

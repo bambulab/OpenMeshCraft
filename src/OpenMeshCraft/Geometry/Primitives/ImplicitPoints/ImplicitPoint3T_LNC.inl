@@ -8,9 +8,9 @@ namespace OMC {
 template <typename IT, typename ET>
 ImplicitPoint3T_LNC<IT, ET>::ImplicitPoint3T_LNC() noexcept
   : GP(PointType::LNC)
-	, ip(nullptr)
-	, iq(nullptr)
-	, it(0)
+  , ip(nullptr)
+  , iq(nullptr)
+  , it(0)
 {
 }
 
@@ -24,7 +24,7 @@ ImplicitPoint3T_LNC<IT, ET>::ImplicitPoint3T_LNC(const EP &_p, const EP &_q,
 {
 #ifdef OMC_CACHE_DF
 	if (!lambda3d_LNC_interval<IT>(P().x(), P().y(), P().z(), Q().x(), Q().y(),
-	                               Q().z(), T(), m_d, m_lx, m_ly, m_lz))
+	                               Q().z(), T(), m_lx, m_ly, m_lz, m_d))
 		m_d = 0;
 
 	if (m_d.is_negative())
@@ -106,7 +106,7 @@ bool ImplicitPoint3T_LNC<IT, ET>::getIntervalLambda(IT &lx, IT &ly, IT &lz,
 
 	// otherwise, calculate the lambda values
 	lambda3d_LNC_interval<IT>(P().x(), P().y(), P().z(), Q().x(), Q().y(),
-	                          Q().z(), T(), d, lx, ly, lz);
+	                          Q().z(), T(), lx, ly, lz, d);
 	if (d.is_negative())
 		lx.invert(), ly.invert(), lz.invert(), d.invert();
 
@@ -140,7 +140,7 @@ void ImplicitPoint3T_LNC<IT, ET>::getExactLambda(ET &lx, ET &ly, ET &lz,
 
 	// otherwise, calculate the lambda values
 	lambda3d_LNC_exact<ET>(P().x(), P().y(), P().z(), Q().x(), Q().y(), Q().z(),
-	                       T(), d, lx, ly, lz);
+	                       T(), lx, ly, lz, d);
 	if (OMC::sign(d) == Sign::NEGATIVE)
 		lx = -lx, ly = -ly, lz = -lz, d = -d;
 
@@ -180,7 +180,7 @@ void ImplicitPoint3T_LNC<IT, ET>::getExpansionLambda(NT **lx, int &lx_len,
 
 	// otherwise, calculate the lambda values
 	lambda3d_LNC_expansion(P().x(), P().y(), P().z(), Q().x(), Q().y(), Q().z(),
-	                       T(), d, d_len, lx, lx_len, ly, ly_len, lz, lz_len);
+	                       T(), lx, lx_len, ly, ly_len, lz, lz_len, d, d_len);
 	expansionObject o;
 
 	// compress the expansion if necessary

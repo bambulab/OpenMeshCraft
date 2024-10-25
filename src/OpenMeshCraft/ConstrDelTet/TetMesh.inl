@@ -8,7 +8,8 @@ template <typename Traits>
 TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &points)
   : verts(points)
 {
-	inc_tet.resize(verts.size(), InvalidIndex);
+	inc_tet.resize(sizeVerts(), InvalidIndex);
+	vtx_mark.resize(sizeVerts(), 0);
 }
 
 /**
@@ -237,24 +238,24 @@ bool TetrahedralMesh<Traits>::faceExists(index_t vid0, index_t vid1,
  * @brief Collect tetrahedra adjacent to the vertex `vid` and store them in the
  * container `tets`.
  * @param [in] vid Vertex index
- * @param [out] tets Container to store the adjacent tetrahedra (tetrahedron
+ * @param [out] adj_tets Container to store the adjacent tetrahedra (tetrahedron
  * idoff)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
  * the same vertex multiple times. NOT THREAD SAFE.
  */
 template <typename Traits>
 template <typename ContainerT>
-void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets) const
+void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &adj_tets) const
 {
-	OMC_EXPENSIVE_ASSERT(vid < verts.size(), "Invalid vertex index.");
+	OMC_EXPENSIVE_ASSERT(vid < sizeVerts(), "Invalid vertex index.");
 	index_t tet_idoff = toIdOff(incTet(vid));
 
-	tets.push_back(tet_idoff);
+	adj_tets.push_back(tet_idoff);
 	mark(tet_idoff, TET_MARK::VISITED);
 
-	for (index_t i = 0; i < tets.size(); i++)
+	for (index_t i = 0; i < adj_tets.size(); i++)
 	{
-		index_t curr_idoff = tets[i];
+		index_t curr_idoff = adj_tets[i];
 		// visit neighbors
 		for (index_t j = 0; j < 4; j++)
 		{
@@ -266,29 +267,29 @@ void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &tets) const
 			// skip infinite tetrahedra and visited tetrahedra
 			if (isFiniteTet(neigh_idoff) && !isMarked(neigh_idoff, TET_MARK::VISITED))
 			{
-				tets.push_back(neigh_idoff);
+				adj_tets.push_back(neigh_idoff);
 				mark(neigh_idoff, TET_MARK::VISITED);
 			}
 		}
 	}
 	// unmark visited tetrahedra
-	for (index_t idoff : tets)
+	for (index_t idoff : adj_tets)
 		unmark(idoff, TET_MARK::VISITED);
 }
 
 /**
  * @brief Collect vertices adjacent to the vertex `vid` and store them in the
- * container `verts`.
+ * container `adj_verts`.
  * @param [in] vid Vertex index
- * @param [out] verts Container to store the adjacent vertices (vertex id)
+ * @param [out] adj_verts Container to store the adjacent vertices (vertex id)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
  * the same vertex multiple times. NOT THREAD SAFE.
  */
 template <typename Traits>
 template <typename ContainerT>
-void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
+void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &adj_verts) const
 {
-	OMC_EXPENSIVE_ASSERT(vid < verts.size(), "Invalid vertex index.");
+	OMC_EXPENSIVE_ASSERT(vid < sizeVerts(), "Invalid vertex index.");
 	index_t tet_idoff = toIdOff(incTet(vid));
 
 	AuxVector64<index_t> tets;
@@ -305,11 +306,11 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
 			// skip the corner at `vid`
 			if (curr_vid == vid)
 				continue;
-			// add the corner vertex into `verts`
+			// add the corner vertex into `adj_verts`
 			if (!isMarked(curr_vid, VTX_MARK::VISITED))
 			{
 				mark(curr_vid, VTX_MARK::VISITED);
-				verts.push_back(curr_vid);
+				adj_verts.push_back(curr_vid);
 			}
 			// visit neighbors at other corners
 			index_t neigh_idoff = clipId(tetNeigh(curr_idoff + j));
@@ -325,7 +326,7 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
 	for (index_t idoff : tets)
 		unmark(idoff, TET_MARK::VISITED);
 	// unmark visited vertices
-	for (index_t vi : verts)
+	for (index_t vi : adj_verts)
 		unmark(vi, VTX_MARK::VISITED);
 }
 
@@ -334,7 +335,7 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
  * and `vid1`, and store in `tets`.
  * @param [in] vid0 Vertex index
  * @param [in] vid1 Vertex index
- * @param [out] tets Container to store the adjacent tetrahedra (tetrahedron
+ * @param [out] adj_tets Container to store the adjacent tetrahedra (tetrahedron
  * idoff)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
  * the same vertex multiple times. NOT THREAD SAFE.
@@ -342,19 +343,19 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &verts) const
 template <typename Traits>
 template <typename ContainerT>
 void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1,
-                                 ContainerT &tets) const
+                                 ContainerT &adj_tets) const
 {
-	OMC_EXPENSIVE_ASSERT(vid0 < verts.size() && vid1 < verts.size(),
+	OMC_EXPENSIVE_ASSERT(vid0 < sizeVerts() && vid1 < sizeVerts(),
 	                     "Invalid vertex index.");
 	// find tetrahedra adjacent to the vertex `vid0`
-	VT(vid0, tets);
+	VT(vid0, adj_tets);
 	// keep the tetrahedra adjacent to the vertex `vid1`
-	for (index_t i = 0; i < tets.size(); /*`i` is updated in the loop*/)
+	for (index_t i = 0; i < adj_tets.size(); /*`i` is updated in the loop*/)
 	{
-		if (!tetHasVertex(tets[i], vid1))
+		if (!tetHasVertex(adj_tets[i], vid1))
 		{
-			std::swap(tets[i], tets.back());
-			tets.pop_back();
+			std::swap(adj_tets[i], adj_tets.back());
+			adj_tets.pop_back();
 		}
 		else
 			i++;
@@ -530,9 +531,11 @@ template <typename Traits>
 void TetrahedralMesh<Traits>::newVtx(OMC_UNUSED index_t new_vid)
 {
 	inc_tet.emplace_back(InvalidIndex);
+	vtx_mark.emplace_back(0);
 
-	OMC_EXPENSIVE_ASSERT(verts.size() == new_vid, "vertices size mismatch.");
-	OMC_EXPENSIVE_ASSERT(inc_tet.size() == new_vid, "vertices size mismatch.");
+	OMC_EXPENSIVE_ASSERT(sizeVerts() == new_vid + 1, "size mismatch.");
+	OMC_EXPENSIVE_ASSERT(inc_tet.size() == new_vid + 1, "size mismatch.");
+	OMC_EXPENSIVE_ASSERT(vtx_mark.size() == new_vid + 1, "size mismatch.");
 }
 
 /**
@@ -795,15 +798,15 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
 		// (a) the outer half-space defined by the supporting plane of the boundary
 		// face (excluding the supporting plane) and (b) the boundary face itself.
 
-		OMC_EXPENSIVE_ASSERT(!CollinearPoints3()(epnt(tet_nodes[0]),
-		                                         epnt(tet_nodes[1]),
-		                                         epnt(tet_nodes[2])),
+		OMC_EXPENSIVE_ASSERT(!CollinearPoints3()(gpnt(tet_nodes[0]),
+		                                         gpnt(tet_nodes[1]),
+		                                         gpnt(tet_nodes[2])),
 		                     "The boundary face is degenerate.");
 
 		// We first check the position of the vertex relative to the supporting
 		// plane of the boundary face.
-		Sign ori = Orient3D()(epnt(tet_nodes[0]), epnt(tet_nodes[1]),
-		                      epnt(tet_nodes[2]), epnt(vid));
+		Sign ori = Orient3D()(gpnt(tet_nodes[0]), gpnt(tet_nodes[1]),
+		                      gpnt(tet_nodes[2]), gpnt(vid));
 		// If the vertex is not on the plane, it must be located either outside or
 		// inside, indicating whether it is inside or outside the circumsphere.
 		if (ori != Sign::ZERO)
@@ -819,7 +822,7 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
 		                       tetNode(tetNeigh(tet_id + 3))};
 
 		OMC_EXPENSIVE_ASSERT(
-		  Orient3D()(epnt(nn[0]), epnt(nn[1]), epnt(nn[2]), epnt(nn[3])) ==
+		  Orient3D()(gpnt(nn[0]), gpnt(nn[1]), gpnt(nn[2]), gpnt(nn[3])) ==
 		    Sign::NEGATIVE,
 		  "The neighboring tetrahedron is either degenerate or flipped.");
 
@@ -831,9 +834,9 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
 	{
 		// For a finite tetrahedron, check the inSphere predicate.
 
-		OMC_EXPENSIVE_ASSERT(Orient3D()(epnt(tet_nodes[0]), epnt(tet_nodes[1]),
-		                                epnt(tet_nodes[2]),
-		                                epnt(tet_nodes[3])) == Sign::POSITIVE,
+		OMC_EXPENSIVE_ASSERT(Orient3D()(gpnt(tet_nodes[0]), gpnt(tet_nodes[1]),
+		                                gpnt(tet_nodes[2]),
+		                                gpnt(tet_nodes[3])) == Sign::POSITIVE,
 		                     "The tetrahedron is either degenerate or flipped.");
 
 		return vertexInTetSphere(tet_nodes, vid);
@@ -849,8 +852,8 @@ template <typename Traits>
 bool TetrahedralMesh<Traits>::vertexInTetSphere(const index_t *node,
                                                 index_t        vid) const
 {
-	Sign ori = InSphere()(epnt(node[0]), epnt(node[1]), epnt(node[2]),
-	                      epnt(node[3]), epnt(vid));
+	Sign ori = InSphere()(gpnt(node[0]), gpnt(node[1]), gpnt(node[2]),
+	                      gpnt(node[3]), gpnt(vid));
 	if (ori != Sign::ZERO)
 		return ori == Sign::POSITIVE;
 
@@ -895,14 +898,14 @@ Sign TetrahedralMesh<Traits>::symbolicPerturbation(index_t *indices) const
 	} while (count);
 
 	// Orientation test on the last four vertices (excluding the first vertex)
-	Sign ori = Orient3D()(epnt(indices[1]), epnt(indices[2]), epnt(indices[3]),
-	                      epnt(indices[4]));
+	Sign ori = Orient3D()(gpnt(indices[1]), gpnt(indices[2]), gpnt(indices[3]),
+	                      gpnt(indices[4]));
 	if (ori != Sign::ZERO)
 		return (swaps % 2) ? reverse_sign(ori) : ori;
 
 	// Orientation test on the vertices except the second vertex
-	ori = Orient3D()(epnt(indices[0]), epnt(indices[2]), epnt(indices[3]),
-	                 epnt(indices[4]));
+	ori = Orient3D()(gpnt(indices[0]), gpnt(indices[2]), gpnt(indices[3]),
+	                 gpnt(indices[4]));
 	return (swaps % 2) ? ori : reverse_sign(ori);
 }
 
