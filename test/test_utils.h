@@ -2,11 +2,13 @@
 
 /* OpenMeshCraft */
 
-#include "OpenMeshCraft/Mesh/IO/MEDITWriter.h"
 #include "OpenMeshCraft/Mesh/IO/OBJReader.h"
 #include "OpenMeshCraft/Mesh/IO/OBJWriter.h"
 #include "OpenMeshCraft/Mesh/IO/STLReader.h"
 #include "OpenMeshCraft/Mesh/IO/STLWriter.h"
+
+#include "OpenMeshCraft/Mesh/IO/MEDITWriter.h"
+#include "OpenMeshCraft/Mesh/IO/VTKWriter.h"
 
 #include "OpenMeshCraft/Mesh/TetSoup.h"
 #include "OpenMeshCraft/Mesh/TriSoup.h"
@@ -99,6 +101,7 @@ using STLReader = OMC::STLReader<TriSoupTraits>;
 using STLWriter = OMC::STLWriter<TriSoupTraits>;
 
 using MEDITWriter = OMC::MEDITWriter<TetSoupTraits>;
+using VTKWriter   = OMC::VTKWriter<TetSoupTraits>;
 
 using IOOptions = OMC::IOOptions;
 
@@ -175,6 +178,13 @@ inline void write_mesh(const std::string &filename, const TetPoints &points,
 	if (OMC::ends_with(filename, ".mesh") || OMC::ends_with(filename, ".MESH"))
 	{
 		MEDITWriter writer;
+		writer.m_points     = std::move(points);
+		writer.m_tetrahedra = std::move(tetrahedra);
+		writer.write(filename, io_options, DBL_DIG);
+	}
+	else if (OMC::ends_with(filename, ".vtk") || OMC::ends_with(filename, ".VTK"))
+	{
+		VTKWriter writer;
 		writer.m_points     = std::move(points);
 		writer.m_tetrahedra = std::move(tetrahedra);
 		writer.write(filename, io_options, DBL_DIG);

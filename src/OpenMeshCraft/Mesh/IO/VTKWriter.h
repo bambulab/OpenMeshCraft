@@ -16,12 +16,12 @@
 namespace OMC {
 
 /**
- * @brief Write tet soup to an MEDIT file.
+ * @brief Write tetrahedra soup to an VTK file.
  * @tparam Traits Traits define types for points, normals, and triangles.
- * MEDIT writer will define variables of these types to store results.
+ * VTK writer will define variables of these types to store results.
  */
 template <typename Traits>
-class MEDITWriter
+class VTKWriter
 {
 public:
 	/** @brief Point type. */
@@ -66,20 +66,20 @@ public:
 	Tetrahedra m_tetrahedra; ///< triangle faces
 
 private:
-	std::string get_extensions() const { return "mesh"; }
+	std::string get_extensions() const { return "vtk"; }
 
 	bool save_to_stream(std::ostream &out);
 
 private:
-	std::string path, msh_name;
+	std::string path, vtk_name;
 
 	IOOptions user_options;
 };
 
-extern template class MEDITWriter<TetSoupTraits>;
+extern template class VTKWriter<TetSoupTraits>;
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "MEDITWriter.inl"
+	#include "VTKWriter.inl"
 #endif

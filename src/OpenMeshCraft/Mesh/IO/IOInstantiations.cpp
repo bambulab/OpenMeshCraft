@@ -4,6 +4,7 @@
 #include "STLWriter.h"
 
 #include "MEDITWriter.h"
+#include "VTKWriter.h"
 
 namespace OMC {
 
@@ -13,5 +14,6 @@ template class STLReader<TriSoupTraits>;
 template class STLWriter<TriSoupTraits>;
 
 template class MEDITWriter<TetSoupTraits>;
+template class VTKWriter<TetSoupTraits>;
 
 } // namespace OMC

@@ -84,7 +84,7 @@ TEST_F(test_ConstrDelTet, TestIfCrash)
 	if (config.get<bool>("write"))
 	{
 		// The desired extension
-		std::string extension    = ".mesh";
+		std::string extension    = ".vtk";
 		// Extract the file stem (filename without extension)
 		std::string file_stem    = std::filesystem::path(filename).stem().string();
 		// Create the new filename with the desired extension

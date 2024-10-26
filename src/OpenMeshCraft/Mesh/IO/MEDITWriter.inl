@@ -10,7 +10,7 @@ bool MEDITWriter<Traits>::write(const std::string &filename, IOOptions &opt,
 {
 	std::fstream out(filename.c_str(), std::ios_base::out);
 
-	OMC_THROW_INVALID_ARGUMENT_IF(!out, "[OBJWriter] : cannot open file {}",
+	OMC_THROW_INVALID_ARGUMENT_IF(!out, "[MEDIT Writer] : cannot open file {}",
 	                              filename);
 
 	user_options = opt;
@@ -41,19 +41,19 @@ bool MEDITWriter<Traits>::write(const std::string &filename, IOOptions &opt,
 		if (dotposition == std::string::npos)
 		{
 			path     = "./";
-			obj_name = filename;
+			msh_name = filename;
 		}
 		else
 		{
 			path     = filename.substr(0, dotposition + 1);
-			obj_name = filename.substr(dotposition + 1);
+			msh_name = filename.substr(dotposition + 1);
 		}
 
 		// remove the file extension
-		dotposition = obj_name.find_last_of(".");
+		dotposition = msh_name.find_last_of(".");
 
 		if (dotposition != std::string::npos)
-			obj_name = obj_name.substr(0, dotposition);
+			msh_name = msh_name.substr(0, dotposition);
 	}
 
 	bool result = save_to_stream(out);
