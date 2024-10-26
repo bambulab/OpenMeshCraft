@@ -125,7 +125,7 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 	if (edge.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
 		curr_tet = TetMesh::toIdOff(tet_mesh.incTet(edge.ep0()));
-		new_vid  = splitAtMiddle(eid);
+		new_vid  = splitSegment_BothAcuteVertex(eid);
 	}
 	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
 	{
@@ -210,11 +210,11 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 			{
 				tet_mesh.mark(vid, VTX_MARK::ENCROACHED);
 				// check if it is the reference encroaching point
-				if (ref_vid == InvalidIndex || largerSphere(p0, p1, *ref_p, gpnt(vid)))
+				if (ref_vid == InvalidIndex || largerSphere(p0, p1, curr_p, *ref_p))
 				{
 					ref_vid = vid;
 					ref_tid = tet_idoff;
-					ref_p   = &gpnt(ref_vid);
+					ref_p   = &curr_p;
 				}
 			}
 		}
@@ -281,7 +281,7 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
  * @return The index to the splitting point.
  */
 template <typename Traits>
-index_t ConstraintsRecover<Traits>::splitAtMiddle(index_t eid)
+index_t ConstraintsRecover<Traits>::splitSegment_BothAcuteVertex(index_t eid)
 {
 	const PLCEdge &edge    = plc.edge(eid);
 	// Get the new point
@@ -542,7 +542,7 @@ ConstraintsRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1,
 		t0 = 1.0 - gpnt(ep0).LNC().T();
 	else
 	{
-		OMC_THROW_RUNTIME_ERROR("The sub-edge is not a part of the original edge.");
+		OMC_ASSERT(false, "The sub-edge is not a part of the original edge.");
 	}
 
 	// calculate the interpolation parameter for `ep1`
@@ -556,7 +556,7 @@ ConstraintsRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1,
 		t1 = 1.0 - gpnt(ep1).LNC().T();
 	else
 	{
-		OMC_THROW_RUNTIME_ERROR("The sub-edge is not a part of the original edge.");
+		OMC_ASSERT(false, "The sub-edge is not a part of the original edge.");
 	}
 
 	OMC_EXPENSIVE_ASSERT(t0 >= 0.0 && t0 <= 1.0 && t1 >= 0.0 && t1 <= 1.0,
@@ -675,7 +675,8 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_oneAc(
 	const PLCEdge &e   = plc.edge(eid);
 	// Get the endpoints of the edge and its original edge.
 	index_t        ep0 = e.ep0(), ep1 = e.ep1();
-	index_t        oep0 = InvalidIndex, oep1 = InvalidIndex;
+	index_t        acute_vid = e.acute_vid;
+	index_t        oep0, oep1;
 	if (is_valid_idx(e.ancestor_id))
 	{
 		const PLCEdge &oe = plc.edge(e.ancestor_id);
@@ -685,8 +686,13 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_oneAc(
 	{
 		oep0 = ep0, oep1 = ep1;
 	}
+	OMC_EXPENSIVE_ASSERT(
+	  acute_vid == oep0 || acute_vid == oep1,
+	  "The acute vertex is not an endpoint of the original edge.");
 	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
 	                     "Input points contain implicit points.");
+	if (acute_vid == oep1)	// swap the acute vertex to oep0
+		std::swap(oep0, oep1);
 	// Get the vectors of related points.
 	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
 	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();

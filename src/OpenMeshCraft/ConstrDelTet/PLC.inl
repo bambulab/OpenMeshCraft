@@ -15,6 +15,7 @@ PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(index_t e0, index_t e1)
   , ep(unique_pair(e0, e1))
   , ancestor_id(InvalidIndex)
   , child_id(InvalidIndex)
+	, acute_vid(InvalidIndex)
 {
 }
 
@@ -28,11 +29,13 @@ template <typename Traits>
 PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(PLCEdgeType _type, index_t e0,
                                                  index_t e1,
                                                  index_t _ancestor_id,
-                                                 index_t _child_id)
+                                                 index_t _child_id,
+                                                 index_t _acute_vid)
   : type(_type)
   , ep{e0, e1}
   , ancestor_id(_ancestor_id)
   , child_id(_child_id)
+  , acute_vid(_acute_vid)
 {
 }
 
@@ -86,7 +89,7 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 			PLCEdge &e = plc_edges[ti_v + j];
 			// Set type and endpoints
 			e.type     = PLCEdgeType::UNDETERMINED;
-			e.ep = unique_pair(triangles[ti_v + j], triangles[(ti_v + j + 1) % 3]);
+			e.ep = unique_pair(triangles[ti_v + j], triangles[ti_v + (j + 1) % 3]);
 			// Set the ancestor to remember where the incident triangles are stored.
 			// The ancestor will be clear after initialization.
 			e.ancestor_id = ti_v + j;
@@ -210,9 +213,15 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 		  (size_t)is_acute_vertex[e.ep0()] + (size_t)is_acute_vertex[e.ep1()];
 		// classify the edge type based on the number of acute vertices
 		if (acute_vertex_count == 0)
+		{
 			e.type = PLCEdgeType::NO_ACUTE_VERTEX;
+			e.acute_vid = InvalidIndex;
+		}
 		else if (acute_vertex_count == 2)
+		{
 			e.type = PLCEdgeType::BOTH_ACUTE_VERTEX;
+			e.acute_vid = InvalidIndex;
+		}
 		else
 		{
 			e.type = PLCEdgeType::ONE_ACUTE_VERTEX;
@@ -220,12 +229,17 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 			{ // swap two endpoints to make the acute vertex at the first position
 				e.swapEp();
 			}
+			e.acute_vid = e.ep0();
 		}
 	}
 }
 
 /**
- * @brief
+ * @brief Initializes PLC faces with ordered sub-edges.
+ * 
+ * This function initializes PLC faces with ordered sub-edges surrounding the
+ * PLC face. Triangles across the flat edges are merged into one PLC face.
+ * The sub-edges are sorted by their endpoints in a connected manner.
  *
  * @see
  * - [Robust CDT] Diazzi, L., Panozzo, D., Vaxman, A. and Attene, M.
@@ -655,20 +669,22 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 	// create two new edge
 	if (e.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
+		OMC_EXPENSIVE_ASSERT(!is_valid_idx(e.ancestor_id), "Not an ancestor edge.");
 		// create two new edges with the type `ONE_ACUTE_VERTEX`
 		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep0, vid, ancestor_id,
-		                       /*child_id*/ InvalidIndex);
+		                       /*child_id*/ InvalidIndex, /*avute_vid*/ ep0);
 		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep1, vid, ancestor_id,
-		                       /*child_id*/ InvalidIndex);
+		                       /*child_id*/ InvalidIndex, /*acute_vid*/ ep1);
 	}
 	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
 	{
-		PLCEdgeType new_type = e.type;
+		PLCEdgeType new_type  = e.type;
+		index_t     acute_vid = e.acute_vid;
 		// create two new edges inherit the same edge type
 		plc_edges.emplace_back(new_type, ep0, vid, ancestor_id,
-		                       /*child_id*/ InvalidIndex);
+		                       /*child_id*/ InvalidIndex, acute_vid);
 		plc_edges.emplace_back(new_type, vid, ep1, ancestor_id,
-		                       /*child_id*/ InvalidIndex);
+		                       /*child_id*/ InvalidIndex, acute_vid);
 	}
 	edge(eid).child_id = plc_edges.size() - 2;
 }

@@ -206,6 +206,8 @@ public:
 
 	/* Operations about deletion */
 
+	void markInfiniteTetsDeleted();
+
 	void markTetAsDeleted(index_t idoff);
 	void removeDeletedTets();
 

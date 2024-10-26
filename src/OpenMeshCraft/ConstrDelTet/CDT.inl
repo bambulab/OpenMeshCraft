@@ -215,7 +215,7 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	DelaunayTet<Traits> DT(*tet_mesh);
 
 	OMC_CDT_START_ELAPSE(start_dt);
-	DT.tetrahedralize(/*remove_infinite_tets*/ false);
+	DT.tetrahedralize();
 	OMC_CDT_SAVE_ELAPSED(start_dt, dt_elapsed, "Delaunay tetrahedralization");
 
 	OMC_EXPENSIVE_ASSERT(DT.verify(),
@@ -234,6 +234,10 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	OMC_CDT_START_ELAPSE(start_face);
 	CR.faceRecovery();
 	OMC_CDT_SAVE_ELAPSED(start_face, face_elapsed, "Face recovery");
+
+	tet_mesh->markInfiniteTetsDeleted();
+	tet_mesh->removeDeletedTets();
+	cdt_out_tets = std::move(tet_mesh->tet_node);
 }
 
 template <typename Traits>
@@ -288,7 +292,7 @@ void ConstrDelTet_Impl<Traits>::computeExplicitResult(iPoints &final_points,
 	for (index_t t_id = 0; t_id < cdt_out_tets.size(); t_id += 4)
 	{
 		const index_t         *tet = &cdt_out_tets[t_id];
-		std::array<index_t, 4> out_tets;
+		std::array<index_t, 4> out_tet;
 		for (size_t i = 0; i < 4; i++)
 		{
 			index_t old_vid = tet[i];
@@ -296,12 +300,12 @@ void ConstrDelTet_Impl<Traits>::computeExplicitResult(iPoints &final_points,
 			{
 				vertex_index[old_vid] = num_vertices++;
 			}
-			out_tets[i] = vertex_index[old_vid];
+			out_tet[i] = vertex_index[old_vid];
 		}
 
 		// Assign the fixed vertex indices to the final tets
 		final_tets[t_id / 4] =
-		  iTet(out_tets[0], out_tets[1], out_tets[2], out_tets[3]);
+		  iTet(out_tet[0], out_tet[1], out_tet[2], out_tet[3]);
 	}
 
 	// Resize the final points container to match the number of vertices

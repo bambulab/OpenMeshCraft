@@ -90,7 +90,7 @@ public: /* Algorithms ******************************************************/
 	void findReferenceEncroachingPoint(index_t eid, index_t &ref_vid,
 	                                   index_t &ref_tid) const;
 
-	index_t splitAtMiddle(index_t eid);
+	index_t splitSegment_BothAcuteVertex(index_t eid);
 
 	index_t splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid);
 

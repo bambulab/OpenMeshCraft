@@ -5,7 +5,7 @@
 namespace OMC {
 
 template <typename Traits>
-void DelaunayTet<Traits>::tetrahedralize(bool remove_infinite_tets)
+void DelaunayTet<Traits>::tetrahedralize()
 {
 	// TODO sort vertices to tetrahedralize it faster.
 
@@ -17,9 +17,6 @@ void DelaunayTet<Traits>::tetrahedralize(bool remove_infinite_tets)
 	for (index_t i = 2; i < n_verts; i++)
 		if (i != init_k && i != init_l)
 			insertVertex(i, curr_tet);
-
-	if (remove_infinite_tets)
-		markInfiniteTetsDeleted();
 
 	mesh.removeDeletedTets();
 }
@@ -406,28 +403,6 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 	}
 
 	tet = mesh.tetNeigh(cavity_corners.back());
-}
-
-/**
- * @brief Marks tetrahedrons containing infinite vertices as deleted.
- */
-template <typename Traits>
-void DelaunayTet<Traits>::markInfiniteTetsDeleted()
-{
-	const size_t n = mesh.sizeTets();
-	for (index_t id = 0; id < n; id++)
-	{
-		index_t idoff = TetMesh::toIdOff(id);
-		if (mesh.isMarked(idoff, TetMesh::TET_MARK::TO_DELETE))
-			continue;
-		if (!mesh.isFiniteTet(idoff))
-		{
-			mesh.markTetAsDeleted(idoff);
-			OMC_EXPENSIVE_ASSERT(mesh.tetNeigh(mesh.tetNeigh(idoff + 3)) == idoff + 3,
-			                     "The neighbor relationship is incorrect.");
-			mesh.tetNeigh(mesh.tetNeigh(idoff + 3)) = InvalidIndex;
-		}
-	}
 }
 
 template <typename Traits>

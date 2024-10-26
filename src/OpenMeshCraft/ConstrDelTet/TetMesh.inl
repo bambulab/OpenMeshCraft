@@ -628,6 +628,28 @@ void TetrahedralMesh<Traits>::newTets(size_t                inc_size,
 }
 
 /**
+ * @brief Marks tetrahedrons containing infinite vertices as deleted.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::markInfiniteTetsDeleted()
+{
+	const size_t n = sizeTets();
+	for (index_t id = 0; id < n; id++)
+	{
+		index_t idoff = toIdOff(id);
+		if (isMarked(idoff, TET_MARK::TO_DELETE))
+			continue;
+		if (!isFiniteTet(idoff))
+		{
+			markTetAsDeleted(idoff);
+			OMC_EXPENSIVE_ASSERT(tetNeigh(tetNeigh(idoff + 3)) == idoff + 3,
+			                     "The neighbor relationship is incorrect.");
+			tetNeigh(tetNeigh(idoff + 3)) = InvalidIndex;
+		}
+	}
+}
+
+/**
  * @brief Mark a tetrahedron as deleted.
  * @param idoff tetrahedron's idoff = tet_id * 4 + node_offset
  */

@@ -21,10 +21,10 @@ public: /* Traits **********************************************************/
 	using AsEP = typename Traits::AsEP;
 	using ToEP = typename Traits::ToEP;
 
-	using Orient3D          = typename Traits::Orient3D;
-	using DotProduct3D      = typename Traits::DotProduct3D;
-	using InSphere          = typename Traits::InSphere;
-	using CollinearPoints3  = typename Traits::CollinearPoints3;
+	using Orient3D         = typename Traits::Orient3D;
+	using DotProduct3D     = typename Traits::DotProduct3D;
+	using InSphere         = typename Traits::InSphere;
+	using CollinearPoints3 = typename Traits::CollinearPoints3;
 
 public: /* Auxiliary data structures ****************************************/
 	/// The type of the edge in the PLC, determining the recovery strategy on
@@ -63,12 +63,15 @@ public: /* Auxiliary data structures ****************************************/
 		/// (set to InvalidIndex if this edge is not splitted)
 		/// (every edge is splitted to two subsequent child edges)
 		index_t     child_id;
+		/// The original acute vertex is need to be remembered when splitting the
+		/// edge with type `ONE_ACUTE_VERTEX`.
+		index_t     acute_vid;
 
 	public: /* Constructors *************************************************/
 		PLCEdge() = default;
 		PLCEdge(index_t e0, index_t e1);
 		PLCEdge(PLCEdgeType _type, index_t e0, index_t e1, index_t _ancestor_id,
-		        index_t _child_id);
+		        index_t _child_id, index_t _acute_vid);
 
 	public: /* Interfaces ***************************************************/
 		index_t       &ep0() { return ep.first; }
