@@ -443,7 +443,13 @@ void ConstraintsRecover<Traits>::faceRecovery()
 			if (expanded)
 				need_recursion = true;
 		}
-	} while (need_recursion);
+	} while (need_recursion && recover_fail == 0);
+	if (verbose) // output a new line
+	{
+		std::cout << std::endl;
+		if (recover_fail > 0)
+			std::cout << "Fail to recover " << recover_fail << " faces." << std::endl;
+	}
 }
 
 /**

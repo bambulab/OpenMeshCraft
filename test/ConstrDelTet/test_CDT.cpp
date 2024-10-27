@@ -178,16 +178,25 @@ TEST_F(test_ConstrDelTet, TestDataSet)
 			auto start = OMC::Logger::elapse_reset();
 
 			// Perform constrained Delaunay tetrahedralization
-			cdt.CDT();
+			try
+			{
+				cdt.CDT();
 
-			// Calculate elapsed time
-			double total_time = OMC::Logger::elapsed(start).count();
-			std::cout << total_time << " s\n";
+				// Calculate elapsed time
+				double total_time = OMC::Logger::elapsed(start).count();
+				std::cout << total_time << " s\n";
 
-			// Log the filename and processing time
-			log_file << std::fixed;
-			log_file << iter->path().filename().string();
-			log_file << "," << total_time << std::endl;
+				// Log the filename and processing time
+				log_file << std::fixed;
+				log_file << iter->path().filename().string();
+				log_file << "," << total_time << std::endl;
+			}
+			catch (...)
+			{
+				std::cout << "Error in processing " << iter->path().filename()
+				          << std::endl;
+				log_file << iter->path().filename().string() << ",error\n";
+			}
 		}
 	}
 	// Close the log file
