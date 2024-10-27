@@ -64,10 +64,12 @@ public: /* Traits **********************************************************/
 	using TET_MARK = typename TetMesh::TET_MARK;
 	using VTX_MARK = typename TetMesh::VTX_MARK;
 
-	using PLC         = PiecewiseLinearComplex<Traits>;
-	using PLCEdge     = typename PLC::PLCEdge;
-	using PLCFace     = typename PLC::PLCFace;
-	using PLCEdgeType = typename PLC::PLCEdgeType;
+	using PLC          = PiecewiseLinearComplex<Traits>;
+	using PLCEdge      = typename PLC::PLCEdge;
+	using PLCFace      = typename PLC::PLCFace;
+	using PLCEdgeType  = typename PLC::PLCEdgeType;
+	using SubEdgeRange = typename PLC::SubEdgeRange;
+	using BoundingEdge = typename PLC::BoundingEdge;
 
 	using DelTet = DelaunayTet<Traits>;
 

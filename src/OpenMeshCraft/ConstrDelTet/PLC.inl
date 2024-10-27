@@ -15,7 +15,7 @@ PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(index_t e0, index_t e1)
   , ep(unique_pair(e0, e1))
   , ancestor_id(InvalidIndex)
   , child_id(InvalidIndex)
-	, acute_vid(InvalidIndex)
+  , acute_vid(InvalidIndex)
 {
 }
 
@@ -214,12 +214,12 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 		// classify the edge type based on the number of acute vertices
 		if (acute_vertex_count == 0)
 		{
-			e.type = PLCEdgeType::NO_ACUTE_VERTEX;
+			e.type      = PLCEdgeType::NO_ACUTE_VERTEX;
 			e.acute_vid = InvalidIndex;
 		}
 		else if (acute_vertex_count == 2)
 		{
-			e.type = PLCEdgeType::BOTH_ACUTE_VERTEX;
+			e.type      = PLCEdgeType::BOTH_ACUTE_VERTEX;
 			e.acute_vid = InvalidIndex;
 		}
 		else
@@ -236,7 +236,7 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 
 /**
  * @brief Initializes PLC faces with ordered sub-edges.
- * 
+ *
  * This function initializes PLC faces with ordered sub-edges surrounding the
  * PLC face. Triangles across the flat edges are merged into one PLC face.
  * The sub-edges are sorted by their endpoints in a connected manner.
@@ -314,43 +314,59 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 
 		// Adjust endpoints of original edges to a unique pair
 		e.makeUniqEp();
+		if (range.size == 1)
+		{ // This original edge is not split
+			OMC_EXPENSIVE_ASSERT(sub_edges[range.start] == range.orig_eid,
+			                     "Not the same original edge.");
+			continue;
+		}
 
 		// Get the range of sub-edges
 		index_t sub_edge_start = range.start;
 		index_t sub_edge_end   = sub_edge_start + range.size;
 
-		// Map from the first/second endpoint to the sub-edge index
-		phmap::flat_hash_map<index_t, index_t> first_ep_map;
-		phmap::flat_hash_map<index_t, index_t> second_ep_map;
+		// Map from the endpoint to the sub-edge indices.
+		// Note that each vertex has at most two adjacent sub-edges.
+		phmap::flat_hash_map<index_t, IPair> ep_map2_sube;
 		for (index_t i = sub_edge_start; i < sub_edge_end; i++)
 		{
-			const PLCEdge &sub_e       = edge(sub_edges[i]);
-			first_ep_map[sub_e.ep0()]  = sub_edges[i];
-			second_ep_map[sub_e.ep1()] = sub_edges[i];
+			index_t        sub_eid = sub_edges[i];
+			const PLCEdge &sub_e   = edge(sub_eid);
+			// map ep0 to sub_e
+			if (ep_map2_sube.find(sub_e.ep0()) == ep_map2_sube.end())
+				ep_map2_sube[sub_e.ep0()] = IPair(sub_eid, InvalidIndex);
+			else
+				ep_map2_sube[sub_e.ep0()].second = sub_eid;
+			// map ep1 to sub_e
+			if (ep_map2_sube.find(sub_e.ep1()) == ep_map2_sube.end())
+				ep_map2_sube[sub_e.ep1()] = IPair(sub_eid, InvalidIndex);
+			else
+				ep_map2_sube[sub_e.ep1()].second = sub_eid;
 		}
 
 		// Sort sub-edges by their endpoints
-		for (index_t i = sub_edge_start, curr_vid = e.ep0(); curr_vid != e.ep1();)
-		{
-			if (first_ep_map.find(curr_vid) != first_ep_map.end())
-			{
-				sub_edges[i] = first_ep_map.at(curr_vid);
-			}
-			else if (second_ep_map.find(curr_vid) != second_ep_map.end())
-			{
-				sub_edges[i] = second_ep_map.at(curr_vid);
-				edge(sub_edges[i]).swapEp();
-			}
-			else
-			{
-				OMC_ASSERT(false, "Impossible case. Cannot find the next sub-edge.");
-			}
-			// update the current vertex and iterator
-			curr_vid = edge(sub_edges[i]).ep1();
-			i++;
-		}
 
-		// TODO Add a validity check
+		// Find and set the first sub-edge
+		OMC_EXPENSIVE_ASSERT(!is_valid_idx(ep_map2_sube.at(e.ep0()).second) &&
+		                       !is_valid_idx(ep_map2_sube.at(e.ep1()).second),
+		                     "The original start and end points should have only "
+		                     "one connected sub-edge.");
+
+		index_t curr_vid = e.ep0(), last_eid = InvalidIndex;
+		for (index_t i = sub_edge_start; i < sub_edge_end; i++)
+		{
+			IPair two_sub_eid = ep_map2_sube.at(curr_vid);
+			// get the current edge different from the last edge
+			sub_edges[i] =
+			  two_sub_eid.second == last_eid ? two_sub_eid.first : two_sub_eid.second;
+			PLCEdge &sube = edge(sub_edges[i]);
+			// Adjust the order of the endpoints
+			if (sube.ep1() == curr_vid)
+				sube.swapEp();
+			// update the vertex and edge in the iteration
+			curr_vid = sube.ep1();
+			last_eid = sub_edges[i];
+		}
 	}
 
 	// =========================================================================
@@ -381,18 +397,12 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 
 		for (int i = 0; i < 3; ++i)
 		{
-			if (ev[0] == tv[i] && ev[1] == tv[(i + 1) % 3])
+			if ((ev[0] == tv[i] && ev[1] == tv[(i + 1) % 3]) ||
+			    (ev[0] == tv[(i + 1) % 3] && ev[1] == tv[i]))
 			{
 				f.bounding_edges[i].range    = range;
 				f.bounding_edges[i].tid      = t_id;
-				f.bounding_edges[i].reversed = false;
-				return;
-			}
-			else if (ev[0] == tv[(i + 1) % 3] && ev[1] == tv[i])
-			{
-				f.bounding_edges[i].range    = range;
-				f.bounding_edges[i].tid      = t_id;
-				f.bounding_edges[i].reversed = true;
+				f.bounding_edges[i].reversed = !(ev[0] == tv[i]);
 				return;
 			}
 		}
@@ -492,6 +502,12 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		remap[t1] = t0;                        // and adjust the map
 	}
 
+	// remove merged and empty faces
+	plc_faces.erase(std::remove_if(plc_faces.begin(), plc_faces.end(),
+	                               [](const PLCFace &f)
+	                               { return f.triangles.empty(); }),
+	                plc_faces.end());
+
 	// At this point, all faces are merged across flat edges.
 	// However, duplicate bounding edges may exist within a single face and may be
 	// sequential or non-sequential.
@@ -499,10 +515,13 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 
 	// Remove duplicate bounding edges for each face
 	// OPT consider very large PLC face (it may be common seen in CAD models).
-	for (index_t fid = 0; fid < input_nt; fid++)
+	for (index_t fid = 0; fid < numFaces(); fid++)
 	{
 		PLCFace &f         = face(fid);
 		auto    &bnd_edges = f.bounding_edges;
+
+		if (bnd_edges.size() <= 4)
+			continue;	// A triangle or a quad face, no need to remove duplicate edges.
 
 		// We first remove sequential duplicate bounding edges
 		for (index_t i = 0; i < bnd_edges.size() - 1; /*i is updated in the loop*/)
@@ -532,7 +551,22 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 			bnd_edges.pop_back();
 		}
 		OMC_EXPENSIVE_ASSERT(bnd_edges.size() >= 3, "too few bounding edges.");
-		// TODO add a validity check
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+		// check if all bounding edges are correctly connected
+		for (index_t i = 0; i < bnd_edges.size(); i++)
+		{
+			index_t             next_i  = (i + 1) % bnd_edges.size();
+			const BoundingEdge &curr_be = bnd_edges[i];
+			const BoundingEdge &next_be = bnd_edges[next_i];
+
+			const PLCEdge &curr_e = edge(curr_be.range.orig_eid);
+			const PLCEdge &next_e = edge(next_be.range.orig_eid);
+			index_t curr_end_vid  = curr_be.reversed ? curr_e.ep0() : curr_e.ep1();
+			index_t next_bgn_vid  = next_be.reversed ? next_e.ep1() : next_e.ep0();
+			OMC_ASSERT(curr_end_vid == next_bgn_vid, "Not connected bounding edges.");
+		}
+#endif
 
 		// Then remove non-sequential duplicate bounding edges.
 		// Note this removal will cut one boundary to multiple disjointed ones.
@@ -561,28 +595,34 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 			// append the |<-2->| to the `bnd_edges`
 			bnd_edges.insert(bnd_edges.end(), new_edges.begin(), new_edges.end());
 		}
-	}
 
 #ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-	// Validity check: check if all faces are properly merged
-	for (index_t eid = 0; eid < init_npe; eid++)
-	{
-		PLCEdge &e = edge(eid);
-		if (e.type != PLCEdgeType::FLAT_EDGE)
-			continue;
-		index_t t0 = findMergedFace(edgeIncTri(eid, 0));
-		index_t t1 = findMergedFace(edgeIncTri(eid, 1));
-		OMC_ASSERT(t0 == t1 && face(t1).triangles.empty(),
-		           "Faces are not properly merged.");
-		// TODO more checks
-	}
-#endif
+		// check if all bounding edges are correctly connected.
+		// consider multiple disjointed boundaries.
+		index_t curr_ring_start = 0;
+		for (index_t i = 0; i < bnd_edges.size(); i++)
+		{
+			index_t             next_i  = (i + 1) % bnd_edges.size();
+			const BoundingEdge &curr_be = bnd_edges[i];
+			const BoundingEdge &next_be = bnd_edges[next_i];
 
-	// remove merged and empty faces
-	plc_faces.erase(std::remove_if(plc_faces.begin(), plc_faces.end(),
-	                               [](const PLCFace &f)
-	                               { return f.triangles.empty(); }),
-	                plc_faces.end());
+			const PLCEdge &curr_e = edge(curr_be.range.orig_eid);
+			const PLCEdge &next_e = edge(next_be.range.orig_eid);
+			index_t curr_end_vid  = curr_be.reversed ? curr_e.ep0() : curr_e.ep1();
+			index_t next_bgn_vid  = next_be.reversed ? next_e.ep1() : next_e.ep0();
+			if (curr_end_vid == next_bgn_vid)
+				continue; // current ring is still connected, continue to next edge
+			// current ring is disconnected, check if it is a valid ring by returning
+			// to the start point.
+			const BoundingEdge &start_be = bnd_edges[curr_ring_start];
+			const PLCEdge      &start_e  = edge(start_be.range.orig_eid);
+			index_t start_vid = start_be.reversed ? start_e.ep1() : start_e.ep0();
+			OMC_ASSERT(curr_end_vid == start_vid, "Not connected bounding edges.");
+			// update the start position of the next ring
+			curr_ring_start = next_i;
+		}
+#endif
+	}
 
 	// =========================================================================
 	// # Extract vertices for each PLC face
@@ -591,7 +631,7 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 	// ## post-condition: All vertices of each PLC face are extracted, and stored
 	// into `bounding_vertices` and `flat_vertices`.
 
-	for (index_t fid = 0; fid < input_nt; fid++)
+	for (index_t fid = 0; fid < numFaces(); fid++)
 	{
 		PLCFace &f = face(fid);
 		// traverse bounding edges of this face and extract bounding vertices
@@ -608,26 +648,25 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 			}
 		}
 		// traverse triangles of this face and extract all vertices
+		AuxVector4<index_t> temp_flat_vertices;
 		for (index_t tid : f.triangles)
 		{
-			f.flat_vertices.push_back(triangles[tid * 3]);
-			f.flat_vertices.push_back(triangles[tid * 3 + 1]);
-			f.flat_vertices.push_back(triangles[tid * 3 + 2]);
+			temp_flat_vertices.push_back(triangles[tid * 3]);
+			temp_flat_vertices.push_back(triangles[tid * 3 + 1]);
+			temp_flat_vertices.push_back(triangles[tid * 3 + 2]);
 		}
 		// sort and remove duplicate vertices
-		std::sort(f.flat_vertices.begin(), f.flat_vertices.end());
-		f.flat_vertices.erase(
-		  std::unique(f.flat_vertices.begin(), f.flat_vertices.end()),
-		  f.flat_vertices.end());
+		std::sort(temp_flat_vertices.begin(), temp_flat_vertices.end());
+		temp_flat_vertices.erase(
+		  std::unique(temp_flat_vertices.begin(), temp_flat_vertices.end()),
+		  temp_flat_vertices.end());
 		// sort bounding vertices
 		std::sort(f.bounding_vertices.begin(), f.bounding_vertices.end());
 		// subtract `bounding_vertices` from current `flat_vertices` to get
 		// right `flat_vertices`
-		AuxVector4<index_t> temp_flat_vertices;
-		std::set_difference(f.flat_vertices.begin(), f.flat_vertices.end(),
+		std::set_difference(temp_flat_vertices.begin(), temp_flat_vertices.end(),
 		                    f.bounding_vertices.begin(), f.bounding_vertices.end(),
-		                    std::back_inserter(temp_flat_vertices));
-		f.flat_vertices = std::move(temp_flat_vertices);
+		                    std::back_inserter(f.flat_vertices));
 
 #ifdef OMC_ENABLE_EXPENSIVE_ASSERT
 		// check if there are duplicate bounding_vertices
@@ -671,6 +710,8 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 	{
 		OMC_EXPENSIVE_ASSERT(!is_valid_idx(e.ancestor_id), "Not an ancestor edge.");
 		// create two new edges with the type `ONE_ACUTE_VERTEX`
+		// `ep0` and `ep1` are the closer vertex to the original acute vertices.
+		// `vid` is the farther(opposite) vertex to the original acute vertices.
 		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep0, vid, ancestor_id,
 		                       /*child_id*/ InvalidIndex, /*avute_vid*/ ep0);
 		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep1, vid, ancestor_id,
@@ -680,7 +721,10 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 	{
 		PLCEdgeType new_type  = e.type;
 		index_t     acute_vid = e.acute_vid;
-		// create two new edges inherit the same edge type
+		// create two new edges inherit the same edge type.
+		// `ep0` is the vertex closer to the original acute vertex in <ep0, vid>,
+		// so as `vid` in <vid, ep1>. This is to distinguish the closer vertex in
+		// lineSphereIntersection_oneAc function in segment recovery.
 		plc_edges.emplace_back(new_type, ep0, vid, ancestor_id,
 		                       /*child_id*/ InvalidIndex, acute_vid);
 		plc_edges.emplace_back(new_type, vid, ep1, ancestor_id,
@@ -721,6 +765,17 @@ auto PiecewiseLinearComplex<Traits>::boundingEdge(
 	OMC_ASSERT(false, "Invalid index to the bounding edge.");
 }
 
+/**
+ * @brief Builds a set of adjacent vertex pairs for a given face.
+ *
+ * This function iterates over the bounding edges of the provided face and 
+ * inserts unique pairs of vertices into the provided set of adjacent vertices.
+ *
+ * @tparam IndexPairSet The type of the set used to store adjacent vertex pairs.
+ * 
+ * @param f The face for which to build the set of adjacent vertex pairs.
+ * @param adj_vtx The set to store the adjacent vertex pairs.
+ */
 template <typename Traits>
 template <typename IndexPairSet>
 void PiecewiseLinearComplex<Traits>::buildBoundingVtxAdjSet(

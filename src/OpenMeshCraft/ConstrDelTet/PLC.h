@@ -53,8 +53,9 @@ public: /* Auxiliary data structures ****************************************/
 		/// The type of the edge.
 		PLCEdgeType type;
 		/// The indices of the endpoints of the edge.
-		/// (In `ONC_ACUTE_VERTEX` case, acute vertex is at the first position.
-		///  In other cases, the order is arbitrary.)
+		/// (In `ONC_ACUTE_VERTEX` case, the vertex closer to the original acute
+		/// vertex `acute_vid` is at the first position. In other cases, the order
+		/// is arbitrary.)
 		IPair       ep;
 		/// the ancestor (not the parent) edge is the original edge before splitting
 		/// (set to InvalidIndex if this edge is not a sub-edge)
@@ -78,6 +79,8 @@ public: /* Auxiliary data structures ****************************************/
 		const index_t &ep0() const { return ep.first; }
 		index_t       &ep1() { return ep.second; }
 		const index_t &ep1() const { return ep.second; }
+
+		bool hasEp(index_t vid) const { return ep0() == vid || ep1() == vid; }
 
 		void makeUniqEp() { ep = unique_pair(ep.first, ep.second); }
 		void swapEp() { std::swap(ep.first, ep.second); }
@@ -168,6 +171,9 @@ public: /* Interfaces ******************************************************/
 
 	PLCFace       &face(index_t fid) { return plc_faces[fid]; }
 	const PLCFace &face(index_t fid) const { return plc_faces[fid]; }
+
+	PLCEdge       &subEdge(index_t seid) { return edge(sub_edges[seid]); }
+	const PLCEdge &subEdge(index_t seid) const { return edge(sub_edges[seid]); }
 
 	size_t numVertices() const { return vertices.size(); }
 	size_t numEdges() const { return plc_edges.size(); }

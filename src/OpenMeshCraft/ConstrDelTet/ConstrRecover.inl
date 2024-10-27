@@ -97,8 +97,8 @@ void ConstraintsRecover<Traits>::segmentRecovery(bool verbose)
 		{
 			const PLCEdge &e = plc.edge(eid);
 			if (!is_valid_idx(e.child_id) && e.type != PLCEdgeType::FLAT_EDGE &&
-			    tet_mesh.isMarked(e.ep0(), VTX_MARK::TO_CHECK) &&
-			    tet_mesh.isMarked(e.ep1(), VTX_MARK::TO_CHECK) &&
+			    (tet_mesh.isMarked(e.ep0(), VTX_MARK::TO_CHECK) ||
+			     tet_mesh.isMarked(e.ep1(), VTX_MARK::TO_CHECK)) &&
 			    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
 			{
 				missing_segments.push_back(eid);
@@ -112,6 +112,18 @@ void ConstraintsRecover<Traits>::segmentRecovery(bool verbose)
 		std::cout << std::endl;
 
 	tet_mesh.removeDeletedTets();
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	// check if all segments are recovered
+	for (index_t eid = 0; eid < plc.numEdges(); eid++)
+	{
+		const PLCEdge &e = plc.edge(eid);
+		if (!is_valid_idx(e.child_id) && e.type != PLCEdgeType::FLAT_EDGE)
+		{
+			OMC_ASSERT(tet_mesh.edgeExists(e.ep0(), e.ep1()), "Missing segment.");
+		}
+	}
+#endif
 }
 
 template <typename Traits>
@@ -691,7 +703,7 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_oneAc(
 	  "The acute vertex is not an endpoint of the original edge.");
 	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
 	                     "Input points contain implicit points.");
-	if (acute_vid == oep1)	// swap the acute vertex to oep0
+	if (acute_vid == oep1) // swap the acute vertex to oep0
 		std::swap(oep0, oep1);
 	// Get the vectors of related points.
 	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
@@ -751,9 +763,10 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 	// - `tri0` is the incident input triangle of `e0`.
 	// - `rev0` is the orientation of `e0`.
 	// - `orig_e0` is the original edge of `e0` and an edge of `tri0`
-	index_t        tri0    = InvalidIndex;
-	const PLCEdge &e0      = plc.boundingEdge(face, 0, &tri0);
-	const PLCEdge &orig_e0 = plc.edge(e0.ancestor_id);
+	index_t        tri0 = InvalidIndex;
+	const PLCEdge &e0   = plc.boundingEdge(face, 0, &tri0);
+	const PLCEdge &orig_e0 =
+	  is_valid_idx(e0.ancestor_id) ? plc.edge(e0.ancestor_id) : e0;
 
 	// Get the endpoints of `e0` and `orig_e0`
 	index_t e0p0 = e0.ep0(), e0p1 = e0.ep1();
@@ -761,10 +774,25 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 	// Get the three vertices of `tri0`
 	index_t tri_v[3] = {plc.triVtx(tri0, 0), plc.triVtx(tri0, 1),
 	                    plc.triVtx(tri0, 2)};
+	int     n_max    = -1; // the maximal component of triangle normal.
+	Sign    tri_ori  = Sign::UNCERTAIN; // triangle vertex orientation.
 	OMC_EXPENSIVE_ASSERT(
 	  (oe0p0 == tri_v[0] || oe0p0 == tri_v[1] || oe0p0 == tri_v[2]) &&
 	    (oe0p1 == tri_v[0] || oe0p1 == tri_v[1] || oe0p1 == tri_v[2]),
 	  "The original edge is not an edge of the input triangle.");
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	// check if all bounding edges are recovered.
+	for (const BoundingEdge &be : face.bounding_edges)
+	{
+		for (index_t i = be.range.start; i < be.range.start + be.range.size; i++)
+		{
+			const PLCEdge &edge = plc.subEdge(i);
+			OMC_ASSERT(tet_mesh.edgeExists(edge.ep0(), edge.ep1()),
+			           "The edge is not recovered.");
+		}
+	}
+#endif
 
 	// Adjust the order of the vertices of `tri0` to make sure that `oe0p0` and
 	// `oe0p1` are the first two vertices of `tri0`.
@@ -855,15 +883,19 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 		{
 			index_t copl_vid = ot2 == Sign::ZERO ? tet_v[2] : tet_v[3];
 
-			if (isVtxBounding(copl_vid)) // this point is not a bounding vertex,
-				continue;                  // so it is outside, skip it.
+			if (!isVtxBounding(copl_vid)) // this point is not a bounding vertex,
+				continue;                   // so it is outside, skip it.
 
 			const GPoint &tri_p0 = gpnt(tri_v[0]), &tri_p1 = gpnt(tri_v[1]),
 			             &tri_p2 = gpnt(tri_v[2]), &copl_p = gpnt(copl_vid);
 
-			int n_max = MaxCompInTriNormal()(
-			  AsEP()(tri_p0).data(), AsEP()(tri_p1).data(), AsEP()(tri_p2).data());
-			Sign tri_ori  = OrientOn2D()(tri_p0, tri_p1, tri_p2, n_max);
+			if (n_max == -1)
+			{
+				n_max = MaxCompInTriNormal()(
+				  AsEP()(tri_p0).data(), AsEP()(tri_p1).data(), AsEP()(tri_p2).data());
+				tri_ori = OrientOn2D()(tri_p0, tri_p1, tri_p2, n_max);
+			}
+
 			Sign copl_ori = OrientOn2D()(tri_p0, tri_p1, copl_p, n_max);
 			OMC_EXPENSIVE_ASSERT(tri_ori != Sign::ZERO && copl_ori != Sign::ZERO,
 			                     "Degenerate triangle.");
