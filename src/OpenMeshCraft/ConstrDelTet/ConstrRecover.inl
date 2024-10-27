@@ -19,16 +19,17 @@ namespace OMC {
 template <typename Traits>
 ConstraintsRecover<Traits>::ConstraintsRecover(
   std::vector<GPoint *> &_verts, std::vector<PntArena> &_pnt_arenas,
-  TetMesh &_tet_mesh, PLC &_plc)
+  TetMesh &_tet_mesh, PLC &_plc, bool _verbose)
   : verts(_verts)
   , pnt_arenas(_pnt_arenas)
   , tet_mesh(_tet_mesh)
   , plc(_plc)
+  , verbose(_verbose)
 {
 }
 
 template <typename Traits>
-void ConstraintsRecover<Traits>::segmentRecovery(bool verbose)
+void ConstraintsRecover<Traits>::segmentRecovery()
 {
 	// initialize the PLC edges
 	plc.initPLCEdges();
@@ -89,7 +90,6 @@ void ConstraintsRecover<Traits>::segmentRecovery(bool verbose)
 				std::cout << std::format(
 				  "\r{} segments are split. {} segments are missing.", split_count,
 				  missing_segments.size());
-				std::fflush(stdout);
 			}
 		}
 		// Find new missing edges around touched vertices
@@ -408,7 +408,8 @@ void ConstraintsRecover<Traits>::faceRecovery()
 	}
 
 	// traverse all faces in the PLC to recover the missing faces
-	bool need_recursion = false;
+	bool   need_recursion  = false;
+	size_t recover_succeed = 0, recover_fail = 0;
 
 	do
 	{
@@ -424,6 +425,16 @@ void ConstraintsRecover<Traits>::faceRecovery()
 
 			bool succeed = false, expanded = false;
 			recoverFace_cavityExpanding(i, tets, succeed, expanded);
+
+			// log and output
+			if (succeed)
+				recover_succeed++;
+			else
+				recover_fail++;
+			if (verbose)
+				std::cout << std::format(
+				  "\r{} faces are recovered. {} faces are missing.", recover_succeed,
+				  recover_fail);
 
 			// A recovered face may be destroyed by the recovery of another face
 			// when expansion is needed.
@@ -840,6 +851,8 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 		v_orient[vid] = Sign::ZERO;
 	}
 
+	auto isVtxBounding = [this](index_t vid) { return v_count[vid] > 0; };
+
 	// The vector to store intersected tetrahedra
 	AuxVector64<index_t> B;
 
@@ -1051,6 +1064,32 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 	}
 	for (index_t vid : face.flat_vertices)
 		v_orient[vid] = Sign::UNCERTAIN;
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	// check if all bounding and flat vertices are traversed.
+	for (index_t tet_idoff : B)
+	{
+		index_t v[4] = {
+		  tet_mesh.tetNode(tet_idoff + 0), tet_mesh.tetNode(tet_idoff + 1),
+		  tet_mesh.tetNode(tet_idoff + 2), tet_mesh.tetNode(tet_idoff + 3)};
+		v_count[v[0]] = v_count[v[1]] = v_count[v[2]] = v_count[v[3]] = 1;
+	}
+	for (index_t vid : face.bounding_vertices)
+	{
+		OMC_ASSERT(v_count[vid], "missing bounding vertex in cavity");
+	}
+	for (index_t vid : face.flat_vertices)
+	{
+		OMC_ASSERT(v_count[vid], "missing flat vertex in cavity");
+	}
+	for (index_t tet_idoff : B)
+	{
+		index_t v[4] = {
+		  tet_mesh.tetNode(tet_idoff + 0), tet_mesh.tetNode(tet_idoff + 1),
+		  tet_mesh.tetNode(tet_idoff + 2), tet_mesh.tetNode(tet_idoff + 3)};
+		v_count[v[0]] = v_count[v[1]] = v_count[v[2]] = v_count[v[3]] = 0;
+	}
+#endif
 }
 
 template <typename Traits>
@@ -1155,17 +1194,6 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 		}
 	}
 
-#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-	for (index_t vid : face.bounding_vertices)
-	{
-		OMC_ASSERT(v_count[vid], "missing bounding vertex in cavity");
-	}
-	for (index_t vid : face.flat_vertices)
-	{
-		OMC_ASSERT(v_count[vid], "missing flat vertex in cavity");
-	}
-#endif
-
 	// Sort vertices and faces so that
 	// we can build a sequential map from global mesh to local meshed cavity.
 	std::sort(top_vertices.begin(), top_vertices.end());
@@ -1261,26 +1289,48 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 			break;
 	}
 
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	size_t _new_finite_tets = 0;
+	for (index_t tid = 0; tid < top_mesh->sizeTets(); tid++)
+		_new_finite_tets += top_mesh->isFiniteTet(TetMesh::toIdOff(tid));
+	for (index_t tid = 0; tid < bottom_mesh->sizeTets(); tid++)
+		_new_finite_tets += bottom_mesh->isFiniteTet(TetMesh::toIdOff(tid));
+#endif
+
 	if (cavity_ok)
 	{ // Really modify the global mesh.
-		// first, remove the tetrahedra of cavity
-		for (index_t idoff : tets) // original part of the cavity
-			tet_mesh.markTetAsDeleted(idoff);
-		for (index_t idoff : tets_to_remove) // expanded part of the cavity
-			tet_mesh.markTetAsDeleted(idoff);
-		tet_mesh.removeDeletedTets();
-
 		size_t n_top_faces = top_faces.size(), n_bottom_faces = bottom_faces.size();
-		// then, embed the tetrahedralization of the cavity to the global mesh
+		// first, embed the tetrahedralization of the cavity to the global mesh
 		embedMeshedCavity(*top_mesh, top_vertices, top_faces, bottom_faces);
 		embedMeshedCavity(*bottom_mesh, bottom_vertices, bottom_faces, top_faces);
 
 		OMC_ASSERT(n_top_faces == top_faces.size(),
 		           "The number of top faces is not consistent.");
-		OMC_ASSERT(n_bottom_faces > bottom_faces.size(),
+		OMC_ASSERT(n_bottom_faces < bottom_faces.size(),
 		           "The number of bottom faces is not consistent.");
+
+		// then, remove the tetrahedra of cavity
+		for (index_t idoff : tets) // original part of the cavity
+			tet_mesh.markTetAsDeleted(idoff);
+		for (index_t idoff : tets_to_remove) // expanded part of the cavity
+			tet_mesh.markTetAsDeleted(idoff);
+		tet_mesh.removeDeletedTets();
 	}
 	succeed = cavity_ok;
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	{
+		DelTet  DT(tet_mesh);
+		index_t tet_idoff_start = (tet_mesh.sizeTets() - _new_finite_tets) * 4;
+		index_t tet_idoff_end   = tet_mesh.sizeTets() * 4;
+		for (index_t tet_idoff = tet_idoff_start; tet_idoff < tet_idoff_end;
+		     tet_idoff += 4)
+		{
+			OMC_ASSERT(DT.verifyVolume(tet_idoff), "Negative volume.");
+			OMC_ASSERT(DT.verifyNeighbor(tet_idoff), "Connectivity error.");
+		}
+	}
+#endif
 
 	{ // Clear cached vertex orientation
 		for (index_t vid : v_cached_orient)
@@ -1587,6 +1637,8 @@ void ConstraintsRecover<Traits>::embedMeshedCavity(
 		// move the last tetrahedron.
 		last_tid--;
 	}
+	while (local_mesh.isMarked(TetMesh::toIdOff(last_tid), TET_MARK::OUTSIDE))
+		last_tid--;
 	// Finally, all outside tetrahedra are removed by the above loop.
 	local_mesh.resizeTets(last_tid + 1);
 
@@ -1688,6 +1740,8 @@ template <typename Traits>
 bool ConstraintsRecover<Traits>::tetIntersectsFace(index_t        tet_idoff,
                                                    const PLCFace &face)
 {
+	auto isVtxBounding = [this](index_t vid) { return v_count[vid] > 0; };
+
 	if (!tet_mesh.isFiniteTet(tet_idoff))
 		return false;
 

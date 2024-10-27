@@ -225,10 +225,11 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	pnt_arenas = std::vector<PntArena>(1);
 	plc        = std::make_unique<PLC>(cdt_out_verts, cdt_in_edges, cdt_in_tris);
-	ConstraintsRecover<Traits> CR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc);
+	ConstraintsRecover<Traits> CR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc,
+	                              /*verbose*/ true);
 
 	OMC_CDT_START_ELAPSE(start_seg);
-	CR.segmentRecovery(/*verbose*/ true);
+	CR.segmentRecovery();
 	OMC_CDT_SAVE_ELAPSED(start_seg, seg_elapsed, "Segment recovery");
 
 	OMC_CDT_START_ELAPSE(start_face);
@@ -304,8 +305,7 @@ void ConstrDelTet_Impl<Traits>::computeExplicitResult(iPoints &final_points,
 		}
 
 		// Assign the fixed vertex indices to the final tets
-		final_tets[t_id / 4] =
-		  iTet(out_tet[0], out_tet[1], out_tet[2], out_tet[3]);
+		final_tets[t_id / 4] = iTet(out_tet[0], out_tet[1], out_tet[2], out_tet[3]);
 	}
 
 	// Resize the final points container to match the number of vertices

@@ -78,12 +78,12 @@ public: /* Traits **********************************************************/
 public: /* Constructor & Destructor ****************************************/
 	ConstraintsRecover() = delete;
 	ConstraintsRecover(std::vector<GPoint *> &_verts, std::vector<PntArena> &_ars,
-	                   TetMesh &_tet_mesh, PLC &_plc);
+	                   TetMesh &_tet_mesh, PLC &_plc, bool _verbose = false);
 
 public: /* Algorithms ******************************************************/
 	/* Recover constrained segments */
 
-	void segmentRecovery(bool verbose = false);
+	void segmentRecovery();
 
 	/* sub-algorithms for segment recovery */
 
@@ -155,9 +155,6 @@ public: /* Algorithms ******************************************************/
 
 	bool segCrossesFace(index_t s0, index_t s1, const PLCFace &face) const;
 
-	bool isVtxBounding(index_t vid) const { return v_count[vid] > 0; }
-	bool isVtxSingular(index_t vid) const { return v_count[vid] > 1; }
-
 	/* Geometric & Topologic Operations on both TetMesh & PLC */
 
 	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
@@ -197,6 +194,9 @@ public: /* Data ************************************************************/
 	/// We need to build a mapping from global vertex index to local vertex index,
 	/// to check if a cavity face is missing.
 	std::vector<index_t> v_reindex;
+
+public: /* Flags ***********************************************************/
+	bool verbose;
 };
 
 } // namespace OMC
