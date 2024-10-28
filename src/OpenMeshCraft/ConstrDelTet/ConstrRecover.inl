@@ -894,11 +894,9 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 		OMC_EXPENSIVE_ASSERT(ot2 != Sign::ZERO || ot3 != Sign::ZERO,
 		                     "Degenerate tetrahedron.");
 
-		// check if the opposite edge is totally above or below the plane
-		if (ot2 != Sign::ZERO && ot2 == ot3)
+		if (ot2 != Sign::ZERO && ot2 == ot3) // totally above or below the plane
 			continue; // ==> no intersection, skip
-
-		if (ot2 == Sign::ZERO || ot3 == Sign::ZERO) // one endpoint is on the plane
+		else if (ot2 == Sign::ZERO || ot3 == Sign::ZERO) // one endpoint is coplanar
 		{
 			index_t copl_vid = ot2 == Sign::ZERO ? tet_v[2] : tet_v[3];
 
@@ -925,7 +923,7 @@ void ConstraintsRecover<Traits>::getTetsIntersectingFace(
 				break;                  // exit loop
 			}
 		}
-		if (ot2 != ot3 && segCrossesFace(tet_v[2], tet_v[3], face))
+		else if (ot2 != ot3 && segCrossesFace(tet_v[2], tet_v[3], face))
 		{                         // the opposite edge crosses the face
 			B.push_back(tet_idoff); // find an intersected tetrahedron
 			break;                  // exit loop
