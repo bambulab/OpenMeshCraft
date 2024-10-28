@@ -1295,14 +1295,6 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 			break;
 	}
 
-#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-	size_t _new_finite_tets = 0;
-	for (index_t tid = 0; tid < top_mesh->sizeTets(); tid++)
-		_new_finite_tets += top_mesh->isFiniteTet(TetMesh::toIdOff(tid));
-	for (index_t tid = 0; tid < bottom_mesh->sizeTets(); tid++)
-		_new_finite_tets += bottom_mesh->isFiniteTet(TetMesh::toIdOff(tid));
-#endif
-
 	if (cavity_ok)
 	{ // Really modify the global mesh.
 		size_t n_top_faces = top_faces.size(), n_bottom_faces = bottom_faces.size();
@@ -1315,6 +1307,21 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 		OMC_ASSERT(n_bottom_faces < bottom_faces.size(),
 		           "The number of bottom faces is not consistent.");
 
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+		{ // check validity of the embedded part
+			size_t  new_finite_tets = top_mesh->sizeTets() + bottom_mesh->sizeTets();
+			DelTet  DT(tet_mesh);
+			index_t tet_idoff_start = (tet_mesh.sizeTets() - new_finite_tets) * 4;
+			index_t tet_idoff_end   = tet_mesh.sizeTets() * 4;
+			for (index_t tet_idoff = tet_idoff_start; tet_idoff < tet_idoff_end;
+			     tet_idoff += 4)
+			{
+				OMC_ASSERT(DT.verifyVolume(tet_idoff), "Negative volume.");
+				OMC_ASSERT(DT.verifyNeighbor(tet_idoff), "Connectivity error.");
+			}
+		}
+#endif
+
 		// then, remove the tetrahedra of cavity
 		for (index_t idoff : tets) // original part of the cavity
 			tet_mesh.markTetAsDeleted(idoff);
@@ -1323,20 +1330,6 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 		tet_mesh.removeDeletedTets();
 	}
 	succeed = cavity_ok;
-
-#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-	{
-		DelTet  DT(tet_mesh);
-		index_t tet_idoff_start = (tet_mesh.sizeTets() - _new_finite_tets) * 4;
-		index_t tet_idoff_end   = tet_mesh.sizeTets() * 4;
-		for (index_t tet_idoff = tet_idoff_start; tet_idoff < tet_idoff_end;
-		     tet_idoff += 4)
-		{
-			OMC_ASSERT(DT.verifyVolume(tet_idoff), "Negative volume.");
-			OMC_ASSERT(DT.verifyNeighbor(tet_idoff), "Connectivity error.");
-		}
-	}
-#endif
 
 	{ // Clear cached vertex orientation
 		for (index_t vid : v_cached_orient)
@@ -1704,14 +1697,11 @@ void ConstraintsRecover<Traits>::embedMeshedCavity(
 		OMC_EXPENSIVE_ASSERT((t0 < n_local_tets || t1 < n_local_tets) &&
 		                       (t0 >= n_local_tets || t1 >= n_local_tets),
 		                     "One inside tet and one outside tet.");
-		index_t inner_corner  = t0 < n_local_tets
-		                          ? TetMesh::toIdOff(t0) + TetMesh::clipOff(bcp.c0)
-		                          : TetMesh::toIdOff(t1) + TetMesh::clipOff(bcp.c1);
-		index_t bnd           = bcp.bnd;
-		index_t global_corner = _4n_global_tets + inner_corner;
-		OMC_EXPENSIVE_ASSERT(
-		  !is_valid_idx(tet_mesh.tetNeigh(global_corner)),
-		  "This neighbor must be invalid since we depart the outside tetrahedra.");
+		index_t inner_corner             = t0 < n_local_tets
+		                                     ? TetMesh::toIdOff(t0) + TetMesh::clipOff(bcp.c0)
+		                                     : TetMesh::toIdOff(t1) + TetMesh::clipOff(bcp.c1);
+		index_t bnd                      = bcp.bnd;
+		index_t global_corner            = _4n_global_tets + inner_corner;
 		tet_mesh.tetNeigh(global_corner) = bnd;
 		tet_mesh.tetNeigh(bnd)           = global_corner;
 	}

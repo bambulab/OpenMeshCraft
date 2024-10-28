@@ -837,6 +837,12 @@ void PiecewiseLinearComplex<Traits>::extractBoundingVertices()
 				f.bounding_vertices.push_back(be.reversed ? sub_e.ep1() : sub_e.ep0());
 			}
 		}
+		// sort bounding vertices and remove duplicate vertices
+		std::sort(f.bounding_vertices.begin(), f.bounding_vertices.end());
+		f.bounding_vertices.erase(
+		  std::unique(f.bounding_vertices.begin(), f.bounding_vertices.end()),
+		  f.bounding_vertices.end());
+
 		// traverse triangles of this face and extract all vertices
 		AuxVector4<index_t> temp_flat_vertices;
 		for (index_t tid : f.triangles)
@@ -850,21 +856,11 @@ void PiecewiseLinearComplex<Traits>::extractBoundingVertices()
 		temp_flat_vertices.erase(
 		  std::unique(temp_flat_vertices.begin(), temp_flat_vertices.end()),
 		  temp_flat_vertices.end());
-		// sort bounding vertices
-		std::sort(f.bounding_vertices.begin(), f.bounding_vertices.end());
 		// subtract `bounding_vertices` from current `flat_vertices` to get
 		// right `flat_vertices`
 		std::set_difference(temp_flat_vertices.begin(), temp_flat_vertices.end(),
 		                    f.bounding_vertices.begin(), f.bounding_vertices.end(),
 		                    std::back_inserter(f.flat_vertices));
-
-#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-		// check if there are duplicate bounding_vertices
-		OMC_ASSERT(
-		  std::unique(f.bounding_vertices.begin(), f.bounding_vertices.end()) ==
-		    f.bounding_vertices.end(),
-		  "Duplicate vertices in PLC face.");
-#endif
 	}
 }
 
