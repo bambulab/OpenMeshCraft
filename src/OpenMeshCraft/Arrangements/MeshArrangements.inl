@@ -119,6 +119,9 @@ public: /* Pipeline **********************************************************/
 	void computeExplicitResult(iPoints &final_points, iTris &final_tris,
 	                           std::vector<Label> *final_labels = nullptr);
 
+public: /* Interfaces of part of algorithm ***********************************/
+	bool checkIntersection();
+
 public: /* Routines before and after solving intersecions ********************/
 	void collectCleanResults(ArrCleanMesh<Traits> &CM);
 
@@ -436,6 +439,57 @@ void MeshArrangements_Impl<Traits>::computeExplicitResult(
 	                  });
 }
 
+template <typename Traits>
+bool MeshArrangements_Impl<Traits>::checkIntersection()
+{
+	OMC_ASSERT(!in_coords.empty() && !in_tris.empty(), "empty input.");
+	OMC_ASSERT(in_tris.size() % 3 == 0, "triangle size error.");
+	OMC_ASSERT(in_tris.size() / 3 == in_labels.size(),
+	           "size of triangles and labels mismatche.");
+
+	/***** Preprocessing *****/
+
+	OMC_ARR_START_ELAPSE(start_pp);
+
+	// clean input mesh
+	ArrCleanMesh<Traits> CM(in_coords, in_tris, in_labels);
+	CM.convertLabels();
+	CM.mergeDuplicatedVertices();
+	CM.removeDegenerateAndDuplicatedTriangles();
+	CM.removeIsolatedVertices();
+	collectCleanResults(CM);
+
+	OMC_ARR_SAVE_ELAPSED(start_pp, pp_elapsed, "Preprocessing");
+
+	/***** Build tree *****/
+
+	OMC_ARR_START_ELAPSE(start_tree);
+
+	// initialize tree from triangle soup (vertices and triangles)
+	tree.init_from_triangle_soup(arr_out_verts, arr_in_tris,
+	                             arr_in_tris.size() / 3 + dupl_triangles.size(),
+	                             config);
+
+	OMC_ARR_SAVE_ELAPSED(start_tree, tree_elapsed, "Build tree");
+
+	/***** Check intersection *****/
+
+	OMC_ARR_START_ELAPSE(start_ci);
+
+	// build triangle soup
+	initBeforeDetectClassify();
+
+	// Classify intersections.
+	DetectClassifyTTIs<Traits> DCI(tri_soup, tree, config, *stats);
+
+	OMC_ARR_SAVE_ELAPSED(start_ci, ci_elapsed, "Classify intersection");
+
+	size_t has_intersection =
+	  std::count(tri_soup.tri_has_intersections.begin(),
+	             tri_soup.tri_has_intersections.end(), uint8_t(true));
+	return has_intersection > 0;
+}
+
 /*****************************************************************************/
 /*************** Implementations of interface class **************************/
 /*****************************************************************************/
@@ -516,6 +570,25 @@ void MeshArrangements<Kernel, Traits>::meshArrangements()
 		    *output_points, *output_triangles, output_labels);
 		m_impl = nullptr;
 	}
+}
+
+template <typename Kernel, typename Traits>
+bool MeshArrangements<Kernel, Traits>::checkIntersection()
+{
+	m_impl =
+	  std::make_unique<MeshArrangements_Impl<ArrangementsTraits>>(&arr_stats);
+
+	if (!loadMultipleMeshes()(input_meshes, m_impl->in_coords, m_impl->in_tris,
+	                          m_impl->in_labels))
+	{
+		OMC_THROW_DOMAIN_ERROR("Empty input meshes.");
+		return false;
+	}
+
+	m_impl->setConfig(config);
+	bool has_intersection = m_impl->checkIntersection();
+	m_impl                = nullptr;
+	return has_intersection;
 }
 
 template <typename Kernel, typename Traits>
