@@ -26,6 +26,7 @@
 #include "OpenMeshCraft/Arrangements/Utils.h"
 
 #include <bitset>
+#include <fstream>
 #include <memory>
 #include <vector>
 

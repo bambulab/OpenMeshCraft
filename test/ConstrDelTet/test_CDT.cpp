@@ -116,7 +116,7 @@ TEST_F(test_ConstrDelTet, TestDataSet)
 	std::string  log_path = outdir + "stats.txt";
 	std::fstream log_file;
 	log_file.open(log_path, std::ios::out | std::ios::app);
-	log_file << "filename,time\n";
+	log_file << "filename,DT,seg,face,time\n";
 
 	// Read models' directory from configuration
 	std::string           models_dir = config.get<std::string>("models_dir");
@@ -172,7 +172,7 @@ TEST_F(test_ConstrDelTet, TestDataSet)
 			cdt.setConfig(cdt_cfg);
 
 			// Get CDT statistics
-			CDTStats stats = cdt.stats();
+			CDTStats &stats = cdt.stats();
 
 			// Start timer
 			auto start = OMC::Logger::elapse_reset();
@@ -189,13 +189,14 @@ TEST_F(test_ConstrDelTet, TestDataSet)
 				// Log the filename and processing time
 				log_file << std::fixed;
 				log_file << iter->path().filename().string();
-				log_file << "," << total_time << std::endl;
+				log_file << "," << stats.dt_elapsed << "," << stats.seg_elapsed << ","
+				         << stats.face_elapsed << "," << total_time << std::endl;
 			}
 			catch (...)
 			{
 				std::cout << "Error in processing " << iter->path().filename()
 				          << std::endl;
-				log_file << iter->path().filename().string() << ",error\n";
+				log_file << iter->path().filename().string() << ",0,0,0,error\n";
 			}
 		}
 	}

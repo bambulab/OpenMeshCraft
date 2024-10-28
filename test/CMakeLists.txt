@@ -118,13 +118,15 @@ gtest_discover_tests(${PROJECT_NAME})
 # ##############################################################################
 
 # ##############################################################################
-# Configure an executable to run dataset for arrangements.
+# Configure excutable files to run dataset.
 # ##############################################################################
 
 add_executable(OpenMeshCraft-Arrangements
                ${CMAKE_CURRENT_SOURCE_DIR}/Executables/arrangements.cpp)
+add_executable(OpenMeshCraft-CDT
+               ${CMAKE_CURRENT_SOURCE_DIR}/Executables/cdt.cpp)
 
-foreach(_TARGET OpenMeshCraft-Arrangements)
+foreach(_TARGET OpenMeshCraft-Arrangements OpenMeshCraft-CDT)
 
   # include directories
   # ############################################################################

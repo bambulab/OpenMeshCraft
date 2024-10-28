@@ -582,7 +582,6 @@ bool MeshArrangements<Kernel, Traits>::checkIntersection()
 	                          m_impl->in_labels))
 	{
 		OMC_THROW_DOMAIN_ERROR("Empty input meshes.");
-		return false;
 	}
 
 	m_impl->setConfig(config);
