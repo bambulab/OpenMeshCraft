@@ -153,6 +153,26 @@ public: /* Interfaces ******************************************************/
 	void initPLCEdges();
 	void initPLCFaces();
 
+	/* Sub-parts of initializing PLC edges **********************************/
+
+	void buildInitialPLCEdges();
+
+	void classifyVertEdge();
+
+	/* Sub-parts of initializing PLC faces **********************************/
+
+	void initSubEdges();
+
+	void sortSubEdges();
+
+	void assembleEdges2Faces();
+
+	void mergeFacesArossFlatEdges();
+
+	void removeDuplicateBoundingEdges();
+
+	void extractBoundingVertices();
+
 	/* Query on input constraints ********************************************/
 
 	// clang-format off

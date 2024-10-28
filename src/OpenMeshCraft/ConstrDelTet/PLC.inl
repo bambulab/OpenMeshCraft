@@ -71,6 +71,29 @@ PiecewiseLinearComplex<Traits>::PiecewiseLinearComplex(
 template <typename Traits>
 void PiecewiseLinearComplex<Traits>::initPLCEdges()
 {
+	// (1) build initial PLC edges
+	buildInitialPLCEdges();
+
+	// (2) classify vertices and edges
+	classifyVertEdge();
+}
+
+/**
+ * @brief Builds the initial Piecewise Linear Complex (PLC) edges.
+ *
+ * This function initializes the PLC edges from the input edges and triangles.
+ * It ensures that the input PLC is valid (without intersections) and
+ * initializes the input edges and triangles as PLC edges.
+ *
+ * @pre The input PLC is valid and does not contain intersections.
+ * @post
+ * - Input edges and triangles are initialized as PLC edges.
+ * - Duplicate edges are merged.
+ * - Incident triangles for each edge are recorded.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::buildInitialPLCEdges()
+{
 	// =========================================================================
 	// # Build PLC edges
 	// ## pre-condition: the input PLC is valid (without intersections).
@@ -144,7 +167,23 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 		ancestor_id           = InvalidIndex;
 	}
 	edge_inc_tri = std::move(tmp_edge_inc_tri);
+}
 
+/**
+ * @brief Classifies the vertices and edges of a Piecewise Linear Complex (PLC).
+ *
+ * This function performs the classification of vertices and edges in a PLC.
+ * It first classifies edges as flat or undetermined, then classifies vertices
+ * as acute or not, and finally classifies non-flat edges based on the number
+ * of acute vertices they connect.
+ *
+ * @pre PLC edges are built.
+ * @post PLC vertices are classified as acute or not, and PLC edges are
+ * classified into different types.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::classifyVertEdge()
+{
 	// =========================================================================
 	// # Classify edge and vertices
 	// ## pre-condition: PLC edges are built.
@@ -250,6 +289,44 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 template <typename Traits>
 void PiecewiseLinearComplex<Traits>::initPLCFaces()
 {
+	// (1) Initialize the sub-edges for each original edge
+	initSubEdges();
+
+	// (2) Sort the sub-edges by their endpoints
+	sortSubEdges();
+
+	// (3) Assemble the sub-edges to faces
+	assembleEdges2Faces();
+
+	// (4) merge the faces across flat edges
+	mergeFacesArossFlatEdges();
+
+	// (5) remove duplicate bounding edges
+	removeDuplicateBoundingEdges();
+
+	// (6) extract bounding vertices
+	extractBoundingVertices();
+}
+
+/**
+ * @brief Initializes the sub-edges for each original edge in the Piecewise
+ * Linear Complex (PLC).
+ *
+ * This function builds a map from each original edge to its sub-edges after
+ * splitting. It uses a depth-first search to find all sub-edges for each
+ * original edge and stores them in a sequential vector.
+ *
+ * @pre Segment recovery is done.
+ * @post Sub-edges belonging to the same original edge are stored in a
+ * sequential vector.
+ *
+ * Assertions:
+ * - Ensures that the current edge is an original edge.
+ * - Ensures that the size of the sub-edge range matches the expected size.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::initSubEdges()
+{
 	// =========================================================================
 	// # We build a map from each original edge to its sub-edges after splitting.
 	// ## pre-condition: segment recovery is done.
@@ -301,7 +378,26 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 
 		OMC_EXPENSIVE_ASSERT(sub_edge_range.size() == eid + 1, "size mismatch.");
 	}
+}
 
+/**
+ * @brief Sorts sub-edges by their endpoints in a connected manner.
+ *
+ * This function sorts the sub-edges stored in `sub_edges` such that they are
+ * ordered by their endpoints in a connected manner. It ensures that the
+ * sub-edges form a continuous chain.
+ *
+ * @pre The sub-edges are properly stored in `sub_edges`.
+ * @post The sub-edges are sorted in `sub_edges` by their endpoints in a
+ * connected manner.
+ *
+ * Assertions:
+ * - This function uses expensive assertions to verify the correctness of
+ * the sorting.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::sortSubEdges()
+{
 	// =========================================================================
 	// # Sort sub-edges by their endpoints in a connected manner
 	// ## pre-condition: sub-edges are properly stored in `sub_edges`
@@ -367,8 +463,35 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 			curr_vid = sube.ep1();
 			last_eid = sub_edges[i];
 		}
-	}
 
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+		// check if the sub-edges are well connected
+		for (index_t i = 0; i < range.size - 1; i++)
+		{
+			index_t        curr_i = sub_edge_start + i;
+			index_t        next_i = sub_edge_start + i + 1;
+			const PLCEdge &curr_e = edge(sub_edges[curr_i]);
+			const PLCEdge &next_e = edge(sub_edges[next_i]);
+			OMC_ASSERT(curr_e.ep1() == next_e.ep0(), "Not connected sub-edges.");
+		}
+#endif
+	}
+}
+
+/**
+ * @brief Assembles ordered sub-edges into each PLC (Piecewise Linear Complex)
+ * face to form an ordered edge chain surrounding the PLC face.
+ *
+ * This function processes the sub-edges and associates them with their
+ * corresponding PLC faces. It ensures that the sub-edges are ordered correctly
+ * to form a continuous edge chain around each face.
+ *
+ * @pre Sub-edges are sorted in `sub_edges` by their endpoints.
+ * @post PLC faces are built with ordered sub-edges.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::assembleEdges2Faces()
+{
 	// =========================================================================
 	// # Assemble ordered sub-edges into each PLC face to form an ordered edge
 	// chain surrounding the PLC face.
@@ -380,6 +503,8 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 	{
 		plc_faces[tid].triangles.push_back(tid);
 		plc_faces[tid].bounding_edges.resize(3);
+		for (index_t j = 0; j < 3; j++)
+			plc_faces[tid].bounding_edges[j].tid = InvalidIndex;
 	}
 
 	auto assembleEdges2Faces =
@@ -400,6 +525,8 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 			if ((ev[0] == tv[i] && ev[1] == tv[(i + 1) % 3]) ||
 			    (ev[0] == tv[(i + 1) % 3] && ev[1] == tv[i]))
 			{
+				OMC_EXPENSIVE_ASSERT(!is_valid_idx(f.bounding_edges[i].tid),
+				                     "Already set.");
 				f.bounding_edges[i].range    = range;
 				f.bounding_edges[i].tid      = t_id;
 				f.bounding_edges[i].reversed = !(ev[0] == tv[i]);
@@ -416,11 +543,35 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		                     "Not an ancestor PLC edge.");
 		for (index_t tid : edge_inc_tri[eid])
 		{
-			PLCFace &f = plc_faces[tid];
-			assembleEdges2Faces(sub_edge_range[eid], f, tid);
+			assembleEdges2Faces(sub_edge_range[eid], plc_faces[tid], tid);
 		}
 	}
 
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	for (index_t fid = 0; fid < input_nt; fid++)
+	{
+		const PLCFace &f = plc_faces[fid];
+		for (const BoundingEdge &be : f.bounding_edges)
+		{
+			OMC_ASSERT(is_valid_idx(be.tid), "Bounding edge not set.");
+		}
+	}
+#endif
+}
+
+/**
+ * @brief Merges faces across flat edges in a Piecewise Linear Complex (PLC).
+ *
+ * This function merges faces in a PLC that are connected by flat edges. It
+ * ensures that the resulting faces are properly connected and updates the
+ * internal data structures accordingly.
+ *
+ * @pre Bounding edges must be built for each PLC face.
+ * @post PLC faces are merged across flat PLC edges.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::mergeFacesArossFlatEdges()
+{
 	// =========================================================================
 	// # Merge faces across flat PLC edges.
 	// ## pre-condition: bounding edges are built for each PLC face.
@@ -483,6 +634,22 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		dst_f.triangles.insert(dst_f.triangles.end(), src_f.triangles.begin(),
 		                       src_f.triangles.end());
 		src_f.triangles.clear();
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+		// check dst_edges are well connected
+		for (index_t i = 0; i < dst_edges.size(); i++)
+		{
+			index_t             next_i  = (i + 1) % dst_edges.size();
+			const BoundingEdge &curr_be = dst_edges[i];
+			const BoundingEdge &next_be = dst_edges[next_i];
+
+			const PLCEdge &curr_e = edge(curr_be.range.orig_eid);
+			const PLCEdge &next_e = edge(next_be.range.orig_eid);
+			index_t curr_end_vid  = curr_be.reversed ? curr_e.ep0() : curr_e.ep1();
+			index_t next_bgn_vid  = next_be.reversed ? next_e.ep1() : next_e.ep0();
+			OMC_ASSERT(curr_end_vid == next_bgn_vid, "Not connected bounding edges.");
+		}
+#endif
 	};
 
 	for (index_t eid = 0; eid < init_npe; eid++)
@@ -507,11 +674,16 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 	                               [](const PLCFace &f)
 	                               { return f.triangles.empty(); }),
 	                plc_faces.end());
+}
 
-	// At this point, all faces are merged across flat edges.
-	// However, duplicate bounding edges may exist within a single face and may be
-	// sequential or non-sequential.
-	// Removing non-sequential duplicate edges may cause disjoint boundaries.
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::removeDuplicateBoundingEdges()
+{
+	// Pre-condition: all faces are merged across flat edges.
+	//   However, duplicate bounding edges may exist within a single face and may
+	//   be sequential or non-sequential. Removing non-sequential duplicate edges
+	//   may cause disjoint boundaries.
+	// Post-condition: all faces have no duplicate bounding edges.
 
 	// Remove duplicate bounding edges for each face
 	// OPT consider very large PLC face (it may be common seen in CAD models).
@@ -521,7 +693,7 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		auto    &bnd_edges = f.bounding_edges;
 
 		if (bnd_edges.size() <= 4)
-			continue;	// A triangle or a quad face, no need to remove duplicate edges.
+			continue; // A triangle or a quad face, no need to remove duplicate edges.
 
 		// We first remove sequential duplicate bounding edges
 		for (index_t i = 0; i < bnd_edges.size() - 1; /*i is updated in the loop*/)
@@ -623,7 +795,25 @@ void PiecewiseLinearComplex<Traits>::initPLCFaces()
 		}
 #endif
 	}
+}
 
+/**
+ * @brief Extracts the bounding vertices for each face in the Piecewise Linear
+ * Complex (PLC).
+ *
+ * This function processes each face in the PLC to extract its bounding vertices
+ * and store them in the `bounding_vertices` and `flat_vertices` containers. It
+ * ensures that all vertices of each PLC face are properly extracted and stored
+ * without duplicates.
+ *
+ * @pre All PLC faces are properly merged, and no duplicate edges exist in any
+ * PLC face.
+ * @post All vertices of each PLC face are extracted and stored into
+ * `bounding_vertices` and `flat_vertices`.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::extractBoundingVertices()
+{
 	// =========================================================================
 	// # Extract vertices for each PLC face
 	// ## pre-condition: all PLC faces are properly merged, and no duplicate edges
@@ -768,11 +958,11 @@ auto PiecewiseLinearComplex<Traits>::boundingEdge(
 /**
  * @brief Builds a set of adjacent vertex pairs for a given face.
  *
- * This function iterates over the bounding edges of the provided face and 
+ * This function iterates over the bounding edges of the provided face and
  * inserts unique pairs of vertices into the provided set of adjacent vertices.
  *
  * @tparam IndexPairSet The type of the set used to store adjacent vertex pairs.
- * 
+ *
  * @param f The face for which to build the set of adjacent vertex pairs.
  * @param adj_vtx The set to store the adjacent vertex pairs.
  */
