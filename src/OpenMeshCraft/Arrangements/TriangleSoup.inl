@@ -709,6 +709,13 @@ auto TriangleSoup<Traits>::colinearEdges(index_t e_id) const
 }
 
 template <typename Traits>
+void TriangleSoup<Traits>::setTriangleHasIntersections(index_t t_id)
+{
+	OMC_EXPENSIVE_ASSERT(t_id < tri_has_intersections.size(), "out of range");
+	tri_has_intersections[t_id] = true;
+}
+
+template <typename Traits>
 void TriangleSoup<Traits>::setTriangleHasIntersections(index_t tA_id,
                                                        index_t tB_id)
 {
