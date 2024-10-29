@@ -62,6 +62,16 @@ TEST_F(test_Arrangements, TestIfCrash)
 	arr_config.verbose                = config.get<bool>("verbose");
 	arr_config.output_explicit_result = config.get<bool>("explicit");
 	arr_config.ignore_same_mesh       = false;
+	if (config.get<bool>("set_parameter", false))
+	{
+		boost::property_tree::ptree &parameters = config.get_child("parameters");
+		arr_config.tree_enlarge_ratio =
+		  parameters.get<double>("tree_enlarge_ratio");
+		arr_config.tree_adaptive_thres =
+		  parameters.get<double>("tree_adaptive_thres");
+		arr_config.tree_split_size_thres =
+		  parameters.get<size_t>("tree_split_size_thres");
+	}
 
 	// Run the mesh arrangement algorithm
 	Arrangements arrangements;

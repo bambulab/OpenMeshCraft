@@ -1100,11 +1100,11 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 	// Get the PLC face
 	const PLCFace &face = plc.face(fid);
 
-	{ // Initialize vertex orientation and count
-		index_t tid = face.triangles[0];
-		index_t tv0 = plc.triVtx(tid, 0), tv1 = plc.triVtx(tid, 1),
-		        tv2 = plc.triVtx(tid, 2);
+	index_t tid = face.triangles[0];
+	index_t tv0 = plc.triVtx(tid, 0), tv1 = plc.triVtx(tid, 1),
+	        tv2 = plc.triVtx(tid, 2);
 
+	{ // Initialize vertex orientation and count
 		for (index_t vid : face.bounding_vertices)
 		{
 			v_orient[vid] = Sign::ZERO;
@@ -1195,8 +1195,10 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 		}
 	}
 
-	// Sort vertices and faces so that
-	// we can build a sequential map from global mesh to local meshed cavity.
+	// Sort vertices and faces so that we can build a sequential map from global
+	// mesh to local meshed cavity. Ensure that the relative order of vertices are
+	// same in both global and local meshes, because the simulation of simplicity
+	// relies on this.
 	std::sort(top_vertices.begin(), top_vertices.end());
 	std::sort(bottom_vertices.begin(), bottom_vertices.end());
 	std::sort(top_faces.begin(), top_faces.end());
@@ -1221,21 +1223,15 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 	// Vertices of the top and bottom half cavity, used for Delaunay
 	// tetrahedralization
 	std::vector<GPoint *> top_vps, bottom_vps;
-
-	// convert vertex indices to vertex pointers
 	top_vps.reserve(2 * top_vertices.size());
 	bottom_vps.reserve(2 * bottom_vertices.size());
-	for (index_t vid : top_vertices)
-		top_vps.push_back(&gpnt(vid));
-	for (index_t vid : bottom_vertices)
-		bottom_vps.push_back(&gpnt(vid));
 
 	// TetMeshes of the top and bottom half cavity
-	TetMesh              top_mesh(top_vps), bottom_mesh(bottom_vps);
+	std::unique_ptr<TetMesh> top_mesh, bottom_mesh;
 	// new tets after expanding, waiting to be removed.
-	std::vector<index_t> tets_to_remove;
+	std::vector<index_t>     tets_to_remove;
 	// missing boundary face during meshing and embedding the cavity
-	index_t              missing_face = InvalidIndex;
+	index_t                  missing_face = InvalidIndex;
 
 	// cavity is ok when it does not cross the PLC plane.
 	bool cavity_ok = true;
@@ -1243,29 +1239,32 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 	// tetrahedralize the half cavity.
 	// if any cavity face is missing, expand the cavity to recover the missing
 	// face, until no missing face.
-	DelTet top_dt(top_mesh);
-	top_dt.tetrahedralize();
 	while (cavity_ok)
 	{
+		// load global vertices to local mesh, keep the order of vertices.
+		top_vps.clear();
+		for (index_t vid : top_vertices)
+			top_vps.push_back(&gpnt(vid));
+		// Delaunay tetrahedralize the cavity
+		top_mesh = std::make_unique<TetMesh>(top_vps);
+		DelTet top_dt(*top_mesh);
+		top_dt.tetrahedralize();
 		// check if any cavity face is missing
-		if (cavityHasMissingFace(top_mesh, top_vertices, top_faces, missing_face))
+		if (cavityHasMissingFace(*top_mesh, top_vertices, top_faces, missing_face))
 		{
 			// expand the cavity to recover the missing boundary face.
 			index_t new_tet = InvalidIndex, new_vertex = InvalidIndex;
-			expandCavity(face, top_vertices, top_faces, missing_face, new_tet,
-			             new_vertex);
+			expandCavity(top_vertices, top_faces, missing_face, new_tet, new_vertex);
 			// mark the tetrahedron to remove
 			tets_to_remove.push_back(new_tet);
-			// add the vertex if it is not in the cavity
-			if (is_valid_idx(new_vertex) && v_orient[new_vertex] >= Sign::ZERO)
+			if (is_valid_idx(new_vertex))
 			{
-				index_t new_vid = top_vps.size(), tmp_tet = 0;
-				top_vps.push_back(&gpnt(new_vertex));
-				top_mesh.newVtx(new_vid);
-				top_dt.insertVertex(new_vid, tmp_tet);
+				// calculate orientation for new vertex
+				v_orient[new_vertex] = orient3dCached(tv0, tv1, tv2, new_vertex);
+				// check if the cavity is still ok after expanding
+				if (v_orient[new_vertex] < Sign::ZERO)
+					cavity_ok = false;
 			}
-			else if (is_valid_idx(new_vertex) && v_orient[new_vertex] < Sign::ZERO)
-				cavity_ok = false;
 			// mark the cavity is expanded
 			expanded = true;
 		}
@@ -1273,32 +1272,34 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 			break;
 	}
 
-	DelTet bottom_dt(bottom_mesh);
-	if (cavity_ok) // fill the cavity by Delaunay tetrahedralization
-		bottom_dt.tetrahedralize();
-
 	while (cavity_ok)
 	{
+		// load global vertices to local mesh, keep the order of vertices.
+		bottom_vps.clear();
+		for (index_t vid : bottom_vertices)
+			bottom_vps.push_back(&gpnt(vid));
+		// Delaunay tetrahedralize the cavity
+		bottom_mesh = std::make_unique<TetMesh>(bottom_vps);
+		DelTet bottom_dt(*bottom_mesh);
+		bottom_dt.tetrahedralize();
 		// check if any cavity face is missing
-		if (cavityHasMissingFace(bottom_mesh, bottom_vertices, bottom_faces,
+		if (cavityHasMissingFace(*bottom_mesh, bottom_vertices, bottom_faces,
 		                         missing_face))
 		{
 			// expand the cavity to recover the missing boundary face.
 			index_t new_tet = InvalidIndex, new_vertex = InvalidIndex;
-			expandCavity(face, bottom_vertices, bottom_faces, missing_face, new_tet,
+			expandCavity(bottom_vertices, bottom_faces, missing_face, new_tet,
 			             new_vertex);
 			// mark the tetrahedron to remove
 			tets_to_remove.push_back(new_tet);
-			// add the vertex if it is not in the cavity
-			if (is_valid_idx(new_vertex) && v_orient[new_vertex] <= Sign::ZERO)
+			if (is_valid_idx(new_vertex))
 			{
-				index_t new_vid = bottom_vps.size(), tmp_tet = 0;
-				bottom_vps.push_back(&gpnt(new_vertex));
-				bottom_mesh.newVtx(new_vid);
-				bottom_dt.insertVertex(new_vid, tmp_tet);
+				// calculate orientation for new vertex
+				v_orient[new_vertex] = orient3dCached(tv0, tv1, tv2, new_vertex);
+				// add the vertex if it is not in the cavity
+				if (v_orient[new_vertex] > Sign::ZERO)
+					cavity_ok = false;
 			}
-			else if (is_valid_idx(new_vertex) && v_orient[new_vertex] > Sign::ZERO)
-				cavity_ok = false;
 			// mark the cavity is expanded
 			expanded = true;
 		}
@@ -1310,8 +1311,8 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 	{ // Really modify the global mesh.
 		size_t n_top_faces = top_faces.size(), n_bottom_faces = bottom_faces.size();
 		// first, embed the tetrahedralization of the cavity to the global mesh
-		embedMeshedCavity(top_mesh, top_vertices, top_faces, bottom_faces);
-		embedMeshedCavity(bottom_mesh, bottom_vertices, bottom_faces, top_faces);
+		embedMeshedCavity(*top_mesh, top_vertices, top_faces, bottom_faces);
+		embedMeshedCavity(*bottom_mesh, bottom_vertices, bottom_faces, top_faces);
 
 		OMC_ASSERT(n_top_faces == top_faces.size(),
 		           "The number of top faces is not consistent.");
@@ -1320,7 +1321,7 @@ void ConstraintsRecover<Traits>::recoverFace_cavityExpanding(
 
 #ifdef OMC_ENABLE_EXPENSIVE_ASSERT
 		{ // check validity of the embedded part
-			size_t  new_finite_tets = top_mesh.sizeTets() + bottom_mesh.sizeTets();
+			size_t  new_finite_tets = top_mesh->sizeTets() + bottom_mesh->sizeTets();
 			DelTet  DT(tet_mesh);
 			index_t tet_idoff_start = (tet_mesh.sizeTets() - new_finite_tets) * 4;
 			index_t tet_idoff_end   = tet_mesh.sizeTets() * 4;
@@ -1428,7 +1429,6 @@ bool ConstraintsRecover<Traits>::cavityHasMissingFace(
  * One tetrahedron belongs to the cavity while the other does not.
  * We expand the cavity by adding the new tetrahedron into the cavity.
  *
- * @param [in] plc_face The PLC face to recover.
  * @param [in] vertices Vertices of the half cavity.
  * @param [in] faces Boundary faces of the half cavity.
  * @param [in] missing_face The missing boundary face when meshing the cavity.
@@ -1436,8 +1436,7 @@ bool ConstraintsRecover<Traits>::cavityHasMissingFace(
  * @param [out] new_vertex The new vertex of the cavity after expanding.
  */
 template <typename Traits>
-void ConstraintsRecover<Traits>::expandCavity(const PLCFace        &plc_face,
-                                              AuxVector64<index_t> &vertices,
+void ConstraintsRecover<Traits>::expandCavity(AuxVector64<index_t> &vertices,
                                               AuxVector64<index_t> &faces,
                                               index_t  missing_face,
                                               index_t &new_tet,
@@ -1491,15 +1490,7 @@ void ConstraintsRecover<Traits>::expandCavity(const PLCFace        &plc_face,
 		new_vertex = tet_mesh.tetNode(missing_face);
 		auto vit   = std::lower_bound(vertices.begin(), vertices.end(), new_vertex);
 		if (vit == vertices.end() || *vit != new_vertex)
-		{
 			vertices.insert(vit, new_vertex);
-			// calculate the orientation of the new vertex
-			index_t tid = plc_face.triangles[0];
-			index_t tv0 = plc.triVtx(tid, 0), tv1 = plc.triVtx(tid, 1),
-			        tv2 = plc.triVtx(tid, 2);
-
-			v_orient[new_vertex] = orient3dCached(tv0, tv1, tv2, new_vertex);
-		}
 		else
 			new_vertex = InvalidIndex;
 	}

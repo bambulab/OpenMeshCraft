@@ -608,6 +608,8 @@ void PiecewiseLinearComplex<Traits>::mergeFacesArossFlatEdges()
 		{ // Not consistent, reverse all edges in `src_f`
 			for (BoundingEdge &be : src_edges)
 				be.reversed = !be.reversed;
+			std::reverse(src_edges.begin(), src_edges.end());
+			src_pos = (src_edges.end() - 1) - (src_pos - src_edges.begin());
 		}
 
 		// `dst_edges` is cut to: begin |<-- 1 -->| dst_pos |<-- 4 -->| end

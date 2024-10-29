@@ -138,9 +138,9 @@ public: /* Algorithms ******************************************************/
 	                          const AuxVector64<index_t> &faces,
 	                          index_t                    &missing_face);
 
-	void expandCavity(const PLCFace &plc_face, AuxVector64<index_t> &vertices,
-	                  AuxVector64<index_t> &faces, index_t missing_face,
-	                  index_t &new_tet, index_t &new_vertex);
+	void expandCavity(AuxVector64<index_t> &vertices, AuxVector64<index_t> &faces,
+	                  index_t missing_face, index_t &new_tet,
+	                  index_t &new_vertex);
 
 	void embedMeshedCavity(TetMesh                    &local_mesh,
 	                       const AuxVector64<index_t> &vertices,

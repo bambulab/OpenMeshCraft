@@ -286,6 +286,7 @@ public: /* Add **************************************************************/
 
 	/* Has intersection */
 
+	void setTriangleHasIntersections(index_t t_id);
 	void setTriangleHasIntersections(index_t tA_id, index_t tB_id);
 
 	/* Intersection points and contrained segments */

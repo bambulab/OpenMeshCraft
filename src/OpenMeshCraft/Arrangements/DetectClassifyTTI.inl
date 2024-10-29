@@ -788,8 +788,9 @@ void DetectClassifyTTI<Traits>::check_TTI_separate(TTIHelper &ha, TTIHelper &hb)
 		OMC_ARR_PROF_TTI_INCR(28);
 		// CASE: a vertex of ta is coplanar to tb, and the opposite edge could
 		// intersect tb (e.g. orAB: -1 0 1)
-		classify_coplanr_vtx_intersections(ha, vtx_id, hb, intersection_points,
-		                                   intersection_types);
+		if (classify_coplanr_vtx_intersections(ha, vtx_id, hb, intersection_points,
+		                                       intersection_types))
+			ts.setTriangleHasIntersections(hb.t_id);
 
 		index_t opp_edge_id = (vtx_id + 1) % 3;
 
@@ -798,6 +799,7 @@ void DetectClassifyTTI<Traits>::check_TTI_separate(TTIHelper &ha, TTIHelper &hb)
 			OMC_ARR_PROF_TTI_INCR(29);
 			classify_noncoplanar_edge_intersections(
 			  ha, opp_edge_id, hb, intersection_points, intersection_types);
+			ts.setTriangleHasIntersections(hb.t_id);
 		}
 		// go on checking B->A
 	}
@@ -811,12 +813,14 @@ void DetectClassifyTTI<Traits>::check_TTI_separate(TTIHelper &ha, TTIHelper &hb)
 			OMC_ARR_PROF_TTI_INCR(31);
 			classify_noncoplanar_edge_intersections(
 			  ha, vtx_id, hb, intersection_points, intersection_types);
+			ts.setTriangleHasIntersections(hb.t_id);
 		}
 		if (noncoplanar_seg_tri_do_intersect(ha, (vtx_id + 2) % 3, hb))
 		{
 			OMC_ARR_PROF_TTI_INCR(32);
 			classify_noncoplanar_edge_intersections(
 			  ha, (vtx_id + 2) % 3, hb, intersection_points, intersection_types);
+			ts.setTriangleHasIntersections(hb.t_id);
 		}
 		// go on checking B->A
 	}
@@ -897,8 +901,9 @@ void DetectClassifyTTI<Traits>::check_TTI_separate(TTIHelper &ha, TTIHelper &hb)
 		OMC_ARR_PROF_TTI_INCR(39);
 		// CASE: a vertex of tB is coplanar to tA, and the opposite edge could
 		// intersect tA (e.g. orBA: -1 0 1)
-		classify_coplanr_vtx_intersections(hb, vtx_id, ha, intersection_points,
-		                                   intersection_types);
+		if (classify_coplanr_vtx_intersections(hb, vtx_id, ha, intersection_points,
+		                                       intersection_types))
+			ts.setTriangleHasIntersections(ha.t_id);
 
 		index_t opp_edge_id = (vtx_id + 1) % 3;
 
@@ -907,6 +912,7 @@ void DetectClassifyTTI<Traits>::check_TTI_separate(TTIHelper &ha, TTIHelper &hb)
 			OMC_ARR_PROF_TTI_INCR(40);
 			classify_noncoplanar_edge_intersections(
 			  hb, opp_edge_id, ha, intersection_points, intersection_types);
+			ts.setTriangleHasIntersections(ha.t_id);
 		}
 	}
 	else if (_vtxOnASideAndOppositeEdgeOnTheOther(orBA, vtx_id))
@@ -919,12 +925,14 @@ void DetectClassifyTTI<Traits>::check_TTI_separate(TTIHelper &ha, TTIHelper &hb)
 			OMC_ARR_PROF_TTI_INCR(42);
 			classify_noncoplanar_edge_intersections(
 			  hb, vtx_id, ha, intersection_points, intersection_types);
+			ts.setTriangleHasIntersections(ha.t_id);
 		}
 		if (noncoplanar_seg_tri_do_intersect(hb, (vtx_id + 2) % 3, ha))
 		{
 			OMC_ARR_PROF_TTI_INCR(43);
 			classify_noncoplanar_edge_intersections(
 			  hb, (vtx_id + 2) % 3, ha, intersection_points, intersection_types);
+			ts.setTriangleHasIntersections(ha.t_id);
 		}
 	}
 
