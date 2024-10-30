@@ -254,6 +254,115 @@ Sign inSphere3p(const GenericPoint3T<IT, ET> &pa,
                 const GenericPoint3T<IT, ET> &pb,
                 const GenericPoint3T<IT, ET> &pc);
 
+template <typename IT, typename ET>
+Sign inSphere3p_EEI_interval(const GenericPoint3T<IT, ET> &pc, IT pax, IT pay,
+                             IT paz, IT pbx, IT pby, IT pbz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI_exact(const GenericPoint3T<IT, ET> &pc, ET pax, ET pay,
+                          ET paz, ET pbx, ET pby, ET pbz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI_expansion(const GenericPoint3T<IT, ET> &pc, double pax,
+                              double pay, double paz, double pbx, double pby,
+                              double pbz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI(const GenericPoint3T<IT, ET> &pc, double pax, double pay,
+                    double paz, double pbx, double pby, double pbz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI(const GenericPoint3T<IT, ET> &pc,
+                    const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE_interval(const GenericPoint3T<IT, ET> &pa, IT pbx, IT pby,
+                             IT pbz, IT pcx, IT pcy, IT pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE_exact(const GenericPoint3T<IT, ET> &pa, ET pbx, ET pby,
+                          ET pbz, ET pcx, ET pcy, ET pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE_expansion(const GenericPoint3T<IT, ET> &pa, double pbx,
+                              double pby, double pbz, double pcx, double pcy,
+                              double pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE(const GenericPoint3T<IT, ET> &pa, double pbx, double pby,
+                    double pbz, double pcx, double pcy, double pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb,
+                    const GenericPoint3T<IT, ET> &pc);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI_interval(const GenericPoint3T<IT, ET> &pa,
+                             const GenericPoint3T<IT, ET> &pc, IT pbx, IT pby,
+                             IT pbz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI_exact(const GenericPoint3T<IT, ET> &pa,
+                          const GenericPoint3T<IT, ET> &pc, ET pbx, ET pby,
+                          ET pbz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI_expansion(const GenericPoint3T<IT, ET> &pa,
+                              const GenericPoint3T<IT, ET> &pc, double pbx,
+                              double pby, double pbz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pc, double pbx, double pby,
+                    double pbz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pc,
+                    const GenericPoint3T<IT, ET> &pb);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE_exact(const GenericPoint3T<IT, ET> &pa,
+                          const GenericPoint3T<IT, ET> &pb, ET pcx, ET pcy,
+                          ET pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE_expansion(const GenericPoint3T<IT, ET> &pa,
+                              const GenericPoint3T<IT, ET> &pb, double pcx,
+                              double pcy, double pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb, double pcx, double pcy,
+                    double pcz);
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb,
+                    const GenericPoint3T<IT, ET> &pc);
+
+template <typename IT, typename ET>
+Sign inSphere3p_III_interval(const GenericPoint3T<IT, ET> &pa,
+                             const GenericPoint3T<IT, ET> &pb,
+                             const GenericPoint3T<IT, ET> &pc);
+
+template <typename IT, typename ET>
+Sign inSphere3p_III_exact(const GenericPoint3T<IT, ET> &pa,
+                          const GenericPoint3T<IT, ET> &pb,
+                          const GenericPoint3T<IT, ET> &pc);
+
+template <typename IT, typename ET>
+Sign inSphere3p_III_expansion(const GenericPoint3T<IT, ET> &pa,
+                              const GenericPoint3T<IT, ET> &pb,
+                              const GenericPoint3T<IT, ET> &pc);
+
+template <typename IT, typename ET>
+Sign inSphere3p_III(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb,
+                    const GenericPoint3T<IT, ET> &pc);
+
 /*===================================================================*/
 
 template <typename IT>
@@ -4708,6 +4817,1851 @@ Sign inSphere3p(const GenericPoint3T<IT, ET> &pa,
 {
 	return inSphere3p<IT, ET>(pa.x(), pa.y(), pa.z(), pb.x(), pb.y(), pb.z(),
 	                          pc.x(), pc.y(), pc.z());
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI_interval(const GenericPoint3T<IT, ET> &pc, IT pax, IT pay,
+                             IT paz, IT pbx, IT pby, IT pbz)
+{
+	IT lcx, lcy, lcz, dc;
+	if (!pc.getIntervalLambda(lcx, lcy, lcz, dc))
+		return Sign::UNCERTAIN;
+
+	typename IT::Protector P;
+
+	IT abx      = pbx - pax;
+	IT aby      = pby - pay;
+	IT abz      = pbz - paz;
+	IT abx2     = abx * abx;
+	IT aby2     = aby * aby;
+	IT abz2     = abz * abz;
+	IT t0       = abx2 + aby2;
+	IT absqr    = t0 + abz2;
+	IT dc2      = dc * dc;
+	IT dc2absqr = dc2 * absqr;
+	IT dcpax    = dc * pax;
+	IT dcpay    = dc * pay;
+	IT dcpaz    = dc * paz;
+	IT acx      = lcx - dcpax;
+	IT acy      = lcy - dcpay;
+	IT acz      = lcz - dcpaz;
+	IT acx2     = acx * acx;
+	IT acy2     = acy * acy;
+	IT acz2     = acz * acz;
+	IT t1       = acx2 + acy2;
+	IT acsqr    = t1 + acz2;
+	IT dcpbx    = dc * pbx;
+	IT dcpby    = dc * pby;
+	IT dcpbz    = dc * pbz;
+	IT bcx      = lcx - dcpbx;
+	IT bcy      = lcy - dcpby;
+	IT bcz      = lcz - dcpbz;
+	IT bcx2     = bcx * bcx;
+	IT bcy2     = bcy * bcy;
+	IT bcz2     = bcz * bcz;
+	IT t2       = bcx2 + bcy2;
+	IT bcsqr    = t2 + bcz2;
+	IT ac_bc    = acsqr + bcsqr;
+	IT d        = dc2absqr - ac_bc;
+	if (!d.is_sign_reliable())
+		return Sign::UNCERTAIN;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI_exact(const GenericPoint3T<IT, ET> &pc, ET pax, ET pay,
+                          ET paz, ET pbx, ET pby, ET pbz)
+{
+	ET lcx, lcy, lcz, dc;
+	pc.getExactLambda(lcx, lcy, lcz, dc);
+	ET abx      = pbx - pax;
+	ET aby      = pby - pay;
+	ET abz      = pbz - paz;
+	ET abx2     = abx * abx;
+	ET aby2     = aby * aby;
+	ET abz2     = abz * abz;
+	ET t0       = abx2 + aby2;
+	ET absqr    = t0 + abz2;
+	ET dc2      = dc * dc;
+	ET dc2absqr = dc2 * absqr;
+	ET dcpax    = dc * pax;
+	ET dcpay    = dc * pay;
+	ET dcpaz    = dc * paz;
+	ET acx      = lcx - dcpax;
+	ET acy      = lcy - dcpay;
+	ET acz      = lcz - dcpaz;
+	ET acx2     = acx * acx;
+	ET acy2     = acy * acy;
+	ET acz2     = acz * acz;
+	ET t1       = acx2 + acy2;
+	ET acsqr    = t1 + acz2;
+	ET dcpbx    = dc * pbx;
+	ET dcpby    = dc * pby;
+	ET dcpbz    = dc * pbz;
+	ET bcx      = lcx - dcpbx;
+	ET bcy      = lcy - dcpby;
+	ET bcz      = lcz - dcpbz;
+	ET bcx2     = bcx * bcx;
+	ET bcy2     = bcy * bcy;
+	ET bcz2     = bcz * bcz;
+	ET t2       = bcx2 + bcy2;
+	ET bcsqr    = t2 + bcz2;
+	ET ac_bc    = acsqr + bcsqr;
+	ET d        = dc2absqr - ac_bc;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI_expansion(const GenericPoint3T<IT, ET> &pc, double pax,
+                              double pay, double paz, double pbx, double pby,
+                              double pbz)
+{
+	double return_value = NAN;
+#ifdef CHECK_FOR_XYZERFLOWS
+	feclearexcept(FE_ALL_EXCEPT);
+#endif
+	double lcx_p[32], *lcx = lcx_p, lcy_p[32], *lcy = lcy_p, lcz_p[32],
+	                  *lcz = lcz_p, dc_p[32], *dc = dc_p;
+	int lcx_len = 32, lcy_len = 32, lcz_len = 32, dc_len = 32;
+	pc.getExpansionLambda(&lcx, lcx_len, &lcy, lcy_len, &lcz, lcz_len, &dc,
+	                      dc_len);
+	if ((dc[dc_len - 1] != 0))
+	{
+		expansionObject o;
+		double          abx[2];
+		o.Two_Diff(pbx, pax, abx);
+		double aby[2];
+		o.Two_Diff(pby, pay, aby);
+		double abz[2];
+		o.Two_Diff(pbz, paz, abz);
+		double abx2[8];
+		int    abx2_len = o.Gen_Product(2, abx, 2, abx, abx2);
+		double aby2[8];
+		int    aby2_len = o.Gen_Product(2, aby, 2, aby, aby2);
+		double abz2[8];
+		int    abz2_len = o.Gen_Product(2, abz, 2, abz, abz2);
+		double t0[16];
+		int    t0_len = o.Gen_Sum(abx2_len, abx2, aby2_len, aby2, t0);
+		double absqr[24];
+		int    absqr_len = o.Gen_Sum(t0_len, t0, abz2_len, abz2, absqr);
+		double dc2_p[32], *dc2 = dc2_p;
+		int dc2_len = o.Gen_Product_With_PreAlloc(dc_len, dc, dc_len, dc, &dc2, 32);
+		double dc2absqr_p[32], *dc2absqr = dc2absqr_p;
+		int    dc2absqr_len = o.Gen_Product_With_PreAlloc(dc2_len, dc2, absqr_len,
+		                                                  absqr, &dc2absqr, 32);
+		double dcpax_p[32], *dcpax = dcpax_p;
+		int    dcpax_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, pax, &dcpax, 32);
+		double dcpay_p[32], *dcpay = dcpay_p;
+		int    dcpay_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, pay, &dcpay, 32);
+		double dcpaz_p[32], *dcpaz = dcpaz_p;
+		int    dcpaz_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, paz, &dcpaz, 32);
+		double acx_p[32], *acx = acx_p;
+		int    acx_len =
+		  o.Gen_Diff_With_PreAlloc(lcx_len, lcx, dcpax_len, dcpax, &acx, 32);
+		double acy_p[32], *acy = acy_p;
+		int    acy_len =
+		  o.Gen_Diff_With_PreAlloc(lcy_len, lcy, dcpay_len, dcpay, &acy, 32);
+		double acz_p[32], *acz = acz_p;
+		int    acz_len =
+		  o.Gen_Diff_With_PreAlloc(lcz_len, lcz, dcpaz_len, dcpaz, &acz, 32);
+		double acx2_p[32], *acx2 = acx2_p;
+		int    acx2_len =
+		  o.Gen_Product_With_PreAlloc(acx_len, acx, acx_len, acx, &acx2, 32);
+		double acy2_p[32], *acy2 = acy2_p;
+		int    acy2_len =
+		  o.Gen_Product_With_PreAlloc(acy_len, acy, acy_len, acy, &acy2, 32);
+		double acz2_p[32], *acz2 = acz2_p;
+		int    acz2_len =
+		  o.Gen_Product_With_PreAlloc(acz_len, acz, acz_len, acz, &acz2, 32);
+		double t1_p[32], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Sum_With_PreAlloc(acx2_len, acx2, acy2_len, acy2, &t1, 32);
+		double acsqr_p[32], *acsqr = acsqr_p;
+		int    acsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t1_len, t1, acz2_len, acz2, &acsqr, 32);
+		double dcpbx_p[32], *dcpbx = dcpbx_p;
+		int    dcpbx_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, pbx, &dcpbx, 32);
+		double dcpby_p[32], *dcpby = dcpby_p;
+		int    dcpby_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, pby, &dcpby, 32);
+		double dcpbz_p[32], *dcpbz = dcpbz_p;
+		int    dcpbz_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, pbz, &dcpbz, 32);
+		double bcx_p[32], *bcx = bcx_p;
+		int    bcx_len =
+		  o.Gen_Diff_With_PreAlloc(lcx_len, lcx, dcpbx_len, dcpbx, &bcx, 32);
+		double bcy_p[32], *bcy = bcy_p;
+		int    bcy_len =
+		  o.Gen_Diff_With_PreAlloc(lcy_len, lcy, dcpby_len, dcpby, &bcy, 32);
+		double bcz_p[32], *bcz = bcz_p;
+		int    bcz_len =
+		  o.Gen_Diff_With_PreAlloc(lcz_len, lcz, dcpbz_len, dcpbz, &bcz, 32);
+		double bcx2_p[32], *bcx2 = bcx2_p;
+		int    bcx2_len =
+		  o.Gen_Product_With_PreAlloc(bcx_len, bcx, bcx_len, bcx, &bcx2, 32);
+		double bcy2_p[32], *bcy2 = bcy2_p;
+		int    bcy2_len =
+		  o.Gen_Product_With_PreAlloc(bcy_len, bcy, bcy_len, bcy, &bcy2, 32);
+		double bcz2_p[32], *bcz2 = bcz2_p;
+		int    bcz2_len =
+		  o.Gen_Product_With_PreAlloc(bcz_len, bcz, bcz_len, bcz, &bcz2, 32);
+		double t2_p[32], *t2 = t2_p;
+		int    t2_len =
+		  o.Gen_Sum_With_PreAlloc(bcx2_len, bcx2, bcy2_len, bcy2, &t2, 32);
+		double bcsqr_p[32], *bcsqr = bcsqr_p;
+		int    bcsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t2_len, t2, bcz2_len, bcz2, &bcsqr, 32);
+		double ac_bc_p[32], *ac_bc = ac_bc_p;
+		int    ac_bc_len =
+		  o.Gen_Sum_With_PreAlloc(acsqr_len, acsqr, bcsqr_len, bcsqr, &ac_bc, 32);
+		double d_p[32], *d = d_p;
+		int    d_len = o.Gen_Diff_With_PreAlloc(dc2absqr_len, dc2absqr, ac_bc_len,
+		                                        ac_bc, &d, 32);
+
+		return_value = d[d_len - 1];
+		if (d_p != d)
+			FreeDoubles(d);
+		if (ac_bc_p != ac_bc)
+			FreeDoubles(ac_bc);
+		if (bcsqr_p != bcsqr)
+			FreeDoubles(bcsqr);
+		if (t2_p != t2)
+			FreeDoubles(t2);
+		if (bcz2_p != bcz2)
+			FreeDoubles(bcz2);
+		if (bcy2_p != bcy2)
+			FreeDoubles(bcy2);
+		if (bcx2_p != bcx2)
+			FreeDoubles(bcx2);
+		if (bcz_p != bcz)
+			FreeDoubles(bcz);
+		if (bcy_p != bcy)
+			FreeDoubles(bcy);
+		if (bcx_p != bcx)
+			FreeDoubles(bcx);
+		if (dcpbz_p != dcpbz)
+			FreeDoubles(dcpbz);
+		if (dcpby_p != dcpby)
+			FreeDoubles(dcpby);
+		if (dcpbx_p != dcpbx)
+			FreeDoubles(dcpbx);
+		if (acsqr_p != acsqr)
+			FreeDoubles(acsqr);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (acz2_p != acz2)
+			FreeDoubles(acz2);
+		if (acy2_p != acy2)
+			FreeDoubles(acy2);
+		if (acx2_p != acx2)
+			FreeDoubles(acx2);
+		if (acz_p != acz)
+			FreeDoubles(acz);
+		if (acy_p != acy)
+			FreeDoubles(acy);
+		if (acx_p != acx)
+			FreeDoubles(acx);
+		if (dcpaz_p != dcpaz)
+			FreeDoubles(dcpaz);
+		if (dcpay_p != dcpay)
+			FreeDoubles(dcpay);
+		if (dcpax_p != dcpax)
+			FreeDoubles(dcpax);
+		if (dc2absqr_p != dc2absqr)
+			FreeDoubles(dc2absqr);
+		if (dc2_p != dc2)
+			FreeDoubles(dc2);
+	}
+
+	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
+	{
+		if (lcx_p != lcx)
+			FreeDoubles(lcx);
+		if (lcy_p != lcy)
+			FreeDoubles(lcy);
+		if (lcz_p != lcz)
+			FreeDoubles(lcz);
+		if (dc_p != dc)
+			FreeDoubles(dc);
+	}
+
+#ifdef CHECK_FOR_XYZERFLOWS
+	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
+		return inSphere3p_EEI_exact<IT, ET>(pc, pax, pay, paz, pbx, pby, pbz);
+#endif
+
+	if (return_value > 0)
+		return Sign::POSITIVE;
+	if (return_value < 0)
+		return Sign::NEGATIVE;
+	if (return_value == 0)
+		return Sign::ZERO;
+	OMC_EXIT("Should not happen.");
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI(const GenericPoint3T<IT, ET> &pc, double pax, double pay,
+                    double paz, double pbx, double pby, double pbz)
+{
+	Sign ret;
+	ret = inSphere3p_EEI_interval<IT, ET>(pc, pax, pay, paz, pbx, pby, pbz);
+	if (is_sign_reliable(ret))
+		return ret;
+	return inSphere3p_EEI_expansion<IT, ET>(pc, pax, pay, paz, pbx, pby, pbz);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_EEI(const GenericPoint3T<IT, ET> &pc,
+                    const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb)
+{
+	return inSphere3p_EEI<IT, ET>(pc, pa.x(), pa.y(), pa.z(), pb.x(), pb.y(),
+	                              pb.z());
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE_interval(const GenericPoint3T<IT, ET> &pa, IT pbx, IT pby,
+                             IT pbz, IT pcx, IT pcy, IT pcz)
+{
+	IT lax, lay, laz, da;
+	if (!pa.getIntervalLambda(lax, lay, laz, da))
+		return Sign::UNCERTAIN;
+
+	typename IT::Protector P;
+
+	IT dapbx    = da * pbx;
+	IT dapby    = da * pby;
+	IT dapbz    = da * pbz;
+	IT abx      = dapbx - lax;
+	IT aby      = dapby - lay;
+	IT abz      = dapbz - laz;
+	IT abx2     = abx * abx;
+	IT aby2     = aby * aby;
+	IT abz2     = abz * abz;
+	IT t0       = abx2 + aby2;
+	IT absqr    = t0 + abz2;
+	IT dapcx    = da * pcx;
+	IT dapcy    = da * pcy;
+	IT dapcz    = da * pcz;
+	IT acx      = dapcx - lax;
+	IT acy      = dapcy - lay;
+	IT acz      = dapcz - laz;
+	IT acx2     = acx * acx;
+	IT acy2     = acy * acy;
+	IT acz2     = acz * acz;
+	IT t1       = acx2 + acy2;
+	IT acsqr    = t1 + acz2;
+	IT bcx      = pcx - pbx;
+	IT bcy      = pcy - pby;
+	IT bcz      = pcz - pbz;
+	IT bcx2     = bcx * bcx;
+	IT bcy2     = bcy * bcy;
+	IT bcz2     = bcz * bcz;
+	IT t2       = bcx2 + bcy2;
+	IT bcsqr    = t2 + bcz2;
+	IT da2      = da * da;
+	IT da2bcsqr = da2 * bcsqr;
+	IT ac_bc    = acsqr + da2bcsqr;
+	IT d        = absqr - ac_bc;
+	if (!d.is_sign_reliable())
+		return Sign::UNCERTAIN;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE_exact(const GenericPoint3T<IT, ET> &pa, ET pbx, ET pby,
+                          ET pbz, ET pcx, ET pcy, ET pcz)
+{
+	ET lax, lay, laz, da;
+	pa.getExactLambda(lax, lay, laz, da);
+	ET dapbx    = da * pbx;
+	ET dapby    = da * pby;
+	ET dapbz    = da * pbz;
+	ET abx      = dapbx - lax;
+	ET aby      = dapby - lay;
+	ET abz      = dapbz - laz;
+	ET abx2     = abx * abx;
+	ET aby2     = aby * aby;
+	ET abz2     = abz * abz;
+	ET t0       = abx2 + aby2;
+	ET absqr    = t0 + abz2;
+	ET dapcx    = da * pcx;
+	ET dapcy    = da * pcy;
+	ET dapcz    = da * pcz;
+	ET acx      = dapcx - lax;
+	ET acy      = dapcy - lay;
+	ET acz      = dapcz - laz;
+	ET acx2     = acx * acx;
+	ET acy2     = acy * acy;
+	ET acz2     = acz * acz;
+	ET t1       = acx2 + acy2;
+	ET acsqr    = t1 + acz2;
+	ET bcx      = pcx - pbx;
+	ET bcy      = pcy - pby;
+	ET bcz      = pcz - pbz;
+	ET bcx2     = bcx * bcx;
+	ET bcy2     = bcy * bcy;
+	ET bcz2     = bcz * bcz;
+	ET t2       = bcx2 + bcy2;
+	ET bcsqr    = t2 + bcz2;
+	ET da2      = da * da;
+	ET da2bcsqr = da2 * bcsqr;
+	ET ac_bc    = acsqr + da2bcsqr;
+	ET d        = absqr - ac_bc;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE_expansion(const GenericPoint3T<IT, ET> &pa, double pbx,
+                              double pby, double pbz, double pcx, double pcy,
+                              double pcz)
+{
+	double return_value = NAN;
+#ifdef CHECK_FOR_XYZERFLOWS
+	feclearexcept(FE_ALL_EXCEPT);
+#endif
+	double lax_p[32], *lax = lax_p, lay_p[32], *lay = lay_p, laz_p[32],
+	                  *laz = laz_p, da_p[32], *da = da_p;
+	int lax_len = 32, lay_len = 32, laz_len = 32, da_len = 32;
+	pa.getExpansionLambda(&lax, lax_len, &lay, lay_len, &laz, laz_len, &da,
+	                      da_len);
+	if ((da[da_len - 1] != 0))
+	{
+		expansionObject o;
+		double          dapbx_p[32], *dapbx = dapbx_p;
+		int    dapbx_len = o.Gen_Scale_With_PreAlloc(da_len, da, pbx, &dapbx, 32);
+		double dapby_p[32], *dapby = dapby_p;
+		int    dapby_len = o.Gen_Scale_With_PreAlloc(da_len, da, pby, &dapby, 32);
+		double dapbz_p[32], *dapbz = dapbz_p;
+		int    dapbz_len = o.Gen_Scale_With_PreAlloc(da_len, da, pbz, &dapbz, 32);
+		double abx_p[32], *abx = abx_p;
+		int    abx_len =
+		  o.Gen_Diff_With_PreAlloc(dapbx_len, dapbx, lax_len, lax, &abx, 32);
+		double aby_p[32], *aby = aby_p;
+		int    aby_len =
+		  o.Gen_Diff_With_PreAlloc(dapby_len, dapby, lay_len, lay, &aby, 32);
+		double abz_p[32], *abz = abz_p;
+		int    abz_len =
+		  o.Gen_Diff_With_PreAlloc(dapbz_len, dapbz, laz_len, laz, &abz, 32);
+		double abx2_p[32], *abx2 = abx2_p;
+		int    abx2_len =
+		  o.Gen_Product_With_PreAlloc(abx_len, abx, abx_len, abx, &abx2, 32);
+		double aby2_p[32], *aby2 = aby2_p;
+		int    aby2_len =
+		  o.Gen_Product_With_PreAlloc(aby_len, aby, aby_len, aby, &aby2, 32);
+		double abz2_p[32], *abz2 = abz2_p;
+		int    abz2_len =
+		  o.Gen_Product_With_PreAlloc(abz_len, abz, abz_len, abz, &abz2, 32);
+		double t0_p[32], *t0 = t0_p;
+		int    t0_len =
+		  o.Gen_Sum_With_PreAlloc(abx2_len, abx2, aby2_len, aby2, &t0, 32);
+		double absqr_p[32], *absqr = absqr_p;
+		int    absqr_len =
+		  o.Gen_Sum_With_PreAlloc(t0_len, t0, abz2_len, abz2, &absqr, 32);
+		double dapcx_p[32], *dapcx = dapcx_p;
+		int    dapcx_len = o.Gen_Scale_With_PreAlloc(da_len, da, pcx, &dapcx, 32);
+		double dapcy_p[32], *dapcy = dapcy_p;
+		int    dapcy_len = o.Gen_Scale_With_PreAlloc(da_len, da, pcy, &dapcy, 32);
+		double dapcz_p[32], *dapcz = dapcz_p;
+		int    dapcz_len = o.Gen_Scale_With_PreAlloc(da_len, da, pcz, &dapcz, 32);
+		double acx_p[32], *acx = acx_p;
+		int    acx_len =
+		  o.Gen_Diff_With_PreAlloc(dapcx_len, dapcx, lax_len, lax, &acx, 32);
+		double acy_p[32], *acy = acy_p;
+		int    acy_len =
+		  o.Gen_Diff_With_PreAlloc(dapcy_len, dapcy, lay_len, lay, &acy, 32);
+		double acz_p[32], *acz = acz_p;
+		int    acz_len =
+		  o.Gen_Diff_With_PreAlloc(dapcz_len, dapcz, laz_len, laz, &acz, 32);
+		double acx2_p[32], *acx2 = acx2_p;
+		int    acx2_len =
+		  o.Gen_Product_With_PreAlloc(acx_len, acx, acx_len, acx, &acx2, 32);
+		double acy2_p[32], *acy2 = acy2_p;
+		int    acy2_len =
+		  o.Gen_Product_With_PreAlloc(acy_len, acy, acy_len, acy, &acy2, 32);
+		double acz2_p[32], *acz2 = acz2_p;
+		int    acz2_len =
+		  o.Gen_Product_With_PreAlloc(acz_len, acz, acz_len, acz, &acz2, 32);
+		double t1_p[32], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Sum_With_PreAlloc(acx2_len, acx2, acy2_len, acy2, &t1, 32);
+		double acsqr_p[32], *acsqr = acsqr_p;
+		int    acsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t1_len, t1, acz2_len, acz2, &acsqr, 32);
+		double bcx[2];
+		o.Two_Diff(pcx, pbx, bcx);
+		double bcy[2];
+		o.Two_Diff(pcy, pby, bcy);
+		double bcz[2];
+		o.Two_Diff(pcz, pbz, bcz);
+		double bcx2[8];
+		int    bcx2_len = o.Gen_Product(2, bcx, 2, bcx, bcx2);
+		double bcy2[8];
+		int    bcy2_len = o.Gen_Product(2, bcy, 2, bcy, bcy2);
+		double bcz2[8];
+		int    bcz2_len = o.Gen_Product(2, bcz, 2, bcz, bcz2);
+		double t2[16];
+		int    t2_len = o.Gen_Sum(bcx2_len, bcx2, bcy2_len, bcy2, t2);
+		double bcsqr[24];
+		int    bcsqr_len = o.Gen_Sum(t2_len, t2, bcz2_len, bcz2, bcsqr);
+		double da2_p[32], *da2 = da2_p;
+		int da2_len = o.Gen_Product_With_PreAlloc(da_len, da, da_len, da, &da2, 32);
+		double da2bcsqr_p[32], *da2bcsqr = da2bcsqr_p;
+		int    da2bcsqr_len = o.Gen_Product_With_PreAlloc(da2_len, da2, bcsqr_len,
+		                                                  bcsqr, &da2bcsqr, 32);
+		double ac_bc_p[32], *ac_bc = ac_bc_p;
+		int    ac_bc_len = o.Gen_Sum_With_PreAlloc(acsqr_len, acsqr, da2bcsqr_len,
+		                                           da2bcsqr, &ac_bc, 32);
+		double d_p[32], *d = d_p;
+		int    d_len =
+		  o.Gen_Diff_With_PreAlloc(absqr_len, absqr, ac_bc_len, ac_bc, &d, 32);
+
+		return_value = d[d_len - 1];
+		if (d_p != d)
+			FreeDoubles(d);
+		if (ac_bc_p != ac_bc)
+			FreeDoubles(ac_bc);
+		if (da2bcsqr_p != da2bcsqr)
+			FreeDoubles(da2bcsqr);
+		if (da2_p != da2)
+			FreeDoubles(da2);
+		if (acsqr_p != acsqr)
+			FreeDoubles(acsqr);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (acz2_p != acz2)
+			FreeDoubles(acz2);
+		if (acy2_p != acy2)
+			FreeDoubles(acy2);
+		if (acx2_p != acx2)
+			FreeDoubles(acx2);
+		if (acz_p != acz)
+			FreeDoubles(acz);
+		if (acy_p != acy)
+			FreeDoubles(acy);
+		if (acx_p != acx)
+			FreeDoubles(acx);
+		if (dapcz_p != dapcz)
+			FreeDoubles(dapcz);
+		if (dapcy_p != dapcy)
+			FreeDoubles(dapcy);
+		if (dapcx_p != dapcx)
+			FreeDoubles(dapcx);
+		if (absqr_p != absqr)
+			FreeDoubles(absqr);
+		if (t0_p != t0)
+			FreeDoubles(t0);
+		if (abz2_p != abz2)
+			FreeDoubles(abz2);
+		if (aby2_p != aby2)
+			FreeDoubles(aby2);
+		if (abx2_p != abx2)
+			FreeDoubles(abx2);
+		if (abz_p != abz)
+			FreeDoubles(abz);
+		if (aby_p != aby)
+			FreeDoubles(aby);
+		if (abx_p != abx)
+			FreeDoubles(abx);
+		if (dapbz_p != dapbz)
+			FreeDoubles(dapbz);
+		if (dapby_p != dapby)
+			FreeDoubles(dapby);
+		if (dapbx_p != dapbx)
+			FreeDoubles(dapbx);
+	}
+
+	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
+	{
+		if (lax_p != lax)
+			FreeDoubles(lax);
+		if (lay_p != lay)
+			FreeDoubles(lay);
+		if (laz_p != laz)
+			FreeDoubles(laz);
+		if (da_p != da)
+			FreeDoubles(da);
+	}
+
+#ifdef CHECK_FOR_XYZERFLOWS
+	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
+		return inSphere3p_IEE_exact<IT, ET>(pa, pbx, pby, pbz, pcx, pcy, pcz);
+#endif
+
+	if (return_value > 0)
+		return Sign::POSITIVE;
+	if (return_value < 0)
+		return Sign::NEGATIVE;
+	if (return_value == 0)
+		return Sign::ZERO;
+	OMC_EXIT("Should not happen.");
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE(const GenericPoint3T<IT, ET> &pa, double pbx, double pby,
+                    double pbz, double pcx, double pcy, double pcz)
+{
+	Sign ret;
+	ret = inSphere3p_IEE_interval<IT, ET>(pa, pbx, pby, pbz, pcx, pcy, pcz);
+	if (is_sign_reliable(ret))
+		return ret;
+	return inSphere3p_IEE_expansion<IT, ET>(pa, pbx, pby, pbz, pcx, pcy, pcz);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEE(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb,
+                    const GenericPoint3T<IT, ET> &pc)
+{
+	return inSphere3p_IEE<IT, ET>(pa, pb.x(), pb.y(), pb.z(), pc.x(), pc.y(),
+	                              pc.z());
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI_interval(const GenericPoint3T<IT, ET> &pa,
+                             const GenericPoint3T<IT, ET> &pc, IT pbx, IT pby,
+                             IT pbz)
+{
+	IT lax, lay, laz, da, lcx, lcy, lcz, dc;
+	if (!pa.getIntervalLambda(lax, lay, laz, da) ||
+	    !pc.getIntervalLambda(lcx, lcy, lcz, dc))
+		return Sign::UNCERTAIN;
+
+	typename IT::Protector P;
+
+	IT dapbx    = da * pbx;
+	IT dapby    = da * pby;
+	IT dapbz    = da * pbz;
+	IT abx      = dapbx - lax;
+	IT aby      = dapby - lay;
+	IT abz      = dapbz - laz;
+	IT abx2     = abx * abx;
+	IT aby2     = aby * aby;
+	IT abz2     = abz * abz;
+	IT t0       = abx2 + aby2;
+	IT absqr    = t0 + abz2;
+	IT dc2      = dc * dc;
+	IT dc2absqr = dc2 * absqr;
+	IT dalcx    = da * lcx;
+	IT dalcy    = da * lcy;
+	IT dalcz    = da * lcz;
+	IT dclax    = dc * lax;
+	IT dclay    = dc * lay;
+	IT dclaz    = dc * laz;
+	IT acx      = dalcx - dclax;
+	IT acy      = dalcy - dclay;
+	IT acz      = dalcz - dclaz;
+	IT acx2     = acx * acx;
+	IT acy2     = acy * acy;
+	IT acz2     = acz * acz;
+	IT t1       = acx2 + acy2;
+	IT acsqr    = t1 + acz2;
+	IT dcpbx    = dc * pbx;
+	IT dcpby    = dc * pby;
+	IT dcpbz    = dc * pbz;
+	IT bcx      = lcx - dcpbx;
+	IT bcy      = lcy - dcpby;
+	IT bcz      = lcz - dcpbz;
+	IT bcx2     = bcx * bcx;
+	IT bcy2     = bcy * bcy;
+	IT bcz2     = bcz * bcz;
+	IT t2       = bcx2 + bcy2;
+	IT bcsqr    = t2 + bcz2;
+	IT da2      = da * da;
+	IT da2bcsqr = da2 * bcsqr;
+	IT ac_bc    = acsqr + da2bcsqr;
+	IT d        = dc2absqr - ac_bc;
+	if (!d.is_sign_reliable())
+		return Sign::UNCERTAIN;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI_exact(const GenericPoint3T<IT, ET> &pa,
+                          const GenericPoint3T<IT, ET> &pc, ET pbx, ET pby,
+                          ET pbz)
+{
+	ET lax, lay, laz, da, lcx, lcy, lcz, dc;
+	pa.getExactLambda(lax, lay, laz, da);
+	pc.getExactLambda(lcx, lcy, lcz, dc);
+	ET dapbx    = da * pbx;
+	ET dapby    = da * pby;
+	ET dapbz    = da * pbz;
+	ET abx      = dapbx - lax;
+	ET aby      = dapby - lay;
+	ET abz      = dapbz - laz;
+	ET abx2     = abx * abx;
+	ET aby2     = aby * aby;
+	ET abz2     = abz * abz;
+	ET t0       = abx2 + aby2;
+	ET absqr    = t0 + abz2;
+	ET dc2      = dc * dc;
+	ET dc2absqr = dc2 * absqr;
+	ET dalcx    = da * lcx;
+	ET dalcy    = da * lcy;
+	ET dalcz    = da * lcz;
+	ET dclax    = dc * lax;
+	ET dclay    = dc * lay;
+	ET dclaz    = dc * laz;
+	ET acx      = dalcx - dclax;
+	ET acy      = dalcy - dclay;
+	ET acz      = dalcz - dclaz;
+	ET acx2     = acx * acx;
+	ET acy2     = acy * acy;
+	ET acz2     = acz * acz;
+	ET t1       = acx2 + acy2;
+	ET acsqr    = t1 + acz2;
+	ET dcpbx    = dc * pbx;
+	ET dcpby    = dc * pby;
+	ET dcpbz    = dc * pbz;
+	ET bcx      = lcx - dcpbx;
+	ET bcy      = lcy - dcpby;
+	ET bcz      = lcz - dcpbz;
+	ET bcx2     = bcx * bcx;
+	ET bcy2     = bcy * bcy;
+	ET bcz2     = bcz * bcz;
+	ET t2       = bcx2 + bcy2;
+	ET bcsqr    = t2 + bcz2;
+	ET da2      = da * da;
+	ET da2bcsqr = da2 * bcsqr;
+	ET ac_bc    = acsqr + da2bcsqr;
+	ET d        = dc2absqr - ac_bc;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI_expansion(const GenericPoint3T<IT, ET> &pa,
+                              const GenericPoint3T<IT, ET> &pc, double pbx,
+                              double pby, double pbz)
+{
+	double return_value = NAN;
+#ifdef CHECK_FOR_XYZERFLOWS
+	feclearexcept(FE_ALL_EXCEPT);
+#endif
+	double lax_p[32], *lax = lax_p, lay_p[32], *lay = lay_p, laz_p[32],
+	                  *laz = laz_p, da_p[32], *da = da_p, lcx_p[32], *lcx = lcx_p,
+	                  lcy_p[32], *lcy = lcy_p, lcz_p[32], *lcz = lcz_p, dc_p[32],
+	                  *dc = dc_p;
+	int lax_len = 32, lay_len = 32, laz_len = 32, da_len = 32, lcx_len = 32,
+	    lcy_len = 32, lcz_len = 32, dc_len = 32;
+	pa.getExpansionLambda(&lax, lax_len, &lay, lay_len, &laz, laz_len, &da,
+	                      da_len);
+	pc.getExpansionLambda(&lcx, lcx_len, &lcy, lcy_len, &lcz, lcz_len, &dc,
+	                      dc_len);
+	if ((da[da_len - 1] != 0) && (dc[dc_len - 1] != 0))
+	{
+		expansionObject o;
+		double          dapbx_p[32], *dapbx = dapbx_p;
+		int    dapbx_len = o.Gen_Scale_With_PreAlloc(da_len, da, pbx, &dapbx, 32);
+		double dapby_p[32], *dapby = dapby_p;
+		int    dapby_len = o.Gen_Scale_With_PreAlloc(da_len, da, pby, &dapby, 32);
+		double dapbz_p[32], *dapbz = dapbz_p;
+		int    dapbz_len = o.Gen_Scale_With_PreAlloc(da_len, da, pbz, &dapbz, 32);
+		double abx_p[32], *abx = abx_p;
+		int    abx_len =
+		  o.Gen_Diff_With_PreAlloc(dapbx_len, dapbx, lax_len, lax, &abx, 32);
+		double aby_p[32], *aby = aby_p;
+		int    aby_len =
+		  o.Gen_Diff_With_PreAlloc(dapby_len, dapby, lay_len, lay, &aby, 32);
+		double abz_p[32], *abz = abz_p;
+		int    abz_len =
+		  o.Gen_Diff_With_PreAlloc(dapbz_len, dapbz, laz_len, laz, &abz, 32);
+		double abx2_p[32], *abx2 = abx2_p;
+		int    abx2_len =
+		  o.Gen_Product_With_PreAlloc(abx_len, abx, abx_len, abx, &abx2, 32);
+		double aby2_p[32], *aby2 = aby2_p;
+		int    aby2_len =
+		  o.Gen_Product_With_PreAlloc(aby_len, aby, aby_len, aby, &aby2, 32);
+		double abz2_p[32], *abz2 = abz2_p;
+		int    abz2_len =
+		  o.Gen_Product_With_PreAlloc(abz_len, abz, abz_len, abz, &abz2, 32);
+		double t0_p[32], *t0 = t0_p;
+		int    t0_len =
+		  o.Gen_Sum_With_PreAlloc(abx2_len, abx2, aby2_len, aby2, &t0, 32);
+		double absqr_p[32], *absqr = absqr_p;
+		int    absqr_len =
+		  o.Gen_Sum_With_PreAlloc(t0_len, t0, abz2_len, abz2, &absqr, 32);
+		double dc2_p[32], *dc2 = dc2_p;
+		int dc2_len = o.Gen_Product_With_PreAlloc(dc_len, dc, dc_len, dc, &dc2, 32);
+		double dc2absqr_p[32], *dc2absqr = dc2absqr_p;
+		int    dc2absqr_len = o.Gen_Product_With_PreAlloc(dc2_len, dc2, absqr_len,
+		                                                  absqr, &dc2absqr, 32);
+		double dalcx_p[32], *dalcx = dalcx_p;
+		int    dalcx_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lcx_len, lcx, &dalcx, 32);
+		double dalcy_p[32], *dalcy = dalcy_p;
+		int    dalcy_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lcy_len, lcy, &dalcy, 32);
+		double dalcz_p[32], *dalcz = dalcz_p;
+		int    dalcz_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lcz_len, lcz, &dalcz, 32);
+		double dclax_p[32], *dclax = dclax_p;
+		int    dclax_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, lax_len, lax, &dclax, 32);
+		double dclay_p[32], *dclay = dclay_p;
+		int    dclay_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, lay_len, lay, &dclay, 32);
+		double dclaz_p[32], *dclaz = dclaz_p;
+		int    dclaz_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, laz_len, laz, &dclaz, 32);
+		double acx_p[32], *acx = acx_p;
+		int    acx_len =
+		  o.Gen_Diff_With_PreAlloc(dalcx_len, dalcx, dclax_len, dclax, &acx, 32);
+		double acy_p[32], *acy = acy_p;
+		int    acy_len =
+		  o.Gen_Diff_With_PreAlloc(dalcy_len, dalcy, dclay_len, dclay, &acy, 32);
+		double acz_p[32], *acz = acz_p;
+		int    acz_len =
+		  o.Gen_Diff_With_PreAlloc(dalcz_len, dalcz, dclaz_len, dclaz, &acz, 32);
+		double acx2_p[32], *acx2 = acx2_p;
+		int    acx2_len =
+		  o.Gen_Product_With_PreAlloc(acx_len, acx, acx_len, acx, &acx2, 32);
+		double acy2_p[32], *acy2 = acy2_p;
+		int    acy2_len =
+		  o.Gen_Product_With_PreAlloc(acy_len, acy, acy_len, acy, &acy2, 32);
+		double acz2_p[32], *acz2 = acz2_p;
+		int    acz2_len =
+		  o.Gen_Product_With_PreAlloc(acz_len, acz, acz_len, acz, &acz2, 32);
+		double t1_p[32], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Sum_With_PreAlloc(acx2_len, acx2, acy2_len, acy2, &t1, 32);
+		double acsqr_p[32], *acsqr = acsqr_p;
+		int    acsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t1_len, t1, acz2_len, acz2, &acsqr, 32);
+		double dcpbx_p[32], *dcpbx = dcpbx_p;
+		int    dcpbx_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, pbx, &dcpbx, 32);
+		double dcpby_p[32], *dcpby = dcpby_p;
+		int    dcpby_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, pby, &dcpby, 32);
+		double dcpbz_p[32], *dcpbz = dcpbz_p;
+		int    dcpbz_len = o.Gen_Scale_With_PreAlloc(dc_len, dc, pbz, &dcpbz, 32);
+		double bcx_p[32], *bcx = bcx_p;
+		int    bcx_len =
+		  o.Gen_Diff_With_PreAlloc(lcx_len, lcx, dcpbx_len, dcpbx, &bcx, 32);
+		double bcy_p[32], *bcy = bcy_p;
+		int    bcy_len =
+		  o.Gen_Diff_With_PreAlloc(lcy_len, lcy, dcpby_len, dcpby, &bcy, 32);
+		double bcz_p[32], *bcz = bcz_p;
+		int    bcz_len =
+		  o.Gen_Diff_With_PreAlloc(lcz_len, lcz, dcpbz_len, dcpbz, &bcz, 32);
+		double bcx2_p[32], *bcx2 = bcx2_p;
+		int    bcx2_len =
+		  o.Gen_Product_With_PreAlloc(bcx_len, bcx, bcx_len, bcx, &bcx2, 32);
+		double bcy2_p[32], *bcy2 = bcy2_p;
+		int    bcy2_len =
+		  o.Gen_Product_With_PreAlloc(bcy_len, bcy, bcy_len, bcy, &bcy2, 32);
+		double bcz2_p[32], *bcz2 = bcz2_p;
+		int    bcz2_len =
+		  o.Gen_Product_With_PreAlloc(bcz_len, bcz, bcz_len, bcz, &bcz2, 32);
+		double t2_p[32], *t2 = t2_p;
+		int    t2_len =
+		  o.Gen_Sum_With_PreAlloc(bcx2_len, bcx2, bcy2_len, bcy2, &t2, 32);
+		double bcsqr_p[32], *bcsqr = bcsqr_p;
+		int    bcsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t2_len, t2, bcz2_len, bcz2, &bcsqr, 32);
+		double da2_p[32], *da2 = da2_p;
+		int da2_len = o.Gen_Product_With_PreAlloc(da_len, da, da_len, da, &da2, 32);
+		double da2bcsqr_p[32], *da2bcsqr = da2bcsqr_p;
+		int    da2bcsqr_len = o.Gen_Product_With_PreAlloc(da2_len, da2, bcsqr_len,
+		                                                  bcsqr, &da2bcsqr, 32);
+		double ac_bc_p[32], *ac_bc = ac_bc_p;
+		int    ac_bc_len = o.Gen_Sum_With_PreAlloc(acsqr_len, acsqr, da2bcsqr_len,
+		                                           da2bcsqr, &ac_bc, 32);
+		double d_p[32], *d = d_p;
+		int    d_len = o.Gen_Diff_With_PreAlloc(dc2absqr_len, dc2absqr, ac_bc_len,
+		                                        ac_bc, &d, 32);
+
+		return_value = d[d_len - 1];
+		if (d_p != d)
+			FreeDoubles(d);
+		if (ac_bc_p != ac_bc)
+			FreeDoubles(ac_bc);
+		if (da2bcsqr_p != da2bcsqr)
+			FreeDoubles(da2bcsqr);
+		if (da2_p != da2)
+			FreeDoubles(da2);
+		if (bcsqr_p != bcsqr)
+			FreeDoubles(bcsqr);
+		if (t2_p != t2)
+			FreeDoubles(t2);
+		if (bcz2_p != bcz2)
+			FreeDoubles(bcz2);
+		if (bcy2_p != bcy2)
+			FreeDoubles(bcy2);
+		if (bcx2_p != bcx2)
+			FreeDoubles(bcx2);
+		if (bcz_p != bcz)
+			FreeDoubles(bcz);
+		if (bcy_p != bcy)
+			FreeDoubles(bcy);
+		if (bcx_p != bcx)
+			FreeDoubles(bcx);
+		if (dcpbz_p != dcpbz)
+			FreeDoubles(dcpbz);
+		if (dcpby_p != dcpby)
+			FreeDoubles(dcpby);
+		if (dcpbx_p != dcpbx)
+			FreeDoubles(dcpbx);
+		if (acsqr_p != acsqr)
+			FreeDoubles(acsqr);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (acz2_p != acz2)
+			FreeDoubles(acz2);
+		if (acy2_p != acy2)
+			FreeDoubles(acy2);
+		if (acx2_p != acx2)
+			FreeDoubles(acx2);
+		if (acz_p != acz)
+			FreeDoubles(acz);
+		if (acy_p != acy)
+			FreeDoubles(acy);
+		if (acx_p != acx)
+			FreeDoubles(acx);
+		if (dclaz_p != dclaz)
+			FreeDoubles(dclaz);
+		if (dclay_p != dclay)
+			FreeDoubles(dclay);
+		if (dclax_p != dclax)
+			FreeDoubles(dclax);
+		if (dalcz_p != dalcz)
+			FreeDoubles(dalcz);
+		if (dalcy_p != dalcy)
+			FreeDoubles(dalcy);
+		if (dalcx_p != dalcx)
+			FreeDoubles(dalcx);
+		if (dc2absqr_p != dc2absqr)
+			FreeDoubles(dc2absqr);
+		if (dc2_p != dc2)
+			FreeDoubles(dc2);
+		if (absqr_p != absqr)
+			FreeDoubles(absqr);
+		if (t0_p != t0)
+			FreeDoubles(t0);
+		if (abz2_p != abz2)
+			FreeDoubles(abz2);
+		if (aby2_p != aby2)
+			FreeDoubles(aby2);
+		if (abx2_p != abx2)
+			FreeDoubles(abx2);
+		if (abz_p != abz)
+			FreeDoubles(abz);
+		if (aby_p != aby)
+			FreeDoubles(aby);
+		if (abx_p != abx)
+			FreeDoubles(abx);
+		if (dapbz_p != dapbz)
+			FreeDoubles(dapbz);
+		if (dapby_p != dapby)
+			FreeDoubles(dapby);
+		if (dapbx_p != dapbx)
+			FreeDoubles(dapbx);
+	}
+
+	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
+	{
+		if (lax_p != lax)
+			FreeDoubles(lax);
+		if (lay_p != lay)
+			FreeDoubles(lay);
+		if (laz_p != laz)
+			FreeDoubles(laz);
+		if (da_p != da)
+			FreeDoubles(da);
+		if (lcx_p != lcx)
+			FreeDoubles(lcx);
+		if (lcy_p != lcy)
+			FreeDoubles(lcy);
+		if (lcz_p != lcz)
+			FreeDoubles(lcz);
+		if (dc_p != dc)
+			FreeDoubles(dc);
+	}
+
+#ifdef CHECK_FOR_XYZERFLOWS
+	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
+		return inSphere3p_IEI_exact<IT, ET>(pa, pc, pbx, pby, pbz);
+#endif
+
+	if (return_value > 0)
+		return Sign::POSITIVE;
+	if (return_value < 0)
+		return Sign::NEGATIVE;
+	if (return_value == 0)
+		return Sign::ZERO;
+	OMC_EXIT("Should not happen.");
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pc, double pbx, double pby,
+                    double pbz)
+{
+	Sign ret;
+	ret = inSphere3p_IEI_interval<IT, ET>(pa, pc, pbx, pby, pbz);
+	if (is_sign_reliable(ret))
+		return ret;
+	return inSphere3p_IEI_expansion<IT, ET>(pa, pc, pbx, pby, pbz);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IEI(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pc,
+                    const GenericPoint3T<IT, ET> &pb)
+{
+	return inSphere3p_IEI<IT, ET>(pa, pc, pb.x(), pb.y(), pb.z());
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE_interval(const GenericPoint3T<IT, ET> &pa,
+                             const GenericPoint3T<IT, ET> &pb, IT pcx, IT pcy,
+                             IT pcz)
+{
+	IT lax, lay, laz, da, lbx, lby, lbz, db;
+	if (!pa.getIntervalLambda(lax, lay, laz, da) ||
+	    !pb.getIntervalLambda(lbx, lby, lbz, db))
+		return Sign::UNCERTAIN;
+
+	typename IT::Protector P;
+
+	IT dalbx    = da * lbx;
+	IT dalby    = da * lby;
+	IT dalbz    = da * lbz;
+	IT dblax    = db * lax;
+	IT dblay    = db * lay;
+	IT dblaz    = db * laz;
+	IT abx      = dalbx - dblax;
+	IT aby      = dalby - dblay;
+	IT abz      = dalbz - dblaz;
+	IT abx2     = abx * abx;
+	IT aby2     = aby * aby;
+	IT abz2     = abz * abz;
+	IT t0       = abx2 + aby2;
+	IT absqr    = t0 + abz2;
+	IT dapcx    = da * pcx;
+	IT dapcy    = da * pcy;
+	IT dapcz    = da * pcz;
+	IT acx      = dapcx - lax;
+	IT acy      = dapcy - lay;
+	IT acz      = dapcz - laz;
+	IT acx2     = acx * acx;
+	IT acy2     = acy * acy;
+	IT acz2     = acz * acz;
+	IT t1       = acx2 + acy2;
+	IT acsqr    = t1 + acz2;
+	IT db2      = db * db;
+	IT db2acsqr = db2 * acsqr;
+	IT dbpcx    = db * pcx;
+	IT dbpcy    = db * pcy;
+	IT dbpcz    = db * pcz;
+	IT bcx      = dbpcx - lbx;
+	IT bcy      = dbpcy - lby;
+	IT bcz      = dbpcz - lbz;
+	IT bcx2     = bcx * bcx;
+	IT bcy2     = bcy * bcy;
+	IT bcz2     = bcz * bcz;
+	IT t2       = bcx2 + bcy2;
+	IT bcsqr    = t2 + bcz2;
+	IT da2      = da * da;
+	IT da2bcsqr = da2 * bcsqr;
+	IT ac_bc    = db2acsqr + da2bcsqr;
+	IT d        = absqr - ac_bc;
+	if (!d.is_sign_reliable())
+		return Sign::UNCERTAIN;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE_exact(const GenericPoint3T<IT, ET> &pa,
+                          const GenericPoint3T<IT, ET> &pb, ET pcx, ET pcy,
+                          ET pcz)
+{
+	ET lax, lay, laz, da, lbx, lby, lbz, db;
+	pa.getExactLambda(lax, lay, laz, da);
+	pb.getExactLambda(lbx, lby, lbz, db);
+	ET dalbx    = da * lbx;
+	ET dalby    = da * lby;
+	ET dalbz    = da * lbz;
+	ET dblax    = db * lax;
+	ET dblay    = db * lay;
+	ET dblaz    = db * laz;
+	ET abx      = dalbx - dblax;
+	ET aby      = dalby - dblay;
+	ET abz      = dalbz - dblaz;
+	ET abx2     = abx * abx;
+	ET aby2     = aby * aby;
+	ET abz2     = abz * abz;
+	ET t0       = abx2 + aby2;
+	ET absqr    = t0 + abz2;
+	ET dapcx    = da * pcx;
+	ET dapcy    = da * pcy;
+	ET dapcz    = da * pcz;
+	ET acx      = dapcx - lax;
+	ET acy      = dapcy - lay;
+	ET acz      = dapcz - laz;
+	ET acx2     = acx * acx;
+	ET acy2     = acy * acy;
+	ET acz2     = acz * acz;
+	ET t1       = acx2 + acy2;
+	ET acsqr    = t1 + acz2;
+	ET db2      = db * db;
+	ET db2acsqr = db2 * acsqr;
+	ET dbpcx    = db * pcx;
+	ET dbpcy    = db * pcy;
+	ET dbpcz    = db * pcz;
+	ET bcx      = dbpcx - lbx;
+	ET bcy      = dbpcy - lby;
+	ET bcz      = dbpcz - lbz;
+	ET bcx2     = bcx * bcx;
+	ET bcy2     = bcy * bcy;
+	ET bcz2     = bcz * bcz;
+	ET t2       = bcx2 + bcy2;
+	ET bcsqr    = t2 + bcz2;
+	ET da2      = da * da;
+	ET da2bcsqr = da2 * bcsqr;
+	ET ac_bc    = db2acsqr + da2bcsqr;
+	ET d        = absqr - ac_bc;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE_expansion(const GenericPoint3T<IT, ET> &pa,
+                              const GenericPoint3T<IT, ET> &pb, double pcx,
+                              double pcy, double pcz)
+{
+	double return_value = NAN;
+#ifdef CHECK_FOR_XYZERFLOWS
+	feclearexcept(FE_ALL_EXCEPT);
+#endif
+	double lax_p[32], *lax = lax_p, lay_p[32], *lay = lay_p, laz_p[32],
+	                  *laz = laz_p, da_p[32], *da = da_p, lbx_p[32], *lbx = lbx_p,
+	                  lby_p[32], *lby = lby_p, lbz_p[32], *lbz = lbz_p, db_p[32],
+	                  *db = db_p;
+	int lax_len = 32, lay_len = 32, laz_len = 32, da_len = 32, lbx_len = 32,
+	    lby_len = 32, lbz_len = 32, db_len = 32;
+	pa.getExpansionLambda(&lax, lax_len, &lay, lay_len, &laz, laz_len, &da,
+	                      da_len);
+	pb.getExpansionLambda(&lbx, lbx_len, &lby, lby_len, &lbz, lbz_len, &db,
+	                      db_len);
+	if ((da[da_len - 1] != 0) && (db[db_len - 1] != 0))
+	{
+		expansionObject o;
+		double          dalbx_p[32], *dalbx = dalbx_p;
+		int             dalbx_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lbx_len, lbx, &dalbx, 32);
+		double dalby_p[32], *dalby = dalby_p;
+		int    dalby_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lby_len, lby, &dalby, 32);
+		double dalbz_p[32], *dalbz = dalbz_p;
+		int    dalbz_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lbz_len, lbz, &dalbz, 32);
+		double dblax_p[32], *dblax = dblax_p;
+		int    dblax_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, lax_len, lax, &dblax, 32);
+		double dblay_p[32], *dblay = dblay_p;
+		int    dblay_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, lay_len, lay, &dblay, 32);
+		double dblaz_p[32], *dblaz = dblaz_p;
+		int    dblaz_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, laz_len, laz, &dblaz, 32);
+		double abx_p[32], *abx = abx_p;
+		int    abx_len =
+		  o.Gen_Diff_With_PreAlloc(dalbx_len, dalbx, dblax_len, dblax, &abx, 32);
+		double aby_p[32], *aby = aby_p;
+		int    aby_len =
+		  o.Gen_Diff_With_PreAlloc(dalby_len, dalby, dblay_len, dblay, &aby, 32);
+		double abz_p[32], *abz = abz_p;
+		int    abz_len =
+		  o.Gen_Diff_With_PreAlloc(dalbz_len, dalbz, dblaz_len, dblaz, &abz, 32);
+		double abx2_p[32], *abx2 = abx2_p;
+		int    abx2_len =
+		  o.Gen_Product_With_PreAlloc(abx_len, abx, abx_len, abx, &abx2, 32);
+		double aby2_p[32], *aby2 = aby2_p;
+		int    aby2_len =
+		  o.Gen_Product_With_PreAlloc(aby_len, aby, aby_len, aby, &aby2, 32);
+		double abz2_p[32], *abz2 = abz2_p;
+		int    abz2_len =
+		  o.Gen_Product_With_PreAlloc(abz_len, abz, abz_len, abz, &abz2, 32);
+		double t0_p[32], *t0 = t0_p;
+		int    t0_len =
+		  o.Gen_Sum_With_PreAlloc(abx2_len, abx2, aby2_len, aby2, &t0, 32);
+		double absqr_p[32], *absqr = absqr_p;
+		int    absqr_len =
+		  o.Gen_Sum_With_PreAlloc(t0_len, t0, abz2_len, abz2, &absqr, 32);
+		double dapcx_p[32], *dapcx = dapcx_p;
+		int    dapcx_len = o.Gen_Scale_With_PreAlloc(da_len, da, pcx, &dapcx, 32);
+		double dapcy_p[32], *dapcy = dapcy_p;
+		int    dapcy_len = o.Gen_Scale_With_PreAlloc(da_len, da, pcy, &dapcy, 32);
+		double dapcz_p[32], *dapcz = dapcz_p;
+		int    dapcz_len = o.Gen_Scale_With_PreAlloc(da_len, da, pcz, &dapcz, 32);
+		double acx_p[32], *acx = acx_p;
+		int    acx_len =
+		  o.Gen_Diff_With_PreAlloc(dapcx_len, dapcx, lax_len, lax, &acx, 32);
+		double acy_p[32], *acy = acy_p;
+		int    acy_len =
+		  o.Gen_Diff_With_PreAlloc(dapcy_len, dapcy, lay_len, lay, &acy, 32);
+		double acz_p[32], *acz = acz_p;
+		int    acz_len =
+		  o.Gen_Diff_With_PreAlloc(dapcz_len, dapcz, laz_len, laz, &acz, 32);
+		double acx2_p[32], *acx2 = acx2_p;
+		int    acx2_len =
+		  o.Gen_Product_With_PreAlloc(acx_len, acx, acx_len, acx, &acx2, 32);
+		double acy2_p[32], *acy2 = acy2_p;
+		int    acy2_len =
+		  o.Gen_Product_With_PreAlloc(acy_len, acy, acy_len, acy, &acy2, 32);
+		double acz2_p[32], *acz2 = acz2_p;
+		int    acz2_len =
+		  o.Gen_Product_With_PreAlloc(acz_len, acz, acz_len, acz, &acz2, 32);
+		double t1_p[32], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Sum_With_PreAlloc(acx2_len, acx2, acy2_len, acy2, &t1, 32);
+		double acsqr_p[32], *acsqr = acsqr_p;
+		int    acsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t1_len, t1, acz2_len, acz2, &acsqr, 32);
+		double db2_p[32], *db2 = db2_p;
+		int db2_len = o.Gen_Product_With_PreAlloc(db_len, db, db_len, db, &db2, 32);
+		double db2acsqr_p[32], *db2acsqr = db2acsqr_p;
+		int    db2acsqr_len = o.Gen_Product_With_PreAlloc(db2_len, db2, acsqr_len,
+		                                                  acsqr, &db2acsqr, 32);
+		double dbpcx_p[32], *dbpcx = dbpcx_p;
+		int    dbpcx_len = o.Gen_Scale_With_PreAlloc(db_len, db, pcx, &dbpcx, 32);
+		double dbpcy_p[32], *dbpcy = dbpcy_p;
+		int    dbpcy_len = o.Gen_Scale_With_PreAlloc(db_len, db, pcy, &dbpcy, 32);
+		double dbpcz_p[32], *dbpcz = dbpcz_p;
+		int    dbpcz_len = o.Gen_Scale_With_PreAlloc(db_len, db, pcz, &dbpcz, 32);
+		double bcx_p[32], *bcx = bcx_p;
+		int    bcx_len =
+		  o.Gen_Diff_With_PreAlloc(dbpcx_len, dbpcx, lbx_len, lbx, &bcx, 32);
+		double bcy_p[32], *bcy = bcy_p;
+		int    bcy_len =
+		  o.Gen_Diff_With_PreAlloc(dbpcy_len, dbpcy, lby_len, lby, &bcy, 32);
+		double bcz_p[32], *bcz = bcz_p;
+		int    bcz_len =
+		  o.Gen_Diff_With_PreAlloc(dbpcz_len, dbpcz, lbz_len, lbz, &bcz, 32);
+		double bcx2_p[32], *bcx2 = bcx2_p;
+		int    bcx2_len =
+		  o.Gen_Product_With_PreAlloc(bcx_len, bcx, bcx_len, bcx, &bcx2, 32);
+		double bcy2_p[32], *bcy2 = bcy2_p;
+		int    bcy2_len =
+		  o.Gen_Product_With_PreAlloc(bcy_len, bcy, bcy_len, bcy, &bcy2, 32);
+		double bcz2_p[32], *bcz2 = bcz2_p;
+		int    bcz2_len =
+		  o.Gen_Product_With_PreAlloc(bcz_len, bcz, bcz_len, bcz, &bcz2, 32);
+		double t2_p[32], *t2 = t2_p;
+		int    t2_len =
+		  o.Gen_Sum_With_PreAlloc(bcx2_len, bcx2, bcy2_len, bcy2, &t2, 32);
+		double bcsqr_p[32], *bcsqr = bcsqr_p;
+		int    bcsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t2_len, t2, bcz2_len, bcz2, &bcsqr, 32);
+		double da2_p[32], *da2 = da2_p;
+		int da2_len = o.Gen_Product_With_PreAlloc(da_len, da, da_len, da, &da2, 32);
+		double da2bcsqr_p[32], *da2bcsqr = da2bcsqr_p;
+		int    da2bcsqr_len = o.Gen_Product_With_PreAlloc(da2_len, da2, bcsqr_len,
+		                                                  bcsqr, &da2bcsqr, 32);
+		double ac_bc_p[32], *ac_bc = ac_bc_p;
+		int    ac_bc_len = o.Gen_Sum_With_PreAlloc(db2acsqr_len, db2acsqr,
+		                                           da2bcsqr_len, da2bcsqr, &ac_bc, 32);
+		double d_p[32], *d = d_p;
+		int    d_len =
+		  o.Gen_Diff_With_PreAlloc(absqr_len, absqr, ac_bc_len, ac_bc, &d, 32);
+
+		return_value = d[d_len - 1];
+		if (d_p != d)
+			FreeDoubles(d);
+		if (ac_bc_p != ac_bc)
+			FreeDoubles(ac_bc);
+		if (da2bcsqr_p != da2bcsqr)
+			FreeDoubles(da2bcsqr);
+		if (da2_p != da2)
+			FreeDoubles(da2);
+		if (bcsqr_p != bcsqr)
+			FreeDoubles(bcsqr);
+		if (t2_p != t2)
+			FreeDoubles(t2);
+		if (bcz2_p != bcz2)
+			FreeDoubles(bcz2);
+		if (bcy2_p != bcy2)
+			FreeDoubles(bcy2);
+		if (bcx2_p != bcx2)
+			FreeDoubles(bcx2);
+		if (bcz_p != bcz)
+			FreeDoubles(bcz);
+		if (bcy_p != bcy)
+			FreeDoubles(bcy);
+		if (bcx_p != bcx)
+			FreeDoubles(bcx);
+		if (dbpcz_p != dbpcz)
+			FreeDoubles(dbpcz);
+		if (dbpcy_p != dbpcy)
+			FreeDoubles(dbpcy);
+		if (dbpcx_p != dbpcx)
+			FreeDoubles(dbpcx);
+		if (db2acsqr_p != db2acsqr)
+			FreeDoubles(db2acsqr);
+		if (db2_p != db2)
+			FreeDoubles(db2);
+		if (acsqr_p != acsqr)
+			FreeDoubles(acsqr);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (acz2_p != acz2)
+			FreeDoubles(acz2);
+		if (acy2_p != acy2)
+			FreeDoubles(acy2);
+		if (acx2_p != acx2)
+			FreeDoubles(acx2);
+		if (acz_p != acz)
+			FreeDoubles(acz);
+		if (acy_p != acy)
+			FreeDoubles(acy);
+		if (acx_p != acx)
+			FreeDoubles(acx);
+		if (dapcz_p != dapcz)
+			FreeDoubles(dapcz);
+		if (dapcy_p != dapcy)
+			FreeDoubles(dapcy);
+		if (dapcx_p != dapcx)
+			FreeDoubles(dapcx);
+		if (absqr_p != absqr)
+			FreeDoubles(absqr);
+		if (t0_p != t0)
+			FreeDoubles(t0);
+		if (abz2_p != abz2)
+			FreeDoubles(abz2);
+		if (aby2_p != aby2)
+			FreeDoubles(aby2);
+		if (abx2_p != abx2)
+			FreeDoubles(abx2);
+		if (abz_p != abz)
+			FreeDoubles(abz);
+		if (aby_p != aby)
+			FreeDoubles(aby);
+		if (abx_p != abx)
+			FreeDoubles(abx);
+		if (dblaz_p != dblaz)
+			FreeDoubles(dblaz);
+		if (dblay_p != dblay)
+			FreeDoubles(dblay);
+		if (dblax_p != dblax)
+			FreeDoubles(dblax);
+		if (dalbz_p != dalbz)
+			FreeDoubles(dalbz);
+		if (dalby_p != dalby)
+			FreeDoubles(dalby);
+		if (dalbx_p != dalbx)
+			FreeDoubles(dalbx);
+	}
+
+	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
+	{
+		if (lax_p != lax)
+			FreeDoubles(lax);
+		if (lay_p != lay)
+			FreeDoubles(lay);
+		if (laz_p != laz)
+			FreeDoubles(laz);
+		if (da_p != da)
+			FreeDoubles(da);
+		if (lbx_p != lbx)
+			FreeDoubles(lbx);
+		if (lby_p != lby)
+			FreeDoubles(lby);
+		if (lbz_p != lbz)
+			FreeDoubles(lbz);
+		if (db_p != db)
+			FreeDoubles(db);
+	}
+
+#ifdef CHECK_FOR_XYZERFLOWS
+	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
+		return inSphere3p_IIE_exact<IT, ET>(pa, pb, pcx, pcy, pcz);
+#endif
+
+	if (return_value > 0)
+		return Sign::POSITIVE;
+	if (return_value < 0)
+		return Sign::NEGATIVE;
+	if (return_value == 0)
+		return Sign::ZERO;
+	OMC_EXIT("Should not happen.");
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb, double pcx, double pcy,
+                    double pcz)
+{
+	Sign ret;
+	ret = inSphere3p_IIE_interval<IT, ET>(pa, pb, pcx, pcy, pcz);
+	if (is_sign_reliable(ret))
+		return ret;
+	return inSphere3p_IIE_expansion<IT, ET>(pa, pb, pcx, pcy, pcz);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_IIE(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb,
+                    const GenericPoint3T<IT, ET> &pc)
+{
+	return inSphere3p_IIE<IT, ET>(pa, pb, pc.x(), pc.y(), pc.z());
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_III_interval(const GenericPoint3T<IT, ET> &pa,
+                             const GenericPoint3T<IT, ET> &pb,
+                             const GenericPoint3T<IT, ET> &pc)
+{
+	IT lax, lay, laz, da, lbx, lby, lbz, db, lcx, lcy, lcz, dc;
+	if (!pa.getIntervalLambda(lax, lay, laz, da) ||
+	    !pb.getIntervalLambda(lbx, lby, lbz, db) ||
+	    !pc.getIntervalLambda(lcx, lcy, lcz, dc))
+		return Sign::UNCERTAIN;
+
+	typename IT::Protector P;
+
+	IT dalbx    = da * lbx;
+	IT dalby    = da * lby;
+	IT dalbz    = da * lbz;
+	IT dblax    = db * lax;
+	IT dblay    = db * lay;
+	IT dblaz    = db * laz;
+	IT abx      = dalbx - dblax;
+	IT aby      = dalby - dblay;
+	IT abz      = dalbz - dblaz;
+	IT abx2     = abx * abx;
+	IT aby2     = aby * aby;
+	IT abz2     = abz * abz;
+	IT t0       = abx2 + aby2;
+	IT absqr    = t0 + abz2;
+	IT dc2      = dc * dc;
+	IT dc2absqr = dc2 * absqr;
+	IT dalcx    = da * lcx;
+	IT dalcy    = da * lcy;
+	IT dalcz    = da * lcz;
+	IT dclax    = dc * lax;
+	IT dclay    = dc * lay;
+	IT dclaz    = dc * laz;
+	IT acx      = dalcx - dclax;
+	IT acy      = dalcy - dclay;
+	IT acz      = dalcz - dclaz;
+	IT acx2     = acx * acx;
+	IT acy2     = acy * acy;
+	IT acz2     = acz * acz;
+	IT t1       = acx2 + acy2;
+	IT acsqr    = t1 + acz2;
+	IT db2      = db * db;
+	IT db2acsqr = db2 * acsqr;
+	IT dclbx    = dc * lbx;
+	IT dclby    = dc * lby;
+	IT dclbz    = dc * lbz;
+	IT dblcx    = db * lcx;
+	IT dblcy    = db * lcy;
+	IT dblcz    = db * lcz;
+	IT bcx      = dblcx - dclbx;
+	IT bcy      = dblcy - dclby;
+	IT bcz      = dblcz - dclbz;
+	IT bcx2     = bcx * bcx;
+	IT bcy2     = bcy * bcy;
+	IT bcz2     = bcz * bcz;
+	IT t2       = bcx2 + bcy2;
+	IT bcsqr    = t2 + bcz2;
+	IT da2      = da * da;
+	IT da2bcsqr = da2 * bcsqr;
+	IT ac_bc    = db2acsqr + da2bcsqr;
+	IT d        = dc2absqr - ac_bc;
+	if (!d.is_sign_reliable())
+		return Sign::UNCERTAIN;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_III_exact(const GenericPoint3T<IT, ET> &pa,
+                          const GenericPoint3T<IT, ET> &pb,
+                          const GenericPoint3T<IT, ET> &pc)
+{
+	ET lax, lay, laz, da, lbx, lby, lbz, db, lcx, lcy, lcz, dc;
+	pa.getExactLambda(lax, lay, laz, da);
+	pb.getExactLambda(lbx, lby, lbz, db);
+	pc.getExactLambda(lcx, lcy, lcz, dc);
+	ET dalbx    = da * lbx;
+	ET dalby    = da * lby;
+	ET dalbz    = da * lbz;
+	ET dblax    = db * lax;
+	ET dblay    = db * lay;
+	ET dblaz    = db * laz;
+	ET abx      = dalbx - dblax;
+	ET aby      = dalby - dblay;
+	ET abz      = dalbz - dblaz;
+	ET abx2     = abx * abx;
+	ET aby2     = aby * aby;
+	ET abz2     = abz * abz;
+	ET t0       = abx2 + aby2;
+	ET absqr    = t0 + abz2;
+	ET dc2      = dc * dc;
+	ET dc2absqr = dc2 * absqr;
+	ET dalcx    = da * lcx;
+	ET dalcy    = da * lcy;
+	ET dalcz    = da * lcz;
+	ET dclax    = dc * lax;
+	ET dclay    = dc * lay;
+	ET dclaz    = dc * laz;
+	ET acx      = dalcx - dclax;
+	ET acy      = dalcy - dclay;
+	ET acz      = dalcz - dclaz;
+	ET acx2     = acx * acx;
+	ET acy2     = acy * acy;
+	ET acz2     = acz * acz;
+	ET t1       = acx2 + acy2;
+	ET acsqr    = t1 + acz2;
+	ET db2      = db * db;
+	ET db2acsqr = db2 * acsqr;
+	ET dclbx    = dc * lbx;
+	ET dclby    = dc * lby;
+	ET dclbz    = dc * lbz;
+	ET dblcx    = db * lcx;
+	ET dblcy    = db * lcy;
+	ET dblcz    = db * lcz;
+	ET bcx      = dblcx - dclbx;
+	ET bcy      = dblcy - dclby;
+	ET bcz      = dblcz - dclbz;
+	ET bcx2     = bcx * bcx;
+	ET bcy2     = bcy * bcy;
+	ET bcz2     = bcz * bcz;
+	ET t2       = bcx2 + bcy2;
+	ET bcsqr    = t2 + bcz2;
+	ET da2      = da * da;
+	ET da2bcsqr = da2 * bcsqr;
+	ET ac_bc    = db2acsqr + da2bcsqr;
+	ET d        = dc2absqr - ac_bc;
+	return OMC::sign(d);
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_III_expansion(const GenericPoint3T<IT, ET> &pa,
+                              const GenericPoint3T<IT, ET> &pb,
+                              const GenericPoint3T<IT, ET> &pc)
+{
+	double return_value = NAN;
+#ifdef CHECK_FOR_XYZERFLOWS
+	feclearexcept(FE_ALL_EXCEPT);
+#endif
+	double lax_p[16], *lax = lax_p, lay_p[16], *lay = lay_p, laz_p[16],
+	                  *laz = laz_p, da_p[16], *da = da_p, lbx_p[16], *lbx = lbx_p,
+	                  lby_p[16], *lby = lby_p, lbz_p[16], *lbz = lbz_p, db_p[16],
+	                  *db = db_p, lcx_p[16], *lcx = lcx_p, lcy_p[16],
+	                  *lcy = lcy_p, lcz_p[16], *lcz = lcz_p, dc_p[16], *dc = dc_p;
+	int lax_len = 16, lay_len = 16, laz_len = 16, da_len = 16, lbx_len = 16,
+	    lby_len = 16, lbz_len = 16, db_len = 16, lcx_len = 16, lcy_len = 16,
+	    lcz_len = 16, dc_len = 16;
+	pa.getExpansionLambda(&lax, lax_len, &lay, lay_len, &laz, laz_len, &da,
+	                      da_len);
+	pb.getExpansionLambda(&lbx, lbx_len, &lby, lby_len, &lbz, lbz_len, &db,
+	                      db_len);
+	pc.getExpansionLambda(&lcx, lcx_len, &lcy, lcy_len, &lcz, lcz_len, &dc,
+	                      dc_len);
+	if ((da[da_len - 1] != 0) && (db[db_len - 1] != 0) && (dc[dc_len - 1] != 0))
+	{
+		expansionObject o;
+		double          dalbx_p[16], *dalbx = dalbx_p;
+		int             dalbx_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lbx_len, lbx, &dalbx, 16);
+		double dalby_p[16], *dalby = dalby_p;
+		int    dalby_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lby_len, lby, &dalby, 16);
+		double dalbz_p[16], *dalbz = dalbz_p;
+		int    dalbz_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lbz_len, lbz, &dalbz, 16);
+		double dblax_p[16], *dblax = dblax_p;
+		int    dblax_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, lax_len, lax, &dblax, 16);
+		double dblay_p[16], *dblay = dblay_p;
+		int    dblay_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, lay_len, lay, &dblay, 16);
+		double dblaz_p[16], *dblaz = dblaz_p;
+		int    dblaz_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, laz_len, laz, &dblaz, 16);
+		double abx_p[16], *abx = abx_p;
+		int    abx_len =
+		  o.Gen_Diff_With_PreAlloc(dalbx_len, dalbx, dblax_len, dblax, &abx, 16);
+		double aby_p[16], *aby = aby_p;
+		int    aby_len =
+		  o.Gen_Diff_With_PreAlloc(dalby_len, dalby, dblay_len, dblay, &aby, 16);
+		double abz_p[16], *abz = abz_p;
+		int    abz_len =
+		  o.Gen_Diff_With_PreAlloc(dalbz_len, dalbz, dblaz_len, dblaz, &abz, 16);
+		double abx2_p[16], *abx2 = abx2_p;
+		int    abx2_len =
+		  o.Gen_Product_With_PreAlloc(abx_len, abx, abx_len, abx, &abx2, 16);
+		double aby2_p[16], *aby2 = aby2_p;
+		int    aby2_len =
+		  o.Gen_Product_With_PreAlloc(aby_len, aby, aby_len, aby, &aby2, 16);
+		double abz2_p[16], *abz2 = abz2_p;
+		int    abz2_len =
+		  o.Gen_Product_With_PreAlloc(abz_len, abz, abz_len, abz, &abz2, 16);
+		double t0_p[16], *t0 = t0_p;
+		int    t0_len =
+		  o.Gen_Sum_With_PreAlloc(abx2_len, abx2, aby2_len, aby2, &t0, 16);
+		double absqr_p[16], *absqr = absqr_p;
+		int    absqr_len =
+		  o.Gen_Sum_With_PreAlloc(t0_len, t0, abz2_len, abz2, &absqr, 16);
+		double dc2_p[16], *dc2 = dc2_p;
+		int dc2_len = o.Gen_Product_With_PreAlloc(dc_len, dc, dc_len, dc, &dc2, 16);
+		double dc2absqr_p[16], *dc2absqr = dc2absqr_p;
+		int    dc2absqr_len = o.Gen_Product_With_PreAlloc(dc2_len, dc2, absqr_len,
+		                                                  absqr, &dc2absqr, 16);
+		double dalcx_p[16], *dalcx = dalcx_p;
+		int    dalcx_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lcx_len, lcx, &dalcx, 16);
+		double dalcy_p[16], *dalcy = dalcy_p;
+		int    dalcy_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lcy_len, lcy, &dalcy, 16);
+		double dalcz_p[16], *dalcz = dalcz_p;
+		int    dalcz_len =
+		  o.Gen_Product_With_PreAlloc(da_len, da, lcz_len, lcz, &dalcz, 16);
+		double dclax_p[16], *dclax = dclax_p;
+		int    dclax_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, lax_len, lax, &dclax, 16);
+		double dclay_p[16], *dclay = dclay_p;
+		int    dclay_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, lay_len, lay, &dclay, 16);
+		double dclaz_p[16], *dclaz = dclaz_p;
+		int    dclaz_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, laz_len, laz, &dclaz, 16);
+		double acx_p[16], *acx = acx_p;
+		int    acx_len =
+		  o.Gen_Diff_With_PreAlloc(dalcx_len, dalcx, dclax_len, dclax, &acx, 16);
+		double acy_p[16], *acy = acy_p;
+		int    acy_len =
+		  o.Gen_Diff_With_PreAlloc(dalcy_len, dalcy, dclay_len, dclay, &acy, 16);
+		double acz_p[16], *acz = acz_p;
+		int    acz_len =
+		  o.Gen_Diff_With_PreAlloc(dalcz_len, dalcz, dclaz_len, dclaz, &acz, 16);
+		double acx2_p[16], *acx2 = acx2_p;
+		int    acx2_len =
+		  o.Gen_Product_With_PreAlloc(acx_len, acx, acx_len, acx, &acx2, 16);
+		double acy2_p[16], *acy2 = acy2_p;
+		int    acy2_len =
+		  o.Gen_Product_With_PreAlloc(acy_len, acy, acy_len, acy, &acy2, 16);
+		double acz2_p[16], *acz2 = acz2_p;
+		int    acz2_len =
+		  o.Gen_Product_With_PreAlloc(acz_len, acz, acz_len, acz, &acz2, 16);
+		double t1_p[16], *t1 = t1_p;
+		int    t1_len =
+		  o.Gen_Sum_With_PreAlloc(acx2_len, acx2, acy2_len, acy2, &t1, 16);
+		double acsqr_p[16], *acsqr = acsqr_p;
+		int    acsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t1_len, t1, acz2_len, acz2, &acsqr, 16);
+		double db2_p[16], *db2 = db2_p;
+		int db2_len = o.Gen_Product_With_PreAlloc(db_len, db, db_len, db, &db2, 16);
+		double db2acsqr_p[16], *db2acsqr = db2acsqr_p;
+		int    db2acsqr_len = o.Gen_Product_With_PreAlloc(db2_len, db2, acsqr_len,
+		                                                  acsqr, &db2acsqr, 16);
+		double dclbx_p[16], *dclbx = dclbx_p;
+		int    dclbx_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, lbx_len, lbx, &dclbx, 16);
+		double dclby_p[16], *dclby = dclby_p;
+		int    dclby_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, lby_len, lby, &dclby, 16);
+		double dclbz_p[16], *dclbz = dclbz_p;
+		int    dclbz_len =
+		  o.Gen_Product_With_PreAlloc(dc_len, dc, lbz_len, lbz, &dclbz, 16);
+		double dblcx_p[16], *dblcx = dblcx_p;
+		int    dblcx_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, lcx_len, lcx, &dblcx, 16);
+		double dblcy_p[16], *dblcy = dblcy_p;
+		int    dblcy_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, lcy_len, lcy, &dblcy, 16);
+		double dblcz_p[16], *dblcz = dblcz_p;
+		int    dblcz_len =
+		  o.Gen_Product_With_PreAlloc(db_len, db, lcz_len, lcz, &dblcz, 16);
+		double bcx_p[16], *bcx = bcx_p;
+		int    bcx_len =
+		  o.Gen_Diff_With_PreAlloc(dblcx_len, dblcx, dclbx_len, dclbx, &bcx, 16);
+		double bcy_p[16], *bcy = bcy_p;
+		int    bcy_len =
+		  o.Gen_Diff_With_PreAlloc(dblcy_len, dblcy, dclby_len, dclby, &bcy, 16);
+		double bcz_p[16], *bcz = bcz_p;
+		int    bcz_len =
+		  o.Gen_Diff_With_PreAlloc(dblcz_len, dblcz, dclbz_len, dclbz, &bcz, 16);
+		double bcx2_p[16], *bcx2 = bcx2_p;
+		int    bcx2_len =
+		  o.Gen_Product_With_PreAlloc(bcx_len, bcx, bcx_len, bcx, &bcx2, 16);
+		double bcy2_p[16], *bcy2 = bcy2_p;
+		int    bcy2_len =
+		  o.Gen_Product_With_PreAlloc(bcy_len, bcy, bcy_len, bcy, &bcy2, 16);
+		double bcz2_p[16], *bcz2 = bcz2_p;
+		int    bcz2_len =
+		  o.Gen_Product_With_PreAlloc(bcz_len, bcz, bcz_len, bcz, &bcz2, 16);
+		double t2_p[16], *t2 = t2_p;
+		int    t2_len =
+		  o.Gen_Sum_With_PreAlloc(bcx2_len, bcx2, bcy2_len, bcy2, &t2, 16);
+		double bcsqr_p[16], *bcsqr = bcsqr_p;
+		int    bcsqr_len =
+		  o.Gen_Sum_With_PreAlloc(t2_len, t2, bcz2_len, bcz2, &bcsqr, 16);
+		double da2_p[16], *da2 = da2_p;
+		int da2_len = o.Gen_Product_With_PreAlloc(da_len, da, da_len, da, &da2, 16);
+		double da2bcsqr_p[16], *da2bcsqr = da2bcsqr_p;
+		int    da2bcsqr_len = o.Gen_Product_With_PreAlloc(da2_len, da2, bcsqr_len,
+		                                                  bcsqr, &da2bcsqr, 16);
+		double ac_bc_p[16], *ac_bc = ac_bc_p;
+		int    ac_bc_len = o.Gen_Sum_With_PreAlloc(db2acsqr_len, db2acsqr,
+		                                           da2bcsqr_len, da2bcsqr, &ac_bc, 16);
+		double d_p[16], *d = d_p;
+		int    d_len = o.Gen_Diff_With_PreAlloc(dc2absqr_len, dc2absqr, ac_bc_len,
+		                                        ac_bc, &d, 16);
+
+		return_value = d[d_len - 1];
+		if (d_p != d)
+			FreeDoubles(d);
+		if (ac_bc_p != ac_bc)
+			FreeDoubles(ac_bc);
+		if (da2bcsqr_p != da2bcsqr)
+			FreeDoubles(da2bcsqr);
+		if (da2_p != da2)
+			FreeDoubles(da2);
+		if (bcsqr_p != bcsqr)
+			FreeDoubles(bcsqr);
+		if (t2_p != t2)
+			FreeDoubles(t2);
+		if (bcz2_p != bcz2)
+			FreeDoubles(bcz2);
+		if (bcy2_p != bcy2)
+			FreeDoubles(bcy2);
+		if (bcx2_p != bcx2)
+			FreeDoubles(bcx2);
+		if (bcz_p != bcz)
+			FreeDoubles(bcz);
+		if (bcy_p != bcy)
+			FreeDoubles(bcy);
+		if (bcx_p != bcx)
+			FreeDoubles(bcx);
+		if (dblcz_p != dblcz)
+			FreeDoubles(dblcz);
+		if (dblcy_p != dblcy)
+			FreeDoubles(dblcy);
+		if (dblcx_p != dblcx)
+			FreeDoubles(dblcx);
+		if (dclbz_p != dclbz)
+			FreeDoubles(dclbz);
+		if (dclby_p != dclby)
+			FreeDoubles(dclby);
+		if (dclbx_p != dclbx)
+			FreeDoubles(dclbx);
+		if (db2acsqr_p != db2acsqr)
+			FreeDoubles(db2acsqr);
+		if (db2_p != db2)
+			FreeDoubles(db2);
+		if (acsqr_p != acsqr)
+			FreeDoubles(acsqr);
+		if (t1_p != t1)
+			FreeDoubles(t1);
+		if (acz2_p != acz2)
+			FreeDoubles(acz2);
+		if (acy2_p != acy2)
+			FreeDoubles(acy2);
+		if (acx2_p != acx2)
+			FreeDoubles(acx2);
+		if (acz_p != acz)
+			FreeDoubles(acz);
+		if (acy_p != acy)
+			FreeDoubles(acy);
+		if (acx_p != acx)
+			FreeDoubles(acx);
+		if (dclaz_p != dclaz)
+			FreeDoubles(dclaz);
+		if (dclay_p != dclay)
+			FreeDoubles(dclay);
+		if (dclax_p != dclax)
+			FreeDoubles(dclax);
+		if (dalcz_p != dalcz)
+			FreeDoubles(dalcz);
+		if (dalcy_p != dalcy)
+			FreeDoubles(dalcy);
+		if (dalcx_p != dalcx)
+			FreeDoubles(dalcx);
+		if (dc2absqr_p != dc2absqr)
+			FreeDoubles(dc2absqr);
+		if (dc2_p != dc2)
+			FreeDoubles(dc2);
+		if (absqr_p != absqr)
+			FreeDoubles(absqr);
+		if (t0_p != t0)
+			FreeDoubles(t0);
+		if (abz2_p != abz2)
+			FreeDoubles(abz2);
+		if (aby2_p != aby2)
+			FreeDoubles(aby2);
+		if (abx2_p != abx2)
+			FreeDoubles(abx2);
+		if (abz_p != abz)
+			FreeDoubles(abz);
+		if (aby_p != aby)
+			FreeDoubles(aby);
+		if (abx_p != abx)
+			FreeDoubles(abx);
+		if (dblaz_p != dblaz)
+			FreeDoubles(dblaz);
+		if (dblay_p != dblay)
+			FreeDoubles(dblay);
+		if (dblax_p != dblax)
+			FreeDoubles(dblax);
+		if (dalbz_p != dalbz)
+			FreeDoubles(dalbz);
+		if (dalby_p != dalby)
+			FreeDoubles(dalby);
+		if (dalbx_p != dalbx)
+			FreeDoubles(dalbx);
+	}
+
+	if (!GenericPoint3T<IT, ET>::global_cached_values_enabled())
+	{
+		if (lax_p != lax)
+			FreeDoubles(lax);
+		if (lay_p != lay)
+			FreeDoubles(lay);
+		if (laz_p != laz)
+			FreeDoubles(laz);
+		if (da_p != da)
+			FreeDoubles(da);
+		if (lbx_p != lbx)
+			FreeDoubles(lbx);
+		if (lby_p != lby)
+			FreeDoubles(lby);
+		if (lbz_p != lbz)
+			FreeDoubles(lbz);
+		if (db_p != db)
+			FreeDoubles(db);
+		if (lcx_p != lcx)
+			FreeDoubles(lcx);
+		if (lcy_p != lcy)
+			FreeDoubles(lcy);
+		if (lcz_p != lcz)
+			FreeDoubles(lcz);
+		if (dc_p != dc)
+			FreeDoubles(dc);
+	}
+
+#ifdef CHECK_FOR_XYZERFLOWS
+	if (fetestexcept(FE_UNDERFLOW | FE_OVERFLOW))
+		return inSphere3p_III_exact<IT, ET>(pa, pb, pc);
+#endif
+
+	if (return_value > 0)
+		return Sign::POSITIVE;
+	if (return_value < 0)
+		return Sign::NEGATIVE;
+	if (return_value == 0)
+		return Sign::ZERO;
+	OMC_EXIT("Should not happen.");
+}
+
+template <typename IT, typename ET>
+Sign inSphere3p_III(const GenericPoint3T<IT, ET> &pa,
+                    const GenericPoint3T<IT, ET> &pb,
+                    const GenericPoint3T<IT, ET> &pc)
+{
+	Sign ret;
+	ret = inSphere3p_III_interval<IT, ET>(pa, pb, pc);
+	if (is_sign_reliable(ret))
+		return ret;
+	return inSphere3p_III_expansion<IT, ET>(pa, pb, pc);
 }
 
 template <typename IT>

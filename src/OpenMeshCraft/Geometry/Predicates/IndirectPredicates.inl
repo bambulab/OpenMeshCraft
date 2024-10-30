@@ -39,16 +39,16 @@ Sign DotProductSign2D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 	{
 	case PntArr2::EEE:
 		return dotProductSign2D<TP>(p, r, q);
-	case PntArr2::EEI:
-		return dotProductSign2D_EEI<TP>(p, r, q);
+	case PntArr2::EEI: // swap q due to EEI
+		return dotProductSign2D_EEI<TP>(q, p, r);
 	case PntArr2::EIE:
 		return dotProductSign2D_IEE<TP>(r, p, q);
-	case PntArr2::EII:
-		return dotProductSign2D_IEI<TP>(r, p, q);
+	case PntArr2::EII: // swap p and q due to IEI
+		return dotProductSign2D_IEI<TP>(r, q, p);
 	case PntArr2::IEE:
 		return dotProductSign2D_IEE<TP>(p, r, q);
-	case PntArr2::IEI:
-		return dotProductSign2D_IEI<TP>(p, r, q);
+	case PntArr2::IEI: // swap r and q due to IEI
+		return dotProductSign2D_IEI<TP>(p, q, r);
 	case PntArr2::IIE:
 		return dotProductSign2D_IIE<TP>(p, r, q);
 	default: // PntArr2::III
@@ -85,16 +85,16 @@ Sign DotProductSign3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 	{
 	case PntArr3::EEE:
 		return dotProductSign3D<TP>(p, r, q);
-	case PntArr3::EEI:
-		return dotProductSign3D_EEI<TP>(p, r, q);
+	case PntArr3::EEI: // swap q due to EEI
+		return dotProductSign3D_EEI<TP>(q, p, r);
 	case PntArr3::EIE:
 		return dotProductSign3D_IEE<TP>(r, p, q);
-	case PntArr3::EII:
-		return dotProductSign3D_IEI<TP>(r, p, q);
+	case PntArr3::EII: // swap q and p due to IEI
+		return dotProductSign3D_IEI<TP>(r, q, p);
 	case PntArr3::IEE:
 		return dotProductSign3D_IEE<TP>(p, r, q);
-	case PntArr3::IEI:
-		return dotProductSign3D_IEI<TP>(p, r, q);
+	case PntArr3::IEI: // swap r and q due to IEI
+		return dotProductSign3D_IEI<TP>(p, q, r);
 	case PntArr3::IIE:
 		return dotProductSign3D_IIE<TP>(p, r, q);
 	default: // PntArr3::III
@@ -835,11 +835,27 @@ TEMPLATE_DECL
 Sign InSphere_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
                                                const PointT &c)
 {
-	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
+	PntArr3 arr = get_pnts_arr3(PntType(a), PntType(b), PntType(c));
+	// cases are simple, expand them by hand.
+	switch (arr)
+	{
+	case PntArr3::EEE:
 		return inSphere3p<TP>(a, b, c);
-
-	OMC_ASSERT(false, "InSphere3p - should not happen");
-	return Sign::ZERO; // warning killer
+	case PntArr3::EEI: // swap c due to EEI
+		return inSphere3p_EEI<TP>(c, a, b);
+	case PntArr3::EIE:
+		return inSphere3p_IEE<TP>(b, a, c);
+	case PntArr3::EII: // swap a and c due to IEI
+		return inSphere3p_IEI<TP>(b, c, a);
+	case PntArr3::IEE:
+		return inSphere3p_IEE<TP>(a, b, c);
+	case PntArr3::IEI: // swap b and c due to IEI
+		return inSphere3p_IEI<TP>(a, c, b);
+	case PntArr3::IIE:
+		return inSphere3p_IIE<TP>(a, b, c);
+	default: // PntArr3::III
+		return inSphere3p_III<TP>(a, b, c);
+	}
 }
 
 TEMPLATE_DECL

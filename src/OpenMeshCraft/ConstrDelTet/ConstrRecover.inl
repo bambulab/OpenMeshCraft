@@ -4,12 +4,6 @@
 
 namespace OMC {
 
-// In [Robust CDT 2023], some predicates are implemented in floating-point
-// numbers, I reimplemnted them in exact predicates. Define the below macro to
-// use the exact predicates.
-// TODO Exact predicates with implicit points are not implemented yet.
-// #define OMC_SEGMENT_RECOVERY_EXACT_PRED
-
 /**
  * @brief Initialize with the Delaunay tetrahedral mesh and the input
  * constrained triangles. Prepare for the constraits recovery.
@@ -53,6 +47,7 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 	for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
 		tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
 
+	size_t orig_vn     = verts.size();
 	size_t split_count = 0;
 
 	// Main loop: split missing segments to recover them.
@@ -76,9 +71,10 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 
 			// Touch the neighbor vertices
 			// New missing edges will appear near touched vertices
+			tet_mesh.mark(ep0, VTX_MARK::TO_CHECK);
+			tet_mesh.mark(ep1, VTX_MARK::TO_CHECK);
+			tet_mesh.mark(new_vid, VTX_MARK::TO_CHECK);
 			AuxVector64<index_t> local_vv;
-			local_vv.push_back(ep0);
-			local_vv.push_back(ep1);
 			tet_mesh.VV(new_vid, local_vv);
 			for (index_t vid : local_vv)
 				tet_mesh.mark(vid, VTX_MARK::TO_CHECK);
@@ -104,6 +100,7 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 				missing_segments.push_back(eid);
 			}
 		}
+		OMC_ASSERT(split_count < orig_vn * 5, "Too many segments are split.");
 		// clear the `TO_CHECK` mark for all vertices
 		for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
 			tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
@@ -458,7 +455,9 @@ template <typename Traits>
 bool ConstraintsRecover<Traits>::inSphere(const GPoint &a, const GPoint &b,
                                           const GPoint &c)
 {
-#ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
+// In [Robust CDT 2023], this predicate is implemented in floating-point
+// numbers, I reimplemnted it in exact predicates.
+#if 1
 	return InSphere()(a, b, c) >= Sign::ZERO;
 #else
 	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
@@ -477,7 +476,11 @@ template <typename Traits>
 bool ConstraintsRecover<Traits>::largerSphere(const GPoint &a, const GPoint &b,
                                               const GPoint &c, const GPoint &d)
 {
-#ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
+	// It is complex to generate a complete point arrangement to calculate an
+	// exact predicate. This predicate tolerate floating-point errors, so I
+	// directly use the inexact predicate.
+
+#if 0
 	return InSphere().largerSphere(a, b, c, d) == Sign::POSITIVE;
 #else
 	// calculate vectors between points
@@ -510,7 +513,10 @@ bool ConstraintsRecover<Traits>::isLessThanDistance(const GPoint &a,
                                                     const GPoint &b,
                                                     const GPoint &c)
 {
-#ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
+	// This predicate tolerate floating-point errors, so I directly use the
+	// inexact predicate.
+
+#if 0
 	return SquaredDistance3D()(a, b, c) == Sign::NEGATIVE;
 #else
 	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
@@ -528,7 +534,10 @@ bool ConstraintsRecover<Traits>::isLessThanHalfDistance(const GPoint &a,
                                                         const GPoint &b,
                                                         const GPoint &c)
 {
-#ifdef OMC_SEGMENT_RECOVERY_EXACT_PRED
+	// This predicate tolerate floating-point errors, so I directly use the
+	// inexact predicate.
+
+#if 0
 	// scale the squared distance between a and b by 4 to avoid square root.
 	return SquaredDistance3D()(a, b, c, /*ab_scale*/ 4) == Sign::NEGATIVE;
 #else
@@ -611,6 +620,8 @@ auto ConstraintsRecover<Traits>::middlePoint_bothAc(const PLCEdge &e) const
 		index_t        oep0 = oe.ep0(), oep1 = oe.ep1();
 
 		auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+		OMC_EXPENSIVE_ASSERT((t0 + t1) * 0.5 != t0 && (t0 + t1) * 0.5 != t1,
+		                     "The edge can not be split at midpoint.");
 		return CreateLNC()(gpnt(oep0), gpnt(oep1), (t0 + t1) * 0.5);
 	}
 	else // The edge is not split yet.
@@ -673,7 +684,8 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_noAc(
 	{ // if no (maybe caused by numerical error), return the middle point
 		t = (t0 + t1) * 0.5;
 	}
-
+	OMC_EXPENSIVE_ASSERT((t0 < t && t < t1) || (t1 < t && t < t0),
+	                     "The point is outside the edge.");
 	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
 }
 
@@ -726,16 +738,18 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_oneAc(
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
 	// Parameterize the sphere radius to the original segment
-	double radius_t =
+	double t_radius =
 	  std::sqrt((ref_v - oe0_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
 	// Ensure that the intersection point is inside the edge
 	double eps = (t1 - t0) * 0.2;
-	if (radius_t <= (t0 + eps) || radius_t >= (t1 - eps))
+	if (t_radius <= (t0 + eps) || t_radius >= (t1 - eps))
 	{ // Otherwise return the middle point
-		radius_t = (t0 + t1) * 0.5;
+		t_radius = (t0 + t1) * 0.5;
 	}
-
-	return CreateLNC()(gpnt(oep0), gpnt(oep1), radius_t);
+	OMC_EXPENSIVE_ASSERT((t0 < t_radius && t_radius < t1) ||
+	                       (t1 < t_radius && t_radius < t0),
+	                     "The point is outside the edge.");
+	return CreateLNC()(gpnt(oep0), gpnt(oep1), t_radius);
 }
 
 /**
