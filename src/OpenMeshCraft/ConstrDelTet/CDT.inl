@@ -226,7 +226,7 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	pnt_arenas = std::vector<PntArena>(1);
 	plc        = std::make_unique<PLC>(cdt_out_verts, cdt_in_edges, cdt_in_tris);
 	ConstraintsRecover<Traits> CR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc,
-	                              config.verbose);
+	                              config);
 
 	OMC_CDT_START_ELAPSE(start_seg);
 	CR.segmentRecovery();

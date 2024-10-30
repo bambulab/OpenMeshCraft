@@ -78,7 +78,7 @@ public: /* Traits **********************************************************/
 public: /* Constructor & Destructor ****************************************/
 	ConstraintsRecover() = delete;
 	ConstraintsRecover(std::vector<GPoint *> &_verts, std::vector<PntArena> &_ars,
-	                   TetMesh &_tet_mesh, PLC &_plc, bool _verbose = false);
+	                   TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config);
 
 public: /* Algorithms ******************************************************/
 	/* Recover constrained segments */
@@ -195,8 +195,8 @@ public: /* Data ************************************************************/
 	/// to check if a cavity face is missing.
 	std::vector<index_t> v_reindex;
 
-public: /* Flags ***********************************************************/
-	bool verbose;
+public: /* Flags and configurations ******************************************/
+	ConstrDelTet_Config config;
 };
 
 } // namespace OMC

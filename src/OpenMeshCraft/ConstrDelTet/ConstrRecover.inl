@@ -13,12 +13,12 @@ namespace OMC {
 template <typename Traits>
 ConstraintsRecover<Traits>::ConstraintsRecover(
   std::vector<GPoint *> &_verts, std::vector<PntArena> &_pnt_arenas,
-  TetMesh &_tet_mesh, PLC &_plc, bool _verbose)
+  TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config)
   : verts(_verts)
   , pnt_arenas(_pnt_arenas)
   , tet_mesh(_tet_mesh)
   , plc(_plc)
-  , verbose(_verbose)
+  , config(_config)
 {
 }
 
@@ -81,11 +81,11 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 
 			// log and output
 			split_count++;
-			if (verbose && split_count % 100 == 0)
+			if (config.verbose && split_count % 100 == 0)
 			{
-				std::cout << std::format(
-				  "\r{} segments are split. {} segments are missing.", split_count,
-				  missing_segments.size());
+				std::cout << std::format("\r[OpenMeshCraft CDT] {} segments are split. "
+				                         "{} segments are missing.",
+				                         split_count, missing_segments.size());
 			}
 		}
 		// Find new missing edges around touched vertices
@@ -100,12 +100,14 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 				missing_segments.push_back(eid);
 			}
 		}
-		OMC_ASSERT(split_count < orig_vn * 5, "Too many segments are split.");
+		OMC_ASSERT(config.output_explicit_result == 0 ||
+		             split_count < orig_vn * config.output_explicit_result,
+		           "Too many Steiner points are inserted.");
 		// clear the `TO_CHECK` mark for all vertices
 		for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
 			tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
 	}
-	if (verbose) // output a new line
+	if (config.verbose) // output a new line
 		std::cout << std::endl;
 
 	tet_mesh.removeDeletedTets();
@@ -428,10 +430,10 @@ void ConstraintsRecover<Traits>::faceRecovery()
 				recover_succeed++;
 			else
 				recover_fail++;
-			if (verbose)
+			if (config.verbose)
 				std::cout << std::format(
-				  "\r{} faces are recovered. {} faces are missing.", recover_succeed,
-				  recover_fail);
+				  "\r[OpenMeshCraft CDT] {} faces are recovered. {} faces are missing.",
+				  recover_succeed, recover_fail);
 
 			// A recovered face may be destroyed by the recovery of another face
 			// when expansion is needed.
@@ -441,7 +443,7 @@ void ConstraintsRecover<Traits>::faceRecovery()
 				need_recursion = true;
 		}
 	} while (need_recursion && recover_fail == 0);
-	if (verbose) // output a new line
+	if (config.verbose) // output a new line
 		std::cout << std::endl;
 	OMC_ASSERT(recover_fail == 0, "Fail to recover {} faces.", recover_fail);
 }

@@ -6,15 +6,21 @@
       "thread_num": 16,
       "verbose": true,
       "explicit": true,
-      "write": false
+      "write": false,
+      "set_parameter": false,
+      "parameters": {
+        "tree_enlarge_ratio": 1.01,
+        "tree_adaptive_thres": 0.1,
+        "tree_split_size_thres": 50
+      }
     },
     "TestDataSet": {
       "models_dir": "who-knows",
       "verbose": false,
       "explicit": false,
       "skip_step": 0,
-      "set_parameter": false,
       "thread_num": 16,
+      "set_parameter": false,
       "parameters": {
         "tree_enlarge_ratio": 1.01,
         "tree_adaptive_thres": 0.1,
@@ -30,20 +36,27 @@
   },
   "ConstrDelTet": {
     "TestIfCrash": {
-      "dir": "./data/arrangements_data/",
-      "filename": "CamelBox.stl",
-      "thread_num": 16,
+      "dir": "./data/CDT_data/",
+      "filename": "112544.obj",
       "verbose": true,
       "explicit": true,
-      "write": true
+      "write": true,
+      "thread_num": 1,
+      "set_parameter": false,
+      "parameters": {
+        "Steiner_point_thres": 10
+      }
     },
     "TestDataSet": {
       "models_dir": "who-knows",
       "verbose": false,
       "explicit": false,
       "skip_step": 0,
+      "thread_num": 1,
       "set_parameter": false,
-      "parameters": {}
+      "parameters": {
+        "Steiner_point_thres": 10
+      }
     }
   },
   "AABBTreeClosestPoint": {

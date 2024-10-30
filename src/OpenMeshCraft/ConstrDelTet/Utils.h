@@ -39,6 +39,11 @@ struct ConstrDelTet_Config
 	/// If set to true, the explicit result (points and tetrahedra) will be saved
 	/// in output mesh set by setTriMeshAsOutput.
 	bool output_explicit_result = false;
+
+	/// The threshold of the number of Steiner points inserted in segment
+	/// recovery. The threshold is a multiple of the number of vertices.
+	/// Set to 0 to disable the threshold.
+	size_t Steiner_point_thres = 0;
 };
 
 struct ConstrDelTet_Stats

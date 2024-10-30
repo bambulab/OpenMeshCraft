@@ -62,6 +62,15 @@ TEST_F(test_ConstrDelTet, TestIfCrash)
 	cdt_cfg.verbose                = config.get<bool>("verbose");
 	cdt_cfg.output_explicit_result = config.get<bool>("explicit");
 
+	// Read additional parameters if set in configuration
+	bool set_parameter = config.get<bool>("set_parameter", false);
+	if (set_parameter)
+	{
+		boost::property_tree::ptree &parameters = config.get_child("parameters");
+		cdt_cfg.Steiner_point_thres =
+		  parameters.get<size_t>("Steiner_point_thres", 0);
+	}
+
 	tbb::global_control tbb_gc(
 	  tbb::global_control::max_allowed_parallelism,
 	  config.get<size_t>("thread_num", tbb::this_task_arena::max_concurrency()));
@@ -132,8 +141,9 @@ TEST_F(test_ConstrDelTet, TestDataSet)
 	bool set_parameter = config.get<bool>("set_parameter", false);
 	if (set_parameter)
 	{
-		[[maybe_unused]] boost::property_tree::ptree &parameters =
-		  config.get_child("parameters");
+		boost::property_tree::ptree &parameters = config.get_child("parameters");
+		cdt_cfg.Steiner_point_thres =
+		  parameters.get<size_t>("Steiner_point_thres", 0);
 	}
 
 	// Set the number of threads for parallel processing
