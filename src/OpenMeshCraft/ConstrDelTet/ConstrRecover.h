@@ -114,7 +114,7 @@ public: /* Algorithms ******************************************************/
 	std::pair<double, double> getInterpolateT(index_t oep0, index_t oep1,
 	                                          index_t ep0, index_t ep1) const;
 
-	IPoint_LNC middlePoint_bothAc(const PLCEdge &e) const;
+	IPoint_LNC middlePoint(const PLCEdge &e) const;
 
 	IPoint_LNC lineSphereIntersection_noAc(index_t eid, bool reverse,
 	                                       index_t ref_vid) const;

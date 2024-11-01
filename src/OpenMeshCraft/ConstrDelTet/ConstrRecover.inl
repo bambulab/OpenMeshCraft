@@ -4,6 +4,11 @@
 
 namespace OMC {
 
+// Enable shuffling missing segments in each loop of segment recovery.
+#define OMC_CDT_SHUFFLE_MISSING_SEGMENTS
+// Enable exact inSphere predicate in finding encroaching point.
+#define OMC_CDT_EXACT_ENCROACH_TEST
+
 /**
  * @brief Initialize with the Delaunay tetrahedral mesh and the input
  * constrained triangles. Prepare for the constraits recovery.
@@ -100,9 +105,13 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 				missing_segments.push_back(eid);
 			}
 		}
-		OMC_ASSERT(config.output_explicit_result == 0 ||
-		             split_count < orig_vn * config.output_explicit_result,
+		OMC_ASSERT(config.Steiner_point_thres == 0 ||
+		             split_count < orig_vn * config.Steiner_point_thres,
 		           "Too many Steiner points are inserted.");
+#ifdef OMC_CDT_SHUFFLE_MISSING_SEGMENTS
+		std::shuffle(missing_segments.begin(), missing_segments.end(),
+		             std::default_random_engine(std::random_device()()));
+#endif
 		// clear the `TO_CHECK` mark for all vertices
 		for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
 			tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
@@ -143,13 +152,24 @@ index_t ConstraintsRecover<Traits>::splitMissingSegment(index_t eid)
 		index_t ref_vid;
 		findReferenceEncroachingPoint(eid, ref_vid, curr_tet);
 
+#ifdef OMC_CDT_EXACT_ENCROACH_TEST
 		OMC_EXPENSIVE_ASSERT(is_valid_idx(ref_vid),
 		                     "Could not find a valid reference encroaching point.");
-
-		if (edge.type == PLCEdgeType::NO_ACUTE_VERTEX)
-			new_vid = splitSegment_NoAcuteVertex(eid, ref_vid);
-		else // ONE_ACUTE_VERTEX
-			new_vid = splitSegment_OneAcuteVertex(eid, ref_vid);
+#else
+		if (!is_valid_idx(ref_vid))
+		{ //  can't find the reference encroaching point due to inexact predicate.
+			// just (use BothAcute strategy to) split the segment at its middle point.
+			curr_tet = TetMesh::toIdOff(tet_mesh.incTet(edge.ep0()));
+			new_vid  = splitSegment_BothAcuteVertex(eid);
+		}
+		else
+#endif
+		{
+			if (edge.type == PLCEdgeType::NO_ACUTE_VERTEX)
+				new_vid = splitSegment_NoAcuteVertex(eid, ref_vid);
+			else // ONE_ACUTE_VERTEX
+				new_vid = splitSegment_OneAcuteVertex(eid, ref_vid);
+		}
 	}
 
 	// insert the splitting point into the Delaunay tetrahedral mesh
@@ -195,6 +215,8 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 
 	tet_mesh.mark(edge.ep0(), VTX_MARK::TOUCHED);
 	tet_mesh.mark(edge.ep1(), VTX_MARK::TOUCHED);
+	tet_mesh.mark(edge.ep0(), VTX_MARK::ENCROACHED);
+	tet_mesh.mark(edge.ep1(), VTX_MARK::ENCROACHED);
 
 	const GPoint &p0    = gpnt(edge.ep0());
 	const GPoint &p1    = gpnt(edge.ep1());
@@ -271,6 +293,8 @@ void ConstraintsRecover<Traits>::findReferenceEncroachingPoint(
 	// clear all marks
 	tet_mesh.unmark(edge.ep0(), VTX_MARK::TOUCHED);
 	tet_mesh.unmark(edge.ep1(), VTX_MARK::TOUCHED);
+	tet_mesh.unmark(edge.ep0(), VTX_MARK::ENCROACHED);
+	tet_mesh.unmark(edge.ep1(), VTX_MARK::ENCROACHED);
 	for (index_t idoff : encroach_tets)
 	{
 		tet_mesh.unmark(idoff, TET_MARK::TOUCHED);
@@ -296,7 +320,7 @@ index_t ConstraintsRecover<Traits>::splitSegment_BothAcuteVertex(index_t eid)
 {
 	const PLCEdge &edge    = plc.edge(eid);
 	// Get the new point
-	IPoint_LNC     new_pnt = middlePoint_bothAc(edge);
+	IPoint_LNC     new_pnt = middlePoint(edge);
 	// Add the new point
 	index_t        new_vid = newVtx(new_pnt);
 	// Split edge by the new point
@@ -341,7 +365,7 @@ index_t ConstraintsRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
 	{ // The distances between both <`ref_pnt`, `ep0`> and <`ref_pnt`, `ep1`>
 		// are larger than half the distance between `ep0` and `ep1`.
 		// Split the segment at the middle point.
-		new_pnt = middlePoint_bothAc(edge);
+		new_pnt = middlePoint(edge);
 	}
 
 	// Add the new point
@@ -374,7 +398,7 @@ index_t ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
 		// reference encroaching point, we should switch to another split strategy
 		// (described in Section 3.3 in [Robust CDT]), but it is not really
 		// necessary. Just using midpoint provides better performances
-		new_pnt = middlePoint_bothAc(edge);
+		new_pnt = middlePoint(edge);
 	}
 
 	// Add the new point
@@ -383,69 +407,6 @@ index_t ConstraintsRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
 	plc.splitPLCEdge(eid, new_vid);
 
 	return new_vid;
-}
-
-template <typename Traits>
-void ConstraintsRecover<Traits>::faceRecovery()
-{
-	// initialize PLC faces
-	plc.initPLCFaces();
-
-	// initialize auxiliary data for face recovery.
-	{
-		v_orient.clear();
-		v_cached_orient.clear();
-		v_count.clear();
-		v_reindex.clear();
-
-		v_orient.resize(verts.size(), Sign::UNCERTAIN);
-		v_count.resize(verts.size(), 0);
-		v_reindex.resize(verts.size(), InvalidIndex);
-
-		for (index_t tid = 0; tid < tet_mesh.sizeTets(); tid++)
-			tet_mesh.unmark(TetMesh::toIdOff(tid), TET_MARK::TOUCHED);
-	}
-
-	// traverse all faces in the PLC to recover the missing faces
-	bool   need_recursion  = false;
-	size_t recover_succeed = 0, recover_fail = 0;
-
-	do
-	{
-		need_recursion = false;
-
-		for (index_t i = 0; i < plc.numFaces(); i++)
-		{
-			std::vector<index_t> tets;
-			getTetsIntersectingFace(i, tets);
-
-			if (tets.empty())
-				continue; // this face is already recovered.
-
-			bool succeed = false, expanded = false;
-			recoverFace_cavityExpanding(i, tets, succeed, expanded);
-
-			// log and output
-			if (succeed)
-				recover_succeed++;
-			else
-				recover_fail++;
-			if (config.verbose)
-				std::cout << std::format(
-				  "\r[OpenMeshCraft CDT] {} faces are recovered. {} faces are missing.",
-				  recover_succeed, recover_fail);
-
-			// A recovered face may be destroyed by the recovery of another face
-			// when expansion is needed.
-			// OPT: Record relation between tet face and PLC face to detect destroyed
-			// faces more efficiently.
-			if (expanded)
-				need_recursion = true;
-		}
-	} while (need_recursion && recover_fail == 0);
-	if (config.verbose) // output a new line
-		std::cout << std::endl;
-	OMC_ASSERT(recover_fail == 0, "Fail to recover {} faces.", recover_fail);
 }
 
 /**
@@ -457,9 +418,10 @@ template <typename Traits>
 bool ConstraintsRecover<Traits>::inSphere(const GPoint &a, const GPoint &b,
                                           const GPoint &c)
 {
-// In [Robust CDT 2023], this predicate is implemented in floating-point
-// numbers, I reimplemnted it in exact predicates.
-#if 1
+	// In [Robust CDT 2023], this predicate is implemented in floating-point
+	// numbers, I reimplemnted it in exact predicates.
+
+#ifdef OMC_CDT_EXACT_ENCROACH_TEST
 	return InSphere()(a, b, c) >= Sign::ZERO;
 #else
 	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
@@ -609,7 +571,7 @@ ConstraintsRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1,
  * @return IPoint_LNC The middle point of the edge.
  */
 template <typename Traits>
-auto ConstraintsRecover<Traits>::middlePoint_bothAc(const PLCEdge &e) const
+auto ConstraintsRecover<Traits>::middlePoint(const PLCEdge &e) const
   -> IPoint_LNC
 {
 	OMC_EXPENSIVE_ASSERT(!is_valid_idx(e.child_id), "The edge is already split.");
@@ -676,18 +638,18 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_noAc(
 	Vec3 end_v    = ToEP()(gpnt(reverse ? ep1 : ep0)).as_vec();
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+	OMC_EXPENSIVE_ASSERT(t0 < t1, "Invalid interpolate parameters.");
 	// Parameterize the sphere radius to the original segment
-	double radius_t =
+	double radius =
 	  std::sqrt((ref_v - end_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
 	// Get the parameter of the intersection point
-	double t = reverse ? t1 - radius_t : t0 + radius_t;
+	double t   = reverse ? t1 - radius : t0 + radius;
 	// Check if the intersection point is inside the edge
 	if (t <= t0 || t >= t1)
 	{ // if no (maybe caused by numerical error), return the middle point
 		t = (t0 + t1) * 0.5;
 	}
-	OMC_EXPENSIVE_ASSERT((t0 < t && t < t1) || (t1 < t && t < t0),
-	                     "The point is outside the edge.");
+	OMC_EXPENSIVE_ASSERT((t0 < t && t < t1), "The point is outside the edge.");
 	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
 }
 
@@ -739,19 +701,81 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_oneAc(
 	Vec3 ref_v    = ToEP()(gpnt(ref_vid)).as_vec();
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+	OMC_EXPENSIVE_ASSERT(t0 < t1, "Invalid interpolation parameters.");
 	// Parameterize the sphere radius to the original segment
-	double t_radius =
-	  std::sqrt((ref_v - oe0_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
-	// Ensure that the intersection point is inside the edge
+	double t   = std::sqrt((ref_v - oe0_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
+	// Ensure that the intersection point is inside the edge,
+	// and make the sub segments as long as possible.
 	double eps = (t1 - t0) * 0.2;
-	if (t_radius <= (t0 + eps) || t_radius >= (t1 - eps))
+	if (t <= (t0 + eps) || t >= (t1 - eps))
 	{ // Otherwise return the middle point
-		t_radius = (t0 + t1) * 0.5;
+		t = (t0 + t1) * 0.5;
 	}
-	OMC_EXPENSIVE_ASSERT((t0 < t_radius && t_radius < t1) ||
-	                       (t1 < t_radius && t_radius < t0),
-	                     "The point is outside the edge.");
-	return CreateLNC()(gpnt(oep0), gpnt(oep1), t_radius);
+	OMC_EXPENSIVE_ASSERT((t0 < t && t < t1), "The point is outside the edge.");
+	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
+}
+
+template <typename Traits>
+void ConstraintsRecover<Traits>::faceRecovery()
+{
+	// initialize PLC faces
+	plc.initPLCFaces();
+
+	// initialize auxiliary data for face recovery.
+	{
+		v_orient.clear();
+		v_cached_orient.clear();
+		v_count.clear();
+		v_reindex.clear();
+
+		v_orient.resize(verts.size(), Sign::UNCERTAIN);
+		v_count.resize(verts.size(), 0);
+		v_reindex.resize(verts.size(), InvalidIndex);
+
+		for (index_t tid = 0; tid < tet_mesh.sizeTets(); tid++)
+			tet_mesh.unmark(TetMesh::toIdOff(tid), TET_MARK::TOUCHED);
+	}
+
+	// traverse all faces in the PLC to recover the missing faces
+	bool   need_recursion  = false;
+	size_t recover_succeed = 0, recover_fail = 0;
+
+	do
+	{
+		need_recursion = false;
+
+		for (index_t i = 0; i < plc.numFaces(); i++)
+		{
+			std::vector<index_t> tets;
+			getTetsIntersectingFace(i, tets);
+
+			if (tets.empty())
+				continue; // this face is already recovered.
+
+			bool succeed = false, expanded = false;
+			recoverFace_cavityExpanding(i, tets, succeed, expanded);
+
+			// log and output
+			if (succeed)
+				recover_succeed++;
+			else
+				recover_fail++;
+			if (config.verbose)
+				std::cout << std::format(
+				  "\r[OpenMeshCraft CDT] {} faces are recovered. {} faces are missing.",
+				  recover_succeed, recover_fail);
+
+			// A recovered face may be destroyed by the recovery of another face
+			// when expansion is needed.
+			// OPT: Record relation between tet face and PLC face to detect destroyed
+			// faces more efficiently.
+			if (expanded)
+				need_recursion = true;
+		}
+	} while (need_recursion && recover_fail == 0);
+	if (config.verbose) // output a new line
+		std::cout << std::endl;
+	OMC_ASSERT(recover_fail == 0, "Fail to recover {} faces.", recover_fail);
 }
 
 /**
