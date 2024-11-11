@@ -199,14 +199,15 @@ TEST_F(test_ConstrDelTet, TestDataSet)
 				// Log the filename and processing time
 				log_file << std::fixed;
 				log_file << iter->path().filename().string();
-				log_file << "," << stats.dt_elapsed << "," << stats.seg_elapsed << ","
-				         << stats.face_elapsed << "," << total_time << std::endl;
+				log_file << "," << stats.pp_elapsed << "," << stats.dt_elapsed << ","
+				         << stats.seg_elapsed << "," << stats.face_elapsed << ","
+				         << total_time << std::endl;
 			}
 			catch (...)
 			{
 				std::cout << "Error in processing " << iter->path().filename()
 				          << std::endl;
-				log_file << iter->path().filename().string() << ",0,0,0,error\n";
+				log_file << iter->path().filename().string() << ",0,0,0,0,error\n";
 			}
 		}
 	}

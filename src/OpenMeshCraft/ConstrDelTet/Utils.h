@@ -60,6 +60,8 @@ struct ConstrDelTet_Stats
 
 	double seg_elapsed  = 0.; // timings of segment recovery
 	double face_elapsed = 0.; // timings of face recovery
+
+	size_t seg_steiner = 0; // number of Steiner points
 };
 
 // TODO Rename to InlinedVector2, and extract both Arrangements and CDT's

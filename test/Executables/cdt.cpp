@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 		fout << filename << "," << stats.pp_elapsed << "," << stats.dt_elapsed
 		     << "," << stats.seg_elapsed << "," << stats.face_elapsed << "," << time
 		     << "," << OMC::getPeakMegabytesUsed() << "," << result_points.size()
-		     << "," << result_tetrahedra.size() << "\n";
+		     << "," << result_tetrahedra.size() << "," << stats.seg_steiner << "\n";
 		std::cout << filename << ": " << time << "s, "
 		          << OMC::getPeakMegabytesUsed() << " MB\n";
 		fout.close();

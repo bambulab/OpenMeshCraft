@@ -78,7 +78,8 @@ public: /* Traits **********************************************************/
 public: /* Constructor & Destructor ****************************************/
 	ConstraintsRecover() = delete;
 	ConstraintsRecover(std::vector<GPoint *> &_verts, std::vector<PntArena> &_ars,
-	                   TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config);
+	                   TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config,
+										 ConstrDelTet_Stats* _stats = nullptr);
 
 public: /* Algorithms ******************************************************/
 	/* Recover constrained segments */
@@ -197,6 +198,8 @@ public: /* Data ************************************************************/
 
 public: /* Flags and configurations ******************************************/
 	ConstrDelTet_Config config;
+
+	ConstrDelTet_Stats* stats;
 };
 
 } // namespace OMC

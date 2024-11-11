@@ -5,7 +5,7 @@
 namespace OMC {
 
 // Enable shuffling missing segments in each loop of segment recovery.
-#define OMC_CDT_SHUFFLE_MISSING_SEGMENTS
+// #define OMC_CDT_SHUFFLE_MISSING_SEGMENTS
 // Enable exact inSphere predicate in finding encroaching point.
 #define OMC_CDT_EXACT_ENCROACH_TEST
 
@@ -18,12 +18,14 @@ namespace OMC {
 template <typename Traits>
 ConstraintsRecover<Traits>::ConstraintsRecover(
   std::vector<GPoint *> &_verts, std::vector<PntArena> &_pnt_arenas,
-  TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config)
+  TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config,
+  ConstrDelTet_Stats *_stats)
   : verts(_verts)
   , pnt_arenas(_pnt_arenas)
   , tet_mesh(_tet_mesh)
   , plc(_plc)
   , config(_config)
+  , stats(_stats)
 {
 }
 
@@ -120,6 +122,11 @@ void ConstraintsRecover<Traits>::segmentRecovery()
 		std::cout << std::endl;
 
 	tet_mesh.removeDeletedTets();
+
+	if (stats)
+	{ // record statistics about segment recovery
+		stats->seg_steiner = split_count;
+	}
 
 #ifdef OMC_ENABLE_EXPENSIVE_ASSERT
 	// check if all segments are recovered
@@ -643,7 +650,7 @@ auto ConstraintsRecover<Traits>::lineSphereIntersection_noAc(
 	double radius =
 	  std::sqrt((ref_v - end_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
 	// Get the parameter of the intersection point
-	double t   = reverse ? t1 - radius : t0 + radius;
+	double t = reverse ? t1 - radius : t0 + radius;
 	// Check if the intersection point is inside the edge
 	if (t <= t0 || t >= t1)
 	{ // if no (maybe caused by numerical error), return the middle point
