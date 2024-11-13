@@ -166,19 +166,19 @@ protected: /* Modifiers ******************************************************/
 	 * @param box any box.
 	 * @param center any center point.
 	 * @return
-	 * for the first bitset in pair: for any dimension i, if the box overlaps the
+	 * for the first bitset in pair: for any axis i, if the box overlaps the
 	 * lower half space of the center point, set bitset[i] to true.
-	 * for the second bitset in pair: for any dimension i, if the box overlaps the
+	 * for the second bitset in pair: for any axis i, if the box overlaps the
 	 * higher half space of the center point, set bitset[i] to true.
 	 */
 	static std::pair<std::bitset<Dimension>, std::bitset<Dimension>>
 	compare_box_with_center(TreeBboxCRef box, TreePointCRef center);
 
 	/**
-	 * @brief If boxes are not partitionable on dimension i, collapse nodes on
-	 * dimension i. Boxes in collasped nodes will be moved to existed nodes.
+	 * @brief If boxes are not partitionable on axis i, collapse nodes on
+	 * axis i. Boxes in collasped nodes will be moved to existed nodes.
 	 * This function calculate destination for collapsed nodes.
-	 * @param partitionable whether boxes are partitionable on all dimensions.
+	 * @param partitionable whether boxes are partitionable on all axes.
 	 * @param destination boxes on i-th child node are moved to destination[i]-th
 	 * child node.
 	 * @return true if moving happens.
@@ -262,8 +262,6 @@ protected:
 
 	NT m_adaptive_thres = 0.1;
 };
-
-
 
 } // namespace OMC
 

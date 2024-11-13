@@ -206,14 +206,14 @@ void QuadTree<Traits>::calc_box_for_children(NodeRef nd, OrPointCRef c)
 	OrPointCRef maxb = nd.box().max_bound();
 
 	// clang-format off
-	// child 0(000, -x-y-z)
+	// child 0(000, -x-y)
 	this->node(nd.child(0)).box() = Bbox(minb, c);
-	// child 1(001, +x-y-z)
+	// child 1(001, +x-y)
 	this->node(nd.child(1)).box() = Bbox(OrPoint(c.x(), minb.y()), OrPoint(maxb.x(), c.y()));
-	// child 2(010, -x+y-z)
+	// child 2(010, -x+y)
 	this->node(nd.child(2)).box() = Bbox(OrPoint(minb.x(), c.y()), OrPoint(c.x(), maxb.y()));
-	// child 3(011, +x+y-z)
-	this->node(nd.child(3)).box() = Bbox(OrPoint(c.x(), c.y()), OrPoint(maxb.x(), maxb.y()));
+	// child 3(011, +x+y)
+	this->node(nd.child(3)).box() = Bbox(c, maxb);
 	// clang-format on
 }
 

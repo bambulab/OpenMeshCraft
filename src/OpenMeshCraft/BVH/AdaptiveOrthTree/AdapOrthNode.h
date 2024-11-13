@@ -49,10 +49,10 @@ public:
 	AdapOrthTreeAbbreviate(Node);
 
 	/** @brief Array storing a bundle of children.
-	 * @details The orthtree subdivides the space in 2 on each dimension
+	 * @details The orthtree subdivides the space in 2 on each axis
 	 * available, so a child node can be accessed by selecting a Boolean
-	 * value for each dimension. The `index` parameter is thus
-	 * interpreted as a bitmap, where each bit matches a dimension
+	 * value for each axis. The `index` parameter is thus
+	 * interpreted as a bitmap, where each bit matches an axis
 	 * (starting by the least significant bit for coordinate X).
 	 *
 	 * For example, in the case of an octree (dimension 3):
