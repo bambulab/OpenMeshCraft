@@ -183,9 +183,9 @@ void OrthogonalTree<Traits>::grade(NT dupl_thres, index_t depth_delta)
 			continue;
 
 		auto CheckNeigbor = [this, &leaf_nodes, &depth_delta, &dupl_thres,
-		                     &cur_node](index_t dim, bool dir) -> void
+		                     &cur_node](index_t axis, bool dir) -> void
 		{
-			index_t neighbor_idx = adjacent_node(cur_node, dim, dir);
+			index_t neighbor_idx = adjacent_node(cur_node, axis, dir);
 
 			if (!is_valid_idx(neighbor_idx)
 			    //^ this neighbor does not exist
@@ -213,10 +213,10 @@ void OrthogonalTree<Traits>::grade(NT dupl_thres, index_t depth_delta)
 		};
 
 		// traverse its neighbors
-		for (index_t dim = 0; dim < Dimension; dim++)
+		for (index_t axis = 0; axis < Dimension; axis++)
 		{
-			CheckNeigbor(/*dimension*/ dim, /*direction*/ false);
-			CheckNeigbor(/*dimension*/ dim, /*direction*/ true);
+			CheckNeigbor(/*axis*/ axis, /*direction*/ false);
+			CheckNeigbor(/*axis*/ axis, /*direction*/ true);
 		}
 	}
 }
@@ -319,8 +319,7 @@ void OrthogonalTree<Traits>::collapse(index_t node_idx)
 			auto &ch_boxes = node(ch + i).boxes();
 			boxes.insert(boxes.end(), ch_boxes.begin(), ch_boxes.end());
 		}
-		std::sort(boxes.begin(), boxes.end(),
-		          [](OrBboxCPtr lhs, OrBboxCPtr rhs)
+		std::sort(boxes.begin(), boxes.end(), [](OrBboxCPtr lhs, OrBboxCPtr rhs)
 		          { return lhs->id() < rhs->id(); });
 		boxes.erase(std::unique(boxes.begin(), boxes.end(),
 		                        [](OrBboxCPtr lhs, OrBboxCPtr rhs)
@@ -454,7 +453,7 @@ std::vector<index_t> OrthogonalTree<Traits>::all_leaf_nodes() const
 }
 
 template <typename Traits>
-auto OrthogonalTree<Traits>::adjacent_node(NodeCRef nd, index_t dim,
+auto OrthogonalTree<Traits>::adjacent_node(NodeCRef nd, index_t axis,
                                            bool dir) const -> index_t
 {
 	// The root node has no adjacent nodes.
@@ -462,15 +461,15 @@ auto OrthogonalTree<Traits>::adjacent_node(NodeCRef nd, index_t dim,
 		return InvalidIndex;
 
 	// Check if this child has the adjacent sibling along the direction
-	if (nd.local_coordinates(dim) != dir)
+	if (nd.local_coordinates(axis) != dir)
 	{
 		// This means the adjacent node is a direct sibling, return it.
 		return node(nd.parent())
-		  .child(nd.local_coordinates().set(dim, dir).to_ulong());
+		  .child(nd.local_coordinates().set(axis, dir).to_ulong());
 	}
 
 	// Find the parent's neighbor in that direction if it exists
-	index_t adj_node_of_parent = adjacent_node(node(nd.parent()), dim, dir);
+	index_t adj_node_of_parent = adjacent_node(node(nd.parent()), axis, dir);
 
 	// If the parent has no neighbor, then this node doesn't have one
 	if (!is_valid_idx(adj_node_of_parent))
@@ -483,7 +482,7 @@ auto OrthogonalTree<Traits>::adjacent_node(NodeCRef nd, index_t dim,
 
 	// Return the nearest node of the parent by reverse the direction.
 	return node(adj_node_of_parent)
-	  .child(nd.local_coordinates().set(dim, !dir).to_ulong());
+	  .child(nd.local_coordinates().set(axis, !dir).to_ulong());
 }
 
 template <typename Traits>
@@ -533,9 +532,9 @@ auto OrthogonalTree<Traits>::locate(const PointT &point) const -> index_t
 
 		// Find the index of the correct sub-node
 		LocalCoordinates index;
-		for (index_t dim = 0; dim < Dimension; dim++)
+		for (index_t axis = 0; axis < Dimension; axis++)
 			// Lower: 0(false), higher: 1(true).
-			index[dim] = (point[dim] > center[dim]);
+			index[axis] = (point[axis] > center[axis]);
 
 		// Find the correct sub-node of the current node
 		node_for_point = nd.child(index.to_ulong());

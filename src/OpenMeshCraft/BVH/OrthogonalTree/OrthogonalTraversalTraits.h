@@ -6,7 +6,13 @@
 
 namespace OMC {
 
-/// @todo Add an option to find first or all intersections.
+/**
+ * @class Orth_BoxInterTraversal
+ * @brief A class template for orthogonal box intersection traversal.
+ * @tparam Traits A traits class that defines the necessary types and
+ * operations.
+ * @todo Add an option to find first or all intersections.
+ */
 template <typename Traits>
 class Orth_BoxInterTraversal
 {

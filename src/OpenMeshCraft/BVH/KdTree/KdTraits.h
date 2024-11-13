@@ -8,8 +8,6 @@
 
 namespace OMC {
 
-
-
 template <typename KdTraits>
 class KdAutoDeduceTraits
 {
@@ -61,7 +59,5 @@ public:
 		}
 	};
 };
-
-
 
 } // namespace OMC

@@ -22,7 +22,7 @@ namespace OMC {
 template <typename KdTraits>
 class KdTree
 {
-public:
+public: /* Types *************************************************************/
 	using NT         = typename KdTraits::NT;
 	using PointT     = typename KdTraits::PointT;
 	using PointAttrT = typename KdTraits::PointAttrT;
@@ -44,15 +44,17 @@ public:
 
 	using PointContainer = KdPointContainer<KdTraits>;
 
-public:
+public: /* Constructor *******************************************************/
 	KdTree() = default;
 
+	/**
+	 * @brief Insert points and attrs to KdTree, then build KdTree.
+	 * @param points points to initialize KdTree.
+	 * @param attrs attributes that attached to points, e.g., the index of each
+	 * point.
+	 */
 	template <typename Points, typename Attrs>
-	KdTree(const Points &points, const Attrs &attrs)
-	{
-		insert(points, attrs);
-		build();
-	}
+	KdTree(const Points &points, const Attrs &attrs);
 
 	/**
 	 * @brief Insert points and attrs to KdTree. Won't build KdTree.
@@ -68,16 +70,17 @@ public:
 	 */
 	void build();
 
-	inline bool empty() { return pts.empty(); }
+public: /* Interfaces ********************************************************/
+	bool empty() { return pts.empty(); }
 
 	/**
 	 * @brief Search the neatest point of the query in KdTree.
 	 * @param query The query point.
-	 * @return
+	 * @return The nearest point and its attribute.
 	 */
 	std::pair<PointT, PointAttrT> search_nearest_point(const PointT &query);
 
-private:
+private: /* Internal help functions ******************************************/
 	NodePtr create_leaf_node(PointContainer &container);
 
 	NodePtr new_internal_node();
@@ -108,7 +111,7 @@ private:
 	void handle_extended_node(InternalPtr nh, PointContainer &container,
 	                          PointContainer &container_low);
 
-private:
+private: /* Data *************************************************************/
 	std::deque<InternalNode> internal_nodes;
 	std::deque<LeafNode>     leaf_nodes;
 

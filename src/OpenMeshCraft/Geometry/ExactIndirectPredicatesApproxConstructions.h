@@ -44,6 +44,7 @@
 #include "Constructions/ProjectPoint3K.h"
 
 // Bounding Volume Calculation
+#include "Constructions/CalcBoundingBox2K.h"
 #include "Constructions/CalcBoundingBox3K.h"
 
 namespace OMC {
@@ -241,6 +242,7 @@ public:
 
 	/// @name Axis-Aligned Bounding Box
 	/// @{
+	using CalcBoundingBox2 = CalcBoundingBox2K<Kernel>;
 	using CalcBoundingBox3 = CalcBoundingBox3K<Kernel>;
 	/// @}
 };

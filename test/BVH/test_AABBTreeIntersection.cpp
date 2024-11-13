@@ -44,7 +44,7 @@ protected:
 		TEST_GET_CONFIG(AABBTreeIntersection, SetUp);
 
 		std::ifstream ifs;
-		ifs.open(config.get<std::string>("model_path"));
+		ifs.open(config.get<std::string>("filename"));
 		EXPECT_EQ(ifs.is_open(), true);
 		std::string line;
 		size_t      tri_id = 0;

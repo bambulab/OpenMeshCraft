@@ -53,7 +53,7 @@ public:
 	 */
 	template <typename TT, typename = std::enable_if_t<
 	                         std::is_same_v<remove_cvref_t<TT>, VecT>> /*SIFNAE*/>
-	explicit Point2T(TT &&v) noexcept
+	Point2T(TT &&v) noexcept
 	  : m_p(std::forward<TT>(v))
 	{
 	}

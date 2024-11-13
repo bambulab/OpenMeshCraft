@@ -169,9 +169,9 @@ protected: /* Modifiers ******************************************************/
 	 * @param box any box.
 	 * @param center any center point.
 	 * @return
-	 * for the first bitset in pair: for any dimension i, if the box overlaps the
+	 * for the first bitset in pair: for any axis i, if the box overlaps the
 	 * lower half space of the center point, set bitset[i] to true.
-	 * for the second bitset in pair: for any dimension i, if the box overlaps the
+	 * for the second bitset in pair: for any axis i, if the box overlaps the
 	 * higher half space of the center point, set bitset[i] to true.
 	 */
 	static std::pair<std::bitset<Dimension>, std::bitset<Dimension>>
@@ -219,7 +219,7 @@ public: /* Queries */
 
 public: /* Traversal and adjacency *******************************************/
 	/**
-	 * @brief Find the adjacent node along the direction in specific dimension.
+	 * @brief Find the adjacent node along the direction in specific axis.
 	 * @details Adjacent nodes are found according to several properties:
 	 *  - adjacent nodes may be shallower than the seek node, but never deeper.
 	 *  - a node has at most `2 * Dimension` different adjacent nodes
@@ -259,12 +259,11 @@ public: /* Traversal and adjacency *******************************************/
 	 * This implementation returns the adjacent node if it's found.  If
 	 * there is no adjacent node in that direction, it returns a null
 	 * node.
-	 * @param dim dimension
-	 * @param dir dirtion: 0 (negative along the dimension), 1 (positive along the
-	 * dimension)
+	 * @param axis axis (< Dimension)
+	 * @param dir dirtion: 0 (negative along the axis), 1 (positive along the axis)
 	 * @return NodePtr
 	 */
-	index_t adjacent_node(NodeCRef nd, index_t dim, bool dir) const;
+	index_t adjacent_node(NodeCRef nd, index_t axis, bool dir) const;
 
 	/**
 	 * @brief Check if two Node is topologically same.

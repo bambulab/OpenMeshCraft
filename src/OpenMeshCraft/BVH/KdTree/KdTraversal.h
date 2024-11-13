@@ -6,12 +6,12 @@ namespace OMC {
 
 /**
  * @brief Orthogonal nearest search. If find the nearest point in KdTree.
- * @todo Support the case when find more than one neatest point.
+ * @todo Support the case when find more than one nearest point.
  */
 template <typename KdTraits>
 class OrthogonalNearestSeach
 {
-public:
+public: /* Types *************************************************************/
 	using NT           = typename KdTraits::NT;
 	using PointT       = typename KdTraits::PointT;
 	using PointAttrT   = typename KdTraits::PointAttrT;
@@ -28,7 +28,7 @@ public:
 	using LeafNode     = KdLeafNode<KdTraits>;
 	using LeafPtr      = LeafNode *;
 
-public:
+public: /* Interfaces ********************************************************/
 	/**
 	 * @brief Construct the object and find the nearest point at the same time.
 	 * @param tree_root The pointer to root node of KdTree.
@@ -38,9 +38,9 @@ public:
 	OrthogonalNearestSeach(NodePtr tree_root, const KdBox &tree_bbox,
 	                       const PointT &query);
 
-	inline KdPointsIter closest_point_iter() { return m_result; }
+	KdPointsIter closest_point_iter() { return m_result; }
 
-private:
+private: /* Internal help functions ******************************************/
 	/**
 	 * @brief Recursive function to traversal KdTree to find the nearest point.
 	 * @param node The pointer to node of KdTree.
@@ -54,12 +54,12 @@ private:
 	 */
 	void search_nearest_in_leaf(LeafPtr node);
 
-	inline NT new_square_distance(NT dist, NT old_off, NT new_off)
+	NT new_square_distance(NT dist, NT old_off, NT new_off)
 	{
 		return dist + (new_off * new_off - old_off * old_off);
 	}
 
-private:
+private: /* Data *************************************************************/
 	PointT m_dists;
 	PointT m_query;
 

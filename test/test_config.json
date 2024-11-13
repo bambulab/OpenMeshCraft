@@ -61,27 +61,27 @@
   },
   "AABBTreeClosestPoint": {
     "SetUp": {
-      "model_path": "./data/boolean_data/bunny25k.obj"
+      "filename": "./data/boolean_data/bunny25k.obj"
     }
   },
   "AABBTreeIntersection": {
     "SetUp": {
-      "model_path": "./data/boolean_data/bunny25k.obj"
+      "filename": "./data/boolean_data/bunny25k.obj"
     }
   },
   "AdapOrthTree": {
     "SetUp": {
-      "filename": "./data/arrangements_data/318844.stl"
+      "filename": "./data/boolean_data/bunny25k.obj"
     }
   },
   "BinaryTree": {
     "SetUp": {
-      "filename": "./data/arrangements_data/318844.stl"
+      "filename": "./data/boolean_data/bunny25k.obj"
     }
   },
   "OrthogonalTree": {
     "SetUp": {
-      "filename": "./data/arrangements_data/318844.stl"
+      "filename": "./data/boolean_data/bunny25k.obj"
     }
   }
 }

@@ -19,7 +19,7 @@ namespace OMC {
 template <typename Traits>
 class OrthogonalNode
 {
-public:
+public: /* Types *************************************************************/
 	/// The maximal depth of orthogonal tree.
 	/// Root node is at depth 0 and is counted into depth.
 	/// For example, when MaxDepth is 2, the tree is allowed to have a root node
@@ -55,10 +55,10 @@ public:
 	OrthTreeAbbreviate(Vertex);
 
 	/** @brief Array storing a bundle of children.
-	 * @details The orthtree subdivides the space in 2 on each dimension
+	 * @details The orthtree subdivides the space in 2 on each axis
 	 * available, so a child node can be accessed by selecting a Boolean
-	 * value for each dimension. The `index` parameter is thus
-	 * interpreted as a bitmap, where each bit matches a dimension
+	 * value for each axis. The `index` parameter is thus
+	 * interpreted as a bitmap, where each bit matches a axis
 	 * (starting by the least significant bit for coordinate X).
 	 *
 	 * For example, in the case of an octree (dimension 3):
@@ -119,7 +119,7 @@ public:
 	 */
 	using GlobalCoordinates = std::array<gc_t, Dimension>;
 
-public: /* Constructors (Copy, Move, Assign) and Destructor */
+public: /* Constructors (Copy, Move, Assign) and Destructor *******************/
 	OrthogonalNode();
 
 	OrthogonalNode(const Node &src) { *this = src; }
@@ -132,14 +132,14 @@ public: /* Constructors (Copy, Move, Assign) and Destructor */
 
 	~OrthogonalNode() {}
 
-public: /* Queries */
+public: /* Queries ************************************************************/
 	bool is_root() const { return m_depth == 0; }
 
 	bool is_internal() const { return is_valid_idx(m_children); }
 
 	bool is_leaf() const { return !is_valid_idx(m_children); }
 
-public: /* Data access */
+public: /* Data access ********************************************************/
 	/// @brief Access parent.
 	index_t       &parent() { return m_parent; }
 	/// @brief Access parent.
@@ -166,8 +166,13 @@ public: /* Data access */
 	index_t       &depth() { return m_depth; }
 	const index_t &depth() const { return m_depth; }
 
-	bool             local_coordinates(size_t dim) const;
-	void             local_coordinates(LocalCoordinates &lc) const;
+	/// @brief Query the local coordinate at specific `axis`.
+	bool local_coordinates(size_t axis) const;
+
+	/// @brief Get the local coordinate and store in `lc`.
+	void local_coordinates(LocalCoordinates &lc) const;
+
+	/// @brief Get the local coordinate.
 	LocalCoordinates local_coordinates() const;
 
 	/// @brief Access global coordinates.
@@ -198,7 +203,7 @@ public: /* Data access */
 	NodeAttrT       &attribute() { return m_attribute; }
 	const NodeAttrT &attribute() const { return m_attribute; }
 
-protected:
+protected: /* Data ************************************************************/
 	/// index of parent, InvalidIndex if parent doesn't exist.
 	index_t                 m_parent;
 	/// children of this node.
@@ -322,19 +327,13 @@ auto OrthogonalNode<Traits>::vertices() const -> const Vertices &
 	return *m_vertices;
 }
 
-/**
- * @brief Query the local coordinate at dimension \p dim.
- */
 template <typename Traits>
-bool OrthogonalNode<Traits>::local_coordinates(size_t dim) const
+bool OrthogonalNode<Traits>::local_coordinates(size_t axis) const
 {
-	OMC_EXPENSIVE_ASSERT(dim < Dimension, "invalid dimension {}", dim);
-	return m_global_coordinates[dim] & gc_t(1);
+	OMC_EXPENSIVE_ASSERT(axis < Dimension, "invalid axis {}", axis);
+	return m_global_coordinates[axis] & gc_t(1);
 }
 
-/**
- * @brief Get the local coordinate and store in \p lc.
- */
 template <typename Traits>
 void OrthogonalNode<Traits>::local_coordinates(LocalCoordinates &lc) const
 {
@@ -350,9 +349,6 @@ void OrthogonalNode<Traits>::local_coordinates(LocalCoordinates &lc) const
 			lc[i] = m_global_coordinates[i] & gc_t(1);
 }
 
-/**
- * @brief Get the local coordinate.
- */
 template <typename Traits>
 auto OrthogonalNode<Traits>::local_coordinates() const -> LocalCoordinates
 {

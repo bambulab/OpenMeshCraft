@@ -567,7 +567,7 @@ TEST_F(test_ExactIndirectPredicates, InSphere)
 	auto start      = OMC::Logger::elapse_reset();
 	for (size_t i = 0; i < num_all_groups; ++i)
 	{
-		cgal_dummy += -EKIC::Side_of_oriented_sphere_3()(
+		cgal_dummy += EKIC::Side_of_oriented_sphere_3()(
 		  ref_points[5 * i], ref_points[5 * i + 1], ref_points[5 * i + 2],
 		  ref_points[5 * i + 3], ref_points[5 * i + 4]);
 	}
@@ -598,7 +598,7 @@ TEST_F(test_ExactIndirectPredicates, InSphere)
 	  std::execution::seq, indices.begin(), indices.end(),
 	  [&](size_t i)
 	  {
-		  int ref_sign = -EKIC::Side_of_oriented_sphere_3()(
+		  int ref_sign = EKIC::Side_of_oriented_sphere_3()(
 		    ref_points[5 * i], ref_points[5 * i + 1], ref_points[5 * i + 2],
 		    ref_points[5 * i + 3], ref_points[5 * i + 4]);
 

@@ -31,7 +31,7 @@ void OrthogonalNearestSeach<KdTraits>::compute_nearest_neightbors_orthogonally(
 	else
 	{
 		InternalPtr internal_node = static_cast<InternalPtr>(node);
-		size_t      cut_dim       = internal_node->m_cut_dim;
+		size_t      cut_dim       = internal_node->m_cut_axis;
 
 		NodePtr best_ch, other_ch;
 

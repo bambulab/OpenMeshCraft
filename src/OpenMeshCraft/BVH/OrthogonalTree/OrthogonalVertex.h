@@ -57,7 +57,7 @@ namespace OMC {
 template <typename Traits>
 class OrthogonalVertex
 {
-public:
+public: /* Types *************************************************************/
 	/// Dimension, typically 2 or 3, or higher n
 	static constexpr size_t Dimension = Traits::Dimension;
 
@@ -70,10 +70,10 @@ public:
 
 	using VertexAttrT = typename Traits::VertexAttrT;
 
-public: /* Constructors and Destructor */
+public: /* Constructors and Destructor ***************************************/
 	OrthogonalVertex() = default;
 
-public: /* Data access */
+public: /* Data access *******************************************************/
 	OrPoint       &position() { return m_position; }
 	const OrPoint &position() const { return m_position; }
 

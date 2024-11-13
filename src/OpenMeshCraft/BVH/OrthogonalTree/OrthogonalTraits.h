@@ -65,7 +65,6 @@ public:
 			if (begin == end)
 				return box;
 
-			// TODO parallel by std::minmax_element(std::execution::unseq_par)?
 			box = *begin;
 			for (++begin; begin != end; ++begin)
 				box += *begin;
@@ -84,7 +83,6 @@ public:
 			if (begin == end)
 				return box;
 
-			// TODO parallel by std::minmax_element(std::execution::unseq_par)?
 			box = (*begin)->box();
 			for (++begin; begin != end; ++begin)
 				box += (*begin)->box();

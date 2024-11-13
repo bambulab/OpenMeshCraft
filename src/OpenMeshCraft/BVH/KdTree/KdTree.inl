@@ -6,6 +6,14 @@ namespace OMC {
 
 template <typename KdTraits>
 template <typename Points, typename Attrs>
+KdTree<KdTraits>::KdTree(const Points &points, const Attrs &attrs)
+{
+	insert(points, attrs);
+	build();
+}
+
+template <typename KdTraits>
+template <typename Points, typename Attrs>
 void KdTree<KdTraits>::insert(const Points &points, const Attrs &attrs)
 {
 	static_assert(
@@ -17,7 +25,7 @@ void KdTree<KdTraits>::insert(const Points &points, const Attrs &attrs)
 	  "Attributes' types are different.");
 
 	OMC_THROW_INVALID_ARGUMENT_IF(points.size() != attrs.size(),
-	                           "size of points and attrs are different.");
+	                              "size of points and attrs are different.");
 
 	pts.reserve(points.size());
 
@@ -173,8 +181,8 @@ void KdTree<KdTraits>::handle_extended_node(InternalPtr     nh,
 {
 	if (container_low.size() > 0)
 	{
-		nh->m_lower_low_val  = container_low.tbox().min_coord(nh->m_cut_dim);
-		nh->m_lower_high_val = container_low.tbox().max_coord(nh->m_cut_dim);
+		nh->m_lower_low_val  = container_low.tbox().min_coord(nh->m_cut_axis);
+		nh->m_lower_high_val = container_low.tbox().max_coord(nh->m_cut_axis);
 	}
 	else
 	{
@@ -183,8 +191,8 @@ void KdTree<KdTraits>::handle_extended_node(InternalPtr     nh,
 	}
 	if (container.size() > 0)
 	{
-		nh->m_upper_low_val  = container.tbox().min_coord(nh->m_cut_dim);
-		nh->m_upper_high_val = container.tbox().max_coord(nh->m_cut_dim);
+		nh->m_upper_low_val  = container.tbox().min_coord(nh->m_cut_axis);
+		nh->m_upper_high_val = container.tbox().max_coord(nh->m_cut_axis);
 	}
 	else
 	{

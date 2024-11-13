@@ -7,16 +7,14 @@
 namespace OMC {
 
 /**
- * @brief Octree, i.e., orthogonal tree in 3D.
+ * @brief Quadtree, i.e., orthogonal tree in 2D.
  * @details Two directions along each axis in Cartesian space, relative to a
  * node.
  *
- * Directions are mapped to numbers as 3-bit integers,
- * though the numbers 6 and 7 are not used because there are only 6 different
- * directions.
+ * Directions are mapped to numbers as 2-bit integers,
  *
- * The first two bits indicate the axis (00 = x, 01 = y, 10 = z),
- * the third bit indicates the direction along that axis (0 = -, 1 = +).
+ * The first bit indicate the axis (0 = x, 1 = y),
+ * the second bit indicates the direction along that axis (0 = -, 1 = +).
  *
  * It has the following fomula:
  *
@@ -24,32 +22,29 @@ namespace OMC {
  *
  * The following diagram may be a useful reference:
  *
- *            5 *
- *              |  * 3
- *              | /                  z+
- *              |/                   *  y+
- *     0 *------+------* 1           | *
- *             /|                    |/
- *            / |                    +-----* x+
- *         2 *  |
- *              * 4
+ *            3 *
+ *              |
+ *              |                    y+
+ *              |                    * 
+ *     0 *------+------* 1           |
+ *              |                    |
+ *              |                    +-----* x+
+ *              |
+ *              * 2
  *
- * The eight children and corner vertices have following indices:
- *         6(110)              7(111)
- *            -------------------
- *  +z       /|                /|
- *          / |               / |
- *         /  |       5(101) /  |
- * 4(100) -------------------   |        +y
- *        |   |_____________|___|
- *        |  / 2(010)       |  / 3(011)
- *  -z    | /               | /
- *        |/________________|/          -y
- * -x    0(000)            1(001)        +x
+ * The four children and corner vertices have following indices:
+ * 2(10) __________________ 3(11)
+ *      |                 |   +y
+ *      |                 |
+ *      |                 |
+ *      |                 |
+ *      |                 |
+ *      |_________________|  -y
+ * -x  0(00)            1(01)  +x
  *
  */
 template <typename _Traits>
-class OcTree : public OrthogonalTree<_Traits>
+class QuadTree : public OrthogonalTree<_Traits>
 {
 public:
 	using Traits = _Traits;
@@ -107,5 +102,5 @@ protected:
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "OcTree.inl"
+	#include "QuadTree.inl"
 #endif

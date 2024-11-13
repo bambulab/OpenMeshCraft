@@ -7,9 +7,9 @@
 namespace OMC {
 
 template <typename Traits>
-auto OcTree<Traits>::adj_vertex(index_t vidx, index_t dim, bool dir) -> index_t
+auto OcTree<Traits>::adj_vertex(index_t vidx, index_t axis, bool dir) -> index_t
 {
-	return m_adj_vertices[vidx][(dim << 1) + dir];
+	return m_adj_vertices[vidx][(axis << 1) + dir];
 }
 
 template <typename Traits>
@@ -47,10 +47,10 @@ auto OcTree<Traits>::calc_vertex_position(index_t nd_idx, index_t nv_idx)
 }
 
 template <typename Traits>
-void OcTree<Traits>::set_adj_vertices_pair(index_t vl, index_t vh, index_t dim)
+void OcTree<Traits>::set_adj_vertices_pair(index_t vl, index_t vh, index_t axis)
 {
-	m_adj_vertices[vl][(dim << 1) + true]  = vh;
-	m_adj_vertices[vh][(dim << 1) + false] = vl;
+	m_adj_vertices[vl][(axis << 1) + true]  = vh;
+	m_adj_vertices[vh][(axis << 1) + false] = vl;
 }
 
 template <typename Traits>
@@ -76,30 +76,30 @@ void OcTree<Traits>::build_vertices()
 
 	// Given a node and its face, we try to find the face vertex on it.
 	auto find_face_vertex = [this, &face_vertices, &edge_vertices,
-	                         &invalid_indices](index_t nd_idx, index_t dim,
+	                         &invalid_indices](index_t nd_idx, index_t axis,
 	                                           bool dir) -> index_t
 	{
 		NodeCRef nd           = this->node(nd_idx);
 		// find the adjacent node
-		index_t  adj_node_idx = this->adjacent_node(nd, dim, dir);
+		index_t  adj_node_idx = this->adjacent_node(nd, axis, dir);
 		// if the adjacent node exists and has the same depth with this node,
 		// we try to find face vertex on the same face in adjacent node.
 
-		dim = dim << 1; // NOTE: dim is multiply by 2.
+		axis = axis << 1; // NOTE: axis is multiply by 2.
 		if (is_valid_idx(adj_node_idx) &&
 		    this->node(adj_node_idx).depth() == nd.depth() &&
-		    is_valid_idx(face_vertices[adj_node_idx][dim + (!dir)]))
+		    is_valid_idx(face_vertices[adj_node_idx][axis + (!dir)]))
 		{
-			face_vertices[nd_idx][dim + dir] =
-			  face_vertices[adj_node_idx][dim + (!dir)];
+			face_vertices[nd_idx][axis + dir] =
+			  face_vertices[adj_node_idx][axis + (!dir)];
 		}
 		else
 		{
-			face_vertices[nd_idx][dim + dir] = this->new_vertex();
+			face_vertices[nd_idx][axis + dir] = this->new_vertex();
 			edge_vertices.push_back(invalid_indices);
 			m_adj_vertices.push_back(invalid_indices);
 		}
-		return face_vertices[nd_idx][dim + dir];
+		return face_vertices[nd_idx][axis + dir];
 	};
 
 	// An edge of a node is given by (lower index, higher index),
@@ -107,28 +107,28 @@ void OcTree<Traits>::build_vertices()
 	auto find_edge_vertex = [this, &edge_vertices, &invalid_indices](
 	                          NodeRef nd, index_t li, index_t hi) -> index_t
 	{
-		// use xor to get the dimension
-		index_t dim = ((li ^ hi) >> 1) << 1;
-		index_t vl  = nd.vertex(li);
-		index_t vh  = nd.vertex(hi);
+		// use xor to get the axis
+		index_t axis = ((li ^ hi) >> 1) << 1;
+		index_t vl   = nd.vertex(li);
+		index_t vh   = nd.vertex(hi);
 		// find at higher direction of lower vertex.
-		if (is_valid_idx(edge_vertices[vl][dim + true]))
-			return edge_vertices[vl][dim + true];
-		// find at lower direction of higher vertex. (does this neccessary?)
-		if (is_valid_idx(edge_vertices[vh][dim + false]))
-			return edge_vertices[vh][dim + false];
+		if (is_valid_idx(edge_vertices[vl][axis + true]))
+			return edge_vertices[vl][axis + true];
+		// find at lower direction of higher vertex. (is this neccessary?)
+		if (is_valid_idx(edge_vertices[vh][axis + false]))
+			return edge_vertices[vh][axis + false];
 
 		index_t new_vidx = this->new_vertex();
 		// set edge vertices
 		edge_vertices.push_back(invalid_indices);
-		edge_vertices[vl][dim + true]  = new_vidx;
-		edge_vertices[vh][dim + false] = new_vidx;
+		edge_vertices[vl][axis + true]  = new_vidx;
+		edge_vertices[vh][axis + false] = new_vidx;
 		// set adjacent relationship
 		m_adj_vertices.push_back(invalid_indices);
-		m_adj_vertices[vl][dim + true]        = new_vidx;
-		m_adj_vertices[vh][dim + false]       = new_vidx;
-		m_adj_vertices[new_vidx][dim + false] = vl;
-		m_adj_vertices[new_vidx][dim + true]  = vh;
+		m_adj_vertices[vl][axis + true]        = new_vidx;
+		m_adj_vertices[vh][axis + false]       = new_vidx;
+		m_adj_vertices[new_vidx][axis + false] = vl;
+		m_adj_vertices[new_vidx][axis + true]  = vh;
 		return new_vidx;
 	};
 
@@ -209,22 +209,22 @@ void OcTree<Traits>::build_vertices()
 		m_adj_vertices.push_back(invalid_indices);
 
 		// children nodes inherit vertices.
-		this->node(nd.child(0)).vertices() = {v0,   ev01, fv4, ev02,
-		                                      ev04, fv2,  cv,  fv0};
-		this->node(nd.child(1)).vertices() = {ev01, v1,   ev13, fv4,
-		                                      fv2,  ev15, fv1,  cv};
-		this->node(nd.child(2)).vertices() = {ev02, fv4, ev23, v2,
-		                                      fv0,  cv,  fv3,  ev26};
-		this->node(nd.child(3)).vertices() = {fv4, ev13, v3,   ev23,
-		                                      cv,  fv1,  ev37, fv3};
-		this->node(nd.child(4)).vertices() = {ev04, fv2,  cv,  fv0,
-		                                      v4,   ev45, fv5, ev46};
-		this->node(nd.child(5)).vertices() = {fv2,  ev15, fv1,  cv,
-		                                      ev45, v5,   ev57, fv5};
-		this->node(nd.child(6)).vertices() = {fv0,  cv,  fv3,  ev26,
-		                                      ev46, fv5, ev67, v6};
-		this->node(nd.child(7)).vertices() = {cv,  fv1,  ev37, fv3,
-		                                      fv5, ev57, v7,   ev67};
+		this->node(nd.child(0)).vertices() = {v0,   ev01, ev02, fv4,
+		                                      ev04, fv2,  fv0,  cv};
+		this->node(nd.child(1)).vertices() = {ev01, v1,   fv4, ev13,
+		                                      fv2,  ev15, cv,  fv1};
+		this->node(nd.child(2)).vertices() = {ev02, fv4, v2,   ev23,
+		                                      fv0,  cv,  ev26, fv3};
+		this->node(nd.child(3)).vertices() = {fv4, ev13, ev23, v3,
+		                                      cv,  fv1,  fv3,  ev37};
+		this->node(nd.child(4)).vertices() = {ev04, fv2,  fv0,  cv,
+		                                      v4,   ev45, ev46, fv5};
+		this->node(nd.child(5)).vertices() = {fv2,  ev15, cv,  fv1,
+		                                      ev45, v5,   fv5, ev57};
+		this->node(nd.child(6)).vertices() = {fv0,  cv,  ev26, fv3,
+		                                      ev46, fv5, v6,   ev67};
+		this->node(nd.child(7)).vertices() = {cv,  fv1,  fv3,  ev37,
+		                                      fv5, ev57, ev67, v7};
 
 		// set adjancen relationship between
 		// (1) between center vertex and all face vertices

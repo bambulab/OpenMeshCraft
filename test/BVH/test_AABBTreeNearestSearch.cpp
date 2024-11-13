@@ -40,7 +40,7 @@ protected:
 		TEST_GET_CONFIG(AABBTreeClosestPoint, SetUp);
 
 		std::ifstream fin;
-		fin.open(config.get<std::string>("model_path"));
+		fin.open(config.get<std::string>("filename"));
 		ASSERT_EQ(fin.is_open(), true);
 
 		std::string line;
