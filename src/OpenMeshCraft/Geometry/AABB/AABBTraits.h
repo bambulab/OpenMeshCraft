@@ -12,47 +12,60 @@
 namespace OMC {
 
 /**
- * @brief Compare two triangles at specified dimension.
+ * @brief Compare two primitives at specified axis.
  * @tparam PrimT primitive type.
+ * @tparam PrimReferencePoint primitive reference point strategy.
  */
 template <typename PrimT, typename PrimReferencePoint>
 class AABBPrimSplitPred
 {
-public:
+public: /* Constructor ****************************************************/
 	AABBPrimSplitPred()
-	  : m_split_dim(0)
+	  : m_split_axis(0)
 	{
 	}
-	AABBPrimSplitPred(size_t split_dim)
-	  : m_split_dim(split_dim)
+	AABBPrimSplitPred(size_t split_axis)
+	  : m_split_axis(split_axis)
 	{
 	}
 
-public:
-	/**
-	 * @brief Compare the first vertex of two triangles at specified dimension.
-	 */
+public: /* Operator *******************************************************/
+	/// @brief Compare the reference point of two primitives at specified axis.
 	bool operator()(const PrimT &lhs, const PrimT &rhs)
 	{
-		return reference_point(lhs)[m_split_dim] <
-		       reference_point(rhs)[m_split_dim];
+		return reference_point(lhs)[m_split_axis] <
+		       reference_point(rhs)[m_split_axis];
 	}
 
 private:
-	size_t             m_split_dim;
+	size_t             m_split_axis;
 	PrimReferencePoint reference_point;
 };
 
+/**
+ * @class AABBSplitPrimitives
+ * @brief A class template for splitting primitives in an axis-aligned bounding
+ * box (AABB).
+ *
+ * This class template provides a mechanism to split a range of primitives based
+ * on a specified splitting predicate and the longest axis of the bounding box.
+ *
+ * @tparam BboxT Type of the bounding box.
+ * @tparam PrimsIter Type of the iterator used to traverse the primitives.
+ * @tparam PrimSplitPred Type of the predicate used to split the primitives.
+ */
 template <typename BboxT, typename PrimsIter, typename PrimSplitPred>
 class AABBSplitPrimitives
 {
-public:
-	void operator()(PrimsIter first, PrimsIter beyond, PrimsIter &middle,
-	                const BboxT &box)
+public: /* Operator *******************************************************/
+	size_t operator()(PrimsIter first, PrimsIter beyond, PrimsIter &middle,
+	                  const BboxT &box)
 	{
-		PrimSplitPred pred(box.longest_axis());
+		size_t        split_axis = box.longest_axis();
+		PrimSplitPred pred(split_axis);
 		middle = first + (beyond - first) / 2;
 		std::nth_element(first, middle, beyond, pred);
+		return split_axis;
 	}
 };
 

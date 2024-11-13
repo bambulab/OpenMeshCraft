@@ -13,7 +13,7 @@ namespace OMC {
 template <typename Traits>
 class AABBTree
 {
-public:
+public: /* Types ************************************************************/
 	/* The tratis should provide followings: */
 
 	using NT        = typename Traits::NT;
@@ -36,7 +36,7 @@ public:
 	// container to store nodes
 	using Nodes    = std::vector<NodeT>;
 
-public:
+public: /* Constructor and Destructor ***************************************/
 	AABBTree() {}
 
 	AABBTree(Prims &&primitives);
@@ -56,19 +56,24 @@ public:
 
 	void clear();
 
+public: /* Query and Traversal ***********************************************/
 	inline size_t size() const { return m_primitives.size(); }
 	inline bool   empty() const { return m_primitives.empty(); }
 
 	template <typename TraversalTrait>
-	void traversal(TraversalTrait &traits) const;
+	void traverse(TraversalTrait &traits) const;
 
-private:
-	// build functions
+protected: /* Internal help functions ****************************************/
+
+	/* Help functions for building */
+
 	void expand(NodePtr node, PrimsIter first, PrimsIter beyond);
 
+	/* Help functions for traversal */
+
 	template <typename TraversalTrait>
-	bool traversal_node(NodeCPtr node, TraversalTrait &traits,
-	                    const size_t nb_primitives) const;
+	bool traverse_node(NodeCPtr node, TraversalTrait &traits,
+	                   const size_t nb_primitives) const;
 
 protected:
 	Prims m_primitives;

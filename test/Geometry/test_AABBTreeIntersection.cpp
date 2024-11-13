@@ -1,4 +1,5 @@
 #include "OpenMeshCraft/Geometry/AABB/AABBTree_Triangle_Intersection.h"
+#include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
 #include "OpenMeshCraft/Utils/StringUtils.h"
 
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
@@ -16,10 +17,9 @@ class test_AABBTreeIntersection : public testing::Test
 {
 protected:
 	// Our
-	using APAC   = OMC::APAC;
-	using MyTree = OMC::AABBTree_Triangle_Intersection<APAC>;
-	using IndexedTriangle =
-	  OMC::PrimitiveWithAttribute<APAC::Triangle3, size_t>;
+	using APAC            = OMC::APAC;
+	using MyTree          = OMC::AABBTree_Triangle_Intersection<APAC>;
+	using IndexedTriangle = OMC::PrimitiveWithAttribute<APAC::Triangle3, size_t>;
 
 	// CGAL
 	using K         = typename CGAL::Simple_cartesian<double>;

@@ -4,25 +4,33 @@
 
 namespace OMC {
 
-/***********************************************/
-/* 1. Define the reference point of the triangle
-/***********************************************/
+/*************************************************/
+/* 1. Define the reference point of the triangle */
+/*************************************************/
 
 /**
- * @brief The type of reference point.
- *
+ * @brief The type of reference point for triangle.
  */
 enum class AABB_Triangle_ReferencePointType
 {
-	First,   /// The first point of the primitive, e.g., v0 of a triangle.
-	Centroid /// The centroid of the primitive.
+	First,   /// The first point `v0` of the triangle.
+	Centroid /// The centroid of the triangle.
 };
 
 /**
- * @brief Get the reference point of triangle.
- * The reference point will be used to split triangles along an axis.
- * @tparam TriT
- * @tparam RefPntType
+ * @class AABB_Triangle_ReferencePoint
+ * @brief A class template to compute a reference point for a triangle based on
+ * the specified reference point type.
+ *
+ * @tparam TriT The type of the triangle.
+ * @tparam RefPntType The type of the reference point.
+ *
+ * @code
+ * // Example usage:
+ * AABB_Triangle_ReferencePoint<MyTriangleType,
+ *   AABB_Triangle_ReferencePointType::Centroid> refPoint;
+ * auto point = refPoint(myTriangle);
+ * @endcode
  */
 template <typename TriT, AABB_Triangle_ReferencePointType RefPntType>
 class AABB_Triangle_ReferencePoint

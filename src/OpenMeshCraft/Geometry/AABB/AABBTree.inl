@@ -70,7 +70,7 @@ void AABBTree<Traits>::clear()
 
 template <typename Traits>
 template <typename TraversalTrait>
-void AABBTree<Traits>::traversal(TraversalTrait &traits) const
+void AABBTree<Traits>::traverse(TraversalTrait &traits) const
 {
 	switch (size())
 	{
@@ -80,7 +80,7 @@ void AABBTree<Traits>::traversal(TraversalTrait &traits) const
 		traits.intersection(m_primitives[0]);
 		break;
 	default:
-		traversal_node(m_nodes.data(), traits, m_primitives.size());
+		traverse_node(m_nodes.data(), traits, m_primitives.size());
 	}
 }
 
@@ -122,8 +122,8 @@ void AABBTree<Traits>::expand(NodePtr node, PrimsIter first, PrimsIter beyond)
 
 template <typename Traits>
 template <typename TraversalTrait>
-bool AABBTree<Traits>::traversal_node(NodeCPtr node, TraversalTrait &trait,
-                                      const size_t nb_primitives) const
+bool AABBTree<Traits>::traverse_node(NodeCPtr node, TraversalTrait &trait,
+                                     const size_t nb_primitives) const
 {
 	bool go_next = true;
 	switch (nb_primitives)
@@ -136,21 +136,21 @@ bool AABBTree<Traits>::traversal_node(NodeCPtr node, TraversalTrait &trait,
 	case 3:
 		go_next = trait.intersection(*node->left_data());
 		if (go_next && trait.do_inter(node->right_child()->bbox()))
-			go_next = traversal_node(node->right_child(), trait, 2);
+			go_next = traverse_node(node->right_child(), trait, 2);
 		return go_next;
 	default:
 		if (trait.do_inter(node->left_child()->bbox()))
 		{
-			go_next = traversal_node(node->left_child(), trait, nb_primitives / 2);
+			go_next = traverse_node(node->left_child(), trait, nb_primitives / 2);
 			if (go_next && trait.do_inter(node->right_child()->bbox()))
-				go_next = traversal_node(node->right_child(), trait,
-				                         nb_primitives - nb_primitives / 2);
+				go_next = traverse_node(node->right_child(), trait,
+				                        nb_primitives - nb_primitives / 2);
 			return go_next;
 		}
 		else if (trait.do_inter(node->right_child()->bbox()))
 		{
-			return traversal_node(node->right_child(), trait,
-			                      nb_primitives - nb_primitives / 2);
+			return traverse_node(node->right_child(), trait,
+			                     nb_primitives - nb_primitives / 2);
 		}
 		return true;
 	}

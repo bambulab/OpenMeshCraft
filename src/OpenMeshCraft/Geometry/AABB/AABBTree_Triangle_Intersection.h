@@ -6,13 +6,12 @@
 #include "AABBTraversalTraits.h"
 #include "AABBTree.h"
 
-#include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
 #include "OpenMeshCraft/Geometry/Primitives/PrimitiveWithAttribute.h"
 
 namespace OMC {
 
 /***********************************************/
-/* 2. Define minimum set of AABB traits
+/* 2. Define minimum set of AABB traits        */
 /***********************************************/
 template <typename Kernel>
 class AABBMinimumTraits_Triangle_Intersection
@@ -20,18 +19,15 @@ class AABBMinimumTraits_Triangle_Intersection
 public:
 	/* Belows are used by AABBTree */
 
-	// Triangle type
-	// using TriT = typename APAC::Triangle3;
-	// Attribute type
-	// NOTE: If you don't want attach attribute, comment it and replace PrimT with
-	// PrimitiveType.
 	using K    = Kernel;
 	using TriT = typename K::Triangle3;
 
+	// Attribute type
+	// NOTE: If you don't want attach attribute, comment it and replace PrimT with
+	// PrimitiveType.
 	using PrimAttrT = size_t;
-
 	// Primitive type
-	using PrimT = PrimitiveWithAttribute<TriT, PrimAttrT>;
+	using PrimT     = PrimitiveWithAttribute<TriT, PrimAttrT>;
 	// Primitive reference point
 	using PrimReferencePoint =
 	  AABB_Triangle_ReferencePoint<PrimT,
@@ -41,14 +37,14 @@ public:
 };
 
 /****************************************************/
-/* 3. Automatically deduce the complete AABB traits
+/* 3. Automatically deduce the complete AABB traits */
 /****************************************************/
 template <typename Kernel>
 using AABBTraits_Triangle_Intersection =
   AABBAutoDeduceTraits<AABBMinimumTraits_Triangle_Intersection<Kernel>>;
 
 /****************************************************/
-/* 4. Define the AABB Tree used for intersection.
+/* 4. Define the AABB Tree used for intersection.   */
 /****************************************************/
 
 template <typename Kernel>
@@ -65,8 +61,6 @@ public:
 	using TriT      = typename Traits::TriT;
 	using PrimT     = typename Traits::PrimT;
 	using PrimAttrT = typename Traits::PrimAttrT;
-	// using Point_Projection = typename Traits::Point_Projection;
-	//  Other types will be deduced by AABBTree
 
 	using Indices = std::vector<size_t>;
 
@@ -105,7 +99,7 @@ inline void AABBTree_Triangle_Intersection<Kernel>::all_intersections(
   const QPrimT &query, Indices &results) const
 {
 	BoxTrav<QPrimT> box_trav(query);
-	this->traversal(box_trav);
+	this->traverse(box_trav);
 
 	auto &prim_ptrs = box_trav.result();
 	results.reserve(prim_ptrs.size());

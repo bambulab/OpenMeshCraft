@@ -7,9 +7,43 @@
 namespace OMC {
 
 template <typename Traits>
-class AABB_ProjectionTraversal
+class AABB_TraversalTraits
 {
-public:
+public: /* Types ************************************************************/
+	using NT    = typename Traits::NT;
+	using PrimT = typename Traits::PrimT;
+	using BboxT = typename Traits::BboxT;
+
+	AABB_TraversalTraits() = default;
+
+public: /* Interfaces *******************************************************/
+	/**
+	 * @brief Checks if there is an intersection with the given primitive.
+	 *
+	 * `intersection` can be reinterpreted as other operations, such as
+	 * projection, intersection, etc.
+	 *
+	 * @param prim The primitive to check for intersection.
+	 * @return true if there is an intersection, false otherwise.
+	 */
+	virtual bool intersection(const PrimT &prim) = 0;
+
+	/**
+	 * @brief Determine if an intersection occurs with the given bounding box.
+	 *
+	 * `intersection` can be reinterpreted as other operations, such as
+	 * projection, intersection, etc.
+	 *
+	 * @param bbox The bounding box to check for intersection.
+	 * @return true if an intersection occurs, false otherwise.
+	 */
+	virtual bool do_inter(const BboxT &bbox) const = 0;
+};
+
+template <typename Traits>
+class AABB_ProjectionTraversal : public AABB_TraversalTraits<Traits>
+{
+public: /* Types ************************************************************/
 	using NT      = typename Traits::NT;
 	using PointT  = typename Traits::PointT;
 	using PrimT   = typename Traits::PrimT;
@@ -21,24 +55,28 @@ public:
 
 	using PrimCPtr = const PrimT *;
 
-public:
+public: /* Constructor ******************************************************/
+	/**
+	 * @brief Constructs an AABB_ProjectionTraversal object.
+	 *
+	 * @param query The query point used for the traversal.
+	 * @param hint A hint point to optimize the traversal.
+	 * @param hint_prim A pointer to the primitive associated with the hint point.
+	 */
 	AABB_ProjectionTraversal(const PointT &query, const PointT &hint,
-	                         PrimCPtr hint_prim)
-	  : m_query_sphere(query, (query - hint).sqrnorm())
-	  , m_closest_point(hint)
-	  , m_closest_prim(hint_prim)
-	{
-	}
+	                         PrimCPtr hint_prim);
 
-	bool intersection(const PrimT &prim);
+public: /* Inherited Interfaces *********************************************/
+	bool intersection(const PrimT &prim) override;
 
-	bool do_inter(const BboxT &bbox) const;
+	bool do_inter(const BboxT &bbox) const override;
 
+public: /* Interfaces *******************************************************/
 	const PointT &closest_point() const { return m_closest_point; }
 	PrimCPtr      closest_primitive() const { return m_closest_prim; }
 	NT square_distance() const { return m_query_sphere.squared_radius(); }
 
-private:
+private: /* Data ************************************************************/
 	SphereT      m_query_sphere;
 	PointT       m_closest_point;
 	PrimCPtr     m_closest_prim;
@@ -48,9 +86,9 @@ private:
 
 /// @todo Add an option to find first or all intersections.
 template <typename Traits>
-class AABB_BoxInterTraversal
+class AABB_BoxInterTraversal : public AABB_TraversalTraits<Traits>
 {
-public:
+public: /* Types ************************************************************/
 	using NT     = typename Traits::NT;
 	using PointT = typename Traits::PointT;
 	using PrimT  = typename Traits::PrimT;
@@ -63,20 +101,18 @@ public:
 	using PrimCPtr  = const PrimT *;
 	using PrimCPtrs = std::vector<PrimCPtr>;
 
-public:
-	AABB_BoxInterTraversal(const QPrimT &query)
-	  : m_query(query)
-	{
-		m_box_of_query = m_calc_bbox(m_query);
-	}
+public: /* Constructor ******************************************************/
+	AABB_BoxInterTraversal(const QPrimT &query);
 
-	bool intersection(const PrimT &prim);
+public: /* Inherited Interfaces *********************************************/
+	bool intersection(const PrimT &prim) override;
 
-	bool do_inter(const BboxT &bbox) const;
+	bool do_inter(const BboxT &bbox) const override;
 
+public: /* Interfaces ******************************************************/
 	const PrimCPtrs &result() const { return m_intersected_prims; }
 
-private:
+private: /* Data ***********************************************************/
 	CalcBbox    m_calc_bbox;
 	DoIntersect m_do_intersect;
 
@@ -89,7 +125,7 @@ private:
 template <typename Traits>
 class AABB_PrimInterTraversal
 {
-public:
+public: /* Types ************************************************************/
 	using NT     = typename Traits::NT;
 	using PointT = typename Traits::PointT;
 	using PrimT  = typename Traits::PrimT;
@@ -102,20 +138,18 @@ public:
 	using PrimCPtr  = const PrimT *;
 	using PrimCPtrs = std::vector<PrimCPtr>;
 
-public:
-	AABB_PrimInterTraversal(const QPrimT &query)
-	  : m_query(query)
-	{
-		m_box_of_query = m_calc_bbox(m_query);
-	}
+public: /* Constructor ******************************************************/
+	AABB_PrimInterTraversal(const QPrimT &query);
 
-	bool intersection(const PrimT &prim);
+public: /* Inherited Interfaces *********************************************/
+	bool intersection(const PrimT &prim) override;
 
-	bool do_inter(const BboxT &bbox) const;
+	bool do_inter(const BboxT &bbox) const override;
 
+public: /* Interfaces ******************************************************/
 	PrimCPtrs result() const { return m_intersected_prims; }
 
-private:
+private: /* Data ***********************************************************/
 	CalcBbox    m_calc_bbox;
 	DoIntersect m_do_intersect;
 

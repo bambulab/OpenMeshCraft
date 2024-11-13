@@ -5,6 +5,16 @@
 namespace OMC {
 
 template <typename Traits>
+AABB_ProjectionTraversal<Traits>::AABB_ProjectionTraversal(const PointT &query,
+                                                           const PointT &hint,
+                                                           PrimCPtr hint_prim)
+  : m_query_sphere(query, (query - hint).sqrnorm())
+  , m_closest_point(hint)
+  , m_closest_prim(hint_prim)
+{
+}
+
+template <typename Traits>
 bool AABB_ProjectionTraversal<Traits>::intersection(const PrimT &prim)
 {
 	PointT new_closest_point = m_project_point(prim, m_query_sphere.center());
@@ -27,6 +37,13 @@ bool AABB_ProjectionTraversal<Traits>::do_inter(const BboxT &bbox) const
 }
 
 template <typename Traits>
+AABB_BoxInterTraversal<Traits>::AABB_BoxInterTraversal(const QPrimT &query)
+  : m_query(query)
+{
+	m_box_of_query = m_calc_bbox(m_query);
+}
+
+template <typename Traits>
 bool AABB_BoxInterTraversal<Traits>::intersection(const PrimT &prim)
 {
 	// TODO after implement exact box-tri intersect check, add it back
@@ -42,6 +59,13 @@ template <typename Traits>
 bool AABB_BoxInterTraversal<Traits>::do_inter(const BboxT &bbox) const
 {
 	return m_do_intersect(bbox, m_box_of_query);
+}
+
+template <typename Traits>
+AABB_PrimInterTraversal<Traits>::AABB_PrimInterTraversal(const QPrimT &query)
+  : m_query(query)
+{
+	m_box_of_query = m_calc_bbox(m_query);
 }
 
 template <typename Traits>

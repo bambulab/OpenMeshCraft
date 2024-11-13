@@ -1,9 +1,10 @@
 #pragma once
 
+#include "AABBTree_Triangle.h"
+
 #include "AABBTraits.h"
 #include "AABBTraversalTraits.h"
 #include "AABBTree.h"
-#include "AABBTree_Triangle.h"
 
 #include "OpenMeshCraft/Geometry/KdTree/KdTraits.h"
 #include "OpenMeshCraft/Geometry/KdTree/KdTree.h"
@@ -25,7 +26,6 @@ class AABBMinimumTraits_Triangle_NearestSearch
 public:
 	/* Belows are used by AABBTree */
 
-	// Point type
 	// Triangle type
 #ifdef USE_TRIANGLE_FAST_PROJECTION
 	class TriT_ : public APAC::Triangle3,
@@ -193,7 +193,7 @@ auto AABBTree_Triangle_NearestSearch::closest_point(const PointT &query) const
 	// Traversal the tree
 	auto &[hint_point, hint_pid] = hint;
 	ProjTrav proj_trav(query, hint_point, m_primitives.data() + hint_pid);
-	traversal(proj_trav);
+	this->traverse(proj_trav);
 	// Return result
 	return proj_trav.closest_point();
 }
@@ -209,7 +209,7 @@ auto AABBTree_Triangle_NearestSearch::closest_point_and_primitive(
 	// Traversal the tree
 	auto &[hint_point, hint_pid] = hint;
 	ProjTrav proj_trav(query, hint_point, m_primitives.data() + hint_pid);
-	traversal(proj_trav);
+	this->traverse(proj_trav);
 	// Return result
 	return std::pair<PointT, const PrimT *>(proj_trav.closest_point(),
 	                                        proj_trav.closest_primitive());
@@ -226,7 +226,7 @@ auto AABBTree_Triangle_NearestSearch::closest_point_and_primattr(
 	// Traversal the tree
 	auto &[hint_point, hint_pid] = hint;
 	ProjTrav proj_trav(query, hint_point, m_primitives.data() + hint_pid);
-	traversal(proj_trav);
+	this->traverse(proj_trav);
 	// Return result
 	return std::pair<PointT, PrimAttrT>(
 	  proj_trav.closest_point(), proj_trav.closest_primitive()->attribute());
