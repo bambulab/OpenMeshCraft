@@ -145,6 +145,9 @@ public: /* Data access ********************************************************/
 	/// @brief Access parent.
 	const index_t &parent() const { return m_parent; }
 
+	/// @brief Access children size
+	index_t children_size() const { return Degree; }
+
 	/// @brief Access one child by local index (0 ~ Degree-1).
 	index_t child(index_t index) const;
 
