@@ -2,10 +2,9 @@
 
 #include "Utils.h"
 
-#include "OpenMeshCraft/Geometry/AdaptiveOrthTree/AdapOcTree.h"
-#include "OpenMeshCraft/Geometry/AdaptiveOrthTree/AdapOrthTraversalTraits.h"
+#include "OpenMeshCraft/BVH/AdaptiveOrthTree/AdapOcTree.h"
+#include "OpenMeshCraft/BVH/AdaptiveOrthTree/AdapOrthTraversalTraits.h"
 
-#include <fstream>
 #include <vector>
 
 namespace OMC {

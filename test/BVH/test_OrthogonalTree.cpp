@@ -1,13 +1,5 @@
+#include "OpenMeshCraft/BVH/OrthogonalTree/OcTree.h"
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
-#include "OpenMeshCraft/Geometry/OrthogonalTree/OcTree.h"
-
-#include "OpenMeshCraft/Mesh/IO/OBJReader.h"
-#include "OpenMeshCraft/Mesh/IO/OBJWriter.h"
-#include "OpenMeshCraft/Mesh/IO/STLReader.h"
-#include "OpenMeshCraft/Mesh/TriSoup.h"
-
-#include "OpenMeshCraft/Utils/Macros.h"
-#include "OpenMeshCraft/Utils/StringUtils.h"
 
 #include "test_utils.h"
 

@@ -1,8 +1,6 @@
+#include "OpenMeshCraft/BVH/BinaryTree/BinarySplitManner.h"
+#include "OpenMeshCraft/BVH/BinaryTree/BinaryTree.h"
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
-#include "OpenMeshCraft/Geometry/BinaryTree/BinaryTree.h"
-#include "OpenMeshCraft/Geometry/BinaryTree/BinarySplitManner.h"
-
-#include "OpenMeshCraft/Utils/Macros.h"
 
 #include "test_utils.h"
 

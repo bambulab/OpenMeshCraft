@@ -6,8 +6,8 @@
 #include "AABBTraversalTraits.h"
 #include "AABBTree.h"
 
-#include "OpenMeshCraft/Geometry/KdTree/KdTraits.h"
-#include "OpenMeshCraft/Geometry/KdTree/KdTree.h"
+#include "OpenMeshCraft/BVH/KdTree/KdTraits.h"
+#include "OpenMeshCraft/BVH/KdTree/KdTree.h"
 
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
 

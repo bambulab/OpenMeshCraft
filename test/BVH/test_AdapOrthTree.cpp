@@ -1,7 +1,5 @@
-#include "OpenMeshCraft/Geometry/AdaptiveOrthTree/AdapOcTree.h"
+#include "OpenMeshCraft/BVH/AdaptiveOrthTree/AdapOcTree.h"
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
-
-#include "OpenMeshCraft/Utils/Macros.h"
 
 #include "test_utils.h"
 

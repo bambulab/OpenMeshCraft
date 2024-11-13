@@ -1,6 +1,5 @@
-#include "OpenMeshCraft/Geometry/AABB/AABBTree_Triangle_Intersection.h"
+#include "OpenMeshCraft/BVH/AABB/AABBTree_Triangle_Intersection.h"
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
-#include "OpenMeshCraft/Utils/StringUtils.h"
 
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
 

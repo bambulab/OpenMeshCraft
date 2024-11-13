@@ -1,5 +1,4 @@
-#include "OpenMeshCraft/Geometry/AABB/AABBTree_Triangle_NearestSearch.h"
-#include "OpenMeshCraft/Utils/StringUtils.h"
+#include "OpenMeshCraft/BVH/AABB/AABBTree_Triangle_NearestSearch.h"
 
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
 

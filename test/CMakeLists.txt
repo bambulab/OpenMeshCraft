@@ -13,6 +13,7 @@ project(OpenMeshCraft-Test)
 # cmake-format: off
 file(GLOB_RECURSE TEST_Arrangements   "${CMAKE_CURRENT_SOURCE_DIR}/Arrangements/*")
 file(GLOB_RECURSE TEST_Boolean        "${CMAKE_CURRENT_SOURCE_DIR}/Boolean/*")
+file(GLOB_RECURSE TEST_BVH            "${CMAKE_CURRENT_SOURCE_DIR}/BVH/*")
 file(GLOB_RECURSE TEST_ConstrDelTet   "${CMAKE_CURRENT_SOURCE_DIR}/ConstrDelTet/*")
 file(GLOB_RECURSE TEST_Geometry       "${CMAKE_CURRENT_SOURCE_DIR}/Geometry/*")
 file(GLOB_RECURSE TEST_Mesh           "${CMAKE_CURRENT_SOURCE_DIR}/Mesh/*")
@@ -26,6 +27,7 @@ source_group(
         ${CMAKE_CURRENT_SOURCE_DIR}/test_utils.h
         ${TEST_Arrangements}
         ${TEST_Boolean}
+        ${TEST_BVH}
         ${TEST_ConstrDelTet}
         ${TEST_Geometry}
         ${TEST_Mesh}
@@ -40,6 +42,7 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/test_utils.h
   ${TEST_Arrangements}
   ${TEST_Boolean}
+  ${TEST_BVH}
   ${TEST_ConstrDelTet}
   ${TEST_Geometry}
   ${TEST_Mesh}
