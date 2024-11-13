@@ -119,8 +119,8 @@ public: /* Data access */
 	size_t       &size() { return m_size; }
 	const size_t &size() const { return m_size; }
 
-	index_t       &split_dim() { return m_split_dim; }
-	const index_t &split_dim() const { return m_split_dim; }
+	index_t       &split_axis() { return m_split_axis; }
+	const index_t &split_axis() const { return m_split_axis; }
 
 	NT       &split_coord() { return m_split_coord; }
 	const NT &split_coord() const { return m_split_coord; }
@@ -144,8 +144,8 @@ protected:
 	BboxesContainer m_boxes;
 	/// size of all boxes stored in this node (including children).
 	size_t          m_size;
-	/// axis/dimension where this node is split
-	index_t         m_split_dim;
+	/// axis where this node is split
+	index_t         m_split_axis;
 	/// coordinate where this node is split
 	NT              m_split_coord;
 	/// attribute

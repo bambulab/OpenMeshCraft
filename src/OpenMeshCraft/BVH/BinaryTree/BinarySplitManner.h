@@ -44,22 +44,22 @@ public:
 	 * @brief Decide where to split a node.
 	 * @param [in] tree
 	 * @param [in] node
-	 * @param [out] split_dim
+	 * @param [out] split_axis
 	 * @param [out] split_coord
 	 * @param [out] lower_tbox tight box for lower node
 	 * @param [out] higher_tbox tight box for higher node
 	 * @return true if split is ok.
 	 */
 	template <typename Tree, typename Node>
-	bool operator()(const Tree &tree, const Node &node, index_t &split_dim,
+	bool operator()(const Tree &tree, const Node &node, index_t &split_axis,
 	                typename Tree::NT &split_coord);
 
 	template <typename Tree, typename Node>
-	bool geom_center(const Tree &tree, const Node &node, index_t &split_dim,
+	bool geom_center(const Tree &tree, const Node &node, index_t &split_axis,
 	                 typename Tree::NT &split_coord);
 
 	template <typename Tree, typename Node>
-	bool elem_center(const Tree &tree, const Node &node, index_t &split_dim,
+	bool elem_center(const Tree &tree, const Node &node, index_t &split_axis,
 	                 typename Tree::NT &split_coord);
 
 protected:
@@ -85,19 +85,19 @@ inline bool BinarySplitManner::need_tight_box()
 
 template <typename Tree, typename Node>
 bool BinarySplitManner::operator()(const Tree &tree, const Node &node,
-                                   index_t           &split_dim,
+                                   index_t           &split_axis,
                                    typename Tree::NT &split_coord)
 {
 	switch (m_manner)
 	{
 	case Manner::GeomCenter:
 	{
-		return geom_center(tree, node, split_dim, split_coord);
+		return geom_center(tree, node, split_axis, split_coord);
 	}
 	break;
 	case Manner::ElemCenter:
 	{
-		return elem_center(tree, node, split_dim, split_coord);
+		return elem_center(tree, node, split_axis, split_coord);
 	}
 	break;
 	default:
@@ -108,17 +108,17 @@ bool BinarySplitManner::operator()(const Tree &tree, const Node &node,
 
 template <typename Tree, typename Node>
 bool BinarySplitManner::geom_center(const Tree &tree, const Node &node,
-                                    index_t           &split_dim,
+                                    index_t           &split_axis,
                                     typename Tree::NT &split_coord)
 {
 	size_t  total = node.boxes().size();
 	index_t begin = *node.boxes().begin();
 	index_t end   = *node.boxes().end();
-	// find the dimension where box_side_length is longest at
-	split_dim     = node.tbox().longest_axis();
+	// find the axis where box_side_length is longest at
+	split_axis    = node.tbox().longest_axis();
 	// now we simply split node at the center of the longest axis.
-	split_coord =
-	  0.5 * (node.tbox().max_coord(split_dim) + node.tbox().min_coord(split_dim));
+	split_coord   = 0.5 * (node.tbox().max_coord(split_axis) +
+                       node.tbox().min_coord(split_axis));
 	// check if boxes are partitionable and balence.
 	size_t lower = 0, cross = 0, higher = 0;
 
@@ -126,8 +126,8 @@ bool BinarySplitManner::geom_center(const Tree &tree, const Node &node,
 	{
 		typename Tree::TreeBboxCRef b = tree.box(box_idx);
 
-		bool in_lower  = b.min_coord(split_dim) < split_coord;
-		bool in_higher = b.max_coord(split_dim) >= split_coord;
+		bool in_lower  = b.min_coord(split_axis) < split_coord;
+		bool in_higher = b.max_coord(split_axis) >= split_coord;
 
 		if (in_lower && in_higher)
 			cross += 1;
@@ -165,7 +165,7 @@ bool BinarySplitManner::geom_center(const Tree &tree, const Node &node,
 
 template <typename Tree, typename Node>
 bool BinarySplitManner::elem_center(const Tree &tree, const Node &node,
-                                    index_t           &split_dim,
+                                    index_t           &split_axis,
                                     typename Tree::NT &split_coord)
 {
 	size_t  total = node.boxes().size();
@@ -173,7 +173,7 @@ bool BinarySplitManner::elem_center(const Tree &tree, const Node &node,
 	index_t end   = *node.boxes().end();
 
 	// assign boxes and check if partitionable
-	typename Tree::TreePoint center(0., 0., 0.);
+	typename Tree::TreePoint center(0.);
 
 	std::array<size_t, Tree::Dimension> lower, cross, higher;
 	std::fill(lower.begin(), lower.end(), 0);
@@ -184,19 +184,19 @@ bool BinarySplitManner::elem_center(const Tree &tree, const Node &node,
 	{
 		typename Tree::TreeBboxCRef b = tree.box(box_idx);
 
-		for (index_t split_dim = 0; split_dim < Tree::Dimension; split_dim++)
+		for (index_t split_axis = 0; split_axis < Tree::Dimension; split_axis++)
 		{
-			typename Tree::NT split_coord = center[split_dim];
+			typename Tree::NT split_coord = center[split_axis];
 
-			bool in_lower  = b.min_coord(split_dim) < split_coord;
-			bool in_higher = b.max_coord(split_dim) >= split_coord;
+			bool in_lower  = b.min_coord(split_axis) < split_coord;
+			bool in_higher = b.max_coord(split_axis) >= split_coord;
 
 			if (in_lower && in_higher)
-				cross[split_dim] += 1;
+				cross[split_axis] += 1;
 			else if (in_lower)
-				lower[split_dim] += 1;
+				lower[split_axis] += 1;
 			else if (in_higher)
-				higher[split_dim] += 1;
+				higher[split_axis] += 1;
 		}
 	};
 
@@ -223,7 +223,7 @@ bool BinarySplitManner::elem_center(const Tree &tree, const Node &node,
 #else
 
 	// calculate the center of elements on all dimensions
-	typename Tree::TreePoint center(0., 0., 0.);
+	typename Tree::TreePoint center(0.);
 	for (index_t box_id : node.boxes())
 		center += tree.box(box_id).min_bound() + tree.box(box_id).max_bound();
 	center /= (typename Tree::NT)(total * 2);
@@ -236,35 +236,36 @@ bool BinarySplitManner::elem_center(const Tree &tree, const Node &node,
 
 #endif
 
-	// find a dimension that partitions boxes best.
-	index_t best_dim   = OMC::InvalidIndex;
+	// find an axis that partitions boxes best.
+	index_t best_axis  = OMC::InvalidIndex;
 	double  best_score = std::numeric_limits<double>::max();
-	for (index_t dim = 0; dim < 3; dim++)
+	for (index_t axis = 0; axis < Tree::Dimension; axis++)
 	{
-		if (lower[dim] == 0 || higher[dim] == 0)
+		if (lower[axis] == 0 || higher[axis] == 0)
 			continue;
 
-		double score = ((double)cross[dim] / total) / ((double)lower[dim] / total) /
-		               ((double)higher[dim] / total);
+		double score = ((double)cross[axis] / total) /
+		               ((double)lower[axis] / total) /
+		               ((double)higher[axis] / total);
 		if (score < best_score)
 		{
 			best_score = score;
-			best_dim   = dim;
+			best_axis  = axis;
 		}
 	}
 
-	if (OMC::is_valid_idx(best_dim) &&
-	    /*partitionable*/ (double)cross[best_dim] / total < m_cross_thres &&
-	    /*balence*/ (double)lower[best_dim] / total > m_balence_thres &&
-	    /*balence*/ (double)higher[best_dim] / total > m_balence_thres)
+	if (OMC::is_valid_idx(best_axis) &&
+	    /*partitionable*/ (double)cross[best_axis] / total < m_cross_thres &&
+	    /*balence*/ (double)lower[best_axis] / total > m_balence_thres &&
+	    /*balence*/ (double)higher[best_axis] / total > m_balence_thres)
 	{
 		// update box_assign_res
-		split_dim   = best_dim;
-		split_coord = center[best_dim];
+		split_axis  = best_axis;
+		split_coord = center[best_axis];
 		return true;
 	}
 	else
-		return geom_center(tree, node, split_dim, split_coord);
+		return geom_center(tree, node, split_axis, split_coord);
 }
 
 } // namespace OMC

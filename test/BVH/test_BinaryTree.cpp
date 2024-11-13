@@ -20,7 +20,23 @@ protected:
 		}
 	};
 
-	class BinaryShapeRefinePred
+	class BinaryShapeRefinePred2D
+	{
+	public:
+		template <typename BinaryTree, typename BinaryNode>
+		bool operator()(const BinaryTree &tree, const BinaryNode &node,
+		                std::array<bool, 3> &partitionable)
+		{
+			auto diag_length =
+			  (tree.box().max_bound() - tree.box().min_bound()).length();
+			auto node_length = node.box().max_bound() - node.box().min_bound();
+			partitionable[0] = node_length[0] > 0.05 * diag_length;
+			partitionable[1] = node_length[1] > 0.05 * diag_length;
+			return partitionable[0] || partitionable[1];
+		}
+	};
+
+	class BinaryShapeRefinePred3D
 	{
 	public:
 		template <typename BinaryTree, typename BinaryNode>
@@ -37,7 +53,25 @@ protected:
 		}
 	};
 
-	class BinaryTraits
+	class BinaryTraits2D
+	{
+	public:
+		static constexpr size_t Dimension = 2;
+		static constexpr size_t MaxDepth  = 32;
+
+		using NT    = APAC::NT;
+		using BboxT = APAC::BoundingBox2;
+
+		using SplitPred       = BinarySplitPred;
+		using SplitManner     = OMC::BinarySplitManner;
+		using ShapeRefinePred = BinaryShapeRefinePred2D;
+		using DoIntersect     = APAC::DoIntersect;
+		using CalcBbox        = APAC::CalcBoundingBox2;
+	};
+
+	using Tree2D = OMC::BinaryTree<OMC::BinaryAutoDeduceTraits<BinaryTraits2D>>;
+
+	class BinaryTraits3D
 	{
 	public:
 		static constexpr size_t Dimension = 3;
@@ -48,16 +82,14 @@ protected:
 
 		using SplitPred       = BinarySplitPred;
 		using SplitManner     = OMC::BinarySplitManner;
-		using ShapeRefinePred = BinaryShapeRefinePred;
+		using ShapeRefinePred = BinaryShapeRefinePred3D;
 		using DoIntersect     = APAC::DoIntersect;
 		using CalcBbox        = APAC::CalcBoundingBox3;
 	};
 
-	using Tree = OMC::BinaryTree<OMC::BinaryAutoDeduceTraits<BinaryTraits>>;
+	using Tree3D = OMC::BinaryTree<OMC::BinaryAutoDeduceTraits<BinaryTraits3D>>;
 
 protected:
-	Tree tree;
-
 	TriPoints points;
 	Triangles faces;
 
@@ -70,28 +102,32 @@ protected:
 		io_options.vertex_has_point = true;
 
 		read_mesh(filename, points, faces, io_options);
-
-		std::vector<index_t>         indices;
-		std::vector<APAC::Triangle3> triangles;
-
-		for (const auto &f : faces)
-		{
-			triangles.push_back(
-			  APAC::Triangle3(points[f[0]], points[f[1]], points[f[2]]));
-			indices.push_back(indices.size());
-		}
-
-		tree.insert_primitives(triangles, indices);
-		tree.construct(true, 1.01);
-		// tree.shape_refine();
 	}
 
-	void TearDown() override { tree.clear(); }
+	void TearDown() override {}
 };
 
-TEST_F(test_BinaryTree, Construct)
+TEST_F(test_BinaryTree, Construct2D)
 {
-	TEST_OUTPUT_DIRECTORY(BinaryTree, Construct);
+	TEST_OUTPUT_DIRECTORY(BinaryTree, Construct2D);
+
+	Tree2D                       tree;
+	std::vector<index_t>         indices;
+	std::vector<APAC::Triangle2> triangles;
+
+	for (const auto &f : faces)
+	{
+		APAC::Point2 p0(points[f[0]].x(), points[f[0]].y());
+		APAC::Point2 p1(points[f[1]].x(), points[f[1]].y());
+		APAC::Point2 p2(points[f[2]].x(), points[f[2]].y());
+
+		triangles.push_back(APAC::Triangle2(p0, p1, p2));
+		indices.push_back(indices.size());
+	}
+
+	tree.insert_primitives(triangles, indices);
+	tree.construct(true, 1.01);
+	// tree.shape_refine();
 
 	// visualize tree and save
 	TriPoints out_points;
@@ -105,8 +141,84 @@ TEST_F(test_BinaryTree, Construct)
 
 	while (!nodes_to_traverse.empty())
 	{
-		index_t        cur_node_idx = nodes_to_traverse.front();
-		Tree::NodeCRef cur_node     = tree.node(cur_node_idx);
+		index_t          cur_node_idx = nodes_to_traverse.front();
+		Tree2D::NodeCRef cur_node     = tree.node(cur_node_idx);
+		nodes_to_traverse.pop();
+
+		if (!cur_node.is_leaf())
+		{
+			// process each of its children
+			for (index_t i = 0; i < cur_node.children_size(); ++i)
+				nodes_to_traverse.push(cur_node.child(i));
+			continue;
+		}
+
+		APAC::Point2 minb = cur_node.box().min_bound();
+		APAC::Point2 maxb = cur_node.box().max_bound();
+
+		//            xy
+		APAC::Point3 p00(minb.x(), minb.y(), 0.0);
+		APAC::Point3 p11(maxb.x(), maxb.y(), 0.0);
+		APAC::Point3 p01 = p00, p10 = p00;
+		p01.x() = p11.x();
+		p10.y() = p11.y();
+
+		index_t v00 = out_points.size();
+		out_points.push_back(p00);
+		index_t v01 = out_points.size();
+		out_points.push_back(p01);
+		index_t v10 = out_points.size();
+		out_points.push_back(p10);
+		index_t v11 = out_points.size();
+		out_points.push_back(p11);
+
+		out_faces.emplace_back(v00, v01, out_points.size());
+		out_points.push_back((p00 + p01) * 0.5);
+		out_faces.emplace_back(v00, v10, out_points.size());
+		out_points.push_back((p00 + p10) * 0.5);
+		out_faces.emplace_back(v01, v11, out_points.size());
+		out_points.push_back((p01 + p11.as_vec()) * 0.5);
+		out_faces.emplace_back(v10, v11, out_points.size());
+		out_points.push_back((p10 + p11.as_vec()) * 0.5);
+	}
+	IOOptions io_options;
+	io_options.vertex_has_point = true;
+	write_mesh(outdir + "tree.obj", out_points, out_faces, io_options);
+}
+
+TEST_F(test_BinaryTree, Construct3D)
+{
+	TEST_OUTPUT_DIRECTORY(BinaryTree, Construct3D);
+
+	Tree3D                       tree;
+	std::vector<index_t>         indices;
+	std::vector<APAC::Triangle3> triangles;
+
+	for (const auto &f : faces)
+	{
+		triangles.push_back(
+		  APAC::Triangle3(points[f[0]], points[f[1]], points[f[2]]));
+		indices.push_back(indices.size());
+	}
+
+	tree.insert_primitives(triangles, indices);
+	tree.construct(true, 1.01);
+	// tree.shape_refine();
+
+	// visualize tree and save
+	TriPoints out_points;
+	Triangles out_faces;
+
+	std::queue<index_t> nodes_to_traverse;
+	nodes_to_traverse.push(tree.root_node_idx());
+
+	out_points.clear();
+	out_faces.clear();
+
+	while (!nodes_to_traverse.empty())
+	{
+		index_t          cur_node_idx = nodes_to_traverse.front();
+		Tree3D::NodeCRef cur_node     = tree.node(cur_node_idx);
 		nodes_to_traverse.pop();
 
 		if (!cur_node.is_leaf())

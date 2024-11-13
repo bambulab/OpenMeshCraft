@@ -192,15 +192,15 @@ bool BinaryTree<Traits>::split(index_t node_idx)
 	NodeRef nd = node(node_idx);
 
 	// get where to split boxes
-	index_t split_dim;
+	index_t split_axis;
 	NT      split_coord;
 
-	bool do_split = m_split_manner(*this, nd, split_dim, split_coord);
+	bool do_split = m_split_manner(*this, nd, split_axis, split_coord);
 	if (!do_split)
 		return false;
 
 	// update the node itself
-	nd.split_dim()   = split_dim;
+	nd.split_axis()  = split_axis;
 	nd.split_coord() = split_coord;
 
 	// new children
@@ -220,8 +220,8 @@ bool BinaryTree<Traits>::split(index_t node_idx)
 	higher_ch.box()    = nd.tbox();
 
 	// update box of children
-	lower_ch.box().max_bound()[split_dim]  = split_coord;
-	higher_ch.box().min_bound()[split_dim] = split_coord;
+	lower_ch.box().max_bound()[split_axis]  = split_coord;
+	higher_ch.box().min_bound()[split_axis] = split_coord;
 
 	index_t begin = *nd.boxes().begin(), end = *nd.boxes().end();
 	// update boxes for nd and its children
@@ -230,13 +230,13 @@ bool BinaryTree<Traits>::split(index_t node_idx)
 	  std::partition(m_boxes.begin() + begin, m_boxes.begin() + end,
 	                 [&](const TreeBbox &b)
 	                 {
-		                 return b.min_coord(split_dim) < split_coord &&
-		                        b.max_coord(split_dim) >= split_coord;
+		                 return b.min_coord(split_axis) < split_coord &&
+		                        b.max_coord(split_axis) >= split_coord;
 	                 });
 	// box in lower or higher.
 	auto higher_begin =
 	  std::partition(lower_begin, m_boxes.begin() + end, [&](const TreeBbox &b)
-	                 { return b.min_coord(split_dim) < split_coord; });
+	                 { return b.min_coord(split_axis) < split_coord; });
 
 	nd.boxes() =
 	  typename Node::BboxesContainer(begin, lower_begin - m_boxes.begin());
