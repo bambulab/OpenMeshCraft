@@ -69,6 +69,11 @@
       "filename": "./data/boolean_data/bunny25k.obj"
     }
   },
+  "DynamicAABBTree": {
+    "SetUp": {
+      "filename": "./data/boolean_data/bunny25k.obj"
+    }
+  },
   "AdapOrthTree": {
     "SetUp": {
       "filename": "./data/arrangements_data/318844.stl"
