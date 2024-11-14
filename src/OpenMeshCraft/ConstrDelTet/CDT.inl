@@ -11,8 +11,10 @@
 /* Sub-algorithms of CDT */
 // Delaunay tetrahedralization
 #include "DelaunayTet.h"
-// Constraints recovery
-#include "ConstrRecover.h"
+// Constrained segment recovery
+#include "SegmentRecover.h"
+// Constrained face recovery
+#include "FaceRecover.h"
 
 /* Data structures, algorithms, and utils of arrangements */
 #include "OpenMeshCraft/Arrangements/CleanMesh.h"
@@ -229,15 +231,16 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
 	pnt_arenas = std::vector<PntArena>(1);
 	plc        = std::make_unique<PLC>(cdt_out_verts, cdt_in_edges, cdt_in_tris);
-	ConstraintsRecover<Traits> CR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc,
-	                              config, stats);
 
 	OMC_CDT_START_ELAPSE(start_seg);
-	CR.segmentRecovery();
+	SegmentRecover<Traits> SR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc, config,
+	                          stats);
+	SR.segmentRecovery();
 	OMC_CDT_SAVE_ELAPSED(start_seg, seg_elapsed, "Segment recovery");
 
 	OMC_CDT_START_ELAPSE(start_face);
-	CR.faceRecovery();
+	FaceRecover<Traits> FR(cdt_out_verts, *tet_mesh, *plc, config, stats);
+	FR.faceRecovery();
 	OMC_CDT_SAVE_ELAPSED(start_face, face_elapsed, "Face recovery");
 
 	tet_mesh->markInfiniteTetsDeleted();
