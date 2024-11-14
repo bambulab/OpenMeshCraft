@@ -48,6 +48,7 @@ public:
 	using Triangle    = typename K::Triangle3;
 	using BoundingBox = typename K::BoundingBox3;
 
+	// predicates
 	using Orient2D           = typename K::Orient2D;
 	using Orient3D           = typename K::Orient3D;
 	using OrientOn2D         = typename K::OrientOn2D;
@@ -59,11 +60,11 @@ public:
 	using InSphere           = typename K::InSphere;
 	using DotProduct3D       = typename K::DotProductSign3D;
 	using CollinearPoints3   = typename K::CollinearPoints3;
-
-	using CalcBbox = typename K::CalcBoundingBox3;
+	// constructions
+	using CalcBbox           = typename K::CalcBoundingBox3;
 
 	// clang-format off
-	using DoIntersect = typename K::DoIntersect;
+	using DoIntersect                        = typename K::DoIntersect;
 	using Segment3_Point3_DoIntersect        = typename K::Segment3_Point3_DoIntersect;
 	using Segment3_Segment3_DoIntersect      = typename K::Segment3_Segment3_DoIntersect;
 	using Triangle3_Point3_DoIntersect       = typename K::Triangle3_Point3_DoIntersect;
@@ -99,8 +100,9 @@ public: /* Traits ************************************************************/
 	using CreateLPI = typename Traits::CreateLPI;
 	using CreateTPI = typename Traits::CreateTPI;
 
-	using Segment  = typename Traits::Segment;
-	using Triangle = typename Traits::Triangle;
+	using Segment     = typename Traits::Segment;
+	using Triangle    = typename Traits::Triangle;
+	using BoundingBox = typename Traits::BoundingBox;
 
 	// predicates
 	using Orient2D           = typename Traits::Orient2D;
@@ -112,6 +114,8 @@ public: /* Traits ************************************************************/
 	using SquaredDistance3D  = typename Traits::SquaredDistance3D;
 	using InCircle           = typename Traits::InCircle;
 	using InSphere           = typename Traits::InSphere;
+	// constructions
+	using CalcBbox           = typename Traits::CalcBbox;
 
 	// meshes
 	using TetMesh = TetrahedralMesh<Traits>;

@@ -364,7 +364,8 @@ void DAABBTree<Traits>::insert_to_node(index_t prim_idx, BboxT &prim_box,
 }
 
 template <typename Traits>
-void DAABBTree<Traits>::remove_from_node(index_t prim_idx, index_t node_idx)
+void DAABBTree<Traits>::remove_from_node(OMC_UNUSED index_t prim_idx,
+                                         index_t            node_idx)
 {
 	NodeT &n = node(node_idx);
 

@@ -30,8 +30,8 @@ template <typename SegT, AABB_Seg_ReferencePointType RefPntType>
 class AABB_Seg_ReferencePoint
 {
 public:
-	using NT     = typename PointT::NT;
 	using PointT = remove_cvref_t<decltype(std::declval<SegT>().start())>;
+	using NT     = typename PointT::NT;
 
 public:
 	PointT operator()(const SegT &seg)

@@ -3,6 +3,7 @@
 #include "DelaunayTet.h"
 #include "PLC.h"
 #include "TetMesh.h"
+#include "Tree.h"
 
 namespace OMC {
 
@@ -72,6 +73,8 @@ public: /* Traits **********************************************************/
 	using BoundingEdge = typename PLC::BoundingEdge;
 
 	using DelTet = DelaunayTet<Traits>;
+
+	using SegSphereTree = CDT_SegSphereTree<Traits>;
 
 	using PntArena = CDTPointArena<Traits>;
 

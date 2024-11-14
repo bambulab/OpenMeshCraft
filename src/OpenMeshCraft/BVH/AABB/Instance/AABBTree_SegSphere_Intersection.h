@@ -51,7 +51,8 @@ class DAABBTree_SegSphere_Intersection
 public:
 	using Traits = AABBTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>;
 	using BaseT  = DAABBTree<Traits>;
-	using ThisT  = DAABBTree_SegSphere_Intersection<_SegmentT, _CalcBbox>;
+	using ThisT =
+	  DAABBTree_SegSphere_Intersection<_SegmentT, _CalcBbox, _DoIntersect>;
 
 	using SegmentT  = typename Traits::SegmentT;
 	using PrimT     = typename Traits::PrimT;
@@ -84,8 +85,8 @@ protected:
 	public:
 		using QPrimT = _QPrimT;
 
-		using PrimT  = typename Traits::PrimT;
-		using BboxT  = typename Traits::BboxT;
+		using PrimT = typename Traits::PrimT;
+		using BboxT = typename Traits::BboxT;
 
 		using DoIntersect = _DoIntersect;
 		using CalcBbox    = _CalcBbox;
