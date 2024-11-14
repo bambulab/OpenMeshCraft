@@ -97,7 +97,7 @@ TEST_F(test_AABBTreeIntersection, BoxIntersect)
 	// construct our tree
 
 	OurTree tree;
-	tree.insert(triangles);
+	tree.insert(triangles.begin(), triangles.end());
 	tree.build();
 
 	// test our intersection

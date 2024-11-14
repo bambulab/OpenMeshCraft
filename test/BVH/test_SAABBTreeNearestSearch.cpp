@@ -100,11 +100,9 @@ protected:
 TEST_F(test_AABBTreeClosestPoint, ClosestPoint)
 {
 	OurTree tree;
-	// test three insert interfaces.
-	tree.insert(triangles);
+
+	// construct our tree
 	tree.insert(triangles.begin(), triangles.end());
-	tree.insert(std::move(triangles));
-	// build and accelerate
 	tree.build();
 	tree.accelerate_nearest_search();
 

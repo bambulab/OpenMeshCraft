@@ -12,7 +12,8 @@ SAABBTree<Traits>::SAABBTree(Prims &&primitives)
 }
 
 template <typename Traits>
-SAABBTree<Traits>::SAABBTree(PrimsIter first, PrimsIter beyond)
+template <typename PrimsIterT>
+SAABBTree<Traits>::SAABBTree(PrimsIterT first, PrimsIterT beyond)
 {
 	insert(first, beyond);
 	build();
@@ -25,13 +26,6 @@ SAABBTree<Traits>::~SAABBTree()
 }
 
 template <typename Traits>
-void SAABBTree<Traits>::insert(const Prims &primitives)
-{
-	clear();
-	m_primitives = primitives;
-}
-
-template <typename Traits>
 void SAABBTree<Traits>::insert(Prims &&primitives)
 {
 	clear();
@@ -39,7 +33,8 @@ void SAABBTree<Traits>::insert(Prims &&primitives)
 }
 
 template <typename Traits>
-void SAABBTree<Traits>::insert(PrimsIter first, PrimsIter beyond)
+template <typename PrimsIterT>
+void SAABBTree<Traits>::insert(PrimsIterT first, PrimsIterT beyond)
 {
 	clear();
 	m_primitives.insert(m_primitives.end(), first, beyond);

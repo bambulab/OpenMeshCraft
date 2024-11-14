@@ -16,18 +16,20 @@ class SAABBTree
 public: /* Types ************************************************************/
 	/* The tratis should provide followings: */
 
-	using NT        = typename Traits::NT;
-	using PointT    = typename Traits::PointT;
-	using PrimT     = typename Traits::PrimT;
-	using Prims     = typename Traits::Prims;
-	using PrimsIter = typename Traits::PrimsIter;
-	using BboxT     = typename Traits::BboxT;
+	using NT     = typename Traits::NT;
+	using PointT = typename Traits::PointT;
+	using PrimT  = typename Traits::PrimT;
+	using BboxT  = typename Traits::BboxT;
 
 	using CalcBbox           = typename Traits::CalcBbox;
 	using SplitPrims         = typename Traits::SplitPrims;
 	using PrimReferencePoint = typename Traits::PrimReferencePoint;
 
 	/* Types used by AABB tree */
+
+	// primitives
+	using Prims = std::vector<PrimT>;
+	using PrimsIter = typename Prims::iterator;
 
 	// AABB Node
 	using NodeT    = SAABBNode<PrimT, BboxT>;
@@ -41,16 +43,18 @@ public: /* Constructor and Destructor ***************************************/
 
 	SAABBTree(Prims &&primitives);
 
-	SAABBTree(PrimsIter first, PrimsIter beyond);
+	template<typename PrimsIterT>
+	SAABBTree(PrimsIterT first, PrimsIterT beyond);
 
 	~SAABBTree();
 
 	/// @brief Insert primitives to the tree. Won't call build.
-	void insert(const Prims &primitives);
-	/// @brief Insert primitives to the tree. Won't call build.
 	void insert(Prims &&primitives);
+
 	/// @brief Insert primitives to the tree. Won't call build.
+	template<typename PrimsIter>
 	void insert(PrimsIter first, PrimsIter beyond);
+
 	/// @brief Build the AABB tree with given primitives (by insert).
 	void build();
 
@@ -64,7 +68,6 @@ public: /* Query and Traversal ***********************************************/
 	void traverse(TraversalTrait &traits) const;
 
 protected: /* Internal help functions ****************************************/
-
 	/* Help functions for building */
 
 	void expand(NodePtr node, PrimsIter first, PrimsIter beyond);

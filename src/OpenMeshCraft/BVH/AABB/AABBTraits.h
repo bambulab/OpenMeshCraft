@@ -1,6 +1,7 @@
 #pragma once
 
 #include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
+#include "OpenMeshCraft/Utils/IndexDef.h"
 #include "OpenMeshCraft/Utils/SFINAE.h"
 
 #include <algorithm>
@@ -49,13 +50,14 @@ private:
  * on a specified splitting predicate and the longest axis of the bounding box.
  *
  * @tparam BboxT Type of the bounding box.
- * @tparam PrimsIter Type of the iterator used to traverse the primitives.
  * @tparam PrimSplitPred Type of the predicate used to split the primitives.
  */
-template <typename BboxT, typename PrimsIter, typename PrimSplitPred>
+template <typename BboxT, typename PrimSplitPred>
 class AABBSplitPrimitives
 {
 public: /* Operator *******************************************************/
+	/// @brief An operator for static AABB tree, directly split the primitives.
+	template <typename PrimsIter>
 	size_t operator()(PrimsIter first, PrimsIter beyond, PrimsIter &middle,
 	                  const BboxT &box)
 	{
@@ -63,6 +65,21 @@ public: /* Operator *******************************************************/
 		PrimSplitPred pred(split_axis);
 		middle = first + (beyond - first) / 2;
 		std::nth_element(first, middle, beyond, pred);
+		return split_axis;
+	}
+
+	/// @brief An operator for dynamic AABB tree, split the indices of primitives.
+	template <typename TreeT, typename IndicesIter>
+	size_t operator()(TreeT *tree, IndicesIter first, IndicesIter beyond,
+	                  IndicesIter &middle, const BboxT &box)
+	{
+		size_t        split_axis = box.longest_axis();
+		PrimSplitPred pred(split_axis);
+		auto          wrap_pred = [&](index_t lhs, index_t rhs)
+		{ return pred(tree->primitive(lhs), tree->primitive(rhs)); };
+
+		middle = first + (beyond - first) / 2;
+		std::nth_element(first, middle, beyond, wrap_pred);
 		return split_axis;
 	}
 };
@@ -83,11 +100,6 @@ public:
 	// Below types can be automatically deduced or explicitly provided by user.
 	// We will also check if types are consistent.
 
-	// Primitives
-	GET_TYPE_OTHERWISE_DEFAULT(Traits, Prims, std::vector<PrimT>, Prims);
-	// Primitives iterator
-	GET_TYPE_OTHERWISE_DEFAULT(Traits, PrimsIter, typename Prims::iterator,
-	                           PrimsIter);
 	// Primitive split predicate
 	GET_TYPE_OTHERWISE_DEFAULT(
 	  Traits, PrimSplitPred,
@@ -118,8 +130,7 @@ public:
 	              "Deduced box type from CalcBbox and provided box type by user "
 	              "are different.");
 	// Primitive split
-	using DefaultSplitPrims =
-	  AABBSplitPrimitives<BboxT, PrimsIter, PrimSplitPred>;
+	using DefaultSplitPrims = AABBSplitPrimitives<BboxT, PrimSplitPred>;
 	GET_TYPE_OTHERWISE_DEFAULT(Traits, SplitPrims, DefaultSplitPrims, SplitPrims);
 };
 
