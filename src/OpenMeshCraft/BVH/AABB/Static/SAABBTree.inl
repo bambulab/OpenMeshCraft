@@ -1,52 +1,52 @@
 #pragma once
 
-#include "AABBTree.h"
+#include "SAABBTree.h"
 
 namespace OMC {
 
 template <typename Traits>
-AABBTree<Traits>::AABBTree(Prims &&primitives)
+SAABBTree<Traits>::SAABBTree(Prims &&primitives)
 {
 	insert(std::move(primitives));
 	build();
 }
 
 template <typename Traits>
-AABBTree<Traits>::AABBTree(PrimsIter first, PrimsIter beyond)
+SAABBTree<Traits>::SAABBTree(PrimsIter first, PrimsIter beyond)
 {
 	insert(first, beyond);
 	build();
 }
 
 template <typename Traits>
-AABBTree<Traits>::~AABBTree()
+SAABBTree<Traits>::~SAABBTree()
 {
 	clear();
 }
 
 template <typename Traits>
-void AABBTree<Traits>::insert(const Prims &primitives)
+void SAABBTree<Traits>::insert(const Prims &primitives)
 {
 	clear();
 	m_primitives = primitives;
 }
 
 template <typename Traits>
-void AABBTree<Traits>::insert(Prims &&primitives)
+void SAABBTree<Traits>::insert(Prims &&primitives)
 {
 	clear();
 	m_primitives = std::move(primitives);
 }
 
 template <typename Traits>
-void AABBTree<Traits>::insert(PrimsIter first, PrimsIter beyond)
+void SAABBTree<Traits>::insert(PrimsIter first, PrimsIter beyond)
 {
 	clear();
 	m_primitives.insert(m_primitives.end(), first, beyond);
 }
 
 template <typename Traits>
-void AABBTree<Traits>::build()
+void SAABBTree<Traits>::build()
 {
 	// clear nodes and avoid wasting memory
 	m_nodes.clear();
@@ -62,7 +62,7 @@ void AABBTree<Traits>::build()
 }
 
 template <typename Traits>
-void AABBTree<Traits>::clear()
+void SAABBTree<Traits>::clear()
 {
 	m_nodes.clear();
 	m_primitives.clear();
@@ -70,7 +70,7 @@ void AABBTree<Traits>::clear()
 
 template <typename Traits>
 template <typename TraversalTrait>
-void AABBTree<Traits>::traverse(TraversalTrait &traits) const
+void SAABBTree<Traits>::traverse(TraversalTrait &traits) const
 {
 	switch (size())
 	{
@@ -85,7 +85,7 @@ void AABBTree<Traits>::traverse(TraversalTrait &traits) const
 }
 
 template <typename Traits>
-void AABBTree<Traits>::expand(NodePtr node, PrimsIter first, PrimsIter beyond)
+void SAABBTree<Traits>::expand(NodePtr node, PrimsIter first, PrimsIter beyond)
 {
 	CalcBbox   calc_bbox;
 	SplitPrims split_prims;
@@ -122,8 +122,8 @@ void AABBTree<Traits>::expand(NodePtr node, PrimsIter first, PrimsIter beyond)
 
 template <typename Traits>
 template <typename TraversalTrait>
-bool AABBTree<Traits>::traverse_node(NodeCPtr node, TraversalTrait &trait,
-                                     const size_t nb_primitives) const
+bool SAABBTree<Traits>::traverse_node(NodeCPtr node, TraversalTrait &trait,
+                                      const size_t nb_primitives) const
 {
 	bool go_next = true;
 	switch (nb_primitives)

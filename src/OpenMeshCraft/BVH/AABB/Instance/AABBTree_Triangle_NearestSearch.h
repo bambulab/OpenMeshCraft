@@ -2,14 +2,16 @@
 
 #include "AABBTree_Triangle.h"
 
-#include "AABBTraits.h"
-#include "AABBTraversalTraits.h"
-#include "AABBTree.h"
+#include "OpenMeshCraft/BVH/AABB/AABBTraits.h"
+#include "OpenMeshCraft/BVH/AABB/AABBTraversalTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Static/SAABBTree.h"
 
 #include "OpenMeshCraft/BVH/KdTree/KdTraits.h"
 #include "OpenMeshCraft/BVH/KdTree/KdTree.h"
 
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
+
+#include "OpenMeshCraft/Utils/Exception.h"
 
 #include <memory>
 
@@ -78,12 +80,12 @@ using AABBTraits_Triangle_NearestSearch =
 /* 4. Define the AABB Tree used for nearest search.
 /****************************************************/
 
-class AABBTree_Triangle_NearestSearch
-  : public AABBTree<AABBTraits_Triangle_NearestSearch>
+class SAABBTree_Triangle_NearestSearch
+  : public SAABBTree<AABBTraits_Triangle_NearestSearch>
 {
 public:
-	using BaseT  = AABBTree<AABBTraits_Triangle_NearestSearch>;
-	using ThisT  = AABBTree_Triangle_NearestSearch;
+	using BaseT  = SAABBTree<AABBTraits_Triangle_NearestSearch>;
+	using ThisT  = SAABBTree_Triangle_NearestSearch;
 	using Traits = AABBTraits_Triangle_NearestSearch;
 
 	using TriT          = typename Traits::TriT;
@@ -143,7 +145,7 @@ protected:
 	using ProjTrav = AABB_ProjectionTraversal<ProjectionTraits>;
 };
 
-void AABBTree_Triangle_NearestSearch::accelerate_nearest_search()
+void SAABBTree_Triangle_NearestSearch::accelerate_nearest_search()
 {
 	Traits::PrimReferencePoint ref_point;
 
@@ -163,7 +165,7 @@ void AABBTree_Triangle_NearestSearch::accelerate_nearest_search()
 	m_kd_tree->build();
 }
 
-bool AABBTree_Triangle_NearestSearch::best_hint(
+bool SAABBTree_Triangle_NearestSearch::best_hint(
   const PointT &query, std::pair<PointT, size_t> &hint) const
 {
 	if (m_kd_tree)
@@ -182,7 +184,7 @@ bool AABBTree_Triangle_NearestSearch::best_hint(
 		return false;
 }
 
-auto AABBTree_Triangle_NearestSearch::closest_point(const PointT &query) const
+auto SAABBTree_Triangle_NearestSearch::closest_point(const PointT &query) const
   -> PointT
 {
 	// Get the best hint
@@ -198,7 +200,7 @@ auto AABBTree_Triangle_NearestSearch::closest_point(const PointT &query) const
 	return proj_trav.closest_point();
 }
 
-auto AABBTree_Triangle_NearestSearch::closest_point_and_primitive(
+auto SAABBTree_Triangle_NearestSearch::closest_point_and_primitive(
   const PointT &query) const -> std::pair<PointT, const PrimT *>
 {
 	// Get the best hint
@@ -215,7 +217,7 @@ auto AABBTree_Triangle_NearestSearch::closest_point_and_primitive(
 	                                        proj_trav.closest_primitive());
 }
 
-auto AABBTree_Triangle_NearestSearch::closest_point_and_primattr(
+auto SAABBTree_Triangle_NearestSearch::closest_point_and_primattr(
   const PointT &query) const -> std::pair<PointT, PrimAttrT>
 {
 	// Get the best hint

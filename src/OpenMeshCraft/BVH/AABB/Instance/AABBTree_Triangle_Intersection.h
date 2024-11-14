@@ -2,9 +2,9 @@
 
 #include "AABBTree_Triangle.h"
 
-#include "AABBTraits.h"
-#include "AABBTraversalTraits.h"
-#include "AABBTree.h"
+#include "OpenMeshCraft/BVH/AABB/AABBTraits.h"
+#include "OpenMeshCraft/BVH/AABB/AABBTraversalTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Static/SAABBTree.h"
 
 #include "OpenMeshCraft/Geometry/Primitives/PrimitiveWithAttribute.h"
 
@@ -48,14 +48,14 @@ using AABBTraits_Triangle_Intersection =
 /****************************************************/
 
 template <typename Kernel>
-class AABBTree_Triangle_Intersection
-  : public AABBTree<AABBTraits_Triangle_Intersection<Kernel>>
+class SAABBTree_Triangle_Intersection
+  : public SAABBTree<AABBTraits_Triangle_Intersection<Kernel>>
 {
 public:
 	using K = Kernel;
 
-	using BaseT  = AABBTree<AABBTraits_Triangle_Intersection<K>>;
-	using ThisT  = AABBTree_Triangle_Intersection<K>;
+	using BaseT  = SAABBTree<AABBTraits_Triangle_Intersection<K>>;
+	using ThisT  = SAABBTree_Triangle_Intersection<K>;
 	using Traits = AABBTraits_Triangle_Intersection<K>;
 
 	using TriT      = typename Traits::TriT;
@@ -66,7 +66,16 @@ public:
 
 public:
 	template <typename QPrimT>
-	void all_intersections(const QPrimT &query, Indices &results) const;
+	void all_intersections(const QPrimT &query, Indices &results) const
+	{
+		BoxTrav<QPrimT> box_trav(query);
+		this->traverse(box_trav);
+
+		auto &prim_ptrs = box_trav.result();
+		results.reserve(prim_ptrs.size());
+		for (auto pp : prim_ptrs)
+			results.push_back(pp->attribute());
+	}
 
 	const typename BaseT::BboxT &get_Bbox(const size_t i) const
 	{
@@ -92,19 +101,5 @@ protected:
 	template <typename QPrimT>
 	using BoxTrav = AABB_BoxInterTraversal<BoxInterTraits<QPrimT>>;
 };
-
-template <typename Kernel>
-template <typename QPrimT>
-inline void AABBTree_Triangle_Intersection<Kernel>::all_intersections(
-  const QPrimT &query, Indices &results) const
-{
-	BoxTrav<QPrimT> box_trav(query);
-	this->traverse(box_trav);
-
-	auto &prim_ptrs = box_trav.result();
-	results.reserve(prim_ptrs.size());
-	for (auto pp : prim_ptrs)
-		results.push_back(pp->attribute());
-}
 
 } // namespace OMC

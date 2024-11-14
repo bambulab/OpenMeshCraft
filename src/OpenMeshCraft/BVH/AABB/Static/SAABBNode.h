@@ -3,15 +3,15 @@
 namespace OMC {
 
 /**
- * @brief Define node of AABB tree.
+ * @brief Define node of static AABB tree.
  * @tparam PrimT The geometry primitive type stored in leaf nodes.
  * @tparam BboxT The bounding box type used in internal nodes.
  */
 template <typename PrimT, typename BboxT>
-class AABBNode
+class SAABBNode
 {
 public:
-	using NodeT = AABBNode<PrimT, BboxT>;
+	using NodeT = SAABBNode<PrimT, BboxT>;
 
 	/// pointer to primitive
 	using PrimPtr   = PrimT *;
@@ -24,14 +24,14 @@ public:
 	using ChildCPtr = const void *;
 
 public:
-	AABBNode()
+	SAABBNode()
 	  : m_bbox()
 	  , m_p_left_child(nullptr)
 	  , m_p_right_child(nullptr)
 	{
 	}
 
-	~AABBNode() {}
+	~SAABBNode() {}
 
 	inline BboxT       &bbox() { return m_bbox; }
 	inline const BboxT &bbox() const { return m_bbox; }

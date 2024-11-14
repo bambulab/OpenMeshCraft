@@ -1,4 +1,4 @@
-#include "OpenMeshCraft/BVH/AABB/AABBTree_Triangle_NearestSearch.h"
+#include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_Triangle_NearestSearch.h"
 
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
 
@@ -15,7 +15,7 @@ class test_AABBTreeClosestPoint : public testing::Test
 {
 protected:
 	using APAC    = OMC::APAC;
-	using OurTree = OMC::AABBTree_Triangle_NearestSearch;
+	using OurTree = OMC::SAABBTree_Triangle_NearestSearch;
 
 	using K         = typename CGAL::Simple_cartesian<double>;
 	using FT        = typename K::FT;

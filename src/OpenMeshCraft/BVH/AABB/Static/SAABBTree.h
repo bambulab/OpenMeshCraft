@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AABBNode.h"
+#include "SAABBNode.h"
 
 #include <vector>
 
@@ -11,7 +11,7 @@ namespace OMC {
  * @tparam Traits The traits defines tree's behaviors.
  */
 template <typename Traits>
-class AABBTree
+class SAABBTree
 {
 public: /* Types ************************************************************/
 	/* The tratis should provide followings: */
@@ -30,20 +30,20 @@ public: /* Types ************************************************************/
 	/* Types used by AABB tree */
 
 	// AABB Node
-	using NodeT    = AABBNode<PrimT, BboxT>;
+	using NodeT    = SAABBNode<PrimT, BboxT>;
 	using NodePtr  = NodeT *;
 	using NodeCPtr = const NodeT *;
 	// container to store nodes
 	using Nodes    = std::vector<NodeT>;
 
 public: /* Constructor and Destructor ***************************************/
-	AABBTree() {}
+	SAABBTree() {}
 
-	AABBTree(Prims &&primitives);
+	SAABBTree(Prims &&primitives);
 
-	AABBTree(PrimsIter first, PrimsIter beyond);
+	SAABBTree(PrimsIter first, PrimsIter beyond);
 
-	~AABBTree();
+	~SAABBTree();
 
 	/// @brief Insert primitives to the tree. Won't call build.
 	void insert(const Prims &primitives);
@@ -83,5 +83,5 @@ protected:
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "AABBTree.inl"
+	#include "SAABBTree.inl"
 #endif

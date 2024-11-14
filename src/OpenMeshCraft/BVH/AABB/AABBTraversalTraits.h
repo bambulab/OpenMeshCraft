@@ -1,7 +1,5 @@
 #pragma once
 
-#include "AABBTree.h"
-
 #include "OpenMeshCraft/Utils/SFINAE.h"
 
 namespace OMC {
