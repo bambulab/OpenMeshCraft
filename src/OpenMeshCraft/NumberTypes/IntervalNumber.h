@@ -619,6 +619,18 @@ public: /* Unary Operators ***************************************************/
 		return IN(-0.0, std::max(-inf(), sup()));
 	}
 
+	IN sqrt() const
+	{
+		InternalProtector _; // protected, round to upward
+
+		FPU_set_round(FE_DOWNWARD);
+		double _inf = inf() > 0.0 ? (std::sqrt(inf())) : 0.0;
+		FPU_set_round(FE_UPWARD);
+		double _sup = std::sqrt(sup());
+
+		return IN(-_inf, _sup);
+	}
+
 private:
 	using InternalProtector = FPU_RoundingProtector<Protected>;
 

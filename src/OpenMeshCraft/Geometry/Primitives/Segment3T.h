@@ -34,7 +34,7 @@ public:
 	{
 	}
 
-	/// @name Acess the data of Plane
+	/// @name Acess the data of Segment
 	/// @{
 	PointT       &start() { return m_start; }
 	const PointT &start() const { return m_start; }

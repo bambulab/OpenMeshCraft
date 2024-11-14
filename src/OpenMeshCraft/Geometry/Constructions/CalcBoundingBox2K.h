@@ -55,8 +55,9 @@ template <typename Kernel>
 template <typename GPT, typename /*SFINAE*/>
 void CalcBoundingBox2K<Kernel>::operator()(BboxT &box, const GPT &gp)
 {
-	box.min_bound() = PointBound<GPointT, EPointT>().lower_bound(gp);
-	box.max_bound() = PointBound<GPointT, EPointT>().upper_bound(gp);
+	auto [minb, maxb] = PointBound<GPointT, EPointT>().both_bounds(gp);
+	box.min_bound()   = minb;
+	box.max_bound()   = maxb;
 }
 
 template <typename Kernel>
