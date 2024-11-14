@@ -11,7 +11,7 @@ namespace OMC {
 /**
  * @brief The type of reference point for triangle.
  */
-enum class AABB_Triangle_ReferencePointType
+enum class AABB_Tri_ReferencePointType
 {
 	First,   /// The first point `v0` of the triangle.
 	Centroid /// The centroid of the triangle.
@@ -24,34 +24,22 @@ enum class AABB_Triangle_ReferencePointType
  *
  * @tparam TriT The type of the triangle.
  * @tparam RefPntType The type of the reference point.
- *
- * @code
- * // Example usage:
- * AABB_Triangle_ReferencePoint<MyTriangleType,
- *   AABB_Triangle_ReferencePointType::Centroid> refPoint;
- * auto point = refPoint(myTriangle);
- * @endcode
  */
-template <typename TriT, AABB_Triangle_ReferencePointType RefPntType>
-class AABB_Triangle_ReferencePoint
+template <typename TriT, AABB_Tri_ReferencePointType RefPntType>
+class AABB_Tri_ReferencePoint
 {
-	static_assert(
-	  RefPntType == AABB_Triangle_ReferencePointType::First ||
-	    RefPntType == AABB_Triangle_ReferencePointType::Centroid,
-	  "AABB_Triangle_ReferencePoint havn't support other reference point type.");
+public:
+	using NT     = typename TriT::NT;
+	using PointT = remove_cvref_t<decltype(std::declval<TriT>().v0())>;
 
 public:
-	using NT = typename TriT::NT;
-
-public:
-	auto operator()(const TriT &tri)
-	  -> remove_cvref_t<decltype(std::declval<TriT>().v0())>
+	PointT operator()(const TriT &tri)
 	{
-		if constexpr (RefPntType == AABB_Triangle_ReferencePointType::First)
+		if constexpr (RefPntType == AABB_Tri_ReferencePointType::First)
 		{
 			return tri.v0();
 		}
-		else if constexpr (RefPntType == AABB_Triangle_ReferencePointType::Centroid)
+		else if constexpr (RefPntType == AABB_Tri_ReferencePointType::Centroid)
 		{
 			return (tri.v0() + tri.v1() + tri.v2()) / NT(3.);
 		}

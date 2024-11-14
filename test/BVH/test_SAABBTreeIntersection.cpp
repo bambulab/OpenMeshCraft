@@ -18,7 +18,7 @@ protected:
 	// Our
 	using APAC            = OMC::APAC;
 	using OurTree         = OMC::SAABBTree_Triangle_Intersection<APAC>;
-	using IndexedTriangle = OMC::PrimitiveWithAttribute<APAC::Triangle3, size_t>;
+	using IndexedTriangle = OMC::PrimitiveWithAttribute<APAC::Triangle3, index_t>;
 
 	// CGAL
 	using K         = typename CGAL::Simple_cartesian<double>;
@@ -47,7 +47,7 @@ protected:
 		ifs.open(config.get<std::string>("filename"));
 		EXPECT_EQ(ifs.is_open(), true);
 		std::string line;
-		size_t      tri_id = 0;
+		index_t     tri_id = 0;
 		// read the mesh
 		while (std::getline(ifs, line))
 		{
@@ -104,8 +104,8 @@ TEST_F(test_AABBTreeIntersection, BoxIntersect)
 
 	auto start = OMC::Logger::elapse_reset();
 
-	std::vector<size_t> results;
-	APAC::Point3        center(0.0, 0.0, 0.0);
+	std::vector<index_t> results;
+	APAC::Point3         center(0.0, 0.0, 0.0);
 	for (int j = 0; j < 3; ++j)
 	{
 		center.x() += triangles[0][j].x();
@@ -155,7 +155,7 @@ TEST_F(test_AABBTreeIntersection, BoxIntersect)
 	    << std::endl;
 
 	ofs << results.size() << std::endl;
-	for (size_t i = 0; i < results.size(); ++i)
+	for (index_t i = 0; i < results.size(); ++i)
 	{
 		for (int j = 0; j < 3; ++j)
 		{

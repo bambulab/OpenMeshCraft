@@ -1,10 +1,10 @@
 #pragma once
 
-#include "AABBTree_Triangle.h"
+#include "AABBTree_Segment.h"
 
 #include "OpenMeshCraft/BVH/AABB/AABBTraits.h"
 #include "OpenMeshCraft/BVH/AABB/AABBTraversalTraits.h"
-#include "OpenMeshCraft/BVH/AABB/Static/SAABBTree.h"
+#include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTree.h"
 
 #include "OpenMeshCraft/Geometry/Primitives/PrimitiveWithAttribute.h"
 
@@ -14,50 +14,46 @@ namespace OMC {
 /* 2. Define minimum set of AABB traits        */
 /***********************************************/
 
-template <typename Kernel>
-class AABBMinimumTraits_Triangle_Intersection
+template <typename _SegmentT, typename _CalcBbox>
+class AABBMinimumTraits_SegSphere_Intersection
 {
 public:
 	/* Belows are used by AABBTree */
 
-	using K    = Kernel;
-	using TriT = typename K::Triangle3;
+	using SegmentT = _SegmentT;
+	using CalcBbox = _CalcBbox;
 
 	// Attribute type
 	using PrimAttrT = index_t;
 	// Primitive type
-	using PrimT     = PrimitiveWithAttribute<TriT, PrimAttrT>;
+	using PrimT     = PrimitiveWithAttribute<SegmentT, PrimAttrT>;
 	// Primitive reference point
 	using PrimReferencePoint =
-	  AABB_Tri_ReferencePoint<PrimT, AABB_Tri_ReferencePointType::First>;
-	// Calculate bounding box
-	using CalcBbox = typename K::CalcBoundingBox3;
+	  AABB_Seg_ReferencePoint<PrimT, AABB_Seg_ReferencePointType::Centroid>;
 };
 
 /****************************************************/
 /* 3. Automatically deduce the complete AABB traits */
 /****************************************************/
 
-template <typename Kernel>
-using AABBTraits_Triangle_Intersection =
-  AABBAutoDeduceTraits<AABBMinimumTraits_Triangle_Intersection<Kernel>>;
+template <typename _SegmentT, typename _CalcBbox>
+using AABBTraits_SegSphere_Intersection = AABBAutoDeduceTraits<
+  AABBMinimumTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>>;
 
 /****************************************************/
 /* 4. Define the AABB Tree used for intersection.   */
 /****************************************************/
 
-template <typename Kernel>
-class SAABBTree_Triangle_Intersection
-  : public SAABBTree<AABBTraits_Triangle_Intersection<Kernel>>
+template <typename _SegmentT, typename _CalcBbox, typename _DoIntersect>
+class DAABBTree_SegSphere_Intersection
+  : public DAABBTree<AABBTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>>
 {
 public:
-	using K = Kernel;
+	using Traits = AABBTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>;
+	using BaseT  = DAABBTree<Traits>;
+	using ThisT  = DAABBTree_SegSphere_Intersection<_SegmentT, _CalcBbox>;
 
-	using BaseT  = SAABBTree<AABBTraits_Triangle_Intersection<K>>;
-	using ThisT  = SAABBTree_Triangle_Intersection<K>;
-	using Traits = AABBTraits_Triangle_Intersection<K>;
-
-	using TriT      = typename Traits::TriT;
+	using SegmentT  = typename Traits::SegmentT;
 	using PrimT     = typename Traits::PrimT;
 	using PrimAttrT = typename Traits::PrimAttrT;
 
@@ -91,8 +87,8 @@ protected:
 		using PrimT  = typename Traits::PrimT;
 		using BboxT  = typename Traits::BboxT;
 
-		using DoIntersect = typename K::DoIntersect;
-		using CalcBbox    = typename Traits::CalcBbox;
+		using DoIntersect = _DoIntersect;
+		using CalcBbox    = _CalcBbox;
 	};
 
 	template <typename QPrimT>

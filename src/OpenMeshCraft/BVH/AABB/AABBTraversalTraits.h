@@ -8,7 +8,6 @@ template <typename Traits>
 class AABB_TraversalTraits
 {
 public: /* Types ************************************************************/
-	using NT    = typename Traits::NT;
 	using PrimT = typename Traits::PrimT;
 	using BboxT = typename Traits::BboxT;
 
@@ -65,14 +64,29 @@ public: /* Constructor ******************************************************/
 	                         PrimCPtr hint_prim);
 
 public: /* Inherited Interfaces *********************************************/
+	/**
+	 * @brief Check if the distance to the given primitive is less than the
+	 * current closest distance, and update the closest distance if necessary.
+	 * @return always true to make the traversal continue.
+	 */
 	bool intersection(const PrimT &prim) override;
 
+	/**
+	 * @brief Check if the box contains a possible closer point,
+	 * which is equivalent to check if the query sphere intersects the box.
+	 * @return true if the box contains a possible closer point.
+	 */
 	bool do_inter(const BboxT &bbox) const override;
 
 public: /* Interfaces *******************************************************/
+	/// @brief Get the closest point
 	const PointT &closest_point() const { return m_closest_point; }
-	PrimCPtr      closest_primitive() const { return m_closest_prim; }
-	NT square_distance() const { return m_query_sphere.squared_radius(); }
+
+	/// @brief Get the closest primitive
+	PrimCPtr closest_primitive() const { return m_closest_prim; }
+
+	/// @brief Get the closest squared distance.
+	NT squared_distance() const { return m_query_sphere.squared_radius(); }
 
 private: /* Data ************************************************************/
 	SphereT      m_query_sphere;
@@ -87,8 +101,6 @@ template <typename Traits>
 class AABB_BoxInterTraversal : public AABB_TraversalTraits<Traits>
 {
 public: /* Types ************************************************************/
-	using NT     = typename Traits::NT;
-	using PointT = typename Traits::PointT;
 	using PrimT  = typename Traits::PrimT;
 	using QPrimT = typename Traits::QPrimT;
 	using BboxT  = typename Traits::BboxT;
@@ -100,14 +112,30 @@ public: /* Types ************************************************************/
 	using PrimCPtrs = std::vector<PrimCPtr>;
 
 public: /* Constructor ******************************************************/
+	/**
+	 * @brief Construct an AABB_BoxInterTraversal object.
+	 * @param query The query primitive.
+	 */
 	AABB_BoxInterTraversal(const QPrimT &query);
 
 public: /* Inherited Interfaces *********************************************/
+	/**
+	 * @brief Save the given primitive into results, due to its bounding box
+	 * intersects the query box.
+	 * @return always true to make the traversal continue.
+	 */
 	bool intersection(const PrimT &prim) override;
 
+	/**
+	 * @brief Check if the bounding box of the given primitive intersects with the
+	 * query box.
+	 * @return true if they intersect.
+	 */
 	bool do_inter(const BboxT &bbox) const override;
 
 public: /* Interfaces ******************************************************/
+
+	/// @brief Get all (bbox-)intersected primitives
 	const PrimCPtrs &result() const { return m_intersected_prims; }
 
 private: /* Data ***********************************************************/
@@ -124,8 +152,6 @@ template <typename Traits>
 class AABB_PrimInterTraversal
 {
 public: /* Types ************************************************************/
-	using NT     = typename Traits::NT;
-	using PointT = typename Traits::PointT;
 	using PrimT  = typename Traits::PrimT;
 	using QPrimT = typename Traits::QPrimT;
 	using BboxT  = typename Traits::BboxT;
@@ -140,11 +166,24 @@ public: /* Constructor ******************************************************/
 	AABB_PrimInterTraversal(const QPrimT &query);
 
 public: /* Inherited Interfaces *********************************************/
+
+	/**
+	 * @brief Check if the given primitive intersects with the query primitive.
+	 * Save the primitive into results if they intersect.
+	 * @return always true to make the traversal continue.
+	 */
 	bool intersection(const PrimT &prim) override;
 
+	/**
+	 * @brief Check if the bounding box of the given primitive intersects with the
+	 * query box.
+	 * @return true if they intersect.
+	 */
 	bool do_inter(const BboxT &bbox) const override;
 
 public: /* Interfaces ******************************************************/
+
+	/// @brief Get all intersected primitives
 	PrimCPtrs result() const { return m_intersected_prims; }
 
 private: /* Data ***********************************************************/

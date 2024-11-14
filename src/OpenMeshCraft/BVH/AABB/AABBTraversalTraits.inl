@@ -46,11 +46,6 @@ AABB_BoxInterTraversal<Traits>::AABB_BoxInterTraversal(const QPrimT &query)
 template <typename Traits>
 bool AABB_BoxInterTraversal<Traits>::intersection(const PrimT &prim)
 {
-	// TODO after implement exact box-tri intersect check, add it back
-	//  if (m_do_intersect(m_box_of_query, prim))
-	//  {
-	//  	m_intersected_prims.push_back(&prim);
-	//  }
 	m_intersected_prims.push_back(&prim);
 	return true;
 }

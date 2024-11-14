@@ -56,15 +56,12 @@ public:
 	using ProjectPoint3 = typename APAC::ProjectPoint3;
 #endif
 	// Attribute type
-	// NOTE: If you don't want attach attribute, comment it and replace PrimT with
-	// PrimitiveType.
-	using PrimAttrT = size_t;
+	using PrimAttrT = index_t;
 	// Primitive type
 	using PrimT     = PrimitiveWithAttribute<TriT, PrimAttrT>;
 	// Primitive reference point
 	using PrimReferencePoint =
-	  AABB_Triangle_ReferencePoint<PrimT,
-	                               AABB_Triangle_ReferencePointType::First>;
+	  AABB_Tri_ReferencePoint<PrimT, AABB_Tri_ReferencePointType::First>;
 	// Calculate bounding box
 	using CalcBbox = typename APAC::CalcBoundingBox3;
 };
@@ -96,8 +93,8 @@ public:
 public:
 	inline void accelerate_nearest_search();
 
-	inline bool best_hint(const PointT              &query,
-	                      std::pair<PointT, size_t> &hint) const;
+	inline bool best_hint(const PointT               &query,
+	                      std::pair<PointT, index_t> &hint) const;
 
 	inline PointT closest_point(const PointT &query) const;
 
@@ -114,7 +111,7 @@ protected:
 	public:
 		using NT           = typename Traits::NT;
 		using PointT       = typename Traits::PointT;
-		using PointAttrT   = size_t;
+		using PointAttrT   = index_t;
 		using BboxT        = typename Traits::BboxT;
 		using ProjectPoint = typename Traits::ProjectPoint3;
 	};
@@ -149,12 +146,12 @@ void SAABBTree_Triangle_NearestSearch::accelerate_nearest_search()
 {
 	Traits::PrimReferencePoint ref_point;
 
-	std::vector<PointT> points;
-	std::vector<size_t> ids;
+	std::vector<PointT>  points;
+	std::vector<index_t> ids;
 	points.reserve(m_primitives.size());
 	ids.reserve(m_primitives.size());
 
-	for (size_t i = 0; i < m_primitives.size(); i++)
+	for (index_t i = 0; i < m_primitives.size(); i++)
 	{
 		points.push_back(ref_point(m_primitives[i]));
 		ids.push_back(i);
@@ -166,7 +163,7 @@ void SAABBTree_Triangle_NearestSearch::accelerate_nearest_search()
 }
 
 bool SAABBTree_Triangle_NearestSearch::best_hint(
-  const PointT &query, std::pair<PointT, size_t> &hint) const
+  const PointT &query, std::pair<PointT, index_t> &hint) const
 {
 	if (m_kd_tree)
 	{
@@ -176,7 +173,7 @@ bool SAABBTree_Triangle_NearestSearch::best_hint(
 	else if (!m_primitives.empty())
 	{
 		PrimReferencePoint reference_point;
-		hint = std::make_pair<PointT, size_t>(
+		hint = std::make_pair<PointT, index_t>(
 		  reference_point(*m_primitives.cbegin()), 0);
 		return true;
 	}
@@ -188,7 +185,7 @@ auto SAABBTree_Triangle_NearestSearch::closest_point(const PointT &query) const
   -> PointT
 {
 	// Get the best hint
-	std::pair<PointT, size_t> hint;
+	std::pair<PointT, index_t> hint;
 	OMC_THROW_LOGIC_ERROR_IF(
 	  !best_hint(query, hint),
 	  "Can't find best hint. It may caused by empty primitive.");
@@ -204,7 +201,7 @@ auto SAABBTree_Triangle_NearestSearch::closest_point_and_primitive(
   const PointT &query) const -> std::pair<PointT, const PrimT *>
 {
 	// Get the best hint
-	std::pair<PointT, size_t> hint;
+	std::pair<PointT, index_t> hint;
 	OMC_THROW_LOGIC_ERROR_IF(
 	  !best_hint(query, hint),
 	  "Can't find best hint. It may caused by empty primitive.");
@@ -221,7 +218,7 @@ auto SAABBTree_Triangle_NearestSearch::closest_point_and_primattr(
   const PointT &query) const -> std::pair<PointT, PrimAttrT>
 {
 	// Get the best hint
-	std::pair<PointT, size_t> hint;
+	std::pair<PointT, index_t> hint;
 	OMC_THROW_LOGIC_ERROR_IF(
 	  !best_hint(query, hint),
 	  "Can't find best hint. It may caused by empty primitive.");

@@ -44,7 +44,7 @@ protected:
 		ASSERT_EQ(fin.is_open(), true);
 
 		std::string line;
-		size_t      tri_id = 0;
+		index_t     tri_id = 0;
 		// read the mesh
 		while (std::getline(fin, line))
 		{
@@ -119,7 +119,7 @@ TEST_F(test_AABBTreeClosestPoint, ClosestPoint)
 	double our_time = 0., cgal_time = 0.;
 
 	// srand(time(nullptr));
-	for (size_t i = 0; i < 100000; i++)
+	for (index_t i = 0; i < 100000; i++)
 	{
 		double x = (double)rand() / RAND_MAX * box_x;
 		double y = (double)rand() / RAND_MAX * box_y;
