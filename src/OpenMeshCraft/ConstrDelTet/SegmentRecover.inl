@@ -6,8 +6,13 @@ namespace OMC {
 
 // Enable shuffling missing segments in each loop of segment recovery.
 // #define OMC_CDT_SHUFFLE_MISSING_SEGMENTS
+
 // Enable exact inSphere predicate in finding encroaching point.
 #define OMC_CDT_EXACT_ENCROACH_TEST
+
+// Choose one segmen recovery strategy
+// #define OMC_CDT_SEG_SIHANG
+#define OMC_CDT_SEG_GREEDY
 
 /**
  * @brief Initialize with the Delaunay tetrahedral mesh and the input
@@ -32,6 +37,38 @@ SegmentRecover<Traits>::SegmentRecover(std::vector<GPoint *> &_verts,
 
 template <typename Traits>
 void SegmentRecover<Traits>::segmentRecovery()
+{
+#if defined(OMC_CDT_SEG_SIHANG)
+	segmentRecovery_SiHang();
+#elif defined(OMC_CDT_SEG_GREEDY)
+	segmentRecovery_Greedy();
+#endif
+}
+
+/**
+ * @brief Create a new vertex and update `tet_mesh` and `plc` at the same time.
+ * @param new_pnt geometric implementation of the new vertex
+ * @return the index to the new vertex.
+ */
+template <typename Traits>
+template <typename PointType>
+index_t SegmentRecover<Traits>::newVtx(PointType new_pnt)
+{
+	// create the new vertex
+	index_t new_vid     = verts.size();
+	// Put the new vertex into the point arena
+	auto   *new_pnt_ptr = pnt_arenas[0].emplace(std::move(new_pnt));
+	// Put the new vertex into the vertex list
+	verts.push_back(static_cast<GPoint *>(new_pnt_ptr));
+
+	// create auxiliary data in TetMesh & PLC
+	tet_mesh.newVtx(new_vid);
+
+	return new_vid;
+}
+
+template <typename Traits>
+void SegmentRecover<Traits>::segmentRecovery_SiHang()
 {
 	// initialize the PLC edges
 	plc.initPLCEdges();
@@ -725,26 +762,28 @@ auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
 	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
 }
 
-/**
- * @brief Create a new vertex and update `tet_mesh` and `plc` at the same time.
- * @param new_pnt geometric implementation of the new vertex
- * @return the index to the new vertex.
- */
 template <typename Traits>
-template <typename PointType>
-index_t SegmentRecover<Traits>::newVtx(PointType new_pnt)
+void SegmentRecover<Traits>::segmentRecovery_Greedy()
 {
-	// create the new vertex
-	index_t new_vid     = verts.size();
-	// Put the new vertex into the point arena
-	auto   *new_pnt_ptr = pnt_arenas[0].emplace(std::move(new_pnt));
-	// Put the new vertex into the vertex list
-	verts.push_back(static_cast<GPoint *>(new_pnt_ptr));
+	// initialize the PLC edges
+	plc.initPLCEdges();
 
-	// create auxiliary data in TetMesh & PLC
-	tet_mesh.newVtx(new_vid);
-
-	return new_vid;
+	// initialize the segments' diametral sphere tree.
+	{
+		std::vector<GenericSegment3T> segments;
+		segments.reserve(plc.numEdges());
+		for (index_t eid = 0; eid < plc.numEdges(); eid++)
+		{
+			const PLCEdge &e = plc.edge(eid);
+			if (e.type != PLCEdgeType::FLAT_EDGE)
+			{
+				index_t ev0 = e.ep0(), ev1 = e.ep1();
+				segments.emplace_back(&gpnt(ev0), &gpnt(ev1));
+			}
+		}
+		tree.insert(std::move(segments));
+		tree.build();
+	}
 }
 
 } // namespace OMC

@@ -36,8 +36,8 @@ public: /* Traits **********************************************************/
 
 	using CreateLNC = typename Traits::CreateLNC;
 
-	using InSphere           = typename Traits::InSphere;
-	using SquaredDistance3D  = typename Traits::SquaredDistance3D;
+	using InSphere          = typename Traits::InSphere;
+	using SquaredDistance3D = typename Traits::SquaredDistance3D;
 
 	using TetMesh  = TetrahedralMesh<Traits>;
 	using TET_MARK = typename TetMesh::TET_MARK;
@@ -56,16 +56,31 @@ public: /* Traits **********************************************************/
 
 	using PntArena = CDTPointArena<Traits>;
 
-public: /* Constructor & Destructor ****************************************/
+public: /* Constructor & Destructor ******************************************/
 	SegmentRecover() = delete;
 	SegmentRecover(std::vector<GPoint *> &_verts, std::vector<PntArena> &_ars,
-	                   TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config,
-										 ConstrDelTet_Stats* _stats = nullptr);
+	               TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config,
+	               ConstrDelTet_Stats *_stats = nullptr);
 
-public: /* Algorithms ******************************************************/
+public: /* Interface *********************************************************/
+
 	/* Recover constrained segments */
 
 	void segmentRecovery();
+
+public: /* Common operations used by recovery algorithms *********************/
+
+	/* Geometric & Topologic Operations on both TetMesh & PLC */
+
+	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
+	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
+
+	template <typename PointType>
+	index_t newVtx(PointType new_pnt);
+
+public: /* SiHang's Recovery Algorithm ***************************************/
+
+	void segmentRecovery_SiHang();
 
 	/* sub-algorithms for segment recovery */
 
@@ -103,15 +118,11 @@ public: /* Algorithms ******************************************************/
 
 	IPoint_LNC lineSphereIntersection_oneAc(index_t eid, index_t ref_vid) const;
 
-	/* Geometric & Topologic Operations on both TetMesh & PLC */
+public: /* Greedy Recovery Algorithm *****************************************/
 
-	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
-	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
+	void segmentRecovery_Greedy();
 
-	template <typename PointType>
-	index_t newVtx(PointType new_pnt);
-
-public: /* Data ************************************************************/
+public: /* Data **************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
 	std::vector<GPoint *> &verts;
 	/// All generated points in algorithm are stored in pnt_arena
@@ -121,10 +132,19 @@ public: /* Data ************************************************************/
 	/// Constrained piecewise linear complex
 	PLC                   &plc;
 
+	/* Data used by greedy recovery algorithm */
+
+	/// The segments' diametral sphere tree
+	/// - The tree is built on the segments' diametral spheres.
+	/// - The segments in tree have the same indices as the PLC edges.
+	/// - The tree is used to quickly find encroached segments by a Steiner point.
+	/// - The tree is updated when a segment is split.
+	SegSphereTree tree;
+
 public: /* Flags and configurations ******************************************/
 	ConstrDelTet_Config config;
 
-	ConstrDelTet_Stats* stats;
+	ConstrDelTet_Stats *stats;
 };
 
 } // namespace OMC
