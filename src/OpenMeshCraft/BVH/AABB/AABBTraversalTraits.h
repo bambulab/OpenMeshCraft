@@ -88,10 +88,12 @@ public: /* Interfaces *******************************************************/
 	/// @brief Get the closest squared distance.
 	NT squared_distance() const { return m_query_sphere.squared_radius(); }
 
-private: /* Data ************************************************************/
+private: /* Data & Predicates ***********************************************/
+	/* Data */
 	SphereT      m_query_sphere;
 	PointT       m_closest_point;
 	PrimCPtr     m_closest_prim;
+	/* Predicates */
 	DoIntersect  m_box_sphere_do_intersect;
 	ProjectPoint m_project_point;
 };
@@ -133,18 +135,18 @@ public: /* Inherited Interfaces *********************************************/
 	 */
 	bool do_inter(const BboxT &bbox) const override;
 
-public: /* Interfaces ******************************************************/
-
+public: /* Interfaces ********************************************************/
 	/// @brief Get all (bbox-)intersected primitives
 	const PrimCPtrs &result() const { return m_intersected_prims; }
 
-private: /* Data ***********************************************************/
-	CalcBbox    m_calc_bbox;
-	DoIntersect m_do_intersect;
-
-	QPrimT    m_query;
-	BboxT     m_box_of_query;
-	PrimCPtrs m_intersected_prims;
+private: /* Data & Predicates ************************************************/
+	/* Data */
+	const QPrimT &m_query;
+	BboxT         m_box_of_query;
+	PrimCPtrs     m_intersected_prims;
+	/* Predicates */
+	CalcBbox      m_calc_bbox;
+	DoIntersect   m_do_intersect;
 };
 
 /// @todo Add an option to find first or all intersections.
@@ -166,7 +168,6 @@ public: /* Constructor ******************************************************/
 	AABB_PrimInterTraversal(const QPrimT &query);
 
 public: /* Inherited Interfaces *********************************************/
-
 	/**
 	 * @brief Check if the given primitive intersects with the query primitive.
 	 * Save the primitive into results if they intersect.
@@ -181,18 +182,18 @@ public: /* Inherited Interfaces *********************************************/
 	 */
 	bool do_inter(const BboxT &bbox) const override;
 
-public: /* Interfaces ******************************************************/
-
+public: /* Interfaces *******************************************************/
 	/// @brief Get all intersected primitives
 	PrimCPtrs result() const { return m_intersected_prims; }
 
-private: /* Data ***********************************************************/
-	CalcBbox    m_calc_bbox;
-	DoIntersect m_do_intersect;
-
-	QPrimT    m_query;
-	BboxT     m_box_of_query;
-	PrimCPtrs m_intersected_prims;
+private: /* Data & Predicates ***********************************************/
+	/* Data */
+	const QPrimT &m_query;
+	BboxT         m_box_of_query;
+	PrimCPtrs     m_intersected_prims;
+	/* Predicates */
+	CalcBbox      m_calc_bbox;
+	DoIntersect   m_do_intersect;
 };
 
 } // namespace OMC

@@ -207,37 +207,38 @@ void DAABBTree<Traits>::collect_garbage()
 
 template <typename Traits>
 template <typename TraversalTrait>
-void DAABBTree<Traits>::traverse(TraversalTrait &trait)
+void DAABBTree<Traits>::traverse(TraversalTrait &trait) const
 {
 	if (m_primitives.empty())
 		return;
 	else if (m_primitives.size() == 1)
-		trait.intersection(0);
+		trait.intersection(primitive(0));
 	else                       // m_primitives.size() > 1
 		traverse_node(trait, 0); // root node's index is always 0.
 }
 
 template <typename Traits>
-template <typename Trait>
-bool DAABBTree<Traits>::traverse_node(Trait &trait, index_t node_idx)
+template <typename TraversalTrait>
+bool DAABBTree<Traits>::traverse_node(TraversalTrait &trait,
+                                      index_t         node_idx) const
 {
 	// trait.intersection will check intersection with primitive.
 	// trait.do_inter will check intersection with box.
-	bool   go_next = true;
-	NodeT &n       = node(node_idx);
+	bool         go_next = true;
+	const NodeT &n       = node(node_idx);
 	switch (n.m_nb_primitives)
 	{
 	case 1:
-		return trait.intersection(n.m_left_child);
+		return trait.intersection(primitive(n.m_left_child));
 	default:
-		if (trait.do_inter(n.m_left_child))
+		if (trait.do_inter(node(n.m_left_child).m_bbox))
 		{
 			go_next = traverse_node(trait, n.m_left_child);
-			if (go_next && trait.do_inter(n.m_right_child))
+			if (go_next && trait.do_inter(node(n.m_right_child).m_bbox))
 				go_next = traverse_node(trait, n.m_right_child);
 			return go_next;
 		}
-		else if (trait.do_inter(n.m_right_child))
+		else if (trait.do_inter(node(n.m_right_child).m_bbox))
 		{
 			return traverse_node(trait, n.m_right_child);
 		}
@@ -283,6 +284,9 @@ index_t DAABBTree<Traits>::expand(IndicesIter first, IndicesIter beyond,
 
 	switch (n.m_nb_primitives)
 	{
+	case 0:
+		OMC_ASSERT(false, "Expand a DAABB node without child.");
+		break;
 	case 1:
 		n.m_left_child  = *first;
 		n.m_right_child = InvalidIndex;
@@ -339,11 +343,11 @@ void DAABBTree<Traits>::insert_to_node(index_t prim_idx, BboxT &prim_box,
 		NodeT &lnode = node(n.m_left_child);
 		NodeT &rnode = node(n.m_right_child);
 
-		int sd         = n.m_split_axis;
-		NT  left_max   = lnode.m_bbox.max_coord(sd);
-		NT  right_min  = rnode.m_bbox.min_coord(sd);
-		NT  insert_min = prim_box.min_coord(sd);
-		NT  insert_max = prim_box.max_coord(sd);
+		int  sd         = n.m_split_axis;
+		auto left_max   = lnode.m_bbox.max_coord(sd);
+		auto right_min  = rnode.m_bbox.min_coord(sd);
+		auto insert_min = prim_box.min_coord(sd);
+		auto insert_max = prim_box.max_coord(sd);
 		n.m_bbox += prim_box;
 
 		if (insert_max <= right_min)
@@ -521,6 +525,7 @@ void DAABBTree<Traits>::split_node(index_t node_idx, index_t subprim0_idx,
 
 	node(node_idx).m_left_child  = expand(first, middle, node_idx);
 	node(node_idx).m_right_child = expand(middle, beyond, node_idx);
+	update_node(n.m_parent);
 }
 
 } // namespace OMC

@@ -28,14 +28,16 @@ class AABBMinimumTraits_Triangle_NearestSearch
 public:
 	/* Belows are used by AABBTree */
 
+	// Number type
+	using NT     = typename APAC::NT;
+	// Point type
+	using PointT = typename APAC::Point3;
 	// Triangle type
 #ifdef USE_TRIANGLE_FAST_PROJECTION
 	class TriT_ : public APAC::Triangle3,
 	              public APAC::FastProjectPoint3::AuxTriangle
 	{
 	public:
-		using NT           = typename APAC::NT;
-		using VecT         = typename APAC::Vec3;
 		using PointT       = typename APAC::Point3;
 		using BaseTriangle = typename APAC::Triangle3;
 		using AuxTriangle  = typename APAC::FastProjectPoint3::AuxTriangle;
@@ -48,7 +50,6 @@ public:
 		}
 	};
 	using TriT = TriT_;
-
 	// Point projection
 	using ProjectPoint3 = typename APAC::FastProjectPoint3;
 #else
@@ -85,6 +86,8 @@ public:
 	using ThisT  = SAABBTree_Triangle_NearestSearch;
 	using Traits = AABBTraits_Triangle_NearestSearch;
 
+	using NT            = typename Traits::NT;
+	using PointT        = typename Traits::PointT;
 	using TriT          = typename Traits::TriT;
 	using PrimAttrT     = typename Traits::PrimAttrT;
 	using ProjectPoint3 = typename Traits::ProjectPoint3;

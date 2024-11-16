@@ -88,48 +88,33 @@ template <typename Traits>
 class AABBAutoDeduceTraits : public Traits
 {
 public:
+	// ========================================================================
 	// Below types must be provided by user
 
 	// Primitive type
 	using PrimT              = typename Traits::PrimT;
-	// Primitive reference point
-	using PrimReferencePoint = typename Traits::PrimReferencePoint;
 	// Calculate bounding box
 	using CalcBbox           = typename Traits::CalcBbox;
+	// Primitive reference point
+	using PrimReferencePoint = typename Traits::PrimReferencePoint;
 
+	// ========================================================================
 	// Below types can be automatically deduced or explicitly provided by user.
 	// We will also check if types are consistent.
 
-	// Primitive split predicate
-	GET_TYPE_OTHERWISE_DEFAULT(
-	  Traits, PrimSplitPred,
-	  decltype(AABBPrimSplitPred<PrimT, PrimReferencePoint>()), PrimSplitPred);
-
-	// Point type
-	GET_TYPE_OTHERWISE_VOID(PrimT, PointT, DeducedPointT);
-	GET_TYPE_OTHERWISE_DEFAULT(Traits, PointT, DeducedPointT, PointT);
-	static_assert(!std::is_void_v<PointT>,
-	              "PointT is not provided and can't be deduced.");
-	static_assert(std::is_void_v<DeducedPointT> ||
-	                std::is_same_v<PointT, DeducedPointT>,
-	              "Deduced point type from PrimT and provided point type by "
-	              "user are different.");
-	// Number type
-	GET_TYPE_OTHERWISE_VOID(PointT, NT, DeducedNT);
-	GET_TYPE_OTHERWISE_DEFAULT(Traits, NT, DeducedNT, NT);
-	static_assert(!std::is_void_v<NT>,
-	              "Number type is not provided and can't be deduced.");
-	static_assert(std::is_void_v<DeducedNT> || std::is_same_v<NT, DeducedNT>,
-	              "Deduced number type from PointT and provided number type by "
-	              "user are different.");
-	// Bounding box type, deduced by CalcBbox or provided by user
+	// Bounding box type -------------------------------------------------------
 	using DeducedBboxT =
 	  remove_cvref_t<std::invoke_result_t<decltype(CalcBbox()), const PrimT &>>;
 	GET_TYPE_OTHERWISE_DEFAULT(Traits, BboxT, DeducedBboxT, BboxT);
-	static_assert(std::is_same_v<BboxT, DeducedBboxT>,
-	              "Deduced box type from CalcBbox and provided box type by user "
-	              "are different.");
-	// Primitive split
+	static_assert(!std::is_void_v<DeducedBboxT>, "Cannot deduce BboxT type.");
+	static_assert(std::is_same_v<BboxT, DeducedBboxT>, "Inconsistent BboxT type.");
+
+	// Primitive split predicate ----------------------------------------------
+	using DefaultSplitPred = AABBPrimSplitPred<PrimT, PrimReferencePoint>;
+	GET_TYPE_OTHERWISE_DEFAULT(Traits, PrimSplitPred, DefaultSplitPred,
+	                           PrimSplitPred);
+
+	// Primitive split method -------------------------------------------------
 	using DefaultSplitPrims = AABBSplitPrimitives<BboxT, PrimSplitPred>;
 	GET_TYPE_OTHERWISE_DEFAULT(Traits, SplitPrims, DefaultSplitPrims, SplitPrims);
 };

@@ -61,7 +61,7 @@ public:
 		ET ex, ey, ed;
 		if (gp.is_explicit())
 		{
-			return gp.to_Explicit();
+			return gp.to_explicit();
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, id))
 		{
@@ -86,7 +86,7 @@ public:
 		ET ex, ey, ed;
 		if (gp.is_explicit())
 		{
-			return gp.to_Explicit();
+			return gp.to_explicit();
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, id))
 		{
@@ -112,7 +112,7 @@ public:
 		ET ex, ey, ed;
 		if (gp.is_explicit())
 		{
-			return std::make_pair(gp.to_Explicit(), gp.to_Explicit());
+			return std::make_pair(gp.to_explicit(), gp.to_explicit());
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, id))
 		{
@@ -147,7 +147,7 @@ public:
 		ET ex, ey, ez, ed;
 		if (gp.is_explicit())
 		{
-			return gp.to_Explicit();
+			return gp.to_explicit();
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, iz, id))
 		{
@@ -173,7 +173,7 @@ public:
 		ET ex, ey, ez, ed;
 		if (gp.is_explicit())
 		{
-			return gp.to_Explicit();
+			return gp.to_explicit();
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, iz, id))
 		{
@@ -200,7 +200,7 @@ public:
 		ET ex, ey, ez, ed;
 		if (gp.is_explicit())
 		{
-			return std::make_pair(gp.to_Explicit(), gp.to_Explicit());
+			return std::make_pair(gp.to_explicit(), gp.to_explicit());
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, iz, id))
 		{

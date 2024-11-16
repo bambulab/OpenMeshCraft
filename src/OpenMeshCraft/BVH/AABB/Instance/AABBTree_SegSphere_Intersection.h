@@ -58,10 +58,8 @@ public:
 	using PrimT     = typename Traits::PrimT;
 	using PrimAttrT = typename Traits::PrimAttrT;
 
-	using Indices = std::vector<index_t>;
-
 public:
-	template <typename QPrimT>
+	template <typename QPrimT, typename Indices>
 	void all_intersections(const QPrimT &query, Indices &results) const
 	{
 		BoxTrav<QPrimT> box_trav(query);

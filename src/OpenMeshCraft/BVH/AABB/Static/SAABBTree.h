@@ -16,8 +16,6 @@ class SAABBTree
 public: /* Types ************************************************************/
 	/* The tratis should provide followings: */
 
-	using NT     = typename Traits::NT;
-	using PointT = typename Traits::PointT;
 	using PrimT  = typename Traits::PrimT;
 	using BboxT  = typename Traits::BboxT;
 

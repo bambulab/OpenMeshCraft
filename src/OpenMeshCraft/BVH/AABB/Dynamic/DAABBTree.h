@@ -16,10 +16,8 @@ class DAABBTree
 public: /* Types *************************************************************/
 	/* The tratis should provide followings: */
 
-	using NT        = typename Traits::NT;
-	using PointT    = typename Traits::PointT;
-	using PrimT     = typename Traits::PrimT;
-	using BboxT     = typename Traits::BboxT;
+	using PrimT = typename Traits::PrimT;
+	using BboxT = typename Traits::BboxT;
 
 	using CalcBbox   = typename Traits::CalcBbox;
 	using SplitPrims = typename Traits::SplitPrims;
@@ -43,14 +41,14 @@ public: /* Constructors and Destructors *************************************/
 	DAABBTree() {}
 
 	/// @brief Insert primitives to the tree and build.
-	template<typename PrimsIterT>
+	template <typename PrimsIterT>
 	DAABBTree(PrimsIterT first, PrimsIterT beyond);
 
 	/// @brief Insert primitives to the tree and build.
 	DAABBTree(Prims &&primitives);
 
 	/// @brief Insert primitives to the tree. Won't call build.
-	template<typename PrimsIterT>
+	template <typename PrimsIterT>
 	void insert(PrimsIterT first, PrimsIterT beyond);
 
 	/// @brief Insert primitives to the tree. Won't call build.
@@ -94,14 +92,19 @@ public: /* Interfaces ********************************************************/
 	/*** Traverse the tree ***/
 
 	template <typename TraversalTrait>
-	void traverse(TraversalTrait &trait);
+	void traverse(TraversalTrait &trait) const;
 
 public: /* Internal interfaces ***********************************************/
 	/*** Query ***/
 
-	inline NodeT   &node(index_t node_idx) { return m_nodes[node_idx]; }
-	inline PrimT   &primitive(index_t p_idx) { return m_primitives[p_idx]; }
-	inline index_t &mapto(index_t p_idx) { return m_primitive_map2_node[p_idx]; }
+	NodeT       &node(index_t node_idx) { return m_nodes[node_idx]; }
+	const NodeT &node(index_t node_idx) const { return m_nodes[node_idx]; }
+
+	PrimT       &primitive(index_t p_idx) { return m_primitives[p_idx]; }
+	const PrimT &primitive(index_t p_idx) const { return m_primitives[p_idx]; }
+
+	index_t &mapto(index_t p_idx) { return m_primitive_map2_node[p_idx]; }
+	index_t  mapto(index_t p_idx) const { return m_primitive_map2_node[p_idx]; }
 
 	/*** Help functions about building ***/
 
@@ -155,8 +158,8 @@ public: /* Internal interfaces ***********************************************/
 	void split_node(index_t node_idx, index_t subprim0_idx, index_t subprim1_idx);
 
 	/*** Help functions about traversal ***/
-	template <typename Trait>
-	bool traverse_node(Trait &trait, index_t node_idx);
+	template <typename TraversalTrait>
+	bool traverse_node(TraversalTrait &trait, index_t node_idx) const;
 
 public: /* Data **************************************************************/
 	/// Primitives stored in the tree.
