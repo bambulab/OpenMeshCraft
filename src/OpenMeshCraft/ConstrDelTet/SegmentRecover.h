@@ -69,7 +69,6 @@ public: /* Interface *********************************************************/
 	void segmentRecovery();
 
 public: /* Common operations used by recovery algorithms *********************/
-
 	/* Geometric & Topologic Operations on both TetMesh & PLC */
 
 	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
@@ -79,21 +78,19 @@ public: /* Common operations used by recovery algorithms *********************/
 	index_t newVtx(PointType new_pnt);
 
 public: /* SiHang's Recovery Algorithm ***************************************/
-
 	void segmentRecovery_SiHang();
 
 	/* sub-algorithms for segment recovery */
 
 	index_t splitMissingSegment(index_t eid);
 
-	void findReferenceEncroachingPoint(index_t eid, index_t &ref_vid,
-	                                   index_t &ref_tid) const;
+	void findReferenceEncroachingPoint(
+	  index_t eid, index_t &ref_vid, index_t &ref_tid,
+	  AuxVector64<index_t> *enc_verts = nullptr) const;
 
-	index_t splitSegment_BothAcuteVertex(index_t eid);
+	IPoint_LNC splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid);
 
-	index_t splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid);
-
-	index_t splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid);
+	IPoint_LNC splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid);
 
 	/* Low level details for edge recovery (predicates, utils, marks...) */
 
@@ -119,7 +116,6 @@ public: /* SiHang's Recovery Algorithm ***************************************/
 	IPoint_LNC lineSphereIntersection_oneAc(index_t eid, index_t ref_vid) const;
 
 public: /* Greedy Recovery Algorithm *****************************************/
-
 	void segmentRecovery_Greedy();
 
 public: /* Data **************************************************************/

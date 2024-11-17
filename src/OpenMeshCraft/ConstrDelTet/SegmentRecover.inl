@@ -43,6 +43,21 @@ void SegmentRecover<Traits>::segmentRecovery()
 #elif defined(OMC_CDT_SEG_GREEDY)
 	segmentRecovery_Greedy();
 #endif
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+	// check if all segments are recovered
+	for (index_t eid = 0; eid < plc.numEdges(); eid++)
+	{
+		const PLCEdge &e = plc.edge(eid);
+		if (!e.is_split() && e.type != PLCEdgeType::FLAT_EDGE)
+		{
+			OMC_ASSERT(tet_mesh.edgeExists(e.ep0(), e.ep1()), "Missing segment {}.",
+			           eid);
+		}
+	}
+#endif
+
+	tet_mesh.removeDeletedTets();
 }
 
 /**
@@ -137,7 +152,7 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang()
 		for (index_t eid = 0; eid < plc.numEdges(); eid++)
 		{
 			const PLCEdge &e = plc.edge(eid);
-			if (!is_valid_idx(e.child_id) && e.type != PLCEdgeType::FLAT_EDGE &&
+			if (!e.is_split() && e.type != PLCEdgeType::FLAT_EDGE &&
 			    (tet_mesh.isMarked(e.ep0(), VTX_MARK::TO_CHECK) ||
 			     tet_mesh.isMarked(e.ep1(), VTX_MARK::TO_CHECK)) &&
 			    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
@@ -158,39 +173,28 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang()
 	}
 	if (config.verbose) // output a new line
 		std::cout << std::endl;
-
-	tet_mesh.removeDeletedTets();
-
 	if (stats)
 	{ // record statistics about segment recovery
 		stats->seg_steiner = split_count;
 	}
 
-#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-	// check if all segments are recovered
-	for (index_t eid = 0; eid < plc.numEdges(); eid++)
-	{
-		const PLCEdge &e = plc.edge(eid);
-		if (!is_valid_idx(e.child_id) && e.type != PLCEdgeType::FLAT_EDGE)
-		{
-			OMC_ASSERT(tet_mesh.edgeExists(e.ep0(), e.ep1()), "Missing segment.");
-		}
-	}
-#endif
+	tet_mesh.removeDeletedTets();
 }
 
 template <typename Traits>
 index_t SegmentRecover<Traits>::splitMissingSegment(index_t eid)
 {
-	index_t new_vid  = InvalidIndex;
-	index_t curr_tet = InvalidIndex;
+	IPoint_LNC new_pnt;
+	index_t    curr_tet = InvalidIndex;
 
 	PLCEdge &edge = plc.edge(eid);
 
 	if (edge.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
+		// This split strategy is used to split segment with two acute vertices, and
+		// generating two sub-edges with type `ONE_ACUTE_VERTEX`.
 		curr_tet = TetMesh::toIdOff(tet_mesh.incTet(edge.ep0()));
-		new_vid  = splitSegment_BothAcuteVertex(eid);
+		new_pnt  = middlePoint(edge);
 	}
 	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
 	{
@@ -205,18 +209,22 @@ index_t SegmentRecover<Traits>::splitMissingSegment(index_t eid)
 		{ //  can't find the reference encroaching point due to inexact predicate.
 			// just (use BothAcute strategy to) split the segment at its middle point.
 			curr_tet = TetMesh::toIdOff(tet_mesh.incTet(edge.ep0()));
-			new_vid  = splitSegment_BothAcuteVertex(eid);
+			new_pnt  = middlePoint(edge);
 		}
 		else
 #endif
 		{
 			if (edge.type == PLCEdgeType::NO_ACUTE_VERTEX)
-				new_vid = splitSegment_NoAcuteVertex(eid, ref_vid);
+				new_pnt = splitSegment_NoAcuteVertex(eid, ref_vid);
 			else // ONE_ACUTE_VERTEX
-				new_vid = splitSegment_OneAcuteVertex(eid, ref_vid);
+				new_pnt = splitSegment_OneAcuteVertex(eid, ref_vid);
 		}
 	}
 
+	// Add the new point
+	index_t new_vid = newVtx(new_pnt);
+	// Split edge by the new point
+	plc.splitPLCEdge(eid, new_vid);
 	// insert the splitting point into the Delaunay tetrahedral mesh
 	DelTet DT(tet_mesh);
 	DT.insertVertex(new_vid, curr_tet);
@@ -236,8 +244,9 @@ index_t SegmentRecover<Traits>::splitMissingSegment(index_t eid)
  * that `v1`, `v2` and `r` define a circle with maximum radius.
  * @param eid index to the segment
  * @param ref_vid index to the reference encroaching point
- * @param ref_tid index to the tetrahedron containing the reference encroaching
- * point
+ * @param ref_tidoff index_off to the tetrahedron containing the reference
+ * encroaching point
+ * @param enc_verts indices to the encroaching points
  * @see Section 3.3 Segment recovery, in [Robust CDT].
  * @note
  * Rely on mark `TOUCHED` to avoid visiting the same tetrahedron and the
@@ -247,7 +256,8 @@ index_t SegmentRecover<Traits>::splitMissingSegment(index_t eid)
  */
 template <typename Traits>
 void SegmentRecover<Traits>::findReferenceEncroachingPoint(
-  index_t eid, index_t &ref_vid, index_t &ref_tid) const
+  index_t eid, index_t &ref_vid, index_t &ref_tidoff,
+  AuxVector64<index_t> *enc_verts) const
 {
 	AuxVector64<index_t> encroach_tets;
 	const PLCEdge       &edge = plc.edge(eid);
@@ -267,7 +277,7 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
 	const GPoint &p1    = gpnt(edge.ep1());
 	const GPoint *ref_p = nullptr;
 	ref_vid             = InvalidIndex;
-	ref_tid             = InvalidIndex;
+	ref_tidoff          = InvalidIndex;
 
 	for (index_t i = 0; i < encroach_tets.size(); i++)
 	{
@@ -287,12 +297,14 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
 			if (inSphere(p0, p1, curr_p))
 			{
 				tet_mesh.mark(vid, VTX_MARK::ENCROACHED);
+				if (enc_verts) // store the encroaching vertices if required
+					enc_verts->push_back(vid);
 				// check if it is the reference encroaching point
 				if (ref_vid == InvalidIndex || largerSphere(p0, p1, curr_p, *ref_p))
 				{
-					ref_vid = vid;
-					ref_tid = tet_idoff;
-					ref_p   = &curr_p;
+					ref_vid    = vid;
+					ref_tidoff = tet_idoff;
+					ref_p      = &curr_p;
 				}
 			}
 		}
@@ -353,28 +365,6 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
 }
 
 /**
- * @brief Split the constrained edge `eid` at the middle point.
- *
- * This split strategy is used to split segment with two acute vertices, and
- * generating two sub-edges with type `ONE_ACUTE_VERTEX`.
- *
- * @return The index to the splitting point.
- */
-template <typename Traits>
-index_t SegmentRecover<Traits>::splitSegment_BothAcuteVertex(index_t eid)
-{
-	const PLCEdge &edge    = plc.edge(eid);
-	// Get the new point
-	IPoint_LNC     new_pnt = middlePoint(edge);
-	// Add the new point
-	index_t        new_vid = newVtx(new_pnt);
-	// Split edge by the new point
-	plc.splitPLCEdge(eid, new_vid);
-
-	return new_vid;
-}
-
-/**
  * @brief Find the splitting point to split the constrained edge `eid` that has
  * no acute vertices, but do not really split the edge.
  * @param eid The constrained edge to split.
@@ -383,8 +373,9 @@ index_t SegmentRecover<Traits>::splitSegment_BothAcuteVertex(index_t eid)
  * @see The strategy is described in Section 3.3 of [Robust CDT].
  */
 template <typename Traits>
-index_t SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
+auto SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
                                                            index_t ref_vid)
+  -> IPoint_LNC
 {
 	const PLCEdge &edge = plc.edge(eid);
 
@@ -392,51 +383,42 @@ index_t SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
 	const GPoint &ep1_pnt = gpnt(edge.ep1());
 	const GPoint &ref_pnt = gpnt(ref_vid);
 
-	IPoint_LNC new_pnt;
-
 	if (isLessThanHalfDistance(ep0_pnt, ref_pnt, ep1_pnt))
 	{ // The `ref_pnt` is closer to the endpoint `ep0`, and the distance between
 		// `ref_pnt` and `ep0` is less than half the distance between `ep0` and
 		// `ep1`.
-		new_pnt = lineSphereIntersection_noAc(eid, false, ref_vid);
+		return lineSphereIntersection_noAc(eid, false, ref_vid);
 	}
 	else if (isLessThanHalfDistance(ep1_pnt, ref_pnt, ep0_pnt))
 	{ // The `ref_pnt` is closer to the endpoint `ep1`, and the distance between
 		// `ref_pnt` and `ep1` is less than half the distance between `ep0` and
 		// `ep1`.
-		new_pnt = lineSphereIntersection_noAc(eid, true, ref_vid);
+		return lineSphereIntersection_noAc(eid, true, ref_vid);
 	}
 	else
 	{ // The distances between both <`ref_pnt`, `ep0`> and <`ref_pnt`, `ep1`>
 		// are larger than half the distance between `ep0` and `ep1`.
 		// Split the segment at the middle point.
-		new_pnt = middlePoint(edge);
+		return middlePoint(edge);
 	}
-
-	// Add the new point
-	index_t new_vid = newVtx(new_pnt);
-	// Split edge by the new point
-	plc.splitPLCEdge(eid, new_vid);
-
-	return new_vid;
 }
 
 /**
- * @brief Split the constrained edge `eid` that has only one acute vertex.
+ * @brief Find the splitting point to split the constrained edge `eid` that has
+ * only one acute vertex, but do not really split the segment.
  * @param eid The constrained edge to split.
  * @param ref_vid the reference encroaching point.
  * @return the new splitting point.
  * @see The strategy is described in Section 3.3 of [Robust CDT].
  */
 template <typename Traits>
-index_t SegmentRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
+auto SegmentRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
                                                             index_t ref_vid)
+  -> IPoint_LNC
 {
 	const PLCEdge &edge = plc.edge(eid);
 
-	IPoint_LNC new_pnt;
-
-	new_pnt = lineSphereIntersection_oneAc(eid, ref_vid);
+	IPoint_LNC new_pnt = lineSphereIntersection_oneAc(eid, ref_vid);
 
 	if (isLessThanDistance(new_pnt, gpnt(edge.ep1()), gpnt(ref_vid)))
 	{ // The new point is closer to the non-acute endpoint `ep1` than the
@@ -446,12 +428,7 @@ index_t SegmentRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
 		new_pnt = middlePoint(edge);
 	}
 
-	// Add the new point
-	index_t new_vid = newVtx(new_pnt);
-	// Split edge by the new point
-	plc.splitPLCEdge(eid, new_vid);
-
-	return new_vid;
+	return new_pnt;
 }
 
 /**
@@ -618,7 +595,7 @@ SegmentRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1, index_t ep0,
 template <typename Traits>
 auto SegmentRecover<Traits>::middlePoint(const PLCEdge &e) const -> IPoint_LNC
 {
-	OMC_EXPENSIVE_ASSERT(!is_valid_idx(e.child_id), "The edge is already split.");
+	OMC_EXPENSIVE_ASSERT(!e.is_split(), "The edge is already split.");
 
 	index_t ep0 = e.ep0(), ep1 = e.ep1();
 

@@ -31,7 +31,11 @@ public: /* Constructors *******************************************************/
 	/**
 	 * @brief Construct Segment3T by default.
 	 */
-	GenericSegment3T() = delete;
+	GenericSegment3T()
+	  : m_start_gp(nullptr)
+	  , m_end_gp(nullptr)
+	{
+	}
 
 	/**
 	 * @brief Construct Segment3T from given \p start and \p end.
@@ -96,13 +100,13 @@ public: /* Operators **********************************************************/
 			IT::Protector it_protecter;
 
 			// start point
-			IT sx(-start_bound.min().x(), start_bound.max().x());
-			IT sy(-start_bound.min().y(), start_bound.max().y());
-			IT sz(-start_bound.min().z(), start_bound.max().z());
+			IT sx(-start_bound.min_bound().x(), start_bound.max_bound().x());
+			IT sy(-start_bound.min_bound().y(), start_bound.max_bound().y());
+			IT sz(-start_bound.min_bound().z(), start_bound.max_bound().z());
 			// end point
-			IT ex(-end_bound.min().x(), end_bound.max().x());
-			IT ey(-end_bound.min().y(), end_bound.max().y());
-			IT ez(-end_bound.min().z(), end_bound.max().z());
+			IT ex(-end_bound.min_bound().x(), end_bound.max_bound().x());
+			IT ey(-end_bound.min_bound().y(), end_bound.max_bound().y());
+			IT ez(-end_bound.min_bound().z(), end_bound.max_bound().z());
 			// middle point
 			IT mx = (sx + ex) * 0.5;
 			IT my = (sy + ey) * 0.5;
@@ -117,15 +121,17 @@ public: /* Operators **********************************************************/
 			IT minz = mz - radius, maxz = mz + radius;
 
 			// bounding box
-			bbox.min() = EPoint(minx.inf(), miny.inf(), minz.inf());
-			bbox.max() = EPoint(maxx.sup(), maxy.sup(), maxz.sup());
+			bbox.min_bound() = EPoint(minx.inf(), miny.inf(), minz.inf());
+			bbox.max_bound() = EPoint(maxx.sup(), maxy.sup(), maxz.sup());
 		}
 		return bbox;
 	}
+
+	BoundingBox operator()(const GPoint &gpnt) const { return CalcBbox()(gpnt); }
 };
 
 template <typename Traits>
-using CDT_SegSphereTree=
+using CDT_SegSphereTree =
   DAABBTree_SegSphere_Intersection<GenericSegment3T<Traits>,
                                    CalcBbox_SegSphere<Traits>,
                                    typename Traits::DoIntersect>;

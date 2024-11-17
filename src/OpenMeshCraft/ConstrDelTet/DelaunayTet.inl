@@ -186,7 +186,7 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 		 ori[i] = Orient3D()(mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON1(i))),
 		                     mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON2(i))),
 		                     mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON3(i))), mesh.gpnt(vid));
-		 OMC_ASSERT(ori[i] >= Sign::ZERO, "The vertex is not inside the target infinite tetrahedron.");
+		 OMC_ASSERT(ori[i] >= Sign::ZERO, "The vertex is not inside the target finite tetrahedron.");
 		}
 	}
 	else

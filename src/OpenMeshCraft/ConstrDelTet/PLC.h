@@ -80,6 +80,8 @@ public: /* Auxiliary data structures ****************************************/
 		index_t       &ep1() { return ep.second; }
 		const index_t &ep1() const { return ep.second; }
 
+		bool is_split() const { return is_valid_idx(child_id); }
+
 		bool hasEp(index_t vid) const { return ep0() == vid || ep1() == vid; }
 
 		void makeUniqEp() { ep = unique_pair(ep.first, ep.second); }
