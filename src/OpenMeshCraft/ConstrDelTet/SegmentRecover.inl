@@ -374,7 +374,7 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
-                                                           index_t ref_vid)
+                                                        index_t ref_vid)
   -> IPoint_LNC
 {
 	const PLCEdge &edge = plc.edge(eid);
@@ -413,7 +413,7 @@ auto SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
-                                                            index_t ref_vid)
+                                                         index_t ref_vid)
   -> IPoint_LNC
 {
 	const PLCEdge &edge = plc.edge(eid);
@@ -745,10 +745,14 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 	// initialize the PLC edges
 	plc.initPLCEdges();
 
+	// ===========================================================================
 	// initialize the segments' diametral sphere tree.
+	size_t non_flat_count = 0;
 	{
-		std::vector<GenericSegment3T> segments;
+		std::vector<GenericSegment> segments;
+		std::vector<index_t>        indices;
 		segments.reserve(plc.numEdges());
+		indices.reserve(plc.numEdges());
 		for (index_t eid = 0; eid < plc.numEdges(); eid++)
 		{
 			const PLCEdge &e = plc.edge(eid);
@@ -756,11 +760,280 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 			{
 				index_t ev0 = e.ep0(), ev1 = e.ep1();
 				segments.emplace_back(&gpnt(ev0), &gpnt(ev1));
+				indices.push_back(eid);
+				non_flat_count++;
 			}
 		}
-		tree.insert(std::move(segments));
+		tree.insert(segments.begin(), segments.end(), indices.begin(),
+		            indices.end());
 		tree.build();
 	}
+
+	// ===========================================================================
+	// Then a greedy strategy to split remaining missing segments.
+
+	seg_steiner_point.resize(plc.numEdges());
+	seg_queue.reserve(plc.numEdges());
+
+	size_t missing_count = 0;
+	// Initialize the segments to be split.
+	for (index_t eid = 0; eid < plc.numEdges(); eid++)
+	{
+		const PLCEdge &e = plc.edge(eid);
+
+		if (!e.is_split() && e.type != PLCEdgeType::FLAT_EDGE &&
+		    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
+		{
+			pushSegmentToQueue</*AllowUpdate*/ false>(eid);
+			missing_count++;
+			if (config.verbose && missing_count % 100 == 0)
+			{
+				std::cout << std::format("\rmissing segments count: {}", missing_count);
+			}
+		}
+	}
+	if (config.verbose) // output a new line
+		std::cout << std::endl;
+
+	size_t split_count = 0;
+	// Loop to split segments with the highest priority
+	while (!seg_queue.empty())
+	{
+		index_t eid      = seg_queue.top().first;
+		double  priority = seg_queue.top().second;
+		seg_queue.pop();
+
+		OMC_EXPENSIVE_ASSERT(plc.edge(eid).type != PLCEdgeType::FLAT_EDGE,
+		                     "Try to split flat edge.");
+		OMC_EXPENSIVE_ASSERT(!plc.edge(eid).is_split(),
+		                     "The edge is already split.");
+		// skip the recovered segment
+		if (tet_mesh.edgeExists(plc.edge(eid).ep0(), plc.edge(eid).ep1()))
+			continue;
+
+		// Get the Steiner point
+		IPoint_LNC new_pnt = seg_steiner_point[eid];
+
+		// before split, find encroached segments
+		AuxVector64<index_t> possible_enc_segs, enc_segs;
+		size_t               local_recovered_before_split = 0;
+		tree.all_intersections(new_pnt, possible_enc_segs);
+		for (index_t possible_enc_eid : possible_enc_segs)
+		{
+			if (possible_enc_eid == eid)
+				continue; // skip the split segment
+
+			const PLCEdge &possible_enc_e = plc.edge(possible_enc_eid);
+			if (!inSphere(gpnt(possible_enc_e.ep0()), gpnt(possible_enc_e.ep1()),
+			              new_pnt))
+				continue; // skip the segments that are not encroached
+
+			enc_segs.push_back(possible_enc_eid);
+			if (tet_mesh.edgeExists(possible_enc_e.ep0(), possible_enc_e.ep1()))
+				local_recovered_before_split++;
+		}
+
+		// Split the segment by the new point
+		index_t new_vid = newVtx(new_pnt);
+		plc.splitPLCEdge(eid, new_vid);
+
+		// Insert the splitting point into the Delaunay tetrahedral mesh
+		DelTet  DT(tet_mesh);
+		index_t tet = TetMesh::toIdOff(tet_mesh.incTet(plc.edge(eid).ep0()));
+		DT.insertVertex(new_vid, tet);
+		// -- Check the validity
+		OMC_EXPENSIVE_ASSERT(DT.localVerify(new_vid),
+		                     "Invalid Delaunay tetrahedralization.");
+
+		// Update related data structures
+		seg_steiner_point.emplace_back();
+		seg_steiner_point.emplace_back();
+
+		// Update the segments' diametral sphere tree
+		const PLCEdge &e     = plc.edge(eid);
+		const PLCEdge &ch_e0 = plc.edge(e.child_id);
+		const PLCEdge &ch_e1 = plc.edge(e.child_id + 1);
+		GenericSegment ch0(&gpnt(ch_e0.ep0()), &gpnt(ch_e0.ep1()));
+		GenericSegment ch1(&gpnt(ch_e1.ep0()), &gpnt(ch_e1.ep1()));
+		tree.split(eid, e.child_id, ch0, e.child_id + 1, ch1);
+
+		// Add two sub-segments to the queue
+		missing_count--; // due to the split
+		if (!tet_mesh.edgeExists(ch_e0.ep0(), ch_e0.ep1()))
+		{
+			pushSegmentToQueue</*AllowUpdate*/ false>(e.child_id);
+			missing_count++;
+		}
+		if (!tet_mesh.edgeExists(ch_e1.ep0(), ch_e1.ep1()))
+		{
+			pushSegmentToQueue</*AllowUpdate*/ false>(e.child_id + 1);
+			missing_count++;
+		}
+
+		// -------------------------------------------------------------------------
+		// The segments that are not encroached by the Steiner point
+		// remain the same recovered or missing status.
+		// But their priority (number of encroaching segments) may change due to
+		// the just added Steiner point.
+		// TODO how to update their priority?
+		// -------------------------------------------------------------------------
+		// The segments that are encroached by the Steiner point
+		// may change their status:
+		// - recovered -> missing, when all incident tetrahedra are removed.
+		// - recovered -> recovered, when at least one incident tetrahedra is kept.
+		// - missing -> missing, a missing segment will never be recovered
+		//   by adding a Steiner point to another segment.
+		// -------------------------------------------------------------------------
+
+		// Update the priority of the segments that are encroached by the split
+
+		size_t local_recovered_after_split = 0;
+		for (index_t enc_eid : enc_segs)
+		{
+			const PLCEdge &enc_e = plc.edge(enc_eid);
+			if (tet_mesh.edgeExists(enc_e.ep0(), enc_e.ep1()))
+			{
+				local_recovered_after_split++;
+				continue; // skip the recovered segments
+			}
+			// Update the priority of the segment
+			pushSegmentToQueue</*AllowUpdate*/ true>(enc_eid);
+		}
+		OMC_EXPENSIVE_ASSERT(local_recovered_before_split >=
+		                       local_recovered_after_split,
+		                     "The number of recovered segments is not correct.");
+		missing_count += local_recovered_before_split - local_recovered_after_split;
+
+		split_count++;
+		if (split_count % 5000 == 0)
+		{ // rebuild the tree for better efficiency
+			tree.collect_garbage();
+			OMC_ASSERT(tree.size() == non_flat_count + split_count,
+			           "The tree size is not correct after collecting garbage.");
+		}
+		if (config.verbose)
+		{ // report the progress
+			std::cout << std::format(
+			  "\rSplit count: {}. Missing count: {}. Priority: {}", split_count,
+			  missing_count, int(priority));
+		}
+	}
+	if (config.verbose) // just output a new line
+		std::cout << std::endl;
+	if (stats)
+	{ // record statistics about segment recovery
+		stats->seg_steiner = split_count;
+	}
+	OMC_ASSERT(missing_count == 0, "Some segments are not recovered.");
+}
+
+/**
+ * @brief Pushes a segment `eid` into the priority queue.
+ *
+ * This function calculates the Steiner point for the segment, evaluates the
+ * segment's priority, and then pushes the segment into the priority queue.
+ */
+template <typename Traits>
+template <bool AllowUpdate>
+void SegmentRecover<Traits>::pushSegmentToQueue(index_t eid)
+{
+	AuxVector64<index_t> enc_verts;
+	// Get the Steiner point to split the segment
+	seg_steiner_point[eid] = getSteinerPoint(eid, enc_verts);
+	// Evaluate the priority and push the segment into the queue
+	double priority = getSegPriority(eid, seg_steiner_point[eid], enc_verts);
+	seg_queue.push<AllowUpdate>(eid, priority);
+}
+
+/**
+ * @brief Computes the Steiner point for segment recovery in constrained
+ * Delaunay tetrahedralization.
+ * This function identifies encroaching points on a given edge and determines a
+ * Steiner point to split the segment.
+ *
+ * @param eid The index of the edge to be split.
+ * @param enc_verts A vector to store indices of encroaching vertices.
+ * @return The computed Steiner point.
+ *
+ * @note This function requires exact encroachment test.
+ * @pre The edge type must be either PLCEdgeType::NO_ACUTE_VERTEX or
+ * PLCEdgeType::ONE_ACUTE_VERTEX.
+ */
+template <typename Traits>
+auto SegmentRecover<Traits>::getSteinerPoint(index_t               eid,
+                                             AuxVector64<index_t> &enc_verts)
+  -> IPoint_LNC
+{
+	// Find encroaching points
+	index_t ref_vid, curr_tet;
+	findReferenceEncroachingPoint(eid, ref_vid, curr_tet, &enc_verts);
+
+	// Check the validity of encroaching points
+#ifdef OMC_CDT_EXACT_ENCROACH_TEST
+	OMC_EXPENSIVE_ASSERT(is_valid_idx(ref_vid),
+	                     "Could not find a valid reference encroaching point.");
+#else
+	static_assert(false, "The inexact predicate is not supported.");
+#endif
+
+	// Get the Steiner point to split the segment
+	if (plc.edge(eid).type == PLCEdgeType::BOTH_ACUTE_VERTEX)
+		return middlePoint(plc.edge(eid));
+	else if (plc.edge(eid).type == PLCEdgeType::NO_ACUTE_VERTEX)
+		return splitSegment_NoAcuteVertex(eid, ref_vid);
+	else // ONE_ACUTE_VERTEX
+		return splitSegment_OneAcuteVertex(eid, ref_vid);
+}
+
+/**
+ * @brief Calculates the priority of a segment based on the number of reduced
+ * encroaching points and encroaching segments.
+ *
+ * @param eid The index of the edge for which the priority is being calculated.
+ * @param steiner_pnt The Steiner point used in the calculation.
+ * @param enc_verts A vector of indices representing the encroaching vertices.
+ * @return The calculated priority of the segment.
+ */
+template <typename Traits>
+double SegmentRecover<Traits>::getSegPriority(
+  index_t eid, const IPoint_LNC &steiner_pnt,
+  const AuxVector64<index_t> &enc_verts) const
+{
+	const PLCEdge &e   = plc.edge(eid);
+	// Get the endpoints of the edge.
+	const GPoint  &ep0 = gpnt(e.ep0()), &ep1 = gpnt(e.ep1());
+	const GPoint  &steiner_gpnt = static_cast<const GPoint &>(steiner_pnt);
+
+	// 1. Calculate the number of reduced encroaching points
+	size_t original_enc_verts = enc_verts.size();
+
+	// Two diametral spheres defined by (ep0, steiner_pnt) and (ep1, steiner_pnt)
+	size_t enc_s0 = 0, enc_s1 = 0;
+	for (index_t vid : enc_verts)
+	{
+		const GPoint &pnt = gpnt(vid);
+		if (inSphere(ep0, steiner_gpnt, pnt))
+			enc_s0++;
+		else if (inSphere(ep1, steiner_gpnt, pnt))
+			enc_s1++;
+	}
+	size_t reduced_enc_verts = original_enc_verts - (enc_s0 + enc_s1);
+
+	// 2. Calculate the number of encroaching segments by the Steiner point
+	AuxVector64<index_t> possible_enc_segs;
+	tree.all_intersections(steiner_gpnt, possible_enc_segs);
+
+	size_t num_enc_segs = 0;
+	for (index_t possible_enc_eid : possible_enc_segs)
+	{
+		const PLCEdge &possible_enc_e = plc.edge(possible_enc_eid);
+		if (inSphere(gpnt(possible_enc_e.ep0()), gpnt(possible_enc_e.ep1()),
+		             steiner_gpnt))
+			num_enc_segs++;
+	}
+
+	double priority = 1.0 * reduced_enc_verts - 1.0 * num_enc_segs;
+	return priority;
 }
 
 } // namespace OMC

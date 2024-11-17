@@ -5,6 +5,8 @@
 #include "TetMesh.h"
 #include "Tree.h"
 
+#include "OpenMeshCraft/Utils/IndexHeap.h"
+
 namespace OMC {
 
 /**
@@ -52,7 +54,8 @@ public: /* Traits **********************************************************/
 
 	using DelTet = DelaunayTet<Traits>;
 
-	using SegSphereTree = CDT_SegSphereTree<Traits>;
+	using GenericSegment = GenericSegment3T<Traits>;
+	using SegSphereTree  = CDT_SegSphereTree<Traits>;
 
 	using PntArena = CDTPointArena<Traits>;
 
@@ -118,6 +121,20 @@ public: /* SiHang's Recovery Algorithm ***************************************/
 public: /* Greedy Recovery Algorithm *****************************************/
 	void segmentRecovery_Greedy();
 
+	/* Data structures used for greedy strategy */
+
+	/// @brief The priority queue of segments
+	using SegPriorityQueue = IndexDenseHeap<double, std::greater<double>>;
+	using SegSteinerPoint  = std::vector<IPoint_LNC>;
+
+	template <bool AllowUpdate = true>
+	void pushSegmentToQueue(index_t eid);
+
+	IPoint_LNC getSteinerPoint(index_t eid, AuxVector64<index_t> &enc_verts);
+
+	double getSegPriority(index_t eid, const IPoint_LNC &steiner_pnt,
+	                      const AuxVector64<index_t> &enc_verts) const;
+
 public: /* Data **************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
 	std::vector<GPoint *> &verts;
@@ -136,6 +153,11 @@ public: /* Data **************************************************************/
 	/// - The tree is used to quickly find encroached segments by a Steiner point.
 	/// - The tree is updated when a segment is split.
 	SegSphereTree tree;
+
+	/// The priority queue of segments to be split.
+	SegPriorityQueue seg_queue;
+	/// The Steiner point of segments to be split.
+	SegSteinerPoint  seg_steiner_point;
 
 public: /* Flags and configurations ******************************************/
 	ConstrDelTet_Config config;
