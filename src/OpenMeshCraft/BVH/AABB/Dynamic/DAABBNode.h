@@ -22,7 +22,7 @@ public: /* Constructor and Destructor **************************************/
 	  , m_parent(InvalidIndex)
 	  , m_left_child(InvalidIndex)
 	  , m_right_child(InvalidIndex)
-	  , m_split_axis(-1)
+	  , m_split_axis(InvalidIndex)
 	{
 	}
 
@@ -34,7 +34,7 @@ public: /* Constructor and Destructor **************************************/
 		m_parent        = InvalidIndex;
 		m_left_child    = InvalidIndex;
 		m_right_child   = InvalidIndex;
-		m_split_axis    = -1;
+		m_split_axis    = InvalidIndex;
 	}
 
 	bool is_leaf() const { return m_nb_primitives == 1; }
@@ -53,7 +53,7 @@ public: /* Data ************************************************************/
 	/// Index of the right child.
 	index_t m_right_child;
 	/// Split axis of the node.
-	int     m_split_axis;
+	size_t  m_split_axis;
 };
 
 } // namespace OMC

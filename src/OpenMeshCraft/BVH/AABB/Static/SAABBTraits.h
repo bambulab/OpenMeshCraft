@@ -11,19 +11,20 @@
 namespace OMC {
 
 /**
+ * @class SAABBPrimSplitPred
  * @brief Compare two primitives at specified axis.
  * @tparam PrimT primitive type.
  * @tparam PrimReferencePoint primitive reference point strategy.
  */
 template <typename PrimT, typename PrimReferencePoint>
-class AABBPrimSplitPred
+class SAABBPrimSplitPred
 {
 public: /* Constructor ****************************************************/
-	AABBPrimSplitPred()
+	SAABBPrimSplitPred()
 	  : m_split_axis(0)
 	{
 	}
-	AABBPrimSplitPred(size_t split_axis)
+	SAABBPrimSplitPred(size_t split_axis)
 	  : m_split_axis(split_axis)
 	{
 	}
@@ -42,7 +43,7 @@ private:
 };
 
 /**
- * @class AABBSplitPrimitives
+ * @class SAABBSplitPrimitives
  * @brief A class template for splitting primitives in an axis-aligned bounding
  * box (AABB).
  *
@@ -53,10 +54,10 @@ private:
  * @tparam PrimSplitPred Type of the predicate used to split the primitives.
  */
 template <typename BboxT, typename PrimSplitPred>
-class AABBSplitPrimitives
+class SAABBSplitPrimitives
 {
 public: /* Operator *******************************************************/
-	/// @brief An operator for static AABB tree, directly split the primitives.
+	/// @brief Split the primitives.
 	template <typename PrimsIter>
 	size_t operator()(PrimsIter first, PrimsIter beyond, PrimsIter &middle,
 	                  const BboxT &box)
@@ -67,25 +68,10 @@ public: /* Operator *******************************************************/
 		std::nth_element(first, middle, beyond, pred);
 		return split_axis;
 	}
-
-	/// @brief An operator for dynamic AABB tree, split the indices of primitives.
-	template <typename TreeT, typename IndicesIter>
-	size_t operator()(TreeT *tree, IndicesIter first, IndicesIter beyond,
-	                  IndicesIter &middle, const BboxT &box)
-	{
-		size_t        split_axis = box.longest_axis();
-		PrimSplitPred pred(split_axis);
-		auto          wrap_pred = [&](index_t lhs, index_t rhs)
-		{ return pred(tree->primitive(lhs), tree->primitive(rhs)); };
-
-		middle = first + (beyond - first) / 2;
-		std::nth_element(first, middle, beyond, wrap_pred);
-		return split_axis;
-	}
 };
 
 template <typename Traits>
-class AABBAutoDeduceTraits : public Traits
+class SAABBAutoDeduceTraits : public Traits
 {
 public:
 	// ========================================================================
@@ -110,12 +96,12 @@ public:
 	static_assert(std::is_same_v<BboxT, DeducedBboxT>, "Inconsistent BboxT type.");
 
 	// Primitive split predicate ----------------------------------------------
-	using DefaultSplitPred = AABBPrimSplitPred<PrimT, PrimReferencePoint>;
+	using DefaultSplitPred = SAABBPrimSplitPred<PrimT, PrimReferencePoint>;
 	GET_TYPE_OTHERWISE_DEFAULT(Traits, PrimSplitPred, DefaultSplitPred,
 	                           PrimSplitPred);
 
 	// Primitive split method -------------------------------------------------
-	using DefaultSplitPrims = AABBSplitPrimitives<BboxT, PrimSplitPred>;
+	using DefaultSplitPrims = SAABBSplitPrimitives<BboxT, PrimSplitPred>;
 	GET_TYPE_OTHERWISE_DEFAULT(Traits, SplitPrims, DefaultSplitPrims, SplitPrims);
 };
 

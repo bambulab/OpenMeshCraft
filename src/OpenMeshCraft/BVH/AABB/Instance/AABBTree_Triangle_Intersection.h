@@ -2,8 +2,8 @@
 
 #include "AABBTree_Triangle.h"
 
-#include "OpenMeshCraft/BVH/AABB/AABBTraits.h"
-#include "OpenMeshCraft/BVH/AABB/AABBTraversalTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Static/SAABBTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Static/SAABBTraversalTraits.h"
 #include "OpenMeshCraft/BVH/AABB/Static/SAABBTree.h"
 
 #include "OpenMeshCraft/Geometry/Primitives/PrimitiveWithAttribute.h"
@@ -15,7 +15,7 @@ namespace OMC {
 /***********************************************/
 
 template <typename Kernel>
-class AABBMinimumTraits_Triangle_Intersection
+class SAABBMinimumTraits_Triangle_Intersection
 {
 public:
 	/* Belows are used by AABBTree */
@@ -39,8 +39,8 @@ public:
 /****************************************************/
 
 template <typename Kernel>
-using AABBTraits_Triangle_Intersection =
-  AABBAutoDeduceTraits<AABBMinimumTraits_Triangle_Intersection<Kernel>>;
+using SAABBTraits_Triangle_Intersection =
+  SAABBAutoDeduceTraits<SAABBMinimumTraits_Triangle_Intersection<Kernel>>;
 
 /****************************************************/
 /* 4. Define the AABB Tree used for intersection.   */
@@ -48,14 +48,14 @@ using AABBTraits_Triangle_Intersection =
 
 template <typename Kernel>
 class SAABBTree_Triangle_Intersection
-  : public SAABBTree<AABBTraits_Triangle_Intersection<Kernel>>
+  : public SAABBTree<SAABBTraits_Triangle_Intersection<Kernel>>
 {
 public:
 	using K = Kernel;
 
-	using BaseT  = SAABBTree<AABBTraits_Triangle_Intersection<K>>;
+	using BaseT  = SAABBTree<SAABBTraits_Triangle_Intersection<K>>;
 	using ThisT  = SAABBTree_Triangle_Intersection<K>;
-	using Traits = AABBTraits_Triangle_Intersection<K>;
+	using Traits = SAABBTraits_Triangle_Intersection<K>;
 
 	using TriT      = typename Traits::TriT;
 	using PrimT     = typename Traits::PrimT;
@@ -86,15 +86,15 @@ protected:
 	public:
 		using QPrimT = _QPrimT;
 
-		using PrimT  = typename Traits::PrimT;
-		using BboxT  = typename Traits::BboxT;
+		using PrimT = typename Traits::PrimT;
+		using BboxT = typename Traits::BboxT;
 
 		using DoIntersect = typename K::DoIntersect;
 		using CalcBbox    = typename Traits::CalcBbox;
 	};
 
 	template <typename QPrimT>
-	using BoxTrav = AABB_BoxInterTraversal<BoxInterTraits<QPrimT>>;
+	using BoxTrav = SAABB_BoxInterTraversal<BoxInterTraits<QPrimT>>;
 };
 
 } // namespace OMC

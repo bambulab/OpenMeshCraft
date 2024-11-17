@@ -2,8 +2,8 @@
 
 #include "AABBTree_Triangle.h"
 
-#include "OpenMeshCraft/BVH/AABB/AABBTraits.h"
-#include "OpenMeshCraft/BVH/AABB/AABBTraversalTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Static/SAABBTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Static/SAABBTraversalTraits.h"
 #include "OpenMeshCraft/BVH/AABB/Static/SAABBTree.h"
 
 #include "OpenMeshCraft/BVH/KdTree/KdTraits.h"
@@ -23,7 +23,7 @@ namespace OMC {
 /* 2. Define minimum set of AABB traits
 /***********************************************/
 
-class AABBMinimumTraits_Triangle_NearestSearch
+class SAABBMinimumTraits_Triangle_NearestSearch
 {
 public:
 	/* Belows are used by AABBTree */
@@ -49,7 +49,7 @@ public:
 		{
 		}
 	};
-	using TriT = TriT_;
+	using TriT          = TriT_;
 	// Point projection
 	using ProjectPoint3 = typename APAC::FastProjectPoint3;
 #else
@@ -71,20 +71,20 @@ public:
 /* 3. Automatically deduce the complete AABB traits
 /****************************************************/
 
-using AABBTraits_Triangle_NearestSearch =
-  AABBAutoDeduceTraits<AABBMinimumTraits_Triangle_NearestSearch>;
+using SAABBTraits_Triangle_NearestSearch =
+  SAABBAutoDeduceTraits<SAABBMinimumTraits_Triangle_NearestSearch>;
 
 /****************************************************/
 /* 4. Define the AABB Tree used for nearest search.
 /****************************************************/
 
 class SAABBTree_Triangle_NearestSearch
-  : public SAABBTree<AABBTraits_Triangle_NearestSearch>
+  : public SAABBTree<SAABBTraits_Triangle_NearestSearch>
 {
 public:
-	using BaseT  = SAABBTree<AABBTraits_Triangle_NearestSearch>;
+	using BaseT  = SAABBTree<SAABBTraits_Triangle_NearestSearch>;
 	using ThisT  = SAABBTree_Triangle_NearestSearch;
-	using Traits = AABBTraits_Triangle_NearestSearch;
+	using Traits = SAABBTraits_Triangle_NearestSearch;
 
 	using NT            = typename Traits::NT;
 	using PointT        = typename Traits::PointT;
@@ -142,7 +142,7 @@ protected:
 #endif
 	};
 
-	using ProjTrav = AABB_ProjectionTraversal<ProjectionTraits>;
+	using ProjTrav = SAABB_ProjectionTraversal<ProjectionTraits>;
 };
 
 void SAABBTree_Triangle_NearestSearch::accelerate_nearest_search()

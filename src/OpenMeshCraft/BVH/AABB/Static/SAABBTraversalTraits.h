@@ -5,13 +5,13 @@
 namespace OMC {
 
 template <typename Traits>
-class AABB_TraversalTraits
+class SAABB_TraversalTraits
 {
 public: /* Types ************************************************************/
 	using PrimT = typename Traits::PrimT;
 	using BboxT = typename Traits::BboxT;
 
-	AABB_TraversalTraits() = default;
+	SAABB_TraversalTraits() = default;
 
 public: /* Interfaces *******************************************************/
 	/**
@@ -38,7 +38,7 @@ public: /* Interfaces *******************************************************/
 };
 
 template <typename Traits>
-class AABB_ProjectionTraversal : public AABB_TraversalTraits<Traits>
+class SAABB_ProjectionTraversal : public SAABB_TraversalTraits<Traits>
 {
 public: /* Types ************************************************************/
 	using NT      = typename Traits::NT;
@@ -54,14 +54,19 @@ public: /* Types ************************************************************/
 
 public: /* Constructor ******************************************************/
 	/**
-	 * @brief Constructs an AABB_ProjectionTraversal object.
+	 * @brief Constructs an SAABB_ProjectionTraversal object.
 	 *
 	 * @param query The query point used for the traversal.
 	 * @param hint A hint point to optimize the traversal.
 	 * @param hint_prim A pointer to the primitive associated with the hint point.
 	 */
-	AABB_ProjectionTraversal(const PointT &query, const PointT &hint,
-	                         PrimCPtr hint_prim);
+	SAABB_ProjectionTraversal(const PointT &query, const PointT &hint,
+	                         PrimCPtr hint_prim)
+	  : m_query_sphere(query, (query - hint).sqrnorm())
+	  , m_closest_point(hint)
+	  , m_closest_prim(hint_prim)
+	{
+	}
 
 public: /* Inherited Interfaces *********************************************/
 	/**
@@ -69,14 +74,30 @@ public: /* Inherited Interfaces *********************************************/
 	 * current closest distance, and update the closest distance if necessary.
 	 * @return always true to make the traversal continue.
 	 */
-	bool intersection(const PrimT &prim) override;
+	bool intersection(const PrimT &prim) override
+	{
+		PointT new_closest_point = m_project_point(prim, m_query_sphere.center());
+		double new_square_distance =
+		  (new_closest_point - m_query_sphere.center()).sqrnorm();
+
+		if (new_square_distance < m_query_sphere.squared_radius())
+		{
+			m_query_sphere.squared_radius() = new_square_distance;
+			m_closest_point                 = new_closest_point;
+			m_closest_prim                  = &prim;
+		}
+		return true;
+	}
 
 	/**
 	 * @brief Check if the box contains a possible closer point,
 	 * which is equivalent to check if the query sphere intersects the box.
 	 * @return true if the box contains a possible closer point.
 	 */
-	bool do_inter(const BboxT &bbox) const override;
+	bool do_inter(const BboxT &bbox) const override
+	{
+		return m_box_sphere_do_intersect(bbox, m_query_sphere);
+	}
 
 public: /* Interfaces *******************************************************/
 	/// @brief Get the closest point
@@ -100,7 +121,7 @@ private: /* Data & Predicates ***********************************************/
 
 /// @todo Add an option to find first or all intersections.
 template <typename Traits>
-class AABB_BoxInterTraversal : public AABB_TraversalTraits<Traits>
+class SAABB_BoxInterTraversal : public SAABB_TraversalTraits<Traits>
 {
 public: /* Types ************************************************************/
 	using PrimT  = typename Traits::PrimT;
@@ -115,10 +136,14 @@ public: /* Types ************************************************************/
 
 public: /* Constructor ******************************************************/
 	/**
-	 * @brief Construct an AABB_BoxInterTraversal object.
+	 * @brief Construct an SAABB_BoxInterTraversal object.
 	 * @param query The query primitive.
 	 */
-	AABB_BoxInterTraversal(const QPrimT &query);
+	SAABB_BoxInterTraversal(const QPrimT &query)
+	  : m_query(query)
+	{
+		m_box_of_query = m_calc_bbox(m_query);
+	}
 
 public: /* Inherited Interfaces *********************************************/
 	/**
@@ -126,14 +151,21 @@ public: /* Inherited Interfaces *********************************************/
 	 * intersects the query box.
 	 * @return always true to make the traversal continue.
 	 */
-	bool intersection(const PrimT &prim) override;
+	bool intersection(const PrimT &prim) override
+	{
+		m_intersected_prims.push_back(&prim);
+		return true;
+	}
 
 	/**
 	 * @brief Check if the bounding box of the given primitive intersects with the
 	 * query box.
 	 * @return true if they intersect.
 	 */
-	bool do_inter(const BboxT &bbox) const override;
+	bool do_inter(const BboxT &bbox) const override
+	{
+		return m_do_intersect(bbox, m_box_of_query);
+	}
 
 public: /* Interfaces ********************************************************/
 	/// @brief Get all (bbox-)intersected primitives
@@ -151,7 +183,7 @@ private: /* Data & Predicates ************************************************/
 
 /// @todo Add an option to find first or all intersections.
 template <typename Traits>
-class AABB_PrimInterTraversal
+class SAABB_PrimInterTraversal
 {
 public: /* Types ************************************************************/
 	using PrimT  = typename Traits::PrimT;
@@ -165,7 +197,15 @@ public: /* Types ************************************************************/
 	using PrimCPtrs = std::vector<PrimCPtr>;
 
 public: /* Constructor ******************************************************/
-	AABB_PrimInterTraversal(const QPrimT &query);
+	/**
+	 * @brief Construct an SAABB_PrimInterTraversal object.
+	 * @param query The query primitive.
+	 */
+	SAABB_PrimInterTraversal(const QPrimT &query)
+	  : m_query(query)
+	{
+		m_box_of_query = m_calc_bbox(m_query);
+	}
 
 public: /* Inherited Interfaces *********************************************/
 	/**
@@ -173,14 +213,25 @@ public: /* Inherited Interfaces *********************************************/
 	 * Save the primitive into results if they intersect.
 	 * @return always true to make the traversal continue.
 	 */
-	bool intersection(const PrimT &prim) override;
+	bool intersection(const PrimT &prim) override
+	{
+		if (m_do_intersect(m_box_of_query, prim))
+		{
+			if (m_do_intersect(m_query, prim))
+				m_intersected_prims.push_back(&prim);
+		}
+		return true;
+	}
 
 	/**
 	 * @brief Check if the bounding box of the given primitive intersects with the
 	 * query box.
 	 * @return true if they intersect.
 	 */
-	bool do_inter(const BboxT &bbox) const override;
+	bool do_inter(const BboxT &bbox) const override
+	{
+		return m_do_intersect(bbox, m_box_of_query);
+	}
 
 public: /* Interfaces *******************************************************/
 	/// @brief Get all intersected primitives
@@ -197,7 +248,3 @@ private: /* Data & Predicates ***********************************************/
 };
 
 } // namespace OMC
-
-#ifdef OMC_HAS_IMPL
-	#include "AABBTraversalTraits.inl"
-#endif

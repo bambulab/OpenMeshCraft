@@ -1,9 +1,9 @@
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
 
-#include "OpenMeshCraft/BVH/AABB/AABBTraits.h"
-#include "OpenMeshCraft/BVH/AABB/AABBTraversalTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTraversalTraits.h"
 #include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTree.h"
-#include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_Triangle_Intersection.h"
+#include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_SegSphere_Intersection.h"
 
 #include "OpenMeshCraft/Utils/Macros.h"
 
@@ -15,8 +15,9 @@ protected:
 	using index_t = OMC::index_t;
 	using APAC    = OMC::APAC;
 
-	using Tree = OMC::DAABBTree<OMC::AABBTraits_Triangle_Intersection<APAC>>;
-	using IndexedTriangle = OMC::PrimitiveWithAttribute<APAC::Triangle3, size_t>;
+	using Tree    = OMC::DAABBTree<OMC::DAABBTraits_SegSphere_Intersection<
+	     APAC::Segment3, APAC::CalcBoundingBox3>>;
+	using Segment = APAC::Segment3;
 
 protected:
 	TriPoints points;
@@ -43,45 +44,45 @@ TEST_F(test_DynamicAABBTree, Construct)
 	Tree tree;
 
 	// construct an initial tree.
-	std::vector<IndexedTriangle> triangles;
-	index_t                      idx = 0;
-	size_t                       n   = faces.size();
+	std::vector<Segment> segments;
+	std::vector<index_t> indices;
+	index_t              idx = 0;
+	size_t               n   = faces.size();
 
 	for (size_t i = 0; i < n / 2; i++)
 	{
 		const auto &f = faces[i];
-		triangles.push_back(IndexedTriangle(
-		  APAC::Triangle3(points[f[0]], points[f[1]], points[f[2]]), idx++));
+		segments.push_back(Segment(points[f[0]], points[f[1]]));
+		indices.push_back(idx++);
 	}
 
-	tree.insert(std::move(triangles));
+	tree.insert(segments.begin(), segments.end(), indices.begin(), indices.end());
 	tree.build();
 
 	// insert the remaining faces
 	for (size_t i = n / 2; i < n; i++)
 	{
 		const auto &f = faces[i];
-		tree.insert(IndexedTriangle(
-		  APAC::Triangle3(points[f[0]], points[f[1]], points[f[2]]), idx++));
+		tree.insert(Segment(points[f[0]], points[f[1]]), idx++);
 	}
-	tree.rebuild();
+	tree.build();
 
 	// delete some faces
-	for (size_t i = n / 2; i < n; i++)
+	for (size_t i = 1; i < n; i += 2)
 	{
 		tree.remove(i);
 	}
-	tree.rebuild();
+	tree.collect_garbage();
 
 	// split some faces
-	for (size_t i = 0; i < n / 2; i++)
+	for (size_t i = 0; i < n; i += 2)
 	{
 		const auto &f         = faces[i];
 		const auto  mid_point = (points[f[0]] + points[f[1]]) * 0.5;
-		const auto  tri0 = APAC::Triangle3(points[f[0]], mid_point, points[f[2]]);
-		const auto  tri1 = APAC::Triangle3(mid_point, points[f[1]], points[f[2]]);
+		const auto  seg0      = Segment(points[f[0]], mid_point);
+		const auto  seg1      = Segment(mid_point, points[f[1]]);
 
-		tree.split(i, IndexedTriangle(tri0, idx++), IndexedTriangle(tri1, idx++));
+		tree.split(i, idx++, seg0, idx++, seg1);
 	}
-	tree.rebuild();
+	tree.build();
 }

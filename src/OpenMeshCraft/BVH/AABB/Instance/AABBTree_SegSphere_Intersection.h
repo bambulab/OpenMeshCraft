@@ -2,8 +2,8 @@
 
 #include "AABBTree_Segment.h"
 
-#include "OpenMeshCraft/BVH/AABB/AABBTraits.h"
-#include "OpenMeshCraft/BVH/AABB/AABBTraversalTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTraits.h"
+#include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTraversalTraits.h"
 #include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTree.h"
 
 #include "OpenMeshCraft/Geometry/Primitives/PrimitiveWithAttribute.h"
@@ -15,18 +15,18 @@ namespace OMC {
 /***********************************************/
 
 template <typename _SegmentT, typename _CalcBbox>
-class AABBMinimumTraits_SegSphere_Intersection
+class DAABBMinimumTraits_SegSphere_Intersection
 {
 public:
 	/* Belows are used by AABBTree */
 
+	// Primitive type
 	using SegmentT = _SegmentT;
+	using PrimT    = SegmentT;
+
+	// Calculate bounding box
 	using CalcBbox = _CalcBbox;
 
-	// Attribute type
-	using PrimAttrT = index_t;
-	// Primitive type
-	using PrimT     = PrimitiveWithAttribute<SegmentT, PrimAttrT>;
 	// Primitive reference point
 	using PrimReferencePoint =
 	  AABB_Seg_ReferencePoint<PrimT, AABB_Seg_ReferencePointType::Centroid>;
@@ -37,8 +37,8 @@ public:
 /****************************************************/
 
 template <typename _SegmentT, typename _CalcBbox>
-using AABBTraits_SegSphere_Intersection = AABBAutoDeduceTraits<
-  AABBMinimumTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>>;
+using DAABBTraits_SegSphere_Intersection = DAABBAutoDeduceTraits<
+  DAABBMinimumTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>>;
 
 /****************************************************/
 /* 4. Define the AABB Tree used for intersection.   */
@@ -46,17 +46,15 @@ using AABBTraits_SegSphere_Intersection = AABBAutoDeduceTraits<
 
 template <typename _SegmentT, typename _CalcBbox, typename _DoIntersect>
 class DAABBTree_SegSphere_Intersection
-  : public DAABBTree<AABBTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>>
+  : public DAABBTree<DAABBTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>>
 {
 public:
-	using Traits = AABBTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>;
+	using Traits = DAABBTraits_SegSphere_Intersection<_SegmentT, _CalcBbox>;
 	using BaseT  = DAABBTree<Traits>;
 	using ThisT =
 	  DAABBTree_SegSphere_Intersection<_SegmentT, _CalcBbox, _DoIntersect>;
 
-	using SegmentT  = typename Traits::SegmentT;
-	using PrimT     = typename Traits::PrimT;
-	using PrimAttrT = typename Traits::PrimAttrT;
+	using PrimT = typename Traits::PrimT;
 
 public:
 	template <typename QPrimT, typename Indices>
@@ -65,10 +63,8 @@ public:
 		BoxTrav<QPrimT> box_trav(query);
 		this->traverse(box_trav);
 
-		auto &prim_ptrs = box_trav.result();
-		results.reserve(prim_ptrs.size());
-		for (auto pp : prim_ptrs)
-			results.push_back(pp->attribute());
+		const typename BoxTrav<QPrimT>::Indices &prim_ids = box_trav.result();
+		results.insert(results.end(), prim_ids.begin(), prim_ids.end());
 	}
 
 	const typename BaseT::BboxT &get_Bbox(const index_t i) const
@@ -91,7 +87,7 @@ protected:
 	};
 
 	template <typename QPrimT>
-	using BoxTrav = AABB_BoxInterTraversal<BoxInterTraits<QPrimT>>;
+	using BoxTrav = DAABB_BoxInterTraversal<BoxInterTraits<QPrimT>>;
 };
 
 } // namespace OMC

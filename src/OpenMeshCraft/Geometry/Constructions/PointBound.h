@@ -65,6 +65,7 @@ public:
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, id))
 		{
+			typename IT::Protector _;
 			IT x = ix / id, y = iy / id;
 			return EP(x.inf(), y.inf());
 		}
@@ -90,6 +91,7 @@ public:
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, id))
 		{
+			typename IT::Protector _;
 			IT x = ix / id, y = iy / id;
 			return EP(x.sup(), y.sup());
 		}
@@ -116,6 +118,7 @@ public:
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, id))
 		{
+			typename IT::Protector _;
 			IT x = ix / id, y = iy / id;
 			return std::make_pair(EP(x.inf(), y.inf()), EP(x.sup(), y.sup()));
 		}
@@ -151,6 +154,7 @@ public:
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, iz, id))
 		{
+			typename IT::Protector _;
 			IT x = ix / id, y = iy / id, z = iz / id;
 			return EP(x.inf(), y.inf(), z.inf());
 		}
@@ -177,6 +181,7 @@ public:
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, iz, id))
 		{
+			typename IT::Protector _;
 			IT x = ix / id, y = iy / id, z = iz / id;
 			return EP(x.sup(), y.sup(), z.sup());
 		}
@@ -204,6 +209,7 @@ public:
 		}
 		else if (!apap && gp.getIntervalLambda(ix, iy, iz, id))
 		{
+			typename IT::Protector _;
 			IT x = ix / id, y = iy / id, z = iz / id;
 			return std::make_pair(EP(x.inf(), y.inf(), z.inf()),
 			                      EP(x.sup(), y.sup(), z.sup()));
