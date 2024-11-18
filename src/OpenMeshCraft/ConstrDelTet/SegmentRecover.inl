@@ -807,16 +807,15 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 		                     "Try to split flat edge.");
 		OMC_EXPENSIVE_ASSERT(!plc.edge(eid).is_split(),
 		                     "The edge is already split.");
-		// skip the recovered segment
+		// Skip the recovered segment
 		if (tet_mesh.edgeExists(plc.edge(eid).ep0(), plc.edge(eid).ep1()))
 			continue;
 
 		// Get the Steiner point
 		IPoint_LNC new_pnt = seg_steiner_point[eid];
 
-		// before split, find encroached segments
+		// Before split, find encroached segments
 		AuxVector64<index_t> possible_enc_segs, enc_segs;
-		size_t               local_recovered_before_split = 0;
 		tree.all_intersections(new_pnt, possible_enc_segs);
 		for (index_t possible_enc_eid : possible_enc_segs)
 		{
@@ -829,8 +828,6 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 				continue; // skip the segments that are not encroached
 
 			enc_segs.push_back(possible_enc_eid);
-			if (tet_mesh.edgeExists(possible_enc_e.ep0(), possible_enc_e.ep1()))
-				local_recovered_before_split++;
 		}
 
 		// Split the segment by the new point
@@ -840,7 +837,17 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 		// Insert the splitting point into the Delaunay tetrahedral mesh
 		DelTet  DT(tet_mesh);
 		index_t tet = TetMesh::toIdOff(tet_mesh.incTet(plc.edge(eid).ep0()));
-		DT.insertVertex(new_vid, tet);
+		// -- Walk and find the cavity
+		AuxVector64<index_t> cavity_tets;
+		AuxVector64<index_t> cavity_corners;
+		DT.walk(new_vid, tet);
+		DT.cavity(new_vid, tet, cavity_tets, cavity_corners);
+		// -- Find missing segments in the cavity (inner edges of the cavity)
+		//    (they may not be encroached by the Steiner point)
+		AuxVector64<index_t> cavity_missing_segs;
+		missingSegmentsInCavity(cavity_tets, cavity_corners, cavity_missing_segs);
+		// -- Fill the cavity
+		DT.filling(new_vid, cavity_corners);
 		// -- Check the validity
 		OMC_EXPENSIVE_ASSERT(DT.localVerify(new_vid),
 		                     "Invalid Delaunay tetrahedralization.");
@@ -869,13 +876,13 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 			pushSegmentToQueue</*AllowUpdate*/ false>(e.child_id + 1);
 			missing_count++;
 		}
+		missing_count += cavity_missing_segs.size();
 
 		// -------------------------------------------------------------------------
 		// The segments that are not encroached by the Steiner point
-		// remain the same recovered or missing status.
-		// But their priority (number of encroaching segments) may change due to
-		// the just added Steiner point.
-		// TODO how to update their priority?
+		// may change their status:
+		// - missing -> missing and recovered -> recovered.
+		// - recovered -> missing, when all incident tetrahedra are removed.
 		// -------------------------------------------------------------------------
 		// The segments that are encroached by the Steiner point
 		// may change their status:
@@ -886,23 +893,23 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 		// -------------------------------------------------------------------------
 
 		// Update the priority of the segments that are encroached by the split
+		AuxVector64<index_t> segs_to_update;
+		segs_to_update.insert(segs_to_update.end(), enc_segs.begin(),
+		                      enc_segs.end());
+		segs_to_update.insert(segs_to_update.end(), cavity_missing_segs.begin(),
+		                      cavity_missing_segs.end());
+		segs_to_update.erase(
+		  std::unique(segs_to_update.begin(), segs_to_update.end()),
+		  segs_to_update.end());
 
-		size_t local_recovered_after_split = 0;
-		for (index_t enc_eid : enc_segs)
+		for (index_t eid_to_update : segs_to_update)
 		{
-			const PLCEdge &enc_e = plc.edge(enc_eid);
+			const PLCEdge &enc_e = plc.edge(eid_to_update);
 			if (tet_mesh.edgeExists(enc_e.ep0(), enc_e.ep1()))
-			{
-				local_recovered_after_split++;
 				continue; // skip the recovered segments
-			}
 			// Update the priority of the segment
-			pushSegmentToQueue</*AllowUpdate*/ true>(enc_eid);
+			pushSegmentToQueue</*AllowUpdate*/ true>(eid_to_update);
 		}
-		OMC_EXPENSIVE_ASSERT(local_recovered_before_split >=
-		                       local_recovered_after_split,
-		                     "The number of recovered segments is not correct.");
-		missing_count += local_recovered_before_split - local_recovered_after_split;
 
 		split_count++;
 		if (split_count % 5000 == 0)
@@ -1032,8 +1039,56 @@ double SegmentRecover<Traits>::getSegPriority(
 			num_enc_segs++;
 	}
 
-	double priority = 1.0 * reduced_enc_verts - 1.0 * num_enc_segs;
+	double priority = 1.0 * reduced_enc_verts - 0.1 * num_enc_segs;
 	return priority;
+}
+
+template <typename Traits>
+void SegmentRecover<Traits>::missingSegmentsInCavity(
+  const AuxVector64<index_t> &cavity_tets,
+  const AuxVector64<index_t> &cavity_corners,
+  AuxVector64<index_t>       &missing_segs)
+{
+	// collect edges of cavity
+	boost::container::flat_set<UIPair> cavity_edges;
+	for (index_t tet_idoff : cavity_tets)
+	{
+		for (index_t i = 0; i < 3; i++)
+		{
+			index_t vi = tet_mesh.tetNode(tet_idoff + i);
+			for (index_t j = i + 1; j < 4; j++)
+			{
+				index_t vj = tet_mesh.tetNode(tet_idoff + j);
+				cavity_edges.insert(unique_pair(vi, vj));
+			}
+		}
+	}
+	// collect boundary edges of cavity
+	boost::container::flat_set<UIPair> cavity_boundary_edges;
+	for (index_t idoff : cavity_corners)
+	{
+		index_t id = TetMesh::clipId(idoff);
+		index_t v1 = tet_mesh.tetNode(id + TetMesh::tetNi(idoff, 1)),
+		        v2 = tet_mesh.tetNode(id + TetMesh::tetNi(idoff, 2)),
+		        v3 = tet_mesh.tetNode(id + TetMesh::tetNi(idoff, 3));
+		cavity_boundary_edges.insert(unique_pair(v1, v2));
+		cavity_boundary_edges.insert(unique_pair(v2, v3));
+		cavity_boundary_edges.insert(unique_pair(v3, v1));
+	}
+	// get inner edges of the cavity
+	AuxVector64<UIPair> cavity_inner_edges;
+	std::set_difference(
+	  cavity_edges.begin(), cavity_edges.end(), cavity_boundary_edges.begin(),
+	  cavity_boundary_edges.end(),
+	  std::inserter(cavity_inner_edges, cavity_inner_edges.end()));
+	// find missing segments in the cavity
+	for (const UIPair &edge : cavity_inner_edges)
+	{
+		index_t vi = edge.first, vj = edge.second;
+		index_t inner_eid = plc.edgeExists(vi, vj);
+		if (is_valid_idx(inner_eid))
+			missing_segs.push_back(inner_eid);
+	}
 }
 
 } // namespace OMC

@@ -161,6 +161,8 @@ public: /* Interfaces ******************************************************/
 
 	void classifyVertEdge();
 
+	void initVertIncEdge();
+
 	/* Sub-parts of initializing PLC faces **********************************/
 
 	void initSubEdges();
@@ -214,7 +216,14 @@ public: /* Interfaces ******************************************************/
 	size_t numEdgeIncTri(index_t eid) const { return edge_inc_tri[eid].size(); }
 	/// Get the `j`-th incident triangle to the edge.
 	index_t edgeIncTri(index_t eid, index_t j) { return edge_inc_tri[eid][j]; }
+
+	/// Number of incident edges to the vertex
+	size_t numVertIncEdge(index_t vid) const { return vertex_inc_edge[vid].size(); }
+	/// Get the `j`-th incident edge to the vertex
+	index_t vertIncEdge(index_t vid, index_t j) const { return vertex_inc_edge[vid][j]; }
 	// clang-format on
+
+	index_t edgeExists(index_t e0, index_t e1) const;
 
 	/* Query auxiliary data of a PLC face */
 
@@ -246,6 +255,9 @@ public: /* Data ************************************************************/
 
 	/// The initial number of PLC edges.
 	size_t init_npe;
+
+	/// Edges incident to each vertex.
+	std::vector<AuxVector2<index_t>> vertex_inc_edge;
 
 	/// Triangles incident to each edge.
 	/// We only store incident triangles for original input edges, not for

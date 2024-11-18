@@ -56,6 +56,16 @@ public: /* Algorithm *******************************************************/
 	/* Insert a vertex into the Delaunay tetrahedralization */
 	void insertVertex(const index_t vid, index_t &tet);
 
+	/* Sub-steps of inserting a vertex */
+
+	void walk(const index_t vid, index_t &tet);
+
+	void cavity(const index_t vid, const index_t tet,
+	            AuxVector64<index_t> &cavity_tets,
+	            AuxVector64<index_t> &cavity_corners);
+
+	void filling(const index_t vid, const AuxVector64<index_t> &cavity_corners);
+
 public: /* Checks **********************************************************/
 	/* Verify the correctness of the Delaunay tetrahedralization */
 	bool verify() const;

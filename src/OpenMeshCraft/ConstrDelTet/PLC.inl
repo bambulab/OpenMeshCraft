@@ -76,6 +76,9 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 
 	// (2) classify vertices and edges
 	classifyVertEdge();
+
+	// (3) initialize vertex incident edges
+	initVertIncEdge();
 }
 
 /**
@@ -269,6 +272,21 @@ void PiecewiseLinearComplex<Traits>::classifyVertEdge()
 				e.swapEp();
 			}
 			e.acute_vid = e.ep0();
+		}
+	}
+}
+
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::initVertIncEdge()
+{
+	vertex_inc_edge.resize(input_nv);
+	for (index_t eid = 0; eid < numEdges(); eid++)
+	{
+		PLCEdge &e = edge(eid);
+		if (e.type != PLCEdgeType::FLAT_EDGE)
+		{
+			vertex_inc_edge[e.ep0()].push_back(eid);
+			vertex_inc_edge[e.ep1()].push_back(eid);
 		}
 	}
 }
@@ -918,7 +936,47 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 		plc_edges.emplace_back(new_type, vid, ep1, ancestor_id,
 		                       /*child_id*/ InvalidIndex, acute_vid);
 	}
-	edge(eid).child_id = plc_edges.size() - 2;
+	index_t child_id   = plc_edges.size() - 2;
+	edge(eid).child_id = child_id;
+
+	// remove original edge from two endpoints' incident edges
+	*std::find(vertex_inc_edge[ep0].begin(), vertex_inc_edge[ep0].end(), eid) =
+	  vertex_inc_edge[ep0].back();
+	*std::find(vertex_inc_edge[ep1].begin(), vertex_inc_edge[ep1].end(), eid) =
+	  vertex_inc_edge[ep1].back();
+	vertex_inc_edge[ep0].pop_back();
+	vertex_inc_edge[ep1].pop_back();
+	// add two new edges to three endpoints' incident edges
+	OMC_EXPENSIVE_ASSERT(vertex_inc_edge.size() == vid, "size mismatch.");
+	vertex_inc_edge.emplace_back();
+	vertex_inc_edge[ep0].push_back(child_id);
+	vertex_inc_edge[vid].push_back(child_id);
+	vertex_inc_edge[vid].push_back(child_id + 1);
+	vertex_inc_edge[ep1].push_back(child_id + 1);
+}
+
+/**
+ * @brief Checks if an edge exists between two vertices in the Piecewise Linear
+ * Complex (PLC).
+ *
+ * @param e0 The index of the first vertex.
+ * @param e1 The index of the second vertex.
+ * @return The index of the edge connecting `e0` and `e1` if it exists,
+ * otherwise returns `InvalidIndex`.
+ */
+template <typename Traits>
+index_t PiecewiseLinearComplex<Traits>::edgeExists(index_t e0, index_t e1) const
+{
+	// This function iterates through all edges incident to the vertex `e0` and
+	// checks if any of these edges connect to the vertex `e1`.
+	// If such an edge is found, its index is returned.
+	for (index_t eid : vertex_inc_edge[e0])
+	{
+		const PLCEdge &e = edge(eid);
+		if (e.ep1() == e1 || e.ep0() == e1)
+			return eid;
+	}
+	return InvalidIndex;
 }
 
 /**
@@ -930,9 +988,10 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
  * @return the bounding edge (PLCEdge).
  */
 template <typename Traits>
-auto PiecewiseLinearComplex<Traits>::boundingEdge(
-  const PLCFace &f, index_t eid, index_t *tid,
-  bool *reversed) const -> const PLCEdge &
+auto PiecewiseLinearComplex<Traits>::boundingEdge(const PLCFace &f, index_t eid,
+                                                  index_t *tid,
+                                                  bool    *reversed) const
+  -> const PLCEdge &
 {
 	OMC_EXPENSIVE_ASSERT(!f.bounding_edges.empty(), "empty bounding edges.");
 

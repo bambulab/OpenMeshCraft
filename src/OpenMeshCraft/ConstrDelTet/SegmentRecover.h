@@ -66,7 +66,6 @@ public: /* Constructor & Destructor ******************************************/
 	               ConstrDelTet_Stats *_stats = nullptr);
 
 public: /* Interface *********************************************************/
-
 	/* Recover constrained segments */
 
 	void segmentRecovery();
@@ -134,6 +133,12 @@ public: /* Greedy Recovery Algorithm *****************************************/
 
 	double getSegPriority(index_t eid, const IPoint_LNC &steiner_pnt,
 	                      const AuxVector64<index_t> &enc_verts) const;
+
+	/* Help functions used for greedy strategy */
+
+	void missingSegmentsInCavity(const AuxVector64<index_t> &cavity_tets,
+	                             const AuxVector64<index_t> &cavity_corners,
+	                             AuxVector64<index_t>       &missing_segs);
 
 public: /* Data **************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)

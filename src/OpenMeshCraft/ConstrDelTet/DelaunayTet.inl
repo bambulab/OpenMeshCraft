@@ -118,6 +118,32 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
 template <typename Traits>
 void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 {
+	AuxVector64<index_t> cavity_tets;
+	AuxVector64<index_t> cavity_corners;
+
+	walk(vid, tet);
+	cavity(vid, tet, cavity_tets, cavity_corners);
+	filling(vid, cavity_corners);
+
+	tet = mesh.tetNeigh(cavity_corners.back());
+}
+
+/**
+ * @brief Walks through the tetrahedral mesh to find the tetrahedron containing
+ * the given vertex.
+ *
+ * This function traverses the tetrahedral mesh starting from the given
+ * tetrahedron index `tet` to locate the tetrahedron that contains the vertex
+ * identified by `vid`. The traversal is performed step by step, guided by the
+ * orientation of `vid` with respect to the current tetrahedron's faces.
+ *
+ * @param vid The index of the vertex to locate within the mesh.
+ * @param tet The idoff of the starting tetrahedron. This parameter is updated
+ * to the index of the tetrahedron containing `vid` upon completion.
+ */
+template <typename Traits>
+void DelaunayTet<Traits>::walk(const index_t vid, index_t &tet)
+{
 	// ==========================================================================
 	// Step 1: Walking
 	// Traverse the tetrahedral mesh from `tet` to the tetrahedron containing
@@ -203,15 +229,29 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 	           "The vertex is not inside the target tetrahedron's circumsphere.");
 	// clang-format on
 #endif
+}
 
-	// ==========================================================================
-	// Step 2: Cavity
-	// Gather all tetrahedra whose circumsphere contains `v_id` and remove them
-	// to create a cavity.
-
-	AuxVector64<index_t> cavity_tets;
-	AuxVector64<index_t> cavity_corners;
-
+/**
+ * @brief Computes the cavity of a vertex in a Delaunay tetrahedralization.
+ *
+ * This function identifies and processes the cavity formed by the insertion of
+ * a vertex into a Delaunay tetrahedralization. The cavity is the set of
+ * tetrahedra whose circumspheres contain the vertex. These tetrahedra are
+ * marked as deleted, and their neighbors are checked to determine if they also
+ * belong to the cavity or form its boundary.
+ *
+ * @param vid The index of the vertex being inserted.
+ * @param tet The idoff of the tetrahedron containing the vertex.
+ * @param cavity_tets A vector to store the idoffs of the tetrahedra in the
+ * cavity.
+ * @param cavity_corners A vector to store the idoff of the opposite node to the
+ * boundary faces of the cavity.
+ */
+template <typename Traits>
+void DelaunayTet<Traits>::cavity(const index_t vid, const index_t tet,
+                                 AuxVector64<index_t> &cavity_tets,
+                                 AuxVector64<index_t> &cavity_corners)
+{
 	mesh.markTetAsDeleted(tet);
 	cavity_tets.push_back(TetMesh::clipId(tet));
 
@@ -281,7 +321,27 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 		           "Coincident vertices.");
 	}
 #endif
+}
 
+/**
+ * @brief Fills the cavity by connecting a vertex to the cavity's boundary and
+ * establishes correct neighbor and incident relationships.
+ *
+ * This function performs the third step of the Delaunay tetrahedralization
+ * process, which involves filling the cavity created by removing tetrahedra
+ * that do not conform to the Delaunay condition. It connects the given vertex
+ * to the boundary of the cavity and updates the mesh with new tetrahedra.
+ *
+ * @param vid The index of the vertex to be connected to the cavity's boundary.
+ * @param cavity_tets A vector containing the idoffs of the tetrahedra in the
+ * cavity.
+ * @param cavity_corners A vector to store the idoff of the opposite node to the
+ * boundary faces of the cavity.
+ */
+template <typename Traits>
+void DelaunayTet<Traits>::filling(const index_t               vid,
+                                  const AuxVector64<index_t> &cavity_corners)
+{
 	// ==========================================================================
 	// Step 3: Filling
 	// Fill the cavity by connecting `v_id` to the cavity's boundary and establish
@@ -401,8 +461,6 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 		if (mesh.tetNeigh(o + 3) == InvalidIndex)
 			seekAndSetMutualAdjacency(3, 1, 2, c, o);
 	}
-
-	tet = mesh.tetNeigh(cavity_corners.back());
 }
 
 template <typename Traits>
