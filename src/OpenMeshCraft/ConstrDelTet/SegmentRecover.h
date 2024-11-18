@@ -140,6 +140,13 @@ public: /* Greedy Recovery Algorithm *****************************************/
 	                             const AuxVector64<index_t> &cavity_corners,
 	                             AuxVector64<index_t>       &missing_segs);
 
+	IPoint_LNC
+	reduceMostEncroachingPoints(index_t                     eid,
+	                            const AuxVector64<index_t> &enc_verts) const;
+
+	static double linePlaneIntersection(const Vec3 &e0, const Vec3 &e1,
+	                                    const Vec3 &p, const Vec3 &n);
+
 public: /* Data **************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
 	std::vector<GPoint *> &verts;

@@ -795,7 +795,7 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 	if (config.verbose) // output a new line
 		std::cout << std::endl;
 
-	size_t split_count = 0;
+	size_t  split_count = 0;
 	// Loop to split segments with the highest priority
 	while (!seg_queue.empty())
 	{
@@ -976,13 +976,9 @@ auto SegmentRecover<Traits>::getSteinerPoint(index_t               eid,
 	findReferenceEncroachingPoint(eid, ref_vid, curr_tet, &enc_verts);
 
 	// Check the validity of encroaching points
-#ifdef OMC_CDT_EXACT_ENCROACH_TEST
-	OMC_EXPENSIVE_ASSERT(is_valid_idx(ref_vid),
-	                     "Could not find a valid reference encroaching point.");
-#else
-	static_assert(false, "The inexact predicate is not supported.");
-#endif
+	OMC_EXPENSIVE_ASSERT(!enc_verts.empty(), "Empty encroaching points.");
 
+#if 0   // SiHang's strategy
 	// Get the Steiner point to split the segment
 	if (plc.edge(eid).type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 		return middlePoint(plc.edge(eid));
@@ -990,6 +986,11 @@ auto SegmentRecover<Traits>::getSteinerPoint(index_t               eid,
 		return splitSegment_NoAcuteVertex(eid, ref_vid);
 	else // ONE_ACUTE_VERTEX
 		return splitSegment_OneAcuteVertex(eid, ref_vid);
+#elif 0 // simple middle point strategy
+	return middlePoint(plc.edge(eid));
+#elif 1
+	return reduceMostEncroachingPoints(eid, enc_verts);
+#endif
 }
 
 /**
@@ -1089,6 +1090,126 @@ void SegmentRecover<Traits>::missingSegmentsInCavity(
 		if (is_valid_idx(inner_eid))
 			missing_segs.push_back(inner_eid);
 	}
+}
+
+template <typename Traits>
+auto SegmentRecover<Traits>::reduceMostEncroachingPoints(
+  index_t eid, const AuxVector64<index_t> &enc_verts) const -> IPoint_LNC
+{
+	const PLCEdge &e   = plc.edge(eid);
+	// Get the endpoints of the edge and its original edge.
+	index_t        ep0 = e.ep0(), ep1 = e.ep1();
+	index_t        oep0 = InvalidIndex, oep1 = InvalidIndex;
+	if (is_valid_idx(e.ancestor_id))
+	{
+		const PLCEdge &oe = plc.edge(e.ancestor_id);
+		oep0 = oe.ep0(), oep1 = oe.ep1();
+	}
+	else
+	{
+		oep0 = ep0, oep1 = ep1;
+	}
+	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
+	                     "Input points contain implicit points.");
+	// Get the interpolation parameters
+	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+	if (t1 < t0)
+		std::swap(t0, t1);
+
+	// Get the vectors of related points.
+	Vec3 oe0_v = AsEP()(gpnt(oep0)).as_vec();
+	Vec3 oe1_v = AsEP()(gpnt(oep1)).as_vec();
+	Vec3 e0_v  = ToEP()(gpnt(ep0)).as_vec();
+	Vec3 e1_v  = ToEP()(gpnt(ep1)).as_vec();
+
+	using Interval = std::pair<double, double>;
+	// find all intervals that reduce at least an encroaching point
+	AuxVector64<Interval> intervals;
+	for (index_t enc_vid : enc_verts)
+	{
+		Vec3   enc_v    = ToEP()(gpnt(enc_vid)).as_vec();
+		// Calculate the valid interval
+		double valid_t0 = linePlaneIntersection(oe0_v, oe1_v, enc_v, e0_v - enc_v);
+		double valid_t1 = linePlaneIntersection(oe0_v, oe1_v, enc_v, e1_v - enc_v);
+		// Ensure that the interval is inside the edge.
+		if (valid_t1 < valid_t0)
+			std::swap(valid_t0, valid_t1);
+		valid_t0 = std::max(valid_t0, t0);
+		valid_t1 = std::min(valid_t1, t1);
+
+		intervals.emplace_back(valid_t0, valid_t1);
+	}
+
+	// find the interval that reduce the most encroaching points
+
+	// -- cut the axis to smaller intervals by the endpoints of the intervals
+	AuxVector64<double> cut_points;
+	for (const Interval &interval : intervals)
+	{
+		cut_points.push_back(interval.first);
+		cut_points.push_back(interval.second);
+	}
+	cut_points.erase(std::unique(cut_points.begin(), cut_points.end()),
+	                 cut_points.end());
+
+	phmap::flat_hash_map<double, index_t> cut_point_map;
+	for (index_t i = 0; i < cut_points.size(); i++)
+		cut_point_map[cut_points[i]] = i;
+
+	// -- count all intervals that contain each interval
+	AuxVector64<uint32_t> interval_count(cut_points.size() - 1, 0);
+	for (const Interval &interval : intervals)
+	{
+		index_t start = cut_point_map[interval.first];
+		index_t end   = cut_point_map[interval.second];
+		for (index_t i = start; i < end; i++)
+			interval_count[i]++;
+	}
+
+	// -- find the interval that has the maximum count
+	auto max_count =
+	  *std::max_element(interval_count.begin(), interval_count.end());
+
+	// -- get the Steiner point to maximize sub-segments' length
+	double t = -1.0, mid_t = (t0 + t1) * 0.5;
+	for (index_t i = 0; i < cut_points.size() - 1; i++)
+	{
+		if (interval_count[i] != max_count)
+			continue;
+
+		double _t = -1.0;
+		if (cut_points[i + 1] < mid_t)
+			_t = cut_points[i + 1];
+		else if (cut_points[i] > mid_t)
+			_t = cut_points[i];
+		else
+			_t = mid_t;
+
+		if (std::abs(_t - mid_t) < std::abs(t - mid_t))
+			t = _t;
+	}
+
+	if (t <= t0 || t >= t1)
+	{ // if invalid (maybe caused by numerical error), return the middle point
+		t = (t0 + t1) * 0.5;
+	}
+
+	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
+}
+
+template <typename Traits>
+double
+SegmentRecover<Traits>::linePlaneIntersection(const Vec3 &e0, const Vec3 &e1,
+                                              const Vec3 &p, const Vec3 &n)
+{
+	// The line is defined by two points e0 and e1.
+	// The plane is defined by a point p and a normal vector n.
+
+	// Let the intersection point be x = e0 + t * (e1 - e0).
+	// x statisfy the plane equation: n dot (x - p) = 0.
+
+	// So we can solve the equation: t = (n dot (p - e0)) / (n dot (e1 - e0)).
+	return n.dot(p - e0) / n.dot(e1 - e0);
 }
 
 } // namespace OMC
