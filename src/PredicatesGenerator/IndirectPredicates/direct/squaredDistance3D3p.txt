@@ -2,11 +2,11 @@ explicitPoint3D(pa:pax,pay,paz)
 explicitPoint3D(pb:pbx,pby,pbz)
 explicitPoint3D(pc:pcx,pcy,pcz)
 
-// Check if the distance between `a` and `b` is less than the distance between `a` and `c`.
+// compare the distance between `a` and `b` and the distance between `a` and `c`.
 // sign = (b - a).squaredNorm - (c - a).squaredNorm
-// -- NEGATIVE: less than half
-// -- ZERO: exactly half
-// -- POSITIVE: more than half
+// -- NEGATIVE: ab is less than ac
+// -- ZERO: ab exactly equal to ac
+// -- POSITIVE: ab is greater than ac
 
 // -- b - a
 abx = pbx - pax

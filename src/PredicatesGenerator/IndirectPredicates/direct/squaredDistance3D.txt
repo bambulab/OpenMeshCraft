@@ -1,8 +1,8 @@
 explicitPoint3D(p:px,py,pz)
 explicitPoint3D(q:qx,qy,qz)
-dis
+sq_dis
 
-// squaredDistance2D: (p-q).squareNorm - dis
+// squaredDistance3D: (p-q).squareNorm - sq_dis
 
 lx = px - qx
 ly = py - qy
@@ -12,4 +12,4 @@ ly2 = ly * ly
 lz2 = lz * lz
 sqrnormxy = lx2 + ly2
 sqrnorm = sqrnormxy + lz2
-diff = sqrnorm - dis
+diff = sqrnorm - sq_dis

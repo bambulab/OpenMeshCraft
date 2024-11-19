@@ -7,7 +7,7 @@ namespace OMC {
 
 enum class PointInType
 {
-	STRICTLY_INSIDE  = -1, // strictly inside  the input simplex
+	STRICTLY_INSIDE  = -1, // strictly inside the input simplex
 	ON_BOUNDARY      = 0,  // point is on the boundary (vert, edge, face...)
 	STRICTLY_OUTSIDE = 1   // strictly outside the input simplex
 };
@@ -35,6 +35,14 @@ enum class PointInSimplexType
 };
 
 // intersection types
+enum class IntersectionType
+{
+	DO_NOT_INTERSECT = 0,
+	INTERSECT        = 1,
+	OVERLAP          = 2
+};
+
+// simplex intersection types
 enum class SimplexIntersectionType
 {
 	DO_NOT_INTERSECT   = 0, // simplices do not intersect
@@ -42,7 +50,8 @@ enum class SimplexIntersectionType
 	                        // they are coincident or share a sub-simplex)
 	INTERSECT          = 2, // simplices intersect in a non conforming way
 	OVERLAP = 3 // for corner cases: simplices intersect and partially overlap
-};            // (e.g. collinear segments or coplanar triangles)
+	            // (e.g. collinear segments or coplanar triangles)
+};
 
 template <typename NT>
 inline bool vec_equals_2d(const NT *v0, const NT *v1)
@@ -70,8 +79,10 @@ struct IntersectionProfile
 	static const uint32_t BRANCH_CNT = 32;
 
 	static std::atomic_size_t total_count[(size_t)IntersectionNames::CNT];
-	static std::atomic_size_t reach_count[(size_t)IntersectionNames::CNT][BRANCH_CNT];
-	static std::atomic_size_t reach_line[(size_t)IntersectionNames::CNT][BRANCH_CNT];
+	static std::atomic_size_t reach_count[(size_t)IntersectionNames::CNT]
+	                                     [BRANCH_CNT];
+	static std::atomic_size_t reach_line[(size_t)IntersectionNames::CNT]
+	                                    [BRANCH_CNT];
 
 	static void initialize();
 	static void inc_total(IntersectionNames name);

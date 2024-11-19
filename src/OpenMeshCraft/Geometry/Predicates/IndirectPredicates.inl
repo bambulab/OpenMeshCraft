@@ -264,6 +264,19 @@ Sign SquaredDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &a,
 	return Sign::ZERO; // warning killer
 }
 
+TEMPLATE_DECL
+Sign SquaredDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &a,
+                                                        const PointT &b,
+                                                        const PointT &c,
+                                                        FT sqr_dis)
+{
+	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
+		return squaredDistance3Dseg(a, b, c, sqr_dis);
+
+	OMC_ASSERT(false, "SquaredDistance3Dseg - should not happen");
+	return Sign::ZERO; // warning killer
+}
+
 /******************************************************************************/
 /* Orientation ****************************************************************/
 /******************************************************************************/

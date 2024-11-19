@@ -167,6 +167,16 @@ public:
 	 */
 	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
 	                int ab_scale = 1);
+
+	/**
+	 * @brief `a` and `b` define a line. Calculate the projecting distance from
+	 * `c` to the line `ab`, and then compare it with `sqr_dis`.
+	 * @retval NEGATIVE, the projecting distance is less than `sqr_dis`.
+	 * @retval ZERO, the projecting distance is equal to `sqr_dis`.
+	 * @retval POSITIVE, the projecting distance is greater than `sqr_dis`.
+	 */
+	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+	                FT sqr_dis);
 };
 
 /******************************************************************************/
