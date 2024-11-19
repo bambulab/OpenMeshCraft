@@ -6,6 +6,18 @@ namespace OMC {
 
 /**
  * @brief Check if Triangle2 and Point2 intersect.
+ *
+ * From the simplex and bounded side views, the intersection can be classified
+ * into 3 types:
+ *
+ * - DO_NOT_INTERSECT : the triangle does not intersect the point.
+ *
+ * - SIMPLICIAL_COMPLEX : the point is a vertex of the triangle.
+ *
+ * - INTERSECT : the point is on the edge or inside the triangle.
+ *
+ * The last two types are considered as intersect.
+ * 
  * @tparam Kernel
  */
 template <typename Kernel>

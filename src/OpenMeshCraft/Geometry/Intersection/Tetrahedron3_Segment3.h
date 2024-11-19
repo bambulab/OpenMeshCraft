@@ -9,6 +9,20 @@ namespace OMC {
 
 /**
  * @brief Check if Tetrahedron3 and Segment3 intersect.
+ *
+ * From the simplex and bounded side views, the intersection can be classified
+ * into 3 types:
+ *
+ * - DO_NOT_INTERSECT : the segment does not intersect the tetrahedron.
+ *
+ * - SIMPLICIAL_COMPLEX : the segment shares only an edge or a vertex of the
+ * tetrahedron.
+ *
+ * - INTERSECT : the segment intersects tetrahedron at at least a point
+ * (vertex, edge, face, or interior) except the SIMPLICIAL_COMPLEX case.
+ *
+ * The last two types are considered as intersect.
+ *
  * @tparam Kernel
  */
 template <typename Kernel>

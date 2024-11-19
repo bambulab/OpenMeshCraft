@@ -8,6 +8,20 @@ namespace OMC {
 
 /**
  * @brief Check if Triangle3 and Segment3 intersect.
+ *
+ * From the simplex view, the intersection can be classified
+ * into 3 types:
+ *
+ * - DO_NOT_INTERSECT : the triangle does not intersect the segment.
+ *
+ * - SIMPLICIAL_COMPLEX : the segment share only a vertex or an edge of the
+ * triangle.
+ *
+ * - INTERSECT : the segment intersects the triangle at at least a point except
+ * the SIMPLICIAL_COMPLEX case.
+ *
+ * The last two types are considered as intersect.
+ *
  * @tparam Kernel
  */
 template <typename Kernel>

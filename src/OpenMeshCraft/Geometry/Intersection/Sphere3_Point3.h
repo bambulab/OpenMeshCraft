@@ -6,6 +6,11 @@ namespace OMC {
 
 /**
  * @brief Check if Sphere3 and Point3 intersect.
+ * 
+ * From the bounded side view, the intersection can be classified into 3 types:
+ * STRICTLY_INSIDE, ON_BOUNDARY, and STRICTLY_OUTSIDE.
+ * 
+ * The first two types are considered as intersect.
  * @tparam Kernel
  */
 template <typename Kernel>

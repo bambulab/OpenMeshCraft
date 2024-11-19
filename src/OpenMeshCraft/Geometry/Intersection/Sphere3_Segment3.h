@@ -7,6 +7,19 @@ namespace OMC {
 
 /**
  * @brief Check if Sphere3 and Segment3 intersect.
+ *
+ * From the bounded side view, the intersection can be classified into 3 types:
+ *
+ * - STRICTLY_INSIDE : the segment is strictly inside the sphere (two endpoints
+ *   are strictly inside the sphere).
+ *
+ * - CROSS : the segment intersects the sphere's boundary at at least one point
+ *  (at most two points).
+ *
+ * - STRICTLY_OUTSIDE : the segment is strictly outside the sphere.
+ * 
+ * The first two types are considered as intersect.
+ *
  * @tparam Kernel
  */
 template <typename Kernel>
