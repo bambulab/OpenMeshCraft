@@ -74,11 +74,14 @@ void PiecewiseLinearComplex<Traits>::initPLCEdges()
 	// (1) build initial PLC edges
 	buildInitialPLCEdges();
 
-	// (2) classify vertices and edges
-	classifyVertEdge();
+	// (2) classify flat and non-flat edges
+	classifyFlatEdges();
 
 	// (3) initialize vertex incident edges
 	initVertIncEdge();
+
+	// (4) classify acute and obtuse vertices and different types of edges
+	classifyVertEdge();
 }
 
 /**
@@ -173,14 +176,77 @@ void PiecewiseLinearComplex<Traits>::buildInitialPLCEdges()
 }
 
 /**
- * @brief Classifies the vertices and edges of a Piecewise Linear Complex (PLC).
- *
- * This function performs the classification of vertices and edges in a PLC.
- * It first classifies edges as flat or undetermined, then classifies vertices
- * as acute or not, and finally classifies non-flat edges based on the number
- * of acute vertices they connect.
+ * @brief Classifies the edges into flat and non-flat edges.
  *
  * @pre PLC edges are built.
+ * @post The edges are classified into flat and non-flat edges.
+ * If an edge is not flat, it is marked as undetermined.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::classifyFlatEdges()
+{
+	// =========================================================================
+	// # Classify flat and non-flat edges
+	// ## pre-condition: PLC edges are built.
+	// ## post-condition: PLC edges are classified into flat and non-flat edges.
+
+	auto isFlatEdge = [this](index_t eid) -> bool
+	{
+		const PLCEdge &e = edge(eid);
+		return numEdgeIncTri(eid) == 2 &&
+		       Orient3D()(pnt(e.ep0()), pnt(e.ep1()),
+		                  pnt(oppV2E(e, edgeIncTri(eid, 0))),
+		                  pnt(oppV2E(e, edgeIncTri(eid, 1)))) == Sign::ZERO;
+	};
+
+	// Traverse all edges to check if they are flat edges.
+	for (index_t eid = 0; eid < numEdges(); eid++)
+	{
+		PLCEdge &e = edge(eid);
+		if (isFlatEdge(eid))
+		{
+			e.type = PLCEdgeType::FLAT_EDGE;
+		}
+		else
+		{
+			e.type = PLCEdgeType::UNDETERMINED;
+			// Check close and manifold by checking the number of incident triangles.
+			if (numEdgeIncTri(eid) != 2)
+				is_close_and_manifold = false;
+		}
+	}
+}
+
+/**
+ * @brief Initializes the vertex incident edge list.
+ *
+ * @pre PLC edges are built.
+ * @post Vertex incident edges are built.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::initVertIncEdge()
+{
+	// =========================================================================
+	// # Classify edge and vertices
+	// ## pre-condition: PLC edges are built.
+	// ## post-condition: vertex incident edges are built.
+
+	vertex_inc_edge_input.resize(input_nv);
+	for (index_t eid = 0; eid < numEdges(); eid++)
+	{
+		PLCEdge &e = edge(eid);
+		if (e.type != PLCEdgeType::FLAT_EDGE)
+		{
+			vertex_inc_edge_input[e.ep0()].push_back(eid);
+			vertex_inc_edge_input[e.ep1()].push_back(eid);
+		}
+	}
+}
+
+/**
+ * @brief Classifies the vertices and edges.
+ *
+ * @pre PLC edges are built and flat edges are classified.
  * @post PLC vertices are classified as acute or not, and PLC edges are
  * classified into different types.
  */
@@ -193,102 +259,72 @@ void PiecewiseLinearComplex<Traits>::classifyVertEdge()
 	// ## post-condition: PLC vertices are classified to acute or not, and PLC
 	//    edges are classified to different types.
 
-	// vertex-vertex relation of the PLC
-	std::vector<AuxVector16<index_t>> vv(input_nv);
-	// vertex is acute or not
-	std::vector<uint8_t>              is_acute_vertex(input_nv, false);
-
-	auto isFlatEdge = [this](index_t eid) -> bool
-	{
-		const PLCEdge &e = edge(eid);
-		return numEdgeIncTri(eid) == 2 &&
-		       Orient3D()(pnt(e.ep0()), pnt(e.ep1()),
-		                  pnt(oppV2E(e, edgeIncTri(eid, 0))),
-		                  pnt(oppV2E(e, edgeIncTri(eid, 1)))) == Sign::ZERO;
-	};
-
-	auto isAcuteVert = [this, &vv](index_t vi) -> bool
-	{
-		const GPoint &vip = pnt(vi);
-		for (index_t i = 0; i < vv[vi].size(); i++)
-			for (index_t j = 0; j < i; j++)
-				if (DotProduct3D()(pnt(vv[vi][i]), vip, pnt(vv[vi][j])) ==
-				    Sign::POSITIVE)
-					return true;
-
-		return false;
-	};
-
-	// ## Traverse all edges to check if they are flat edges,
-	//    and build the vertex-vertex relation at the same time.
-	for (index_t eid = 0; eid < numEdges(); eid++)
-	{
-		PLCEdge &e = edge(eid);
-		if (isFlatEdge(eid))
-		{
-			e.type = PLCEdgeType::FLAT_EDGE;
-		}
-		else
-		{
-			e.type = PLCEdgeType::UNDETERMINED;
-			vv[e.ep0()].push_back(e.ep1());
-			vv[e.ep1()].push_back(e.ep0());
-			// Check close and manifold by checking the number of incident triangles.
-			if (numEdgeIncTri(eid) != 2)
-				is_close_and_manifold = false;
-		}
-	}
-
-	// ## Traverse all vertices to check if they are acute vertices.
-	for (index_t vi = 0; vi < input_nv; vi++)
-		is_acute_vertex[vi] = isAcuteVert(vi);
-
-	// ## Classify non-flat edges.
+	// Mark all non-flat edges as NO_ACUTE_VERTEX.
 	for (index_t eid = 0; eid < numEdges(); eid++)
 	{
 		PLCEdge &e = edge(eid);
 		// skip flat edges
 		if (e.type == PLCEdgeType::FLAT_EDGE)
 			continue;
-		// count the number of acute vertices
-		size_t acute_vertex_count =
-		  (size_t)is_acute_vertex[e.ep0()] + (size_t)is_acute_vertex[e.ep1()];
-		// classify the edge type based on the number of acute vertices
-		if (acute_vertex_count == 0)
+		OMC_EXPENSIVE_ASSERT(e.type == PLCEdgeType::UNDETERMINED,
+		                     "Edge type should be not undetermined.");
+		e.type = PLCEdgeType::NO_ACUTE_VERTEX;
+		e.makeUniqEp();
+	}
+
+	auto setEdgeVertexAsAcute = [this](PLCEdge &e, index_t acute_vid)
+	{
+		if (e.type == PLCEdgeType::NO_ACUTE_VERTEX)
 		{
-			e.type      = PLCEdgeType::NO_ACUTE_VERTEX;
-			e.acute_vid = InvalidIndex;
-		}
-		else if (acute_vertex_count == 2)
-		{
-			e.type      = PLCEdgeType::BOTH_ACUTE_VERTEX;
-			e.acute_vid = InvalidIndex;
-		}
-		else
-		{
-			e.type = PLCEdgeType::ONE_ACUTE_VERTEX;
-			if (is_acute_vertex[e.ep1()])
+			e.type      = PLCEdgeType::ONE_ACUTE_VERTEX;
+			e.acute_vid = acute_vid;
+			if (e.ep1() == acute_vid)
 			{ // swap two endpoints to make the acute vertex at the first position
 				e.swapEp();
 			}
-			e.acute_vid = e.ep0();
 		}
-	}
-}
-
-template <typename Traits>
-void PiecewiseLinearComplex<Traits>::initVertIncEdge()
-{
-	vertex_inc_edge.resize(input_nv);
-	for (index_t eid = 0; eid < numEdges(); eid++)
-	{
-		PLCEdge &e = edge(eid);
-		if (e.type != PLCEdgeType::FLAT_EDGE)
+		else if (e.type == PLCEdgeType::ONE_ACUTE_VERTEX)
 		{
-			vertex_inc_edge[e.ep0()].push_back(eid);
-			vertex_inc_edge[e.ep1()].push_back(eid);
+			e.type      = PLCEdgeType::BOTH_ACUTE_VERTEX;
+			e.acute_vid = InvalidIndex;
+			e.makeUniqEp();
 		}
-	}
+		else if (e.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
+		{
+			// do nothing
+		}
+		else
+		{
+			OMC_ASSERT(false, "Invalid edge type.");
+		}
+	};
+
+	// Traverse all vertices to check if they are acute vertices.
+	// Each edge is classified as ONE_ACUTE_VERTEX or BOTH_ACUTE_VERTEX
+	// if one or both of its endpoints are classified as acute vertices.
+	for (index_t vid = 0; vid < input_nv; vid++)
+	{
+		const GPoint &vp            = pnt(vid);
+		size_t        num_inc_edges = vertex_inc_edge_input[vid].size();
+
+		for (index_t i = 0; i < num_inc_edges; i++)
+		{
+			PLCEdge &ei     = edge(vertex_inc_edge_input[vid][i]);
+			index_t  opp_vi = ei.ep0() == vid ? ei.ep1() : ei.ep0();
+
+			for (index_t j = i + 1; j < num_inc_edges; j++)
+			{
+				PLCEdge &ej     = edge(vertex_inc_edge_input[vid][j]);
+				index_t  opp_vj = ej.ep0() == vid ? ej.ep1() : ej.ep0();
+
+				if (DotProduct3D()(pnt(opp_vi), vp, pnt(opp_vj)) == Sign::POSITIVE)
+				{
+					setEdgeVertexAsAcute(ei, vid);
+					setEdgeVertexAsAcute(ej, vid);
+				} // end if
+			} // end for j
+		} // end for i
+	} // end for vid
 }
 
 /**
@@ -939,43 +975,64 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 	index_t child_id   = plc_edges.size() - 2;
 	edge(eid).child_id = child_id;
 
-	// remove original edge from two endpoints' incident edges
-	*std::find(vertex_inc_edge[ep0].begin(), vertex_inc_edge[ep0].end(), eid) =
-	  vertex_inc_edge[ep0].back();
-	*std::find(vertex_inc_edge[ep1].begin(), vertex_inc_edge[ep1].end(), eid) =
-	  vertex_inc_edge[ep1].back();
-	vertex_inc_edge[ep0].pop_back();
-	vertex_inc_edge[ep1].pop_back();
-	// add two new edges to three endpoints' incident edges
-	OMC_EXPENSIVE_ASSERT(vertex_inc_edge.size() == vid, "size mismatch.");
-	vertex_inc_edge.emplace_back();
-	vertex_inc_edge[ep0].push_back(child_id);
-	vertex_inc_edge[vid].push_back(child_id);
-	vertex_inc_edge[vid].push_back(child_id + 1);
-	vertex_inc_edge[ep1].push_back(child_id + 1);
+	OMC_EXPENSIVE_ASSERT(vertex_inc_edge_steiner.size() == vid - input_nv,
+	                     "size mismatch.");
+
+	// update
+	updateVertIncEdge(ep0, eid, child_id);
+	updateVertIncEdge(ep1, eid, child_id + 1);
+	// add
+	vertex_inc_edge_steiner.emplace_back();
+	vertex_inc_edge_steiner.back().push_back(child_id);
+	vertex_inc_edge_steiner.back().push_back(child_id + 1);
+}
+
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::updateVertIncEdge(index_t vid,
+                                                       index_t old_eid,
+                                                       index_t new_eid)
+{
+	if (vid < input_nv)
+		*std::find(vertex_inc_edge_input[vid].begin(),
+		           vertex_inc_edge_input[vid].end(), old_eid) = new_eid;
+	else
+		*std::find(vertex_inc_edge_steiner[vid - input_nv].begin(),
+		           vertex_inc_edge_steiner[vid - input_nv].end(), old_eid) =
+		  new_eid;
 }
 
 /**
  * @brief Checks if an edge exists between two vertices in the Piecewise Linear
  * Complex (PLC).
  *
- * @param e0 The index of the first vertex.
- * @param e1 The index of the second vertex.
- * @return The index of the edge connecting `e0` and `e1` if it exists,
+ * @param ep0 The index of the first vertex.
+ * @param ep1 The index of the second vertex.
+ * @return The index of the edge connecting `ep0` and `ep1` if it exists,
  * otherwise returns `InvalidIndex`.
  */
 template <typename Traits>
-index_t PiecewiseLinearComplex<Traits>::edgeExists(index_t e0, index_t e1) const
+index_t PiecewiseLinearComplex<Traits>::edgeExists(index_t ep0,
+                                                   index_t ep1) const
 {
-	// This function iterates through all edges incident to the vertex `e0` and
-	// checks if any of these edges connect to the vertex `e1`.
+	// This function iterates through all edges incident to the vertex `ep0` and
+	// checks if any of these edges connect to the vertex `ep1`.
 	// If such an edge is found, its index is returned.
-	for (index_t eid : vertex_inc_edge[e0])
+	index_t max_vid = std::max(ep0, ep1);
+	index_t min_vid = std::min(ep0, ep1);
+
+	if (max_vid < input_nv)
 	{
-		const PLCEdge &e = edge(eid);
-		if (e.ep1() == e1 || e.ep0() == e1)
-			return eid;
+		for (index_t eid : vertex_inc_edge_input[max_vid])
+			if (edge(eid).hasEp(min_vid))
+				return eid;
 	}
+	else
+	{
+		for (index_t eid : vertex_inc_edge_steiner[max_vid])
+			if (edge(eid).hasEp(min_vid))
+				return eid;
+	}
+
 	return InvalidIndex;
 }
 

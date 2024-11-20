@@ -159,9 +159,11 @@ public: /* Interfaces ******************************************************/
 
 	void buildInitialPLCEdges();
 
-	void classifyVertEdge();
+	void classifyFlatEdges();
 
 	void initVertIncEdge();
+
+	void classifyVertEdge();
 
 	/* Sub-parts of initializing PLC faces **********************************/
 
@@ -177,55 +179,51 @@ public: /* Interfaces ******************************************************/
 
 	void extractBoundingVertices();
 
-	/* Query on input constraints ********************************************/
+	/* Query on input constraints ***********************************************/
 
-	// clang-format off
 	GPoint       &pnt(index_t vid) { return *vertices[vid]; }
 	const GPoint &pnt(index_t vid) const { return *vertices[vid]; }
 
+	size_t numVertices() const { return vertices.size(); }
+
 	index_t edgeVtx(index_t eid, index_t j) const { return edges[eid * 2 + j]; }
 
-	index_t triVtx(index_t tid, index_t j) const { return triangles[tid * 3 + j]; }
-	// clang-format on
+	index_t triVtx(index_t tid, index_t j) const
+	{
+		return triangles[tid * 3 + j];
+	}
 
-	/* Connectivity operations on PLC ****************************************/
+	/* Operations on PLC *******************************************************/
 
+	/* Operations on PLC edge */
+
+	size_t         numEdges() const { return plc_edges.size(); }
 	PLCEdge       &edge(index_t eid) { return plc_edges[eid]; }
 	const PLCEdge &edge(index_t eid) const { return plc_edges[eid]; }
-
-	PLCFace       &face(index_t fid) { return plc_faces[fid]; }
-	const PLCFace &face(index_t fid) const { return plc_faces[fid]; }
-
-	PLCEdge       &subEdge(index_t seid) { return edge(sub_edges[seid]); }
-	const PLCEdge &subEdge(index_t seid) const { return edge(sub_edges[seid]); }
-
-	size_t numVertices() const { return vertices.size(); }
-	size_t numEdges() const { return plc_edges.size(); }
-	size_t numFaces() const { return plc_faces.size(); }
 
 	index_t oppV2E(const PLCEdge &edge, index_t tid) const;
 
 	void splitPLCEdge(index_t eid, index_t vid);
 
-	/* Query auxiliary data **************************************************/
-
-	/* Query auxiliary data of a PLC edge */
-
-	// clang-format off
-	/// Number of incident triangles to the edge.
-	size_t numEdgeIncTri(index_t eid) const { return edge_inc_tri[eid].size(); }
-	/// Get the `j`-th incident triangle to the edge.
-	index_t edgeIncTri(index_t eid, index_t j) { return edge_inc_tri[eid][j]; }
-
-	/// Number of incident edges to the vertex
-	size_t numVertIncEdge(index_t vid) const { return vertex_inc_edge[vid].size(); }
-	/// Get the `j`-th incident edge to the vertex
-	index_t vertIncEdge(index_t vid, index_t j) const { return vertex_inc_edge[vid][j]; }
-	// clang-format on
-
 	index_t edgeExists(index_t e0, index_t e1) const;
 
-	/* Query auxiliary data of a PLC face */
+	/* Operations on PLC face */
+
+	size_t         numFaces() const { return plc_faces.size(); }
+	PLCFace       &face(index_t fid) { return plc_faces[fid]; }
+	const PLCFace &face(index_t fid) const { return plc_faces[fid]; }
+
+	/* Operations on PLC subedges */
+
+	PLCEdge       &subEdge(index_t seid) { return edge(sub_edges[seid]); }
+	const PLCEdge &subEdge(index_t seid) const { return edge(sub_edges[seid]); }
+
+	/* Operations on PLC incidence (vert-edge, edge-tri, tri-bounding edge) */
+
+	size_t  numEdgeIncTri(index_t eid) const { return edge_inc_tri[eid].size(); }
+	index_t edgeIncTri(index_t eid, index_t j) { return edge_inc_tri[eid][j]; }
+
+	void updateVertIncEdge(index_t vid, index_t old_eid, index_t new_eid);
 
 	const PLCEdge &boundingEdge(const PLCFace &f, index_t eid,
 	                            index_t *tid      = nullptr,
@@ -235,6 +233,8 @@ public: /* Interfaces ******************************************************/
 	void buildBoundingVtxAdjSet(const PLCFace &f, IndexPairSet &adj_vtx) const;
 
 public: /* Data ************************************************************/
+	/* Input data for PLC */
+
 	/// The input vertices.
 	const std::vector<GPoint *> &vertices;
 	/// The input isolated edges (storing indices to vertices).
@@ -248,29 +248,35 @@ public: /* Data ************************************************************/
 
 	bool is_close_and_manifold; ///< whether the input is close and manifold
 
-	/* Auxiliary data structures for PLC */
+	/* Edge data for PLC */
 
-	/// The edges in the PLC.
+	/// The built edges in the PLC.
 	std::vector<PLCEdge> plc_edges;
-
 	/// The initial number of PLC edges.
-	size_t init_npe;
+	size_t               init_npe;
 
-	/// Edges incident to each vertex.
-	std::vector<AuxVector2<index_t>> vertex_inc_edge;
+	/* Face data for PLC */
 
-	/// Triangles incident to each edge.
-	/// We only store incident triangles for original input edges, not for
-	/// split edges.
-	std::vector<AuxVector4<index_t>> edge_inc_tri;
+	/// The built faces in the PLC.
+	std::vector<PLCFace> plc_faces;
+
+	/* Subedge data for PLC */
 
 	/// Sub-edges range after splitting the original edges.
 	std::vector<SubEdgeRange> sub_edge_range;
-
 	/// All sub-edges are subsequently stored in this vector.
-	std::vector<index_t> sub_edges;
+	std::vector<index_t>      sub_edges;
 
-	std::vector<PLCFace> plc_faces;
+	/* Incidence data for PLC */
+
+	/// Vertex --- Edge
+	/// (We store incident edges for input edges and split edges separately.)
+	std::vector<AuxVector16<index_t>> vertex_inc_edge_input;
+	std::vector<AuxVector2<index_t>>  vertex_inc_edge_steiner;
+
+	/// Edge --- Triangle
+	/// (We only store incident triangles for original input edges.)
+	std::vector<AuxVector4<index_t>> edge_inc_tri;
 };
 
 } // namespace OMC
