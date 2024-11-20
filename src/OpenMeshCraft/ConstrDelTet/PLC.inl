@@ -988,6 +988,18 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 }
 
 template <typename Traits>
+auto PiecewiseLinearComplex<Traits>::vertIncEdges(index_t vid) const
+  -> std::pair<AuxVecConstIter, AuxVecConstIter>
+{
+	if (vid < input_nv)
+		return {vertex_inc_edge_input[vid].cbegin(),
+		        vertex_inc_edge_input[vid].cend()};
+	else
+		return {vertex_inc_edge_steiner[vid - input_nv].cbegin(),
+		        vertex_inc_edge_steiner[vid - input_nv].cend()};
+}
+
+template <typename Traits>
 void PiecewiseLinearComplex<Traits>::updateVertIncEdge(index_t vid,
                                                        index_t old_eid,
                                                        index_t new_eid)

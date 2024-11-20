@@ -46,6 +46,7 @@ public:
 	using CreateLPI = typename K::CreateLPI;
 	using CreateTPI = typename K::CreateTPI;
 
+	using Sphere      = typename K::Sphere3;
 	using Segment     = typename K::Segment3;
 	using Triangle    = typename K::Triangle3;
 	using BoundingBox = typename K::BoundingBox3;
@@ -64,6 +65,7 @@ public:
 	using CollinearPoints3   = typename K::CollinearPoints3;
 	// constructions
 	using CalcBbox           = typename K::CalcBoundingBox3;
+	using ProjectPoint       = typename K::ProjectPoint3;
 
 	// clang-format off
 	using DoIntersect                        = typename K::DoIntersect;

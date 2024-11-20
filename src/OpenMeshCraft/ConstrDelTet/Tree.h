@@ -3,7 +3,10 @@
 #include "Utils.h"
 
 #include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTree.h"
+#include "OpenMeshCraft/BVH/AABB/Static/SAABBTree.h"
+
 #include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_SegSphere_Intersection.h"
+#include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_Segment_Intersection.h"
 
 #include "OpenMeshCraft/NumberTypes/IntervalNumber.h"
 
@@ -67,7 +70,7 @@ public: /* Data members *******************************************************/
 };
 
 template <typename Traits>
-class CalcBbox_SegSphere
+class CalcBbox_CDT
 {
 public: /* Traits *************************************************************/
 	using IT = IntervalNumber<std::true_type>;
@@ -131,9 +134,13 @@ public: /* Operators **********************************************************/
 };
 
 template <typename Traits>
-using CDT_SegSphereTree =
-  DAABBTree_SegSphere_Intersection<GenericSegment3T<Traits>,
-                                   CalcBbox_SegSphere<Traits>,
-                                   typename Traits::DoIntersect>;
+using CDT_SegSphereTree = DAABBTree_SegSphere_Intersection<
+  GenericSegment3T<Traits>, CalcBbox_CDT<Traits>, typename Traits::DoIntersect>;
+
+template <typename Traits>
+using CDT_SegmentTree =
+  SAABBTree_Segment_Intersection<typename Traits::Segment,
+                                 typename Traits::CalcBbox,
+                                 typename Traits::DoIntersect>;
 
 } // namespace OMC

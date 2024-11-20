@@ -223,6 +223,8 @@ public: /* Interfaces ******************************************************/
 	size_t  numEdgeIncTri(index_t eid) const { return edge_inc_tri[eid].size(); }
 	index_t edgeIncTri(index_t eid, index_t j) { return edge_inc_tri[eid][j]; }
 
+	std::pair<AuxVecConstIter, AuxVecConstIter> vertIncEdges(index_t vid) const;
+
 	void updateVertIncEdge(index_t vid, index_t old_eid, index_t new_eid);
 
 	const PLCEdge &boundingEdge(const PLCFace &f, index_t eid,

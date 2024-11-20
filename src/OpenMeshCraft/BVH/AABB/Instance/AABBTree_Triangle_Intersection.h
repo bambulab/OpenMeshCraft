@@ -27,11 +27,13 @@ public:
 	using PrimAttrT = index_t;
 	// Primitive type
 	using PrimT     = PrimitiveWithAttribute<TriT, PrimAttrT>;
+
+	// Calculate bounding box
+	using CalcBbox = typename K::CalcBoundingBox3;
+
 	// Primitive reference point
 	using PrimReferencePoint =
 	  AABB_Tri_ReferencePoint<PrimT, AABB_Tri_ReferencePointType::First>;
-	// Calculate bounding box
-	using CalcBbox = typename K::CalcBoundingBox3;
 };
 
 /****************************************************/
@@ -72,11 +74,6 @@ public:
 		results.reserve(prim_ptrs.size());
 		for (auto pp : prim_ptrs)
 			results.push_back(pp->attribute());
-	}
-
-	const typename BaseT::BboxT &get_Bbox(const index_t i) const
-	{
-		return this->m_nodes[i].bbox();
 	}
 
 protected:

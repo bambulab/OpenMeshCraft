@@ -742,32 +742,15 @@ auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
 template <typename Traits>
 void SegmentRecover<Traits>::segmentRecovery_Greedy()
 {
-	// initialize the PLC edges
+	// initialize the PLC edges.
 	plc.initPLCEdges();
 
-	// ===========================================================================
-	// initialize the segments' diametral sphere tree.
-	size_t non_flat_count = 0;
-	{
-		std::vector<GenericSegment> segments;
-		std::vector<index_t>        indices;
-		segments.reserve(plc.numEdges());
-		indices.reserve(plc.numEdges());
-		for (index_t eid = 0; eid < plc.numEdges(); eid++)
-		{
-			const PLCEdge &e = plc.edge(eid);
-			if (e.type != PLCEdgeType::FLAT_EDGE)
-			{
-				index_t ev0 = e.ep0(), ev1 = e.ep1();
-				segments.emplace_back(&gpnt(ev0), &gpnt(ev1));
-				indices.push_back(eid);
-				non_flat_count++;
-			}
-		}
-		tree.insert(segments.begin(), segments.end(), indices.begin(),
-		            indices.end());
-		tree.build();
-	}
+	// initialize the static segment tree and the dynamic segments' diametral
+	// sphere tree.
+	size_t non_flat_count = initializeTrees();
+
+	// build the protecting sphere for the PLC edges on PLC vertices.
+	buildProtectingSphere();
 
 	// ===========================================================================
 	// Then a greedy strategy to split remaining missing segments.
@@ -795,7 +778,7 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 	if (config.verbose) // output a new line
 		std::cout << std::endl;
 
-	size_t  split_count = 0;
+	size_t split_count = 0;
 	// Loop to split segments with the highest priority
 	while (!seg_queue.empty())
 	{
@@ -816,7 +799,7 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 
 		// Before split, find encroached segments
 		AuxVector64<index_t> possible_enc_segs, enc_segs;
-		tree.all_intersections(new_pnt, possible_enc_segs);
+		sph_tree.all_intersections(new_pnt, possible_enc_segs);
 		for (index_t possible_enc_eid : possible_enc_segs)
 		{
 			if (possible_enc_eid == eid)
@@ -862,7 +845,7 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 		const PLCEdge &ch_e1 = plc.edge(e.child_id + 1);
 		GenericSegment ch0(&gpnt(ch_e0.ep0()), &gpnt(ch_e0.ep1()));
 		GenericSegment ch1(&gpnt(ch_e1.ep0()), &gpnt(ch_e1.ep1()));
-		tree.split(eid, e.child_id, ch0, e.child_id + 1, ch1);
+		sph_tree.split(eid, e.child_id, ch0, e.child_id + 1, ch1);
 
 		// Add two sub-segments to the queue
 		missing_count--; // due to the split
@@ -914,8 +897,8 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 		split_count++;
 		if (split_count % 5000 == 0)
 		{ // rebuild the tree for better efficiency
-			tree.collect_garbage();
-			OMC_ASSERT(tree.size() == non_flat_count + split_count,
+			sph_tree.collect_garbage();
+			OMC_ASSERT(sph_tree.size() == non_flat_count + split_count,
 			           "The tree size is not correct after collecting garbage.");
 		}
 		if (config.verbose)
@@ -932,6 +915,176 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 		stats->seg_steiner = split_count;
 	}
 	OMC_ASSERT(missing_count == 0, "Some segments are not recovered.");
+}
+
+/**
+ * @brief Initializes the segment and segment diametral sphere trees.
+ * @return The number of non-flat edges processed.
+ */
+template <typename Traits>
+size_t SegmentRecover<Traits>::initializeTrees()
+{
+	size_t non_flat_count = 0;
+
+	// segment tree
+	std::vector<IndexedSegment> indexed_segments;
+	indexed_segments.reserve(plc.numEdges());
+	// segment diametral sphere tree
+	std::vector<GenericSegment> segments;
+	std::vector<index_t>        indices;
+	segments.reserve(plc.numEdges());
+	indices.reserve(plc.numEdges());
+	// collect primitives
+	for (index_t eid = 0; eid < plc.numEdges(); eid++)
+	{
+		const PLCEdge &e = plc.edge(eid);
+		if (e.type != PLCEdgeType::FLAT_EDGE)
+		{
+			non_flat_count++;
+			// endpoints
+			index_t       ev0 = e.ep0(), ev1 = e.ep1();
+			const GPoint &gp0 = gpnt(ev0), &gp1 = gpnt(ev1);
+			// segment tree
+			indexed_segments.emplace_back(Segment(AsEP()(gp0), AsEP()(gp1)), eid);
+			// segment diametral sphere tree
+			segments.emplace_back(&gp0, &gp1);
+			indices.push_back(eid);
+		}
+	}
+	// segment tree
+	seg_tree.insert(indexed_segments.begin(), indexed_segments.end());
+	seg_tree.build();
+	// segment diametral sphere tree
+	sph_tree.insert(segments.begin(), segments.end(), indices.begin(),
+	                indices.end());
+	sph_tree.build();
+
+	return non_flat_count;
+}
+
+/**
+ * @brief Constructs protecting spheres for vertices in the PLC.
+ *
+ * If a vertex needs protection, it constructs an initial protecting sphere
+ * based on the shortest edge lengths connected to the vertex.
+ * It then checks for intersections with other segments and shrinks the sphere
+ * if necessary to ensure the vertex is well-protected.
+ * @see Shewchuk, J. R. Constrained Delaunay Tetrahedralizations and Provably
+ * Good Boundary Recovery. In Proceedings of the International Meshing
+ * Roundtable Conference (2002).
+ */
+template <typename Traits>
+void SegmentRecover<Traits>::buildProtectingSphere()
+{
+	protecting_sphere_squared_radius.resize(plc.numVertices(), -1.0);
+
+	auto approxEdgeLength = [this](const PLCEdge &e)
+	{ return (gpnt(e.ep0()) - gpnt(e.ep1())).sqrnorm(); };
+
+	for (index_t vid = 0; vid < plc.numVertices(); vid++)
+	{
+		std::cout << std::format("\rProcessing vertex {}      ", vid);
+		// check if the vertex need to be protected,
+		// get the shortest edge length at the same time.
+		bool   need_protect            = false;
+		double shortest_acute_edge     = DBL_MAX; // l_i in reference paper
+		double shortest_non_acute_edge = DBL_MAX; // d_i in reference paper
+
+		boost::container::flat_set<index_t> inc_edges;
+		auto [inc_edges_begin, inc_edges_end] = plc.vertIncEdges(vid);
+		for (AuxVecConstIter iter = inc_edges_begin; iter != inc_edges_end; iter++)
+		{
+			index_t        eid = *iter;
+			const PLCEdge &e   = plc.edge(eid);
+			inc_edges.insert(eid);
+
+			if (e.type == PLCEdgeType::NO_ACUTE_VERTEX)
+				continue;
+			else if (e.type == PLCEdgeType::ONE_ACUTE_VERTEX)
+			{
+				need_protect = true;
+				if (e.acute_vid == vid)
+				{
+					shortest_acute_edge =
+					  std::min(shortest_acute_edge, approxEdgeLength(e));
+				}
+				else
+				{
+					shortest_non_acute_edge =
+					  std::min(shortest_non_acute_edge, approxEdgeLength(e));
+				}
+			}
+			else // e.type == PLCEdgeType::BOTH_ACUTE_VERTEX
+			{
+				need_protect = true;
+				shortest_acute_edge =
+				  std::min(shortest_acute_edge, approxEdgeLength(e));
+			}
+		}
+
+		if (!need_protect)
+			continue;
+
+		// construct a initial protecting sphere based on the above lengths.
+		const EPoint &center = AsEP()(gpnt(vid));
+		double        squared_radius =
+		  std::min(shortest_acute_edge * 0.0625, shortest_non_acute_edge * 0.25);
+		Sphere sphere(center, squared_radius);
+
+		// find segments that intersect the currect sphere
+		AuxVector64<index_t> intersected_edges;
+		{
+			// find intersected segments by AABB tree
+			AuxVector64<index_t> _intersected_edges;
+			seg_tree.all_intersections(sphere, _intersected_edges);
+			// remove incident edges in found intersected edges.
+			boost::container::flat_set<index_t> _tmp_set(_intersected_edges.begin(),
+			                                             _intersected_edges.end());
+			std::set_difference(_tmp_set.begin(), _tmp_set.end(), inc_edges.begin(),
+			                    inc_edges.end(),
+			                    std::back_inserter(intersected_edges));
+		}
+
+		// if no intersected segments, the vertex is well-protected.
+		if (intersected_edges.empty())
+		{
+			protecting_sphere_squared_radius[vid] = squared_radius;
+			continue;
+		}
+
+		// otherwise, we need to shrink the sphere.
+		AuxVector64<Segment> intersected_segs;
+		for (index_t eid : intersected_edges)
+		{
+			const PLCEdge &e = plc.edge(eid);
+			intersected_segs.emplace_back(AsEP()(gpnt(e.ep0())),
+			                              AsEP()(gpnt(e.ep1())));
+		}
+
+		// the shortest projection distance from the vertex to the intersected
+		// segments is also called `local feature size` (lfs).
+		// we need to shrink the sphere to be less than the local feature size.
+		double min_proj_dis = DBL_MAX;
+		for (const Segment &seg : intersected_segs)
+		{
+			EPoint proj_pnt = ProjectPoint()(seg, center);
+			double proj_dis = (proj_pnt - center).sqrnorm();
+			min_proj_dis    = std::min(min_proj_dis, proj_dis);
+		}
+
+		// reduce the projection distance to avoid numerical error
+		sphere.squared_radius() = min_proj_dis * 0.5;
+		// check if the sphere is still intersected by segments
+		while (!intersected_segs.empty())
+		{
+			if (DoIntersect()(sphere, intersected_segs.back()))
+				sphere.squared_radius() *= 0.5;
+			else
+				intersected_segs.pop_back();
+		}
+
+		protecting_sphere_squared_radius[vid] = sphere.squared_radius();
+	}
 }
 
 /**
@@ -1029,7 +1182,7 @@ double SegmentRecover<Traits>::getSegPriority(
 
 	// 2. Calculate the number of encroaching segments by the Steiner point
 	AuxVector64<index_t> possible_enc_segs;
-	tree.all_intersections(steiner_gpnt, possible_enc_segs);
+	sph_tree.all_intersections(steiner_gpnt, possible_enc_segs);
 
 	size_t num_enc_segs = 0;
 	for (index_t possible_enc_eid : possible_enc_segs)

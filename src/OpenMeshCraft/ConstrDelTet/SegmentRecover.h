@@ -38,8 +38,16 @@ public: /* Traits **********************************************************/
 
 	using CreateLNC = typename Traits::CreateLNC;
 
+	using Sphere  = typename Traits::Sphere;
+	using Segment = typename Traits::Segment;
+
+	// predicates
 	using InSphere          = typename Traits::InSphere;
 	using SquaredDistance3D = typename Traits::SquaredDistance3D;
+	using DoIntersect       = typename Traits::DoIntersect;
+	// constructions
+	using CalcBbox          = typename Traits::CalcBbox;
+	using ProjectPoint      = typename Traits::ProjectPoint;
 
 	using TetMesh  = TetrahedralMesh<Traits>;
 	using TET_MARK = typename TetMesh::TET_MARK;
@@ -56,6 +64,9 @@ public: /* Traits **********************************************************/
 
 	using GenericSegment = GenericSegment3T<Traits>;
 	using SegSphereTree  = CDT_SegSphereTree<Traits>;
+
+	using IndexedSegment = PrimitiveWithAttribute<Segment, index_t>;
+	using SegmentTree    = CDT_SegmentTree<Traits>;
 
 	using PntArena = CDTPointArena<Traits>;
 
@@ -120,6 +131,10 @@ public: /* SiHang's Recovery Algorithm ***************************************/
 public: /* Greedy Recovery Algorithm *****************************************/
 	void segmentRecovery_Greedy();
 
+	size_t initializeTrees();
+
+	void buildProtectingSphere();
+
 	/* Data structures used for greedy strategy */
 
 	/// @brief The priority queue of segments
@@ -157,6 +172,24 @@ public: /* Data **************************************************************/
 	/// Constrained piecewise linear complex
 	PLC                   &plc;
 
+	/* Data used by explicit protecting sphere */
+
+	/// The segment tree
+	/// - The tree is build on the initial (input) constrained segments.
+	/// - The segments in tree have the same indices as the PLC edges.
+	/// - The tree is used to quickly find intersecting segments with a
+	///   (protecting) sphere.
+	/// - The tree is static and does not change during the recovery process.
+	SegmentTree seg_tree;
+
+	/// The protecting sphere
+	/// - The protecting sphere is built on original input vertices whose incident
+	/// edges form acute angles.
+	/// - We save the squared radius of the protecting sphere for these vertex.
+	/// - The squared radius is set to negative value if the vertex need not
+	/// protection.
+	std::vector<double> protecting_sphere_squared_radius;
+
 	/* Data used by greedy recovery algorithm */
 
 	/// The segments' diametral sphere tree
@@ -164,7 +197,7 @@ public: /* Data **************************************************************/
 	/// - The segments in tree have the same indices as the PLC edges.
 	/// - The tree is used to quickly find encroached segments by a Steiner point.
 	/// - The tree is updated when a segment is split.
-	SegSphereTree tree;
+	SegSphereTree sph_tree;
 
 	/// The priority queue of segments to be split.
 	SegPriorityQueue seg_queue;

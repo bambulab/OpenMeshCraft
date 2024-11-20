@@ -69,6 +69,9 @@ struct ConstrDelTet_Stats
 template <typename T>
 using AuxVector2 = boost::container::small_vector<index_t, 2>;
 
+using AuxVecIter      = typename AuxVector2<index_t>::iterator;
+using AuxVecConstIter = typename AuxVector2<index_t>::const_iterator;
+
 template <typename Traits>
 struct CDTPointArena
 {
