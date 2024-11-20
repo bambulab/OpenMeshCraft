@@ -177,6 +177,7 @@ public:
 	}
 };
 
+#if 0 // When needed, figure out a better way to implement this.
 /**
  * @brief CheckDegenerate3K implements several algorithms that check if a
  * primitive in 3D is degenerate.
@@ -244,5 +245,11 @@ public:
 			return DgnType(); // NoDgn
 	}
 };
+#else
+template <typename Kernel>
+class CheckDegenerate3K
+{
+};
+#endif
 
 } // namespace OMC

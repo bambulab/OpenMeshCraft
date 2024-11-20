@@ -43,7 +43,6 @@ TEST(LazyExactNumber, Operators)
 		if (j == 0 || k == 0)
 			continue;
 
-#if 1
 		LazyNumber n1(j * M_PI);
 		LazyNumber n2(k * M_PI);
 		LazyNumber n3  = n1 + n2;
@@ -70,9 +69,7 @@ TEST(LazyExactNumber, Operators)
 		n9.exact();
 		n10.exact();
 		n11.exact();
-#endif
 
-#if 1
 		Lazy_exact_nt _n1(j * M_PI);
 		Lazy_exact_nt _n2(k * M_PI);
 		Lazy_exact_nt _n3  = _n1 + _n2;
@@ -99,9 +96,7 @@ TEST(LazyExactNumber, Operators)
 		_n9.exact();
 		_n10.exact();
 		_n11.exact();
-#endif
 
-#if 1
 		ASSERT_TRUE(interval_number_equal(n1.approx(), _n1.approx()));
 		ASSERT_TRUE(interval_number_equal(n2.approx(), _n2.approx()));
 		ASSERT_TRUE(interval_number_equal(n3.approx(), _n3.approx()));
@@ -127,6 +122,5 @@ TEST(LazyExactNumber, Operators)
 		ASSERT_EQ(n10.exact(), _n10.exact());
 		ASSERT_EQ(n11.exact(), _n11.exact());
 		ASSERT_EQ(n12.exact(), _n12.exact());
-#endif
 	}
 }

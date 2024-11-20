@@ -23,6 +23,9 @@
 #include "Tetrahedron3_Segment3.h"
 #include "Tetrahedron3_Triangle3.h"
 
+#include "Sphere3_Point3.h"
+#include "Sphere3_Segment3.h"
+
 namespace OMC {
 
 template <typename Kernel>
@@ -48,6 +51,7 @@ public:
 	using Sphere3      = typename K::Sphere3;
 	using Tetrahedron3 = typename K::Tetrahedron3;
 	using Triangle3    = typename K::Triangle3;
+	using Sphere3      = typename K::Sphere3;
 
 public:
 	// clang-format off
@@ -86,6 +90,11 @@ public:
 	bool operator()(const Tetrahedron3 &tet,  const EPoint3   &point) const { return Tetrahedron3_Point3_Do_Intersect<K>()(tet, point); }
 	bool operator()(const Tetrahedron3 &tet,  const Segment3  &seg)   const { return Tetrahedron3_Segment3_Do_Intersect<K>()(tet, seg); }
 	bool operator()(const Tetrahedron3 &tet,  const Triangle3 &tri)   const { return Tetrahedron3_Triangle3_Do_Intersect<K>()(tet, tri); }
+
+	template <typename GPT, typename = std::enable_if_t<std::is_same_v<GPT, GPoint3> && !std::is_same_v<GPT, EPoint3>>>
+	bool operator()(const Sphere3 &sph,  const GPT       &point) const { return Sphere3_Point3_Do_Intersect<K>()(sph, point); }
+	bool operator()(const Sphere3 &sph,  const EPoint3   &point) const { return Sphere3_Point3_Do_Intersect<K>()(sph, point); }
+	bool operator()(const Sphere3 &sph,  const Segment3  &seg)   const { return Sphere3_Segment3_Do_Intersect<K>()(sph, seg); }
 	// clang-format on
 };
 

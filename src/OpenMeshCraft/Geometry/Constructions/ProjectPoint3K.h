@@ -31,7 +31,6 @@ public:
 	using LessThan3D = typename K::LessThan3D;
 
 	using CheckDegenerate3 = typename K::CheckDegenerate3;
-
 	using ConstructNormal3 = typename K::ConstructNormal3;
 
 public:
