@@ -162,6 +162,10 @@ public: /* Greedy Recovery Algorithm *****************************************/
 	static double linePlaneIntersection(const Vec3 &e0, const Vec3 &e1,
 	                                    const Vec3 &p, const Vec3 &n);
 
+	/* Help functions used for protecting sphere */
+
+	IPoint_LNC splitSegment_ProtectingSphere(index_t eid);
+
 public: /* Data **************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
 	std::vector<GPoint *> &verts;

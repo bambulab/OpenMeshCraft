@@ -32,6 +32,19 @@
 
 namespace OMC {
 
+// Enable shuffling missing segments in each loop of segment recovery.
+// #define OMC_CDT_SHUFFLE_MISSING_SEGMENTS
+
+// Enable exact inSphere predicate in finding encroaching point.
+#define OMC_CDT_EXACT_ENCROACH_TEST
+
+// Choose one segmen recovery strategy
+// #define OMC_CDT_SEG_SIHANG
+#define OMC_CDT_SEG_GREEDY
+
+// Enable protecting sphere strategy
+#define OMC_CDT_PROTECT_SPHERE
+
 struct ConstrDelTet_Config
 {
 	/// output more log information

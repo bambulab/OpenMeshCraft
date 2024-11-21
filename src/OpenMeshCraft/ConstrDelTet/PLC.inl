@@ -1040,7 +1040,7 @@ index_t PiecewiseLinearComplex<Traits>::edgeExists(index_t ep0,
 	}
 	else
 	{
-		for (index_t eid : vertex_inc_edge_steiner[max_vid])
+		for (index_t eid : vertex_inc_edge_steiner[max_vid - input_nv])
 			if (edge(eid).hasEp(min_vid))
 				return eid;
 	}

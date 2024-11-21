@@ -4,16 +4,6 @@
 
 namespace OMC {
 
-// Enable shuffling missing segments in each loop of segment recovery.
-// #define OMC_CDT_SHUFFLE_MISSING_SEGMENTS
-
-// Enable exact inSphere predicate in finding encroaching point.
-#define OMC_CDT_EXACT_ENCROACH_TEST
-
-// Choose one segmen recovery strategy
-// #define OMC_CDT_SEG_SIHANG
-#define OMC_CDT_SEG_GREEDY
-
 /**
  * @brief Initialize with the Delaunay tetrahedral mesh and the input
  * constrained triangles. Prepare for the constraits recovery.
@@ -143,9 +133,10 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang()
 			split_count++;
 			if (config.verbose && split_count % 100 == 0)
 			{
-				std::cout << std::format("\r[OpenMeshCraft CDT] {} segments are split. "
-				                         "{} segments are missing.",
-				                         split_count, missing_segments.size());
+				std::cout << std::format(
+				  "\r[OpenMeshCraft CDT] {} segments are split. "
+				  "{} segments are missing.                     ",
+				  split_count, missing_segments.size());
 			}
 		}
 		// Find new missing edges around touched vertices
@@ -187,7 +178,7 @@ index_t SegmentRecover<Traits>::splitMissingSegment(index_t eid)
 	IPoint_LNC new_pnt;
 	index_t    curr_tet = InvalidIndex;
 
-	PLCEdge &edge = plc.edge(eid);
+	const PLCEdge &edge = plc.edge(eid);
 
 	if (edge.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
@@ -771,7 +762,9 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 			missing_count++;
 			if (config.verbose && missing_count % 100 == 0)
 			{
-				std::cout << std::format("\rmissing segments count: {}", missing_count);
+				std::cout << std::format("\rmissing segments count: {}"
+				                         "                            ",
+				                         missing_count);
 			}
 		}
 	}
@@ -904,8 +897,8 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 		if (config.verbose)
 		{ // report the progress
 			std::cout << std::format(
-			  "\rSplit count: {}. Missing count: {}. Priority: {}", split_count,
-			  missing_count, int(priority));
+			  "\rSplit count: {}. Missing count: {}. Priority: {}               ",
+			  split_count, missing_count, int(priority));
 		}
 	}
 	if (config.verbose) // just output a new line
@@ -983,7 +976,6 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 
 	for (index_t vid = 0; vid < plc.numVertices(); vid++)
 	{
-		std::cout << std::format("\rProcessing vertex {}      ", vid);
 		// check if the vertex need to be protected,
 		// get the shortest edge length at the same time.
 		bool   need_protect            = false;
@@ -1026,29 +1018,35 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 			continue;
 
 		// construct a initial protecting sphere based on the above lengths.
-		const EPoint &center = AsEP()(gpnt(vid));
-		double        squared_radius =
-		  std::min(shortest_acute_edge * 0.0625, shortest_non_acute_edge * 0.25);
-		Sphere sphere(center, squared_radius);
+		Sphere sphere(AsEP()(gpnt(vid)),
+		              std::min(shortest_acute_edge * (1.0 / 9.0),
+		                       shortest_non_acute_edge * (4.0 / 9.0)));
 
 		// find segments that intersect the currect sphere
 		AuxVector64<index_t> intersected_edges;
 		{
-			// find intersected segments by AABB tree
-			AuxVector64<index_t> _intersected_edges;
-			seg_tree.all_intersections(sphere, _intersected_edges);
+			// find possible intersected segments by AABB tree
+			AuxVector64<index_t> possible_intersected_edges;
+			seg_tree.all_intersections(sphere, possible_intersected_edges);
+			// find really intersected segments
+			boost::container::flat_set<index_t> _intersected_edges;
+			for (index_t eid : possible_intersected_edges)
+			{
+				const PLCEdge &e = plc.edge(eid);
+				Segment        seg(AsEP()(gpnt(e.ep0())), AsEP()(gpnt(e.ep1())));
+				if (DoIntersect()(sphere, seg))
+					_intersected_edges.insert(eid);
+			}
 			// remove incident edges in found intersected edges.
-			boost::container::flat_set<index_t> _tmp_set(_intersected_edges.begin(),
-			                                             _intersected_edges.end());
-			std::set_difference(_tmp_set.begin(), _tmp_set.end(), inc_edges.begin(),
-			                    inc_edges.end(),
+			std::set_difference(_intersected_edges.begin(), _intersected_edges.end(),
+			                    inc_edges.begin(), inc_edges.end(),
 			                    std::back_inserter(intersected_edges));
 		}
 
 		// if no intersected segments, the vertex is well-protected.
 		if (intersected_edges.empty())
 		{
-			protecting_sphere_squared_radius[vid] = squared_radius;
+			protecting_sphere_squared_radius[vid] = sphere.squared_radius();
 			continue;
 		}
 
@@ -1067,13 +1065,14 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		double min_proj_dis = DBL_MAX;
 		for (const Segment &seg : intersected_segs)
 		{
-			EPoint proj_pnt = ProjectPoint()(seg, center);
-			double proj_dis = (proj_pnt - center).sqrnorm();
+			EPoint proj_pnt = ProjectPoint()(seg, sphere.center());
+			double proj_dis = (proj_pnt - sphere.center()).sqrnorm();
 			min_proj_dis    = std::min(min_proj_dis, proj_dis);
 		}
 
 		// reduce the projection distance to avoid numerical error
-		sphere.squared_radius() = min_proj_dis * 0.5;
+		sphere.squared_radius() =
+		  std::min(min_proj_dis * 0.5, sphere.squared_radius());
 		// check if the sphere is still intersected by segments
 		while (!intersected_segs.empty())
 		{
@@ -1124,26 +1123,45 @@ auto SegmentRecover<Traits>::getSteinerPoint(index_t               eid,
                                              AuxVector64<index_t> &enc_verts)
   -> IPoint_LNC
 {
+	const PLCEdge &e = plc.edge(eid);
+
 	// Find encroaching points
 	index_t ref_vid, curr_tet;
 	findReferenceEncroachingPoint(eid, ref_vid, curr_tet, &enc_verts);
-
 	// Check the validity of encroaching points
 	OMC_EXPENSIVE_ASSERT(!enc_verts.empty(), "Empty encroaching points.");
 
-#if 0   // SiHang's strategy
+	IPoint_LNC steiner_pnt;
+
+#if 1 // SiHang's strategy
 	// Get the Steiner point to split the segment
-	if (plc.edge(eid).type == PLCEdgeType::BOTH_ACUTE_VERTEX)
-		return middlePoint(plc.edge(eid));
-	else if (plc.edge(eid).type == PLCEdgeType::NO_ACUTE_VERTEX)
-		return splitSegment_NoAcuteVertex(eid, ref_vid);
+	if (e.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
+		steiner_pnt = middlePoint(e);
+	else if (e.type == PLCEdgeType::NO_ACUTE_VERTEX)
+		steiner_pnt = splitSegment_NoAcuteVertex(eid, ref_vid);
 	else // ONE_ACUTE_VERTEX
-		return splitSegment_OneAcuteVertex(eid, ref_vid);
+		steiner_pnt = splitSegment_OneAcuteVertex(eid, ref_vid);
 #elif 0 // simple middle point strategy
-	return middlePoint(plc.edge(eid));
-#elif 1
-	return reduceMostEncroachingPoints(eid, enc_verts);
+	steiner_pnt = middlePoint(e);
+#elif 0
+	steiner_pnt = reduceMostEncroachingPoints(eid, enc_verts);
 #endif
+
+#ifdef OMC_CDT_PROTECT_SPHERE
+	if (e.type == PLCEdgeType::ONE_ACUTE_VERTEX && e.hasEp(e.acute_vid))
+	{ // use a protecting sphere to protect edges around the acute vertex.
+		if (DoIntersect()(Sphere(AsEP()(gpnt(e.acute_vid)),
+		                         protecting_sphere_squared_radius[e.acute_vid]),
+		                  AsGP()(steiner_pnt)))
+		{
+			// the Steiner point is inside the protecting sphere of the acute vertex.
+			// we need to protect the acute vertex and incident edge.
+			steiner_pnt = splitSegment_ProtectingSphere(eid);
+		}
+	}
+#endif
+
+	return steiner_pnt;
 }
 
 /**
@@ -1363,6 +1381,45 @@ SegmentRecover<Traits>::linePlaneIntersection(const Vec3 &e0, const Vec3 &e1,
 
 	// So we can solve the equation: t = (n dot (p - e0)) / (n dot (e1 - e0)).
 	return n.dot(p - e0) / n.dot(e1 - e0);
+}
+
+template <typename Traits>
+auto SegmentRecover<Traits>::splitSegment_ProtectingSphere(index_t eid)
+  -> IPoint_LNC
+{
+	const PLCEdge &e   = plc.edge(eid);
+	// Get the endpoints of the edge and its original edge.
+	index_t        ep0 = e.ep0(), ep1 = e.ep1();
+	index_t        acute_vid = e.acute_vid;
+	index_t        oep0, oep1;
+	if (is_valid_idx(e.ancestor_id))
+	{
+		const PLCEdge &oe = plc.edge(e.ancestor_id);
+		oep0 = oe.ep0(), oep1 = oe.ep1();
+	}
+	else
+	{
+		oep0 = ep0, oep1 = ep1;
+	}
+	OMC_EXPENSIVE_ASSERT(
+	  acute_vid == oep0 || acute_vid == oep1,
+	  "The acute vertex is not an endpoint of the original edge.");
+	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
+	                     "Input points contain implicit points.");
+	if (acute_vid == oep1) // swap the acute vertex to oep0
+		std::swap(oep0, oep1);
+	// Get the vectors of related points.
+	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
+	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
+	// Get the interpolation parameters
+	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+	OMC_EXPENSIVE_ASSERT(t0 < t1, "Invalid interpolation parameters.");
+	// Parameterize the sphere radius to the original segment
+	double t = std::sqrt(protecting_sphere_squared_radius[acute_vid] /
+	                     (oe1_v - oe0_v).sqrnorm());
+	// WARN t still has numerical error
+	OMC_EXPENSIVE_ASSERT((t0 < t && t < t1), "The point is outside the edge.");
+	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
 }
 
 } // namespace OMC
