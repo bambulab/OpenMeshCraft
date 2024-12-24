@@ -53,9 +53,8 @@ public: /* Auxiliary data structures ****************************************/
 		/// The type of the edge.
 		PLCEdgeType type;
 		/// The indices of the endpoints of the edge.
-		/// (In `ONC_ACUTE_VERTEX` case, the vertex closer to the original acute
-		/// vertex `acute_vid` is at the first position. In other cases, the order
-		/// is arbitrary.)
+		/// (ep0 is always closer to the original ep0, same for ep1.
+		/// So, the parameter `t` of ep0 is always less than `t` of ep1.)
 		IPair       ep;
 		/// the ancestor (not the parent) edge is the original edge before splitting
 		/// (set to InvalidIndex if this edge is not a sub-edge)
@@ -80,7 +79,10 @@ public: /* Auxiliary data structures ****************************************/
 		index_t       &ep1() { return ep.second; }
 		const index_t &ep1() const { return ep.second; }
 
-		bool is_split() const { return is_valid_idx(child_id); }
+		bool isFlat() const { return type == PLCEdgeType::FLAT_EDGE; }
+		bool hasAncestor() const { return is_valid_idx(ancestor_id); }
+		bool isSplit() const { return is_valid_idx(child_id); }
+		bool isConstraint() const { return !isFlat() && !isSplit(); }
 
 		bool hasEp(index_t vid) const { return ep0() == vid || ep1() == vid; }
 
@@ -89,6 +91,8 @@ public: /* Auxiliary data structures ****************************************/
 
 		bool operator<(const PLCEdge &rhs) const { return ep < rhs.ep; }
 		bool operator==(const PLCEdge &rhs) const { return ep == rhs.ep; }
+
+		index_t commonEp(const PLCEdge &rhs) const;
 	};
 
 	/// A range of sub-edges for an original edge after splitting.
@@ -181,11 +185,6 @@ public: /* Interfaces ******************************************************/
 
 	/* Query on input constraints ***********************************************/
 
-	GPoint       &pnt(index_t vid) { return *vertices[vid]; }
-	const GPoint &pnt(index_t vid) const { return *vertices[vid]; }
-
-	size_t numVertices() const { return vertices.size(); }
-
 	index_t edgeVtx(index_t eid, index_t j) const { return edges[eid * 2 + j]; }
 
 	index_t triVtx(index_t tid, index_t j) const
@@ -195,11 +194,25 @@ public: /* Interfaces ******************************************************/
 
 	/* Operations on PLC *******************************************************/
 
+	/* Operations on PLC vertex */
+
+	size_t        numVertices() const { return vertices.size(); }
+	GPoint       &pnt(index_t vid) { return *vertices[vid]; }
+	const GPoint &pnt(index_t vid) const { return *vertices[vid]; }
+
+	void newVtx(index_t new_vid);
+
+	index_t edgeWrtSteiner(index_t vid) const;
+
+	index_t steinerOfEdge(index_t eid) const;
+
 	/* Operations on PLC edge */
 
 	size_t         numEdges() const { return plc_edges.size(); }
 	PLCEdge       &edge(index_t eid) { return plc_edges[eid]; }
 	const PLCEdge &edge(index_t eid) const { return plc_edges[eid]; }
+
+	index_t ancestorEdge(index_t eid) const;
 
 	index_t oppV2E(const PLCEdge &edge, index_t tid) const;
 
@@ -218,7 +231,7 @@ public: /* Interfaces ******************************************************/
 	PLCEdge       &subEdge(index_t seid) { return edge(sub_edges[seid]); }
 	const PLCEdge &subEdge(index_t seid) const { return edge(sub_edges[seid]); }
 
-	/* Operations on PLC incidence (vert-edge, edge-tri, tri-bounding edge) */
+	/* Operations on PLC incidents (vert-edge, edge-tri, tri-bounding edge) */
 
 	size_t  numEdgeIncTri(index_t eid) const { return edge_inc_tri[eid].size(); }
 	index_t edgeIncTri(index_t eid, index_t j) { return edge_inc_tri[eid][j]; }
@@ -249,6 +262,12 @@ public: /* Data ************************************************************/
 	const size_t input_nt; ///< number of input triangles
 
 	bool is_close_and_manifold; ///< whether the input is close and manifold
+
+	/* Vertex data for PLC */
+
+	/// Index to the edge with respect to its split Steiner point.
+	/// (Steiner point index -> PLC edge index)
+	std::vector<index_t> edge_wrt_steiner;
 
 	/* Edge data for PLC */
 

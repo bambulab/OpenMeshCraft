@@ -39,7 +39,7 @@ void SegmentRecover<Traits>::segmentRecovery()
 	for (index_t eid = 0; eid < plc.numEdges(); eid++)
 	{
 		const PLCEdge &e = plc.edge(eid);
-		if (!e.is_split() && e.type != PLCEdgeType::FLAT_EDGE)
+		if (e.isConstraint())
 		{
 			OMC_ASSERT(tet_mesh.edgeExists(e.ep0(), e.ep1()), "Missing segment {}.",
 			           eid);
@@ -68,6 +68,7 @@ index_t SegmentRecover<Traits>::newVtx(PointType new_pnt)
 
 	// create auxiliary data in TetMesh & PLC
 	tet_mesh.newVtx(new_vid);
+	plc.newVtx(new_vid);
 
 	return new_vid;
 }
@@ -83,8 +84,7 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang()
 	for (index_t eid = 0; eid < plc.numEdges(); eid++)
 	{
 		const PLCEdge &e = plc.edge(eid);
-		if (e.type != PLCEdgeType::FLAT_EDGE &&
-		    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
+		if (!e.isFlat() && !tet_mesh.edgeExists(e.ep0(), e.ep1()))
 		{
 			missing_segments.push_back(eid);
 		}
@@ -143,7 +143,7 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang()
 		for (index_t eid = 0; eid < plc.numEdges(); eid++)
 		{
 			const PLCEdge &e = plc.edge(eid);
-			if (!e.is_split() && e.type != PLCEdgeType::FLAT_EDGE &&
+			if (e.isConstraint() &&
 			    (tet_mesh.isMarked(e.ep0(), VTX_MARK::TO_CHECK) ||
 			     tet_mesh.isMarked(e.ep1(), VTX_MARK::TO_CHECK)) &&
 			    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
@@ -524,11 +524,10 @@ bool SegmentRecover<Traits>::isLessThanHalfDistance(const GPoint &a,
 }
 
 /**
- * @brief Given original PLC edge (oep0, oep1) and a sub-edge (ep0, ep1) of the
- * original one, find the interpolation parameter t0 and t1 such that the
- * sub-edge is the interpolation of the original edge:
+ * @brief Simply get the inerpolation parameters for the sub-edge.
  * ep0 = oep0 + t0 * (oep1 - oep0),
  * ep1 = oep0 + t1 * (oep1 - oep0).
+ * We assume that `oep0.t <= ep0.t < ep1.t <= oep1.t`.
  *
  * @param oep0 one endpoint of the original PLC edge
  * @param oep1 the other endpoint of the original PLC edge
@@ -546,51 +545,40 @@ SegmentRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1, index_t ep0,
 	// calculate the interpolation parameter for `ep0`
 	if (ep0 == oep0)
 		t0 = 0.0;
-	else if (ep0 == oep1)
-		t0 = 1.0;
-	else if (&(gpnt(ep0).LNC().P()) == &gpnt(oep0))
-		t0 = gpnt(ep0).LNC().T();
-	else if (&(gpnt(ep0).LNC().P()) == &gpnt(oep1))
-		t0 = 1.0 - gpnt(ep0).LNC().T();
 	else
 	{
-		OMC_ASSERT(false, "The sub-edge is not a part of the original edge.");
+		OMC_EXPENSIVE_ASSERT(&(gpnt(ep0).LNC().P()) == &gpnt(oep0) &&
+		                       &(gpnt(ep0).LNC().Q()) == &gpnt(oep1),
+		                     "Wrong orders.");
+		t0 = gpnt(ep0).LNC().T();
 	}
 
 	// calculate the interpolation parameter for `ep1`
-	if (ep1 == oep0)
-		t1 = 0.0;
-	else if (ep1 == oep1)
+	if (ep1 == oep1)
 		t1 = 1.0;
-	else if (&(gpnt(ep1).LNC().P()) == &gpnt(oep0))
-		t1 = gpnt(ep1).LNC().T();
-	else if (&(gpnt(ep1).LNC().P()) == &gpnt(oep1))
-		t1 = 1.0 - gpnt(ep1).LNC().T();
 	else
 	{
-		OMC_ASSERT(false, "The sub-edge is not a part of the original edge.");
+		OMC_EXPENSIVE_ASSERT(&(gpnt(ep1).LNC().P()) == &gpnt(oep0) &&
+		                       &(gpnt(ep1).LNC().Q()) == &gpnt(oep1),
+		                     "Wrong orders.");
+		t1 = gpnt(ep1).LNC().T();
 	}
 
-	OMC_EXPENSIVE_ASSERT(t0 >= 0.0 && t0 <= 1.0 && t1 >= 0.0 && t1 <= 1.0,
-	                     "Invalid interpolation parameters.");
+	OMC_EXPENSIVE_ASSERT(t0 < t1, "Wrong orders.");
 	return std::pair<double, double>(t0, t1);
 }
 
 /**
  * @brief Get the middle point of a PLC edge represented by LNC implicit point.
- * This function is used to split a PLC edge with two acute vertices.
  * @param e The given PLC edge.
- * @note bothAc means both acute vertices.
  * @return IPoint_LNC The middle point of the edge.
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::middlePoint(const PLCEdge &e) const -> IPoint_LNC
 {
-	OMC_EXPENSIVE_ASSERT(!e.is_split(), "The edge is already split.");
-
 	index_t ep0 = e.ep0(), ep1 = e.ep1();
 
-	if (is_valid_idx(e.ancestor_id)) // The edge is a sub-edge of a split edge.
+	if (e.hasAncestor()) // The edge is a sub-edge of a split edge.
 	{
 		const PLCEdge &oe   = plc.edge(e.ancestor_id);
 		index_t        oep0 = oe.ep0(), oep1 = oe.ep1();
@@ -630,19 +618,13 @@ auto SegmentRecover<Traits>::lineSphereIntersection_noAc(index_t eid,
                                                          index_t ref_vid) const
   -> IPoint_LNC
 {
-	const PLCEdge &e   = plc.edge(eid);
+	const PLCEdge &e = plc.edge(eid);
+
 	// Get the endpoints of the edge and its original edge.
-	index_t        ep0 = e.ep0(), ep1 = e.ep1();
-	index_t        oep0 = InvalidIndex, oep1 = InvalidIndex;
-	if (is_valid_idx(e.ancestor_id))
-	{
-		const PLCEdge &oe = plc.edge(e.ancestor_id);
-		oep0 = oe.ep0(), oep1 = oe.ep1();
-	}
-	else
-	{
-		oep0 = ep0, oep1 = ep1;
-	}
+	index_t ep0 = e.ep0(), ep1 = e.ep1();
+	index_t oep0 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep0() : ep0;
+	index_t oep1 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep1() : ep1;
+
 	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
 	                     "Input points contain implicit points.");
 	// Get the vectors of related points.
@@ -652,7 +634,6 @@ auto SegmentRecover<Traits>::lineSphereIntersection_noAc(index_t eid,
 	Vec3 end_v    = ToEP()(gpnt(reverse ? ep1 : ep0)).as_vec();
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
-	OMC_EXPENSIVE_ASSERT(t0 < t1, "Invalid interpolate parameters.");
 	// Parameterize the sphere radius to the original segment
 	double radius =
 	  std::sqrt((ref_v - end_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
@@ -689,36 +670,31 @@ auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
                                                           index_t ref_vid) const
   -> IPoint_LNC
 {
-	const PLCEdge &e   = plc.edge(eid);
+	const PLCEdge &e = plc.edge(eid);
+
 	// Get the endpoints of the edge and its original edge.
-	index_t        ep0 = e.ep0(), ep1 = e.ep1();
-	index_t        acute_vid = e.acute_vid;
-	index_t        oep0, oep1;
-	if (is_valid_idx(e.ancestor_id))
-	{
-		const PLCEdge &oe = plc.edge(e.ancestor_id);
-		oep0 = oe.ep0(), oep1 = oe.ep1();
-	}
-	else
-	{
-		oep0 = ep0, oep1 = ep1;
-	}
-	OMC_EXPENSIVE_ASSERT(
-	  acute_vid == oep0 || acute_vid == oep1,
-	  "The acute vertex is not an endpoint of the original edge.");
+	index_t ep0 = e.ep0(), ep1 = e.ep1();
+	index_t oep0 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep0() : ep0;
+	index_t oep1 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep1() : ep1;
+
+	index_t acute_vid = e.acute_vid;
+
+	OMC_EXPENSIVE_ASSERT((acute_vid == oep0 || acute_vid == oep1),
+	                     "Wrong acute vertices.");
 	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
 	                     "Input points contain implicit points.");
-	if (acute_vid == oep1) // swap the acute vertex to oep0
-		std::swap(oep0, oep1);
+
 	// Get the vectors of related points.
 	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
 	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
 	Vec3 ref_v    = ToEP()(gpnt(ref_vid)).as_vec();
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
-	OMC_EXPENSIVE_ASSERT(t0 < t1, "Invalid interpolation parameters.");
 	// Parameterize the sphere radius to the original segment
-	double t   = std::sqrt((ref_v - oe0_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
+	double t =
+	  acute_vid == oep0
+	    ? std::sqrt((ref_v - oe0_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm())
+	    : 1.0 - std::sqrt((ref_v - oe1_v).sqrnorm() / (oe1_v - oe0_v).sqrnorm());
 	// Ensure that the intersection point is inside the edge,
 	// and make the sub segments as long as possible.
 	double eps = (t1 - t0) * 0.2;
@@ -755,8 +731,7 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 	{
 		const PLCEdge &e = plc.edge(eid);
 
-		if (!e.is_split() && e.type != PLCEdgeType::FLAT_EDGE &&
-		    !tet_mesh.edgeExists(e.ep0(), e.ep1()))
+		if (e.isConstraint() && !tet_mesh.edgeExists(e.ep0(), e.ep1()))
 		{
 			pushSegmentToQueue</*AllowUpdate*/ false>(eid);
 			missing_count++;
@@ -779,10 +754,8 @@ void SegmentRecover<Traits>::segmentRecovery_Greedy()
 		double  priority = seg_queue.top().second;
 		seg_queue.pop();
 
-		OMC_EXPENSIVE_ASSERT(plc.edge(eid).type != PLCEdgeType::FLAT_EDGE,
-		                     "Try to split flat edge.");
-		OMC_EXPENSIVE_ASSERT(!plc.edge(eid).is_split(),
-		                     "The edge is already split.");
+		OMC_EXPENSIVE_ASSERT(plc.edge(eid).isConstraint(),
+		                     "Try to split non-constrained edge.");
 		// Skip the recovered segment
 		if (tet_mesh.edgeExists(plc.edge(eid).ep0(), plc.edge(eid).ep1()))
 			continue;
@@ -931,7 +904,7 @@ size_t SegmentRecover<Traits>::initializeTrees()
 	for (index_t eid = 0; eid < plc.numEdges(); eid++)
 	{
 		const PLCEdge &e = plc.edge(eid);
-		if (e.type != PLCEdgeType::FLAT_EDGE)
+		if (!e.isFlat())
 		{
 			non_flat_count++;
 			// endpoints
@@ -1267,25 +1240,17 @@ template <typename Traits>
 auto SegmentRecover<Traits>::reduceMostEncroachingPoints(
   index_t eid, const AuxVector64<index_t> &enc_verts) const -> IPoint_LNC
 {
-	const PLCEdge &e   = plc.edge(eid);
+	const PLCEdge &e = plc.edge(eid);
+
 	// Get the endpoints of the edge and its original edge.
-	index_t        ep0 = e.ep0(), ep1 = e.ep1();
-	index_t        oep0 = InvalidIndex, oep1 = InvalidIndex;
-	if (is_valid_idx(e.ancestor_id))
-	{
-		const PLCEdge &oe = plc.edge(e.ancestor_id);
-		oep0 = oe.ep0(), oep1 = oe.ep1();
-	}
-	else
-	{
-		oep0 = ep0, oep1 = ep1;
-	}
+	index_t ep0 = e.ep0(), ep1 = e.ep1();
+	index_t oep0 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep0() : ep0;
+	index_t oep1 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep1() : ep1;
+
 	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
 	                     "Input points contain implicit points.");
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
-	if (t1 < t0)
-		std::swap(t0, t1);
 
 	// Get the vectors of related points.
 	Vec3 oe0_v = AsEP()(gpnt(oep0)).as_vec();
@@ -1387,27 +1352,21 @@ template <typename Traits>
 auto SegmentRecover<Traits>::splitSegment_ProtectingSphere(index_t eid)
   -> IPoint_LNC
 {
-	const PLCEdge &e   = plc.edge(eid);
+	const PLCEdge &e = plc.edge(eid);
+
 	// Get the endpoints of the edge and its original edge.
-	index_t        ep0 = e.ep0(), ep1 = e.ep1();
-	index_t        acute_vid = e.acute_vid;
-	index_t        oep0, oep1;
-	if (is_valid_idx(e.ancestor_id))
-	{
-		const PLCEdge &oe = plc.edge(e.ancestor_id);
-		oep0 = oe.ep0(), oep1 = oe.ep1();
-	}
-	else
-	{
-		oep0 = ep0, oep1 = ep1;
-	}
+	index_t ep0 = e.ep0(), ep1 = e.ep1();
+	index_t oep0 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep0() : ep0;
+	index_t oep1 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep1() : ep1;
+
+	index_t acute_vid = e.acute_vid;
+
 	OMC_EXPENSIVE_ASSERT(
 	  acute_vid == oep0 || acute_vid == oep1,
 	  "The acute vertex is not an endpoint of the original edge.");
 	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
 	                     "Input points contain implicit points.");
-	if (acute_vid == oep1) // swap the acute vertex to oep0
-		std::swap(oep0, oep1);
+
 	// Get the vectors of related points.
 	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
 	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
@@ -1417,6 +1376,7 @@ auto SegmentRecover<Traits>::splitSegment_ProtectingSphere(index_t eid)
 	// Parameterize the sphere radius to the original segment
 	double t = std::sqrt(protecting_sphere_squared_radius[acute_vid] /
 	                     (oe1_v - oe0_v).sqrnorm());
+	t        = acute_vid == oep0 ? t : 1.0 - t;
 	// WARN t still has numerical error
 	OMC_EXPENSIVE_ASSERT((t0 < t && t < t1), "The point is outside the edge.");
 	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);

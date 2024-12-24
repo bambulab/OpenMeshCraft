@@ -39,8 +39,8 @@ namespace OMC {
 #define OMC_CDT_EXACT_ENCROACH_TEST
 
 // Choose one segmen recovery strategy
-// #define OMC_CDT_SEG_SIHANG
-#define OMC_CDT_SEG_GREEDY
+#define OMC_CDT_SEG_SIHANG
+// #define OMC_CDT_SEG_GREEDY
 
 // Enable protecting sphere strategy
 #define OMC_CDT_PROTECT_SPHERE

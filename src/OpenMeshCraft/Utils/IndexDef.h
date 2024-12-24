@@ -27,7 +27,7 @@ inline bool is_valid_idx(index_t idx) { return idx != InvalidIndex; }
 constexpr size_t UnknownSize = size_t(-1);
 
 /// index pair
-using IPair = std::pair<index_t, index_t>;
+using IPair  = std::pair<index_t, index_t>;
 /// unique index pair (expect first <= second)
 using UIPair = std::pair<index_t, index_t>;
 
@@ -38,5 +38,10 @@ inline UIPair unique_pair(index_t i, index_t j)
 
 /// "<" in case of unique, "==" in case of two invalid indices.
 inline bool is_unique(const UIPair &p) { return p.first <= p.second; }
+
+inline IPair reverse_pair(const IPair &p)
+{
+	return std::make_pair(p.second, p.first);
+}
 
 } // namespace OMC

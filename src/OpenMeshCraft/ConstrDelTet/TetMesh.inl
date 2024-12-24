@@ -516,7 +516,7 @@ TetrahedralMesh<Traits>::classifyInOut(std::vector<uint8_t> &corner_is_boundary,
 	}
 
 	return std::count_if(tet_mark.begin(), tet_mark.end(), [](uint32_t m)
-	                     { return m & (uint32_t)TET_MARK::INSIDE; });
+	                     { return m & static_cast<uint32_t>(TET_MARK::INSIDE); });
 }
 
 /**
@@ -771,13 +771,16 @@ void TetrahedralMesh<Traits>::clear()
 }
 
 /**
- * @brief Clear all vertices and related data in the tetrahedra mesh.
+ * @brief Clear (reset) vertices-related data in the tetrahedra mesh.
  */
 template <typename Traits>
 void TetrahedralMesh<Traits>::clearVerts()
 {
-	verts   = std::vector<GPoint *>();
-	inc_tet = std::vector<index_t>();
+	inc_tet.clear();
+	inc_tet.resize(verts.size(), InvalidIndex);
+
+	vtx_mark.clear();
+	vtx_mark.resize(verts.size(), static_cast<uint32_t>(VTX_MARK::NO_MARK));
 }
 
 /**

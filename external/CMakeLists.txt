@@ -53,7 +53,7 @@ set(CGAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cgal)
 set(Boost_DEBUG OFF)
 set(Boost_NO_WARN_NEW_VERSIONS ON)
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.78.0 REQUIRED)
+find_package(Boost 1.78.0 CONFIG REQUIRED)
 
 # find CGAL. This procedure should be executed after finding boost.
 set(CGAL_Boost_USE_STATIC_LIBS ON)
@@ -116,8 +116,8 @@ set(TBBMALLOC_BUILD OFF CACHE BOOL "")
 # cmake-format: on
 
 if(WIN32 AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  # When compile tbb by gcc (mingw64) on Windows, compiler complains a lot of warnings.
-  # It's ok to compile tbb by MSVC on Windows or by gcc on Unix* OS.
+  # When compile tbb by gcc (mingw64) on Windows, compiler complains a lot of
+  # warnings. It's ok to compile tbb by MSVC on Windows or by gcc on Unix* OS.
   set(TBB_WARNING_SUPPRESS -Wno-stringop-overflow -Wno-unused-value
                            -Wno-array-bounds)
 endif()

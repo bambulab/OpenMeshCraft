@@ -39,6 +39,18 @@ PiecewiseLinearComplex<Traits>::PLCEdge::PLCEdge(PLCEdgeType _type, index_t e0,
 {
 }
 
+template <typename Traits>
+index_t
+PiecewiseLinearComplex<Traits>::PLCEdge::commonEp(const PLCEdge &rhs) const
+{
+	if (ep0() == rhs.ep0() || ep0() == rhs.ep1())
+		return ep0();
+	else if (ep1() == rhs.ep0() || ep1() == rhs.ep1())
+		return ep1();
+	else
+		return InvalidIndex;
+}
+
 /**
  * @brief Initializes a PLC with the given vertices, edges and triangles.
  */
@@ -235,7 +247,7 @@ void PiecewiseLinearComplex<Traits>::initVertIncEdge()
 	for (index_t eid = 0; eid < numEdges(); eid++)
 	{
 		PLCEdge &e = edge(eid);
-		if (e.type != PLCEdgeType::FLAT_EDGE)
+		if (!e.isFlat())
 		{
 			vertex_inc_edge_input[e.ep0()].push_back(eid);
 			vertex_inc_edge_input[e.ep1()].push_back(eid);
@@ -264,7 +276,7 @@ void PiecewiseLinearComplex<Traits>::classifyVertEdge()
 	{
 		PLCEdge &e = edge(eid);
 		// skip flat edges
-		if (e.type == PLCEdgeType::FLAT_EDGE)
+		if (e.isFlat())
 			continue;
 		OMC_EXPENSIVE_ASSERT(e.type == PLCEdgeType::UNDETERMINED,
 		                     "Edge type should be not undetermined.");
@@ -278,16 +290,11 @@ void PiecewiseLinearComplex<Traits>::classifyVertEdge()
 		{
 			e.type      = PLCEdgeType::ONE_ACUTE_VERTEX;
 			e.acute_vid = acute_vid;
-			if (e.ep1() == acute_vid)
-			{ // swap two endpoints to make the acute vertex at the first position
-				e.swapEp();
-			}
 		}
 		else if (e.type == PLCEdgeType::ONE_ACUTE_VERTEX)
 		{
 			e.type      = PLCEdgeType::BOTH_ACUTE_VERTEX;
 			e.acute_vid = InvalidIndex;
-			e.makeUniqEp();
 		}
 		else if (e.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 		{
@@ -420,8 +427,7 @@ void PiecewiseLinearComplex<Traits>::initSubEdges()
 	for (index_t eid = 0; eid < init_npe; eid++)
 	{
 		// skip the sub-edge (non-original edge)
-		OMC_EXPENSIVE_ASSERT(!is_valid_idx(edge(eid).ancestor_id),
-		                     "Not an ancestor PLC edge.");
+		OMC_EXPENSIVE_ASSERT(!edge(eid).hasAncestor(), "Not an ancestor PLC edge.");
 		// the start position of sub-edges
 		index_t sub_edge_start = sub_edges.size();
 		// find all sub-edges and put them in `sub_edges`
@@ -462,8 +468,8 @@ void PiecewiseLinearComplex<Traits>::sortSubEdges()
 	{
 		PLCEdge &e = edge(range.orig_eid);
 
-		// Adjust endpoints of original edges to a unique pair
-		e.makeUniqEp();
+		OMC_EXPENSIVE_ASSERT(e.ep0() < e.ep1(), "ep is not unique.");
+
 		if (range.size == 1)
 		{ // This original edge is not split
 			OMC_EXPENSIVE_ASSERT(sub_edges[range.start] == range.orig_eid,
@@ -593,8 +599,7 @@ void PiecewiseLinearComplex<Traits>::assembleEdges2Faces()
 	// Assemble edges to their incident faces
 	for (index_t eid = 0; eid < init_npe; eid++)
 	{
-		OMC_EXPENSIVE_ASSERT(!is_valid_idx(edge(eid).ancestor_id),
-		                     "Not an ancestor PLC edge.");
+		OMC_EXPENSIVE_ASSERT(!edge(eid).hasAncestor(), "Not an ancestor PLC edge.");
 		for (index_t tid : edge_inc_tri[eid])
 		{
 			assembleEdges2Faces(sub_edge_range[eid], plc_faces[tid], tid);
@@ -712,7 +717,7 @@ void PiecewiseLinearComplex<Traits>::mergeFacesArossFlatEdges()
 	{
 		const PLCEdge &e = edge(eid);
 		// skip non-flat edge
-		if (e.type != PLCEdgeType::FLAT_EDGE)
+		if (!e.isFlat())
 			continue;
 		index_t t0 = findMergedFace(edgeIncTri(eid, 0));
 		index_t t1 = findMergedFace(edgeIncTri(eid, 1));
@@ -921,6 +926,63 @@ void PiecewiseLinearComplex<Traits>::extractBoundingVertices()
 }
 
 /**
+ * @brief Adds a new vertex, which must be a Steiner vertex, to the Piecewise
+ * Linear Complex (PLC).
+ * @param new_vid The index of the new vertex to be added. This index must be
+ * greater than the number of input vertices.
+ */
+template <typename Traits>
+void PiecewiseLinearComplex<Traits>::newVtx(OMC_UNUSED index_t new_vid)
+{
+	OMC_EXPENSIVE_ASSERT(new_vid >= input_nv,
+	                     "New vertex must be a Steiner vertex.");
+
+	edge_wrt_steiner.emplace_back();
+	vertex_inc_edge_steiner.emplace_back();
+
+	OMC_EXPENSIVE_ASSERT(edge_wrt_steiner.size() == new_vid - input_nv + 1,
+	                     "size mismatch.");
+	OMC_EXPENSIVE_ASSERT(vertex_inc_edge_steiner.size() == new_vid - input_nv + 1,
+	                     "size mismatch.");
+}
+
+/**
+ * @brief Get the edge index with respect to its split Steiner point.
+ */
+template <typename Traits>
+index_t PiecewiseLinearComplex<Traits>::edgeWrtSteiner(index_t vid) const
+{
+	return edge_wrt_steiner[vid - input_nv];
+}
+
+/**
+ * @brief Get the Steiner point of a given edge if it exists.
+ */
+template <typename Traits>
+index_t PiecewiseLinearComplex<Traits>::steinerOfEdge(index_t eid) const
+{
+	const PLCEdge &e = edge(eid);
+	if (e.isSplit())
+		return edge(e.child_id).commonEp(edge(e.child_id + 1));
+	else
+		return InvalidIndex;
+}
+
+/**
+ * @brief Retrieves the ancestor edge ID of a given edge.
+ * If the ancestor edge ID is not valid, it returns the ID of the edge itself.
+ */
+template <typename Traits>
+index_t PiecewiseLinearComplex<Traits>::ancestorEdge(index_t eid) const
+{
+	const PLCEdge &e = edge(eid);
+	if (e.hasAncestor())
+		return e.ancestor_id;
+	else
+		return eid;
+}
+
+/**
  * @brief Opposite vertex to the `edge` in the given triangle `tid`.
  */
 template <typename Traits>
@@ -946,27 +1008,26 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 	index_t  ep0 = e.ep0();
 	index_t  ep1 = e.ep1();
 
-	index_t ancestor_id = is_valid_idx(e.ancestor_id) ? e.ancestor_id : eid;
+	index_t ancestor_id = ancestorEdge(eid);
 	// create two new edge
 	if (e.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
 	{
-		OMC_EXPENSIVE_ASSERT(!is_valid_idx(e.ancestor_id), "Not an ancestor edge.");
-		// create two new edges with the type `ONE_ACUTE_VERTEX`
-		// `ep0` and `ep1` are the closer vertex to the original acute vertices.
-		// `vid` is the farther(opposite) vertex to the original acute vertices.
+		OMC_EXPENSIVE_ASSERT(!e.hasAncestor(), "Not an ancestor edge.");
+		// 1. create two new edges with the type `ONE_ACUTE_VERTEX`.
+		// 2. make sure that `oep0 < ep0 < vid < ep1 < oep1`.
+		// 3. set the correct acute vertex in the sub-edges.
 		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep0, vid, ancestor_id,
-		                       /*child_id*/ InvalidIndex, /*avute_vid*/ ep0);
-		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, ep1, vid, ancestor_id,
+		                       /*child_id*/ InvalidIndex, /*acute_vid*/ ep0);
+		plc_edges.emplace_back(PLCEdgeType::ONE_ACUTE_VERTEX, vid, ep1, ancestor_id,
 		                       /*child_id*/ InvalidIndex, /*acute_vid*/ ep1);
 	}
 	else // ONE_ACUTE_VERTEX or NO_ACUTE_VERTEX
 	{
 		PLCEdgeType new_type  = e.type;
 		index_t     acute_vid = e.acute_vid;
-		// create two new edges inherit the same edge type.
-		// `ep0` is the vertex closer to the original acute vertex in <ep0, vid>,
-		// so as `vid` in <vid, ep1>. This is to distinguish the closer vertex in
-		// lineSphereIntersection_oneAc function in segment recovery.
+		// 1. create two new edges inherit the same edge type.
+		// 2. make sure that `oep0 < ep0 < vid < ep1 < oep1`.
+		// 3. set the correct acute vertex in the sub-edges.
 		plc_edges.emplace_back(new_type, ep0, vid, ancestor_id,
 		                       /*child_id*/ InvalidIndex, acute_vid);
 		plc_edges.emplace_back(new_type, vid, ep1, ancestor_id,
@@ -975,16 +1036,13 @@ void PiecewiseLinearComplex<Traits>::splitPLCEdge(index_t eid, index_t vid)
 	index_t child_id   = plc_edges.size() - 2;
 	edge(eid).child_id = child_id;
 
-	OMC_EXPENSIVE_ASSERT(vertex_inc_edge_steiner.size() == vid - input_nv,
-	                     "size mismatch.");
-
 	// update
 	updateVertIncEdge(ep0, eid, child_id);
 	updateVertIncEdge(ep1, eid, child_id + 1);
 	// add
-	vertex_inc_edge_steiner.emplace_back();
-	vertex_inc_edge_steiner.back().push_back(child_id);
-	vertex_inc_edge_steiner.back().push_back(child_id + 1);
+	vertex_inc_edge_steiner[vid - input_nv].push_back(child_id);
+	vertex_inc_edge_steiner[vid - input_nv].push_back(child_id + 1);
+	edge_wrt_steiner[vid - input_nv] = eid;
 }
 
 template <typename Traits>

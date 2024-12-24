@@ -113,8 +113,9 @@ if(CMAKE_HOST_WIN32)
             ${PROJECT_NAME} --config $<CONFIG>)
 endif()
 
-include(GoogleTest)
-gtest_discover_tests(${PROJECT_NAME})
+# enable_testing()
+# include(GoogleTest)
+# gtest_discover_tests(${PROJECT_NAME})
 
 # ##############################################################################
 # ##############################################################################
@@ -148,10 +149,12 @@ foreach(_TARGET OpenMeshCraft-Arrangements OpenMeshCraft-CDT)
   # finally configure...
   include(OpenMeshCraft_ConfigureDeps)
 
-  add_custom_command(
-    TARGET ${_TARGET}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
-            ${PROJECT_NAME} --config $<CONFIG>)
+  if(CMAKE_HOST_WIN32)
+    add_custom_command(
+      TARGET ${_TARGET}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
+              ${PROJECT_NAME} --config $<CONFIG>)
+  endif()
 
 endforeach()
