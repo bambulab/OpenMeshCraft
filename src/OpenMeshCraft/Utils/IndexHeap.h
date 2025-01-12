@@ -109,6 +109,13 @@ public:
 		       is_valid_idx(m_pos_in_heap[key]);
 	}
 
+	const value_type &value(key_type key) const
+	{
+		OMC_EXPENSIVE_ASSERT(exist(key),
+		                     "Key does not exist in heap, fail to query value.");
+		return m_heap[m_pos_in_heap[key]].second;
+	}
+
 	/**
 	 * @brief update a value specified by key.
 	 * @param value the new value.

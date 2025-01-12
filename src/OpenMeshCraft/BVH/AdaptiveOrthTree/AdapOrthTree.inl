@@ -75,7 +75,7 @@ void AdapOrthTree<Traits>::insert_boxes(const Bboxes  &bboxes,
 	                  [this, &bboxes, &indices](size_t i)
 	                  {
 		                  m_boxes[i].bbox() = bboxes[i];
-		                  m_boxes[i].id()   = indices[i];
+		                  m_boxes[i].id()   = static_cast<index_t>(indices[i]);
 	                  });
 }
 
@@ -207,7 +207,6 @@ auto AdapOrthTree<Traits>::new_children(size_t n_children) -> index_t
 template <typename Traits>
 bool AdapOrthTree<Traits>::split(index_t node_idx)
 {
-	// split node to children node
 	NodeRef nd = node(node_idx);
 
 	// get the center to split boxes

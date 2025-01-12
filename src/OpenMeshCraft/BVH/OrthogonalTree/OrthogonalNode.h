@@ -21,8 +21,8 @@ class OrthogonalNode
 {
 public: /* Types *************************************************************/
 	/// The maximal depth of orthogonal tree.
-	/// Root node is at depth 0 and is counted into depth.
-	/// For example, when MaxDepth is 2, the tree is allowed to have a root node
+	/// Root node is at depth 0.
+	/// For example, when MaxDepth is 1, the tree is allowed to have a root node
 	/// (at depth 0) and root node's children (at depth 1). Deeper nodes are not
 	/// allowd to exist in the tree.
 	static constexpr size_t MaxDepth = Traits::MaxDepth;
@@ -198,10 +198,6 @@ public: /* Data access ********************************************************/
 	size_t       &size() { return m_size; }
 	const size_t &size() const { return m_size; }
 
-	/// Access duplication degree
-	float       &dupl_degree() { return m_dupl_degree; }
-	const float &dupl_degree() const { return m_dupl_degree; }
-
 	/// Access node attribute
 	NodeAttrT       &attribute() { return m_attribute; }
 	const NodeAttrT &attribute() const { return m_attribute; }
@@ -215,7 +211,7 @@ protected: /* Data ************************************************************/
 	VerticesUPtr            m_vertices;
 	/// global coordinates of this node.
 	GlobalCoordinates       m_global_coordinates;
-	/// start from 0 (Root), end with MaxDepth - 1.
+	/// start from 0 (Root), end with MaxDepth.
 	index_t                 m_depth;
 	/// box of this node
 	Bbox                    m_box;
@@ -223,8 +219,6 @@ protected: /* Data ************************************************************/
 	std::vector<OrBboxCPtr> m_boxes;
 	/// size of all boxes stored in this node (including children).
 	size_t                  m_size;
-	/// duplication degree = sum of m_size of children / m_size of itself.
-	float                   m_dupl_degree;
 	/// attribute
 	NodeAttrT               m_attribute;
 };

@@ -22,8 +22,8 @@ class AdapOrthNode
 {
 public:
 	/// The maximal depth of orthogonal tree.
-	/// Root node is at depth 0 and is counted into depth.
-	/// For example, when MaxDepth is 2, the tree is allowed to have a root node
+	/// Root node is at depth 0.
+	/// For example, when MaxDepth is 1, the tree is allowed to have a root node
 	/// (at depth 0) and root node's children (at depth 1). Deeper nodes are not
 	/// allowd to exist in the tree.
 	static constexpr size_t MaxDepth = Traits::MaxDepth;
@@ -145,7 +145,7 @@ protected:
 	/// children of this node.
 	Children                    m_children;
 	size_t                      m_children_size;
-	/// start from 0 (Root), end with MaxDepth - 1.
+	/// start from 0 (Root), end with MaxDepth.
 	index_t                     m_depth;
 	/// loose box of this node
 	Bbox                        m_box;

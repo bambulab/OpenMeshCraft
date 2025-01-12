@@ -99,6 +99,7 @@ TEST_F(test_AABBTreeIntersection, BoxIntersect)
 	OurTree tree;
 	tree.insert(triangles.begin(), triangles.end());
 	tree.build();
+	tree.update();
 
 	// test our intersection
 
@@ -145,7 +146,7 @@ TEST_F(test_AABBTreeIntersection, BoxIntersect)
 
 	std::ofstream ofs;
 
-	make_file_writable(outdir + "cgal_intersect.txt");
+	make_file_writable(outdir + "OpenMeshCraft_intersect.txt");
 	ofs.open(outdir + "OpenMeshCraft_intersect.txt");
 
 	ofs << aux_point1[0] << " " << aux_point1[1] << " " << aux_point1[2]

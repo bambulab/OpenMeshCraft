@@ -50,6 +50,7 @@ protected:
 	public:
 		static constexpr size_t Dimension      = 3;
 		static constexpr size_t MaxDepth       = 8;
+		static constexpr bool   EnableGrade    = true;
 		static constexpr bool   EnableVertices = true;
 
 		using NT    = APAC::NT;
@@ -70,8 +71,6 @@ protected:
 	using OcTree = OMC::OcTree<OMC::OrthAutoDeduceTraits<OcTreeTraits>>;
 
 protected:
-	static constexpr double dupl_thres = 2.5;
-
 	TriPoints points;
 	Triangles faces;
 
@@ -108,7 +107,7 @@ TEST_F(test_OrthogonalTree, ConstructQuadTree)
 	}
 
 	tree.insert_primitives(triangles, indices);
-	tree.construct(true, 1.5, dupl_thres, 64);
+	tree.construct(true, 1.5, 64);
 
 	// visualize tree and save
 	visualizeBoxTree2D<QuadTree>(tree, outdir + "quadtree.obj");
@@ -131,7 +130,7 @@ TEST_F(test_OrthogonalTree, ConstructOcTree)
 	}
 
 	tree.insert_primitives(triangles, indices);
-	tree.construct(true, 1.5, dupl_thres, 64);
+	tree.construct(true, 1.5, 64);
 
 	// visualize tree and save
 	visualizeBoxTree3D<OcTree>(tree, outdir + "octree.obj");
@@ -154,7 +153,7 @@ TEST_F(test_OrthogonalTree, OcTreeVertex)
 	}
 
 	tree.insert_primitives(triangles, indices);
-	tree.construct(true, 1.5, dupl_thres, 64);
+	tree.construct(true, 1.5, 64);
 
 	// find closest point for each vertex and save them as mesh to visualize.
 	for (auto &v : tree.vertices())

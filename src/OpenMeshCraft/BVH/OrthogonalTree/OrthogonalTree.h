@@ -2,6 +2,8 @@
 
 #include "OrthogonalNode.h"
 
+#include "tbb/tbb.h"
+
 #include <deque>
 #include <queue>
 
@@ -18,8 +20,8 @@ public: /* Types and Declarations *******************************************/
 	using Traits = _Traits;
 
 	/// The maximal depth of orthogonal tree.
-	/// Root node is at depth 0 and is counted into depth.
-	/// For example, when MaxDepth is 2, the tree is allowed to have a root node
+	/// Root node is at depth 0.
+	/// For example, when MaxDepth is 1, the tree is allowed to have a root node
 	/// (at depth 0) and root node's children (at depth 1). Deeper nodes are not
 	/// allowd to exist in the tree.
 	static constexpr size_t MaxDepth = Traits::MaxDepth;
@@ -29,6 +31,9 @@ public: /* Types and Declarations *******************************************/
 
 	/// size of children, typically 4 or 8, or higher 2^n.
 	static constexpr size_t Degree = (1u << Dimension);
+
+	/// Enable gradation of the tree.
+	static constexpr bool EnableGrade = Traits::EnableGrade;
 
 	/// Enable vertices stored in tree and nodes.
 	static constexpr bool EnableVertices = Traits::EnableVertices;
@@ -66,11 +71,17 @@ public: /* Types and Declarations *******************************************/
 	using Node = OrthogonalNode<Traits>;
 	OrthTreeAbbreviate(Node);
 
+	using Nodes     = tbb::concurrent_vector<Node>;
+	using NodesIter = typename Nodes::iterator;
+
 	using LocalCoordinates  = typename Node::LocalCoordinates;
 	using GlobalCoordinates = typename Node::GlobalCoordinates;
 
 	using Vertex = OrthogonalVertex<Traits>;
 	OrthTreeAbbreviate(Vertex);
+
+	using Vertices     = tbb::concurrent_vector<Vertex>;
+	using VerticesIter = typename Vertices::iterator;
 
 public: /* Constructors and Destructor *************************************/
 	OrthogonalTree() = default;
@@ -104,14 +115,12 @@ public: /* Constructors and Destructor *************************************/
 	 * @param compact_box if set to false, the box will be an equal length cube,
 	 * otherwise be a unequal length cuboid to bound input as compact as possible.
 	 * @param enlarge_ratio enlarge the bounding box of the inserting points.
-	 * @param dupl_thres if a node's duplication degree is larger than dupl_thres,
-	 * stop splitting this node.
 	 * @param depth_delta the difference between adjacent nodes is less than
 	 * depth_delta.	if set to MaxDepth or a larger number, gradation won't be
 	 * operated.
 	 */
 	void construct(bool compact_box = false, NT enlarge_ratio = 1.2,
-	               NT dupl_thres = 2., index_t depth_delta = 2);
+	               index_t depth_delta = 2);
 
 	/**
 	 * @brief Clear the tree.
@@ -137,7 +146,7 @@ protected: /* Modifiers ******************************************************/
 	 * @brief refines the orthtree such that the difference of depth between two
 	 * immediate neighbor leaves is never more than given depth delta.
 	 */
-	void grade(NT dupl_thres, index_t depth_delta);
+	void grade(index_t depth_delta);
 
 	/**
 	 * @brief A child node inherits neccessary information from its parent.
@@ -203,8 +212,8 @@ public: /* Queries */
 	/** @brief Get the side length of a node. */
 	OrPoint node_side_length(NodeCRef nd) const;
 
-	std::deque<Vertex>       &vertices() { return m_vertices; }
-	const std::deque<Vertex> &vertices() const { return m_vertices; }
+	Vertices       &vertices() { return m_vertices; }
+	const Vertices &vertices() const { return m_vertices; }
 
 	VertexRef  vertex(index_t idx) { return m_vertices[idx]; }
 	VertexCRef vertex(index_t idx) const { return m_vertices[idx]; }
@@ -213,9 +222,6 @@ public: /* Queries */
 
 	SplitPred       &split_pred() { return m_split_pred; }
 	const SplitPred &split_pred() const { return m_split_pred; }
-
-	NT &duplication_threshold() { return m_dupl_thres; }
-	NT  duplication_threshold() const { return m_dupl_thres; }
 
 public: /* Traversal and adjacency *******************************************/
 	/**
@@ -260,7 +266,8 @@ public: /* Traversal and adjacency *******************************************/
 	 * there is no adjacent node in that direction, it returns a null
 	 * node.
 	 * @param axis axis (< Dimension)
-	 * @param dir dirtion: 0 (negative along the axis), 1 (positive along the axis)
+	 * @param dir dirtion: 0 (negative along the axis), 1 (positive along the
+	 * axis)
 	 * @return NodePtr
 	 */
 	index_t adjacent_node(NodeCRef nd, index_t axis, bool dir) const;
@@ -281,9 +288,6 @@ public: /* Traversal and adjacency *******************************************/
 	template <typename TraversalTrait>
 	void traversal(TraversalTrait &traits) const;
 
-public: /* Auxiliary or debug utils ******************************************/
-	const std::vector<size_t> &assign_count() const { return m_assign_cnt; }
-
 protected:
 	template <typename TraversalTrait>
 	bool traversal_node(NodeCRef nd, TraversalTrait &traits) const;
@@ -292,21 +296,24 @@ protected:
 	/***** tree's kernel data *****/
 
 	/// nodes of the orthogonal tree. root node is stored in m_nodes[0].
-	std::deque<Node> m_nodes;
+	Nodes m_nodes;
 
 	constexpr static index_t m_root_idx = 0;
+
+	tbb::spin_mutex m_new_children_mutex;
 
 	/// Bounding box of all input points
 	Bbox m_bbox;
 
 	/// Side length for nodes at different depth
+	/// (Numerical exact because the length is always halved)
 	std::vector<OrPoint> m_side_length_per_depth;
 
 	/// Boxes (contain boxes and indices).
 	OrBboxes m_boxes;
 
 	/// (unique) vertices of boxes
-	std::deque<Vertex> m_vertices;
+	Vertices m_vertices;
 
 	/***** Predicates *****/
 
@@ -319,18 +326,10 @@ protected:
 	/// Calculate boungding box
 	CalcBbox m_calc_bbox;
 
-	/***** Auxiliary data *****/
-
-	/// counts how many times a box is assigned to different leaf nodes
-	std::vector<size_t> m_assign_cnt;
-
 	/***** Behavior control flags and data *****/
 
 	/// bounding box enlarge ratio
 	NT m_enlarge_ratio = 1.5;
-
-	/// duplication threshold
-	NT m_dupl_thres = 8.0;
 
 	/// maximal depth delta between adjacent leaf nodes
 	size_t m_depth_delta = 2;

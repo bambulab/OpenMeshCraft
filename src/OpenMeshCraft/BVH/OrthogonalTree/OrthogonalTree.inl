@@ -51,17 +51,16 @@ void OrthogonalTree<Traits>::insert_boxes(const Bboxes  &bboxes,
 	                  [this, &bboxes, &indices](size_t i)
 	                  {
 		                  m_boxes[i].bbox() = bboxes[i];
-		                  m_boxes[i].id()   = indices[i];
+		                  m_boxes[i].id()   = static_cast<index_t>(indices[i]);
 	                  });
 }
 
 template <typename Traits>
 void OrthogonalTree<Traits>::construct(bool compact_box, NT enlarge_ratio,
-                                       NT dupl_thres, index_t depth_delta)
+                                       index_t depth_delta)
 {
 	// save behavior control flags and data for further use or query.
 	m_enlarge_ratio = enlarge_ratio;
-	m_dupl_thres    = dupl_thres;
 	m_depth_delta   = depth_delta;
 	// Find the tight bounding box of boxes
 	m_bbox          = calc_box_from_boxes()(m_boxes.begin(), m_boxes.end());
@@ -97,46 +96,57 @@ void OrthogonalTree<Traits>::construct(bool compact_box, NT enlarge_ratio,
 	std::transform(std::execution::par_unseq, m_boxes.begin(), m_boxes.end(),
 	               root_node().boxes().begin(), [](OrBbox &box) { return &box; });
 
-	// initialize assign count if neccessary
-	m_assign_cnt.clear();
-	m_assign_cnt.resize(m_boxes.size(), 1);
+	std::deque<index_t> nodes_to_split;
+	nodes_to_split.push_back(m_root_idx);
 
-	// Initialize a queue of nodes that need to be split
-	// (width-first, lower depth first)
-	std::queue<index_t> nodes_to_split;
-	nodes_to_split.push(m_root_idx);
-
-	// Split nodes recursively.
-	while (!nodes_to_split.empty())
+	// split the root node
+	if (m_split_pred(*this, root_node()))
 	{
-		index_t cur_node_idx = nodes_to_split.front();
-		nodes_to_split.pop();
+		// Split the node, redistributing its boxes to its children
+		split(m_root_idx);
 
-		NodeRef cur_node = node(cur_node_idx);
-
-		// Check if this node needs to be splitted
-		// TODO: A split predicate need receive what?
-		if (cur_node.depth() < MaxDepth - 1 && m_split_pred(*this, cur_node))
-		{
-			// Split the node, redistributing its boxes to its children
-			split(cur_node_idx);
-
-			// post check
-			if (cur_node.dupl_degree() > dupl_thres)
-			{ // if duplication degree is too large, collapse it.
-				collapse(cur_node_idx);
-			}
-			else
-			{ // process each of its children
-				for (index_t i = 0; i < Degree; ++i)
-					nodes_to_split.push(cur_node.child(i));
-			}
-		}
+		// process each of its children
+		for (index_t i = 0; i < Degree; ++i)
+			nodes_to_split.push_back(root_node().child(i));
 	}
 
-	// refines the tree such that the difference of depth between two
-	// neighbor leaves is never more than depth_delta
-	grade(dupl_thres, depth_delta);
+	// if there remain nodes, split them parallelly.
+	if (!nodes_to_split.empty())
+	{
+		auto split_node = [this](size_t node_idx)
+		{
+			std::queue<index_t> local_nodes_to_split;
+			local_nodes_to_split.push(node_idx);
+
+			while (!local_nodes_to_split.empty())
+			{
+				index_t cur_node_idx = local_nodes_to_split.front();
+				local_nodes_to_split.pop();
+				// handle the task
+				NodeRef cur_node = node(cur_node_idx);
+
+				// Check if this node needs to be splitted
+				if (cur_node.depth() < MaxDepth && m_split_pred(*this, cur_node))
+				{
+					// Split the node, redistributing its boxes to its children
+					split(cur_node_idx);
+					// process each of its children
+					for (index_t i = 0; i < cur_node.children_size(); ++i)
+						local_nodes_to_split.push(cur_node.child(i));
+				}
+			}
+		};
+
+		tbb::parallel_for_each(nodes_to_split.begin(), nodes_to_split.end(),
+		                       split_node);
+	}
+
+	if constexpr (EnableGrade)
+	{
+		// refines the tree such that the difference of depth between two
+		// neighbor leaves is never more than depth_delta
+		grade(depth_delta);
+	}
 
 	if constexpr (EnableVertices)
 	{
@@ -151,12 +161,11 @@ void OrthogonalTree<Traits>::clear()
 	m_bbox = Bbox();
 	m_side_length_per_depth.clear();
 	m_boxes.clear();
-	m_assign_cnt.clear();
 	m_vertices.clear();
 }
 
 template <typename Traits>
-void OrthogonalTree<Traits>::grade(NT dupl_thres, index_t depth_delta)
+void OrthogonalTree<Traits>::grade(index_t depth_delta)
 {
 	if (root_node().is_leaf())
 		return;
@@ -182,7 +191,7 @@ void OrthogonalTree<Traits>::grade(NT dupl_thres, index_t depth_delta)
 		if (!cur_node.is_leaf())
 			continue;
 
-		auto CheckNeigbor = [this, &leaf_nodes, &depth_delta, &dupl_thres,
+		auto CheckNeigbor = [this, &leaf_nodes, &depth_delta,
 		                     &cur_node](index_t axis, bool dir) -> void
 		{
 			index_t neighbor_idx = adjacent_node(cur_node, axis, dir);
@@ -200,16 +209,9 @@ void OrthogonalTree<Traits>::grade(NT dupl_thres, index_t depth_delta)
 
 			split(neighbor_idx);
 
-			// post check
-			if (node(neighbor_idx).dupl_degree() > dupl_thres)
-			{ // if duplication degree is too large, collapse it.
-				collapse(neighbor_idx);
-			}
-			else
-			{ // process each of its children
-				for (index_t i = 0; i < Degree; i++)
-					leaf_nodes.push(node(neighbor_idx).child(i));
-			}
+			// process each of its children
+			for (index_t i = 0; i < Degree; i++)
+				leaf_nodes.push(node(neighbor_idx).child(i));
 		};
 
 		// traverse its neighbors
@@ -219,13 +221,16 @@ void OrthogonalTree<Traits>::grade(NT dupl_thres, index_t depth_delta)
 			CheckNeigbor(/*axis*/ axis, /*direction*/ true);
 		}
 	}
+	// will we miss some nodes due to gradation order?
 }
 
 template <typename Traits>
 auto OrthogonalTree<Traits>::new_children() -> index_t
 {
+	std::lock_guard<tbb::spin_mutex> lock(m_new_children_mutex);
+
 	index_t first_idx = (index_t)m_nodes.size();
-	m_nodes.insert(m_nodes.end(), Degree, Node());
+	m_nodes.grow_by(Degree, Node());
 	return first_idx;
 }
 
@@ -265,12 +270,10 @@ void OrthogonalTree<Traits>::child_inherit_parent(
 template <typename Traits>
 void OrthogonalTree<Traits>::split(index_t node_idx)
 {
-	// split node to children node
 	NodeRef nd = node(node_idx);
 
+	// split node to children node
 	nd.children() = new_children();
-	// <--- This is not thread-safe!
-	//  --- put it outside split() and lock it by mutex.
 
 	for (index_t index = 0; index < Degree; index++)
 		child_inherit_parent(nd.child(index), node_idx, LocalCoordinates(index));
@@ -353,7 +356,6 @@ void OrthogonalTree<Traits>::assign_boxes(NodeRef nd, OrPointCRef center)
 
 	auto assign_box = [this, &nd, &center](OrBboxCPtr box_ptr)
 	{
-		size_t assigned_cnt = 0;
 #if 1 // this implementation is possily faster?
 		std::pair<std::bitset<Dimension>, std::bitset<Dimension>> res =
 		  compare_box_with_center(*box_ptr, center);
@@ -367,8 +369,6 @@ void OrthogonalTree<Traits>::assign_boxes(NodeRef nd, OrPointCRef center)
 			{
 				// assign box to this child node.
 				node(nd.child(i)).boxes().push_back(box_ptr);
-				assigned_cnt += 1;
-				m_assign_cnt[box_ptr - m_boxes.data()] += 1;
 			}
 		}
 #else
@@ -379,25 +379,14 @@ void OrthogonalTree<Traits>::assign_boxes(NodeRef nd, OrPointCRef center)
 			{
 				// assign box to this child node.
 				node(nd.child(i)).boxes().push_back(box_ptr);
-				assigned_cnt += 1;
-				m_assign_cnt[box_ptr - m_boxes.data()] += 1;
 			}
 		}
 #endif
-		OMC_EXPENSIVE_ASSERT(assigned_cnt > 0,
-		                     "A box is not assigned to any child.");
 		// after being assigned, reduce assign count by 1 because this box
 		// is not assigned to parent node any more.
-		m_assign_cnt[box_ptr - m_boxes.data()] -= 1;
 	};
 
 	std::for_each(nd.boxes().begin(), nd.boxes().end(), assign_box);
-
-	size_t total_assigned_cnt =
-	  std::accumulate(nd.boxes().begin(), nd.boxes().end(), size_t(0),
-	                  [this](size_t cnt, OrBboxCPtr box_ptr)
-	                  { return cnt + m_assign_cnt[box_ptr - m_boxes.data()]; });
-	nd.dupl_degree() = (float)total_assigned_cnt / (float)nd.size();
 
 	for (index_t i = 0; i < Degree; i++)
 		node(nd.child(i)).size() = node(nd.child(i)).boxes().size();

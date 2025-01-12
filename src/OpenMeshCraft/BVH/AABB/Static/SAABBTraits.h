@@ -42,34 +42,6 @@ private:
 	PrimReferencePoint reference_point;
 };
 
-/**
- * @class SAABBSplitPrimitives
- * @brief A class template for splitting primitives in an axis-aligned bounding
- * box (AABB).
- *
- * This class template provides a mechanism to split a range of primitives based
- * on a specified splitting predicate and the longest axis of the bounding box.
- *
- * @tparam BboxT Type of the bounding box.
- * @tparam PrimSplitPred Type of the predicate used to split the primitives.
- */
-template <typename BboxT, typename PrimSplitPred>
-class SAABBSplitPrimitives
-{
-public: /* Operator *******************************************************/
-	/// @brief Split the primitives.
-	template <typename PrimsIter>
-	size_t operator()(PrimsIter first, PrimsIter beyond, PrimsIter &middle,
-	                  const BboxT &box)
-	{
-		size_t        split_axis = box.longest_axis();
-		PrimSplitPred pred(split_axis);
-		middle = first + (beyond - first) / 2;
-		std::nth_element(first, middle, beyond, pred);
-		return split_axis;
-	}
-};
-
 template <typename Traits>
 class SAABBAutoDeduceTraits : public Traits
 {
@@ -99,10 +71,6 @@ public:
 	using DefaultSplitPred = SAABBPrimSplitPred<PrimT, PrimReferencePoint>;
 	GET_TYPE_OTHERWISE_DEFAULT(Traits, PrimSplitPred, DefaultSplitPred,
 	                           PrimSplitPred);
-
-	// Primitive split method -------------------------------------------------
-	using DefaultSplitPrims = SAABBSplitPrimitives<BboxT, PrimSplitPred>;
-	GET_TYPE_OTHERWISE_DEFAULT(Traits, SplitPrims, DefaultSplitPrims, SplitPrims);
 };
 
 } // namespace OMC

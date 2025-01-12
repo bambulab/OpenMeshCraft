@@ -24,6 +24,8 @@ public:
 
 	/* Try to deduce below values */
 	GET_VALUE_OTHERWISE_DEFAULT(OrthTraits, size_t, MaxDepth, 32, MaxDepth);
+	GET_VALUE_OTHERWISE_DEFAULT(OrthTraits, bool, EnableGrade, false,
+	                            EnableGrade)
 	GET_VALUE_OTHERWISE_DEFAULT(OrthTraits, bool, EnableVertices, false,
 	                            EnableVertices);
 	GET_VALUE_OTHERWISE_DEFAULT(OrthTraits, bool, StoreBoxesInInternalNodes,
