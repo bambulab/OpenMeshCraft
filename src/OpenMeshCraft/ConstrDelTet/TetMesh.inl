@@ -9,7 +9,14 @@ TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &points)
   : verts(points)
 {
 	inc_tet.resize(sizeVerts(), InvalidIndex);
-	vtx_mark.resize(sizeVerts(), 0);
+
+	num_threads = 0;
+	thread_id   = 0;
+
+	mt_vtx_mark.resize(1);
+	mt_tet_mark.resize(1);
+
+	vtxMarks().resize(sizeVerts(), 0);
 }
 
 /**
@@ -134,7 +141,7 @@ void TetrahedralMesh<Traits>::faceVertices(index_t tet_idoff, index_t &vid0,
  * @return True if the edge exists, otherwise false.
  *
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
- * multiple times. NOT THREAD SAFE.
+ * multiple times.
  */
 template <typename Traits>
 bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1) const
@@ -189,7 +196,7 @@ bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1) const
  * @return True if the face exists, otherwise false.
  *
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron
- * multiple times. NOT THREAD SAFE.
+ * multiple times.
  */
 template <typename Traits>
 bool TetrahedralMesh<Traits>::faceExists(index_t vid0, index_t vid1,
@@ -241,7 +248,7 @@ bool TetrahedralMesh<Traits>::faceExists(index_t vid0, index_t vid1,
  * @param [out] adj_tets Container to store the adjacent tetrahedra (tetrahedron
  * idoff)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
- * the same vertex multiple times. NOT THREAD SAFE.
+ * the same vertex multiple times.
  */
 template <typename Traits>
 template <typename ContainerT>
@@ -283,7 +290,7 @@ void TetrahedralMesh<Traits>::VT(index_t vid, ContainerT &adj_tets) const
  * @param [in] vid Vertex index
  * @param [out] adj_verts Container to store the adjacent vertices (vertex id)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
- * the same vertex multiple times. NOT THREAD SAFE.
+ * the same vertex multiple times.
  */
 template <typename Traits>
 template <typename ContainerT>
@@ -338,7 +345,7 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &adj_verts) const
  * @param [out] adj_tets Container to store the adjacent tetrahedra (tetrahedron
  * idoff)
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
- * the same vertex multiple times. NOT THREAD SAFE.
+ * the same vertex multiple times.
  */
 template <typename Traits>
 template <typename ContainerT>
@@ -369,12 +376,12 @@ void TetrahedralMesh<Traits>::ET(index_t vid0, index_t vid1,
  * @param [in] vid_0_1_2 three vertices (index) define the face.
  * @param [out] t_1_2 two tetrahedra (tet_idoff) corresponding to the face.
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
- * the same vertex multiple times. NOT THREAD SAFE.
+ * the same vertex multiple times.
  */
 template <typename Traits>
 void TetrahedralMesh<Traits>::faceAdjTets(index_t vid0, index_t vid1,
                                           index_t vid2, index_t &t0,
-                                          index_t &t1)
+                                          index_t &t1) const
 {
 	// temporary container to store the adjacent tetrahedra
 	index_t adj_tets[2] = {InvalidIndex, InvalidIndex};
@@ -433,12 +440,12 @@ void TetrahedralMesh<Traits>::faceAdjTets(index_t vid0, index_t vid1,
  * @param [in] vid_0_1_2 three vertices (index) define the face.
  * @param [out] c_0_1 two corners (idoff) corresponding to the face.
  * @note It relies on mark `VISITED` to avoid visiting the same tetrahedron and
- * the same vertex multiple times. NOT THREAD SAFE.
+ * the same vertex multiple times.
  */
 template <typename Traits>
 void TetrahedralMesh<Traits>::faceCorners(index_t vid0, index_t vid1,
                                           index_t vid2, index_t &c0,
-                                          index_t &c1)
+                                          index_t &c1) const
 {
 	// two tetrahedra (tet_idoff) adjacent to the face
 	index_t t0, t1;
@@ -459,8 +466,11 @@ void TetrahedralMesh<Traits>::faceCorners(index_t vid0, index_t vid1,
 template <typename Traits>
 size_t
 TetrahedralMesh<Traits>::classifyInOut(std::vector<uint8_t> &corner_is_boundary,
-                                       index_t               start_tet_idoff)
+                                       index_t start_tet_idoff) const
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(),
+	                     "Don't use in multi-thread environment.");
+
 	// All infinite tetrahedra are marked as outside,
 	// other tetrahedra are marked as unknown.
 	for (index_t i = 0; i < sizeTets(); i++)
@@ -515,7 +525,7 @@ TetrahedralMesh<Traits>::classifyInOut(std::vector<uint8_t> &corner_is_boundary,
 		}
 	}
 
-	return std::count_if(tet_mark.begin(), tet_mark.end(), [](uint32_t m)
+	return std::count_if(tetMarks().begin(), tetMarks().end(), [](uint32_t m)
 	                     { return m & static_cast<uint32_t>(TET_MARK::INSIDE); });
 }
 
@@ -530,12 +540,14 @@ TetrahedralMesh<Traits>::classifyInOut(std::vector<uint8_t> &corner_is_boundary,
 template <typename Traits>
 void TetrahedralMesh<Traits>::newVtx(OMC_UNUSED index_t new_vid)
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
 	inc_tet.emplace_back(InvalidIndex);
-	vtx_mark.emplace_back(0);
+	vtxMarks().emplace_back(0);
 
 	OMC_EXPENSIVE_ASSERT(sizeVerts() == new_vid + 1, "size mismatch.");
 	OMC_EXPENSIVE_ASSERT(inc_tet.size() == new_vid + 1, "size mismatch.");
-	OMC_EXPENSIVE_ASSERT(vtx_mark.size() == new_vid + 1, "size mismatch.");
+	OMC_EXPENSIVE_ASSERT(vtxMarks().size() == new_vid + 1, "size mismatch.");
 }
 
 /**
@@ -549,11 +561,13 @@ void TetrahedralMesh<Traits>::newVtx(OMC_UNUSED index_t new_vid)
 template <typename Traits>
 index_t TetrahedralMesh<Traits>::newTet()
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
 	index_t new_tet_idoff = InvalidIndex;
 	if (tet_deleted.empty())
 	{
 		new_tet_idoff = sizeTets() * 4;
-		tet_mark.emplace_back(TET_MARK::NO_MARK);
+		tetMarks().emplace_back(TET_MARK::NO_MARK);
 		// node and neighbor are undefined
 		tet_node.resize(new_tet_idoff + 4);
 		tet_neigh.resize(new_tet_idoff + 4);
@@ -589,6 +603,8 @@ template <typename Traits>
 void TetrahedralMesh<Traits>::newTets(size_t                inc_size,
                                       AuxVector64<index_t> &new_tets)
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
 	// 1. Resizes the `new_tets` vector to `inc_size`.
 	new_tets.resize(inc_size);
 	auto first = new_tets.begin();
@@ -633,6 +649,8 @@ void TetrahedralMesh<Traits>::newTets(size_t                inc_size,
 template <typename Traits>
 void TetrahedralMesh<Traits>::markInfiniteTetsDeleted()
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
 	const size_t n = sizeTets();
 	for (index_t id = 0; id < n; id++)
 	{
@@ -656,6 +674,8 @@ void TetrahedralMesh<Traits>::markInfiniteTetsDeleted()
 template <typename Traits>
 void TetrahedralMesh<Traits>::markTetAsDeleted(index_t idoff)
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
 	tet_deleted.push_back(clipId(idoff));
 	mark(idoff, TET_MARK::TO_DELETE);
 }
@@ -666,6 +686,8 @@ void TetrahedralMesh<Traits>::markTetAsDeleted(index_t idoff)
 template <typename Traits>
 void TetrahedralMesh<Traits>::removeDeletedTets()
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
 	// If there is no tetrahedra, return.
 	if (tet_node.empty())
 		return;
@@ -710,7 +732,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 				}
 			}
 			// Update the mark for the tetrahedron.
-			tet_mark[getId(t)] = tet_mark[getId(last)];
+			tetMark(getId(t)) = tetMark(getId(last));
 			// Move to the next "last un-deleted" tetrahedron.
 			last -= 4;
 			while (isMarked(last, TET_MARK::TO_DELETE) && last > 0)
@@ -729,7 +751,10 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 template <typename Traits>
 void TetrahedralMesh<Traits>::resizeTets(size_t new_size)
 {
-	tet_mark.resize(new_size);
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
+	tetMarks().resize(new_size);
+
 	new_size <<= 2;
 	tet_node.resize(new_size);
 	tet_neigh.resize(new_size);
@@ -742,7 +767,10 @@ void TetrahedralMesh<Traits>::resizeTets(size_t new_size)
 template <typename Traits>
 void TetrahedralMesh<Traits>::reserveTets(size_t new_capacity)
 {
-	tet_mark.reserve(new_capacity);
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
+	tetMarks().reserve(new_capacity);
+
 	new_capacity <<= 2;
 	tet_node.reserve(new_capacity);
 	tet_neigh.reserve(new_capacity);
@@ -776,11 +804,13 @@ void TetrahedralMesh<Traits>::clear()
 template <typename Traits>
 void TetrahedralMesh<Traits>::clearVerts()
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
 	inc_tet.clear();
 	inc_tet.resize(verts.size(), InvalidIndex);
 
-	vtx_mark.clear();
-	vtx_mark.resize(verts.size(), static_cast<uint32_t>(VTX_MARK::NO_MARK));
+	vtxMarks().clear();
+	vtxMarks().resize(verts.size(), static_cast<uint32_t>(VTX_MARK::NO_MARK));
 }
 
 /**
@@ -789,11 +819,13 @@ void TetrahedralMesh<Traits>::clearVerts()
 template <typename Traits>
 void TetrahedralMesh<Traits>::clearTets()
 {
+	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
+
 	// Clear the tetrahedra and related data
 	tet_node    = std::vector<index_t>();
-	tet_mark    = std::vector<uint32_t>();
 	tet_neigh   = std::vector<index_t>();
 	tet_deleted = std::vector<index_t>();
+	tetMarks()  = std::vector<uint32_t>();
 }
 
 /**
@@ -932,6 +964,58 @@ Sign TetrahedralMesh<Traits>::symbolicPerturbation(index_t *indices) const
 	ori = Orient3D()(gpnt(indices[0]), gpnt(indices[2]), gpnt(indices[3]),
 	                 gpnt(indices[4]));
 	return (swaps % 2) ? ori : reverse_sign(ori);
+}
+
+/**
+ * @brief Set up the environment for TBB multi-threading.
+ * After setting up the environment, the mesh can be used in the TBB
+ * multi-threaded environment.
+ * @param num_threads The number of threads to use.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::enableMultiThreadEnv(size_t num_threads_)
+{
+	OMC_EXPENSIVE_ASSERT(num_threads_ > 1, "Invalid number of threads.");
+	num_threads = num_threads_;
+}
+
+/**
+ * @brief Initialize variables for each mesh instance in TBB multi-threading
+ * environment.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::initMultiThreadVariables()
+{
+	// set up variables for multi-threading
+	mt_vtx_mark.resize(num_threads);
+	mt_tet_mark.resize(num_threads);
+
+	for (size_t i = 1; i < num_threads; i++)
+	{
+		mt_vtx_mark[i].resize(sizeVerts(), 0);
+		mt_tet_mark[i].resize(sizeTets(), 0);
+	}
+}
+
+/**
+ * @brief Set the thread id for TBB multi-threading.
+ * @param tid The thread id.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::setTheadId(size_t tid)
+{
+	OMC_EXPENSIVE_ASSERT(tid < num_threads, "Invalid thread id.");
+	thread_id = tid;
+}
+
+/**
+ * @brief Tear down the environment for TBB multi-threading.
+ */
+template <typename Traits>
+void TetrahedralMesh<Traits>::disableMultiThreadEnv()
+{
+	num_threads = 0;
+	thread_id   = 0;
 }
 
 } // namespace OMC

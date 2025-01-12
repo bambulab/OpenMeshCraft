@@ -28,6 +28,7 @@
 #include <bitset>
 #include <fstream>
 #include <memory>
+#include <stack>
 #include <vector>
 
 namespace OMC {
@@ -38,12 +39,6 @@ namespace OMC {
 // Enable exact inSphere predicate in finding encroaching point.
 #define OMC_CDT_EXACT_ENCROACH_TEST
 
-// Choose one segmen recovery strategy
-#define OMC_CDT_SEG_SIHANG
-// #define OMC_CDT_SEG_GREEDY
-
-// Enable protecting sphere strategy
-#define OMC_CDT_PROTECT_SPHERE
 
 struct ConstrDelTet_Config
 {
@@ -180,6 +175,12 @@ public:
 	{
 		for (size_t i = 0; i < new_n; i++)
 			recycle(&ssi.emplace_back());
+	}
+
+	void reserve_lnc(size_t new_n)
+	{
+		for (size_t i = 0; i < new_n; i++)
+			recycle(&lnc.emplace_back());
 	}
 
 	void reserve_lpi(size_t new_n)

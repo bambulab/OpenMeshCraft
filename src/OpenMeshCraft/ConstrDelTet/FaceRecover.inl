@@ -26,9 +26,6 @@ FaceRecover<Traits>::FaceRecover(std::vector<GPoint *> &_verts,
 template <typename Traits>
 void FaceRecover<Traits>::faceRecovery()
 {
-	// initialize PLC faces
-	plc.initPLCFaces();
-
 	// initialize auxiliary data for face recovery.
 	{
 		v_orient.clear();
@@ -1078,7 +1075,7 @@ void FaceRecover<Traits>::embedMeshedCavity(
 		tet_mesh.tetNeigh(bnd)           = global_corner;
 	}
 	// update the tet marks in the global mesh
-	tet_mesh.tet_mark.resize(tet_mesh.sizeTets());
+	tet_mesh.tetMarks().resize(tet_mesh.sizeTets());
 
 	// (5) Collect the base faces (corners). They are the boundary faces of the
 	// cavity, located on the PLC face.

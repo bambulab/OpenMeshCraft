@@ -5,6 +5,7 @@
 #include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTree.h"
 #include "OpenMeshCraft/BVH/AABB/Static/SAABBTree.h"
 
+#include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_GPoint_Intersection.h"
 #include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_SegSphere_Intersection.h"
 #include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_Segment_Intersection.h"
 
@@ -15,7 +16,7 @@
 namespace OMC {
 
 /*******************************************************************************
- * Dynamic AABB tree.
+ * Static and dynamic AABB trees.
  * Detect intersection between Steiner point and constrained segment.
  *******************************************************************************/
 
@@ -131,6 +132,19 @@ public: /* Operators **********************************************************/
 	}
 
 	BoundingBox operator()(const GPoint &gpnt) const { return CalcBbox()(gpnt); }
+
+	BoundingBox operator()(const GPoint *gpnt) const { return CalcBbox()(*gpnt); }
+
+	template <
+	  typename WrappedGPointPtr,
+	  std::enable_if_t<
+	    std::is_same_v<
+	      remove_cvref_t<decltype(*std::declval<WrappedGPointPtr>())>, GPoint>,
+	    int> = 0>
+	BoundingBox operator()(const WrappedGPointPtr &wrap_gpnt) const
+	{
+		return CalcBbox()(*wrap_gpnt);
+	}
 };
 
 template <typename Traits>
@@ -142,5 +156,11 @@ using CDT_SegmentTree =
   SAABBTree_Segment_Intersection<typename Traits::Segment,
                                  typename Traits::CalcBbox,
                                  typename Traits::DoIntersect>;
+
+template <typename Traits>
+using CDT_GPointTree =
+  SAABBTree_GPoint_Intersection<const typename Traits::GPoint *,
+                                typename Traits::ToEP, CalcBbox_CDT<Traits>,
+                                typename Traits::DoIntersect>;
 
 } // namespace OMC

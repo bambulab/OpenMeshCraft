@@ -66,9 +66,10 @@ TEST_F(test_ConstrDelTet, TestIfCrash)
 	bool set_parameter = config.get<bool>("set_parameter", false);
 	if (set_parameter)
 	{
+		// clang-format off
 		boost::property_tree::ptree &parameters = config.get_child("parameters");
-		cdt_cfg.Steiner_point_thres =
-		  parameters.get<size_t>("Steiner_point_thres", 0);
+		cdt_cfg.Steiner_point_thres = parameters.get<size_t>("Steiner_point_thres", 0);
+		// clang-format on
 	}
 
 	tbb::global_control tbb_gc(

@@ -23,18 +23,16 @@ SegmentRecover<Traits>::SegmentRecover(std::vector<GPoint *> &_verts,
   , config(_config)
   , stats(_stats)
 {
+	// initialize states
+	protecting_sphere_initialized = false;
 }
 
 template <typename Traits>
 void SegmentRecover<Traits>::segmentRecovery()
 {
-#if defined(OMC_CDT_SEG_SIHANG)
 	segmentRecovery_SiHang();
-#elif defined(OMC_CDT_SEG_GREEDY)
-	segmentRecovery_Greedy();
-#endif
 
-#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+#if defined(OMC_ENABLE_EXPENSIVE_ASSERT)
 	// check if all segments are recovered
 	for (index_t eid = 0; eid < plc.numEdges(); eid++)
 	{
@@ -46,8 +44,6 @@ void SegmentRecover<Traits>::segmentRecovery()
 		}
 	}
 #endif
-
-	tet_mesh.removeDeletedTets();
 }
 
 /**
@@ -73,18 +69,22 @@ index_t SegmentRecover<Traits>::newVtx(PointType new_pnt)
 	return new_vid;
 }
 
+/**
+ * @brief segment recovery using the Si-Hang method.
+ * @param num_loop the number of loops to run the segment recovery.
+ * If `num_loop` is 0, the segment recovery will run until all segments are
+ * recovered.
+ * @pre PLC are well constructed, and the tetrahedral mesh is Delaunay.
+ */
 template <typename Traits>
-void SegmentRecover<Traits>::segmentRecovery_SiHang()
+void SegmentRecover<Traits>::segmentRecovery_SiHang(size_t num_loop)
 {
-	// initialize the PLC edges
-	plc.initPLCEdges();
-
 	// traverse all edges in the PLC to find missing segments
 	std::vector<index_t> missing_segments;
 	for (index_t eid = 0; eid < plc.numEdges(); eid++)
 	{
 		const PLCEdge &e = plc.edge(eid);
-		if (!e.isFlat() && !tet_mesh.edgeExists(e.ep0(), e.ep1()))
+		if (e.isConstraint() && !tet_mesh.edgeExists(e.ep0(), e.ep1()))
 		{
 			missing_segments.push_back(eid);
 		}
@@ -97,8 +97,9 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang()
 	for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
 		tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
 
-	size_t orig_vn     = verts.size();
+	size_t orig_vn     = plc.input_nv;
 	size_t split_count = 0;
+	size_t loop_count  = 0;
 
 	// Main loop: split missing segments to recover them.
 	while (!missing_segments.empty())
@@ -139,6 +140,9 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang()
 				  split_count, missing_segments.size());
 			}
 		}
+		loop_count++;
+		if (num_loop > 0 && loop_count == num_loop)
+			break;
 		// Find new missing edges around touched vertices
 		for (index_t eid = 0; eid < plc.numEdges(); eid++)
 		{
@@ -164,10 +168,6 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang()
 	}
 	if (config.verbose) // output a new line
 		std::cout << std::endl;
-	if (stats)
-	{ // record statistics about segment recovery
-		stats->seg_steiner = split_count;
-	}
 
 	tet_mesh.removeDeletedTets();
 }
@@ -246,9 +246,10 @@ index_t SegmentRecover<Traits>::splitMissingSegment(index_t eid)
  * Not thread safe.
  */
 template <typename Traits>
+template <typename Container>
 void SegmentRecover<Traits>::findReferenceEncroachingPoint(
   index_t eid, index_t &ref_vid, index_t &ref_tidoff,
-  AuxVector64<index_t> *enc_verts) const
+  Container *enc_verts) const
 {
 	AuxVector64<index_t> encroach_tets;
 	const PLCEdge       &edge = plc.edge(eid);
@@ -365,7 +366,7 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
-                                                        index_t ref_vid)
+                                                        index_t ref_vid) const
   -> IPoint_LNC
 {
 	const PLCEdge &edge = plc.edge(eid);
@@ -404,12 +405,13 @@ auto SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
-                                                         index_t ref_vid)
+                                                         index_t ref_vid) const
   -> IPoint_LNC
 {
 	const PLCEdge &edge = plc.edge(eid);
 
-	IPoint_LNC new_pnt = lineSphereIntersection_oneAc(eid, ref_vid);
+	IPoint_LNC new_pnt =
+	  lineSphereIntersection_oneAc(eid, edge.acute_vid, ref_vid);
 
 	if (isLessThanDistance(new_pnt, gpnt(edge.ep1()), gpnt(ref_vid)))
 	{ // The new point is closer to the non-acute endpoint `ep1` than the
@@ -661,12 +663,14 @@ auto SegmentRecover<Traits>::lineSphereIntersection_noAc(index_t eid,
  * - Acute endpoint is always put in the first position.
  *
  * @param [in] eid The index of the constrained edge.
+ * @param [in] acute_vid The index of the acute vertex.
  * @param [in] ref_vid The index of the reference encroaching point.
  * @note `oneAc` means one acute vertex.
  * @return IPoint_LNC The intersection point represented in LNC.
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
+                                                          index_t acute_vid,
                                                           index_t ref_vid) const
   -> IPoint_LNC
 {
@@ -676,8 +680,6 @@ auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
 	index_t ep0 = e.ep0(), ep1 = e.ep1();
 	index_t oep0 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep0() : ep0;
 	index_t oep1 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep1() : ep1;
-
-	index_t acute_vid = e.acute_vid;
 
 	OMC_EXPENSIVE_ASSERT((acute_vid == oep0 || acute_vid == oep1),
 	                     "Wrong acute vertices.");
@@ -706,228 +708,6 @@ auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
 	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
 }
 
-template <typename Traits>
-void SegmentRecover<Traits>::segmentRecovery_Greedy()
-{
-	// initialize the PLC edges.
-	plc.initPLCEdges();
-
-	// initialize the static segment tree and the dynamic segments' diametral
-	// sphere tree.
-	size_t non_flat_count = initializeTrees();
-
-	// build the protecting sphere for the PLC edges on PLC vertices.
-	buildProtectingSphere();
-
-	// ===========================================================================
-	// Then a greedy strategy to split remaining missing segments.
-
-	seg_steiner_point.resize(plc.numEdges());
-	seg_queue.reserve(plc.numEdges());
-
-	size_t missing_count = 0;
-	// Initialize the segments to be split.
-	for (index_t eid = 0; eid < plc.numEdges(); eid++)
-	{
-		const PLCEdge &e = plc.edge(eid);
-
-		if (e.isConstraint() && !tet_mesh.edgeExists(e.ep0(), e.ep1()))
-		{
-			pushSegmentToQueue</*AllowUpdate*/ false>(eid);
-			missing_count++;
-			if (config.verbose && missing_count % 100 == 0)
-			{
-				std::cout << std::format("\rmissing segments count: {}"
-				                         "                            ",
-				                         missing_count);
-			}
-		}
-	}
-	if (config.verbose) // output a new line
-		std::cout << std::endl;
-
-	size_t split_count = 0;
-	// Loop to split segments with the highest priority
-	while (!seg_queue.empty())
-	{
-		index_t eid      = seg_queue.top().first;
-		double  priority = seg_queue.top().second;
-		seg_queue.pop();
-
-		OMC_EXPENSIVE_ASSERT(plc.edge(eid).isConstraint(),
-		                     "Try to split non-constrained edge.");
-		// Skip the recovered segment
-		if (tet_mesh.edgeExists(plc.edge(eid).ep0(), plc.edge(eid).ep1()))
-			continue;
-
-		// Get the Steiner point
-		IPoint_LNC new_pnt = seg_steiner_point[eid];
-
-		// Before split, find encroached segments
-		AuxVector64<index_t> possible_enc_segs, enc_segs;
-		sph_tree.all_intersections(new_pnt, possible_enc_segs);
-		for (index_t possible_enc_eid : possible_enc_segs)
-		{
-			if (possible_enc_eid == eid)
-				continue; // skip the split segment
-
-			const PLCEdge &possible_enc_e = plc.edge(possible_enc_eid);
-			if (!inSphere(gpnt(possible_enc_e.ep0()), gpnt(possible_enc_e.ep1()),
-			              new_pnt))
-				continue; // skip the segments that are not encroached
-
-			enc_segs.push_back(possible_enc_eid);
-		}
-
-		// Split the segment by the new point
-		index_t new_vid = newVtx(new_pnt);
-		plc.splitPLCEdge(eid, new_vid);
-
-		// Insert the splitting point into the Delaunay tetrahedral mesh
-		DelTet  DT(tet_mesh);
-		index_t tet = TetMesh::toIdOff(tet_mesh.incTet(plc.edge(eid).ep0()));
-		// -- Walk and find the cavity
-		AuxVector64<index_t> cavity_tets;
-		AuxVector64<index_t> cavity_corners;
-		DT.walk(new_vid, tet);
-		DT.cavity(new_vid, tet, cavity_tets, cavity_corners);
-		// -- Find missing segments in the cavity (inner edges of the cavity)
-		//    (they may not be encroached by the Steiner point)
-		AuxVector64<index_t> cavity_missing_segs;
-		missingSegmentsInCavity(cavity_tets, cavity_corners, cavity_missing_segs);
-		// -- Fill the cavity
-		DT.filling(new_vid, cavity_corners);
-		// -- Check the validity
-		OMC_EXPENSIVE_ASSERT(DT.localVerify(new_vid),
-		                     "Invalid Delaunay tetrahedralization.");
-
-		// Update related data structures
-		seg_steiner_point.emplace_back();
-		seg_steiner_point.emplace_back();
-
-		// Update the segments' diametral sphere tree
-		const PLCEdge &e     = plc.edge(eid);
-		const PLCEdge &ch_e0 = plc.edge(e.child_id);
-		const PLCEdge &ch_e1 = plc.edge(e.child_id + 1);
-		GenericSegment ch0(&gpnt(ch_e0.ep0()), &gpnt(ch_e0.ep1()));
-		GenericSegment ch1(&gpnt(ch_e1.ep0()), &gpnt(ch_e1.ep1()));
-		sph_tree.split(eid, e.child_id, ch0, e.child_id + 1, ch1);
-
-		// Add two sub-segments to the queue
-		missing_count--; // due to the split
-		if (!tet_mesh.edgeExists(ch_e0.ep0(), ch_e0.ep1()))
-		{
-			pushSegmentToQueue</*AllowUpdate*/ false>(e.child_id);
-			missing_count++;
-		}
-		if (!tet_mesh.edgeExists(ch_e1.ep0(), ch_e1.ep1()))
-		{
-			pushSegmentToQueue</*AllowUpdate*/ false>(e.child_id + 1);
-			missing_count++;
-		}
-		missing_count += cavity_missing_segs.size();
-
-		// -------------------------------------------------------------------------
-		// The segments that are not encroached by the Steiner point
-		// may change their status:
-		// - missing -> missing and recovered -> recovered.
-		// - recovered -> missing, when all incident tetrahedra are removed.
-		// -------------------------------------------------------------------------
-		// The segments that are encroached by the Steiner point
-		// may change their status:
-		// - recovered -> missing, when all incident tetrahedra are removed.
-		// - recovered -> recovered, when at least one incident tetrahedra is kept.
-		// - missing -> missing, a missing segment will never be recovered
-		//   by adding a Steiner point to another segment.
-		// -------------------------------------------------------------------------
-
-		// Update the priority of the segments that are encroached by the split
-		AuxVector64<index_t> segs_to_update;
-		segs_to_update.insert(segs_to_update.end(), enc_segs.begin(),
-		                      enc_segs.end());
-		segs_to_update.insert(segs_to_update.end(), cavity_missing_segs.begin(),
-		                      cavity_missing_segs.end());
-		segs_to_update.erase(
-		  std::unique(segs_to_update.begin(), segs_to_update.end()),
-		  segs_to_update.end());
-
-		for (index_t eid_to_update : segs_to_update)
-		{
-			const PLCEdge &enc_e = plc.edge(eid_to_update);
-			if (tet_mesh.edgeExists(enc_e.ep0(), enc_e.ep1()))
-				continue; // skip the recovered segments
-			// Update the priority of the segment
-			pushSegmentToQueue</*AllowUpdate*/ true>(eid_to_update);
-		}
-
-		split_count++;
-		if (split_count % 5000 == 0)
-		{ // rebuild the tree for better efficiency
-			sph_tree.collect_garbage();
-			OMC_ASSERT(sph_tree.size() == non_flat_count + split_count,
-			           "The tree size is not correct after collecting garbage.");
-		}
-		if (config.verbose)
-		{ // report the progress
-			std::cout << std::format(
-			  "\rSplit count: {}. Missing count: {}. Priority: {}               ",
-			  split_count, missing_count, int(priority));
-		}
-	}
-	if (config.verbose) // just output a new line
-		std::cout << std::endl;
-	if (stats)
-	{ // record statistics about segment recovery
-		stats->seg_steiner = split_count;
-	}
-	OMC_ASSERT(missing_count == 0, "Some segments are not recovered.");
-}
-
-/**
- * @brief Initializes the segment and segment diametral sphere trees.
- * @return The number of non-flat edges processed.
- */
-template <typename Traits>
-size_t SegmentRecover<Traits>::initializeTrees()
-{
-	size_t non_flat_count = 0;
-
-	// segment tree
-	std::vector<IndexedSegment> indexed_segments;
-	indexed_segments.reserve(plc.numEdges());
-	// segment diametral sphere tree
-	std::vector<GenericSegment> segments;
-	std::vector<index_t>        indices;
-	segments.reserve(plc.numEdges());
-	indices.reserve(plc.numEdges());
-	// collect primitives
-	for (index_t eid = 0; eid < plc.numEdges(); eid++)
-	{
-		const PLCEdge &e = plc.edge(eid);
-		if (!e.isFlat())
-		{
-			non_flat_count++;
-			// endpoints
-			index_t       ev0 = e.ep0(), ev1 = e.ep1();
-			const GPoint &gp0 = gpnt(ev0), &gp1 = gpnt(ev1);
-			// segment tree
-			indexed_segments.emplace_back(Segment(AsEP()(gp0), AsEP()(gp1)), eid);
-			// segment diametral sphere tree
-			segments.emplace_back(&gp0, &gp1);
-			indices.push_back(eid);
-		}
-	}
-	// segment tree
-	seg_tree.insert(indexed_segments.begin(), indexed_segments.end());
-	seg_tree.build();
-	// segment diametral sphere tree
-	sph_tree.insert(segments.begin(), segments.end(), indices.begin(),
-	                indices.end());
-	sph_tree.build();
-
-	return non_flat_count;
-}
-
 /**
  * @brief Constructs protecting spheres for vertices in the PLC.
  *
@@ -942,12 +722,39 @@ size_t SegmentRecover<Traits>::initializeTrees()
 template <typename Traits>
 void SegmentRecover<Traits>::buildProtectingSphere()
 {
+	if (protecting_sphere_initialized)
+		return;
+
+	// Build segment tree for input constrained segments =====================
+
+	// segment tree
+	std::vector<IndexedSegment> indexed_segments;
+	indexed_segments.reserve(plc.numEdges());
+	// collect primitives
+	for (index_t eid = 0; eid < plc.numEdges(); eid++)
+	{
+		const PLCEdge &e = plc.edge(eid);
+		if (e.isConstraint())
+		{
+			// endpoints
+			index_t       ev0 = e.ep0(), ev1 = e.ep1();
+			const GPoint &gp0 = gpnt(ev0), &gp1 = gpnt(ev1);
+			// segment tree
+			indexed_segments.emplace_back(Segment(AsEP()(gp0), AsEP()(gp1)), eid);
+		}
+	}
+	// segment tree
+	seg_tree.insert(indexed_segments.begin(), indexed_segments.end());
+	seg_tree.build();
+
+	// Calculate protecting spheres for vertices =============================
+
 	protecting_sphere_squared_radius.resize(plc.numVertices(), -1.0);
 
 	auto approxEdgeLength = [this](const PLCEdge &e)
 	{ return (gpnt(e.ep0()) - gpnt(e.ep1())).sqrnorm(); };
 
-	for (index_t vid = 0; vid < plc.numVertices(); vid++)
+	auto buildSphere = [this, &approxEdgeLength](index_t vid)
 	{
 		// check if the vertex need to be protected,
 		// get the shortest edge length at the same time.
@@ -988,11 +795,11 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		}
 
 		if (!need_protect)
-			continue;
+			return;
 
 		// construct a initial protecting sphere based on the above lengths.
 		Sphere sphere(AsEP()(gpnt(vid)),
-		              std::min(shortest_acute_edge * (1.0 / 9.0),
+		              std::min(shortest_acute_edge * (1.0 / 4.0),
 		                       shortest_non_acute_edge * (4.0 / 9.0)));
 
 		// find segments that intersect the currect sphere
@@ -1020,7 +827,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		if (intersected_edges.empty())
 		{
 			protecting_sphere_squared_radius[vid] = sphere.squared_radius();
-			continue;
+			return;
 		}
 
 		// otherwise, we need to shrink the sphere.
@@ -1056,327 +863,73 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		}
 
 		protecting_sphere_squared_radius[vid] = sphere.squared_radius();
+	};
+
+	tbb::parallel_for(index_t(0), plc.numVertices(), buildSphere);
+	protecting_sphere_initialized = true;
+}
+
+template <typename Traits>
+void SegmentRecover<Traits>::protectVertex(index_t     eid,
+                                           IPoint_LNC &steiner_point) const
+{
+	// use a protecting sphere to protect edges around the acute vertex.
+	const PLCEdge &anc_edge = plc.edge(plc.ancestorEdge(eid));
+	index_t        oep0 = anc_edge.ep0(), oep1 = anc_edge.ep1();
+
+	size_t intersected_count = 0;
+	if (protecting_sphere_squared_radius[oep0] > 0.0 &&
+	    DoIntersect()(
+	      Sphere(AsEP()(gpnt(oep0)), protecting_sphere_squared_radius[oep0]),
+	      AsGP()(steiner_point)))
+	{
+		intersected_count++;
+		steiner_point = splitSegment_ProtectingSphere(eid, oep0);
+	}
+	else if (protecting_sphere_squared_radius[oep1] > 0.0 &&
+	    DoIntersect()(
+	      Sphere(AsEP()(gpnt(oep1)), protecting_sphere_squared_radius[oep1]),
+	      AsGP()(steiner_point)))
+	{
+		intersected_count++;
+		steiner_point = splitSegment_ProtectingSphere(eid, oep1);
 	}
 }
 
 /**
- * @brief Pushes a segment `eid` into the priority queue.
- *
- * This function calculates the Steiner point for the segment, evaluates the
- * segment's priority, and then pushes the segment into the priority queue.
+ * @brief Get the Steiner point that is the intersection of the segment and
+ * its protecting sphere.
+ * @param eid The edge to split.
+ * @param center_vid The center vertex of the protecting sphere.
+ * @return The Steiner point.
  */
 template <typename Traits>
-template <bool AllowUpdate>
-void SegmentRecover<Traits>::pushSegmentToQueue(index_t eid)
+auto SegmentRecover<Traits>::splitSegment_ProtectingSphere(
+  index_t eid, index_t center_vid) const -> IPoint_LNC
 {
-	AuxVector64<index_t> enc_verts;
-	// Get the Steiner point to split the segment
-	seg_steiner_point[eid] = getSteinerPoint(eid, enc_verts);
-	// Evaluate the priority and push the segment into the queue
-	double priority = getSegPriority(eid, seg_steiner_point[eid], enc_verts);
-	seg_queue.push<AllowUpdate>(eid, priority);
-}
-
-/**
- * @brief Computes the Steiner point for segment recovery in constrained
- * Delaunay tetrahedralization.
- * This function identifies encroaching points on a given edge and determines a
- * Steiner point to split the segment.
- *
- * @param eid The index of the edge to be split.
- * @param enc_verts A vector to store indices of encroaching vertices.
- * @return The computed Steiner point.
- *
- * @note This function requires exact encroachment test.
- * @pre The edge type must be either PLCEdgeType::NO_ACUTE_VERTEX or
- * PLCEdgeType::ONE_ACUTE_VERTEX.
- */
-template <typename Traits>
-auto SegmentRecover<Traits>::getSteinerPoint(index_t               eid,
-                                             AuxVector64<index_t> &enc_verts)
-  -> IPoint_LNC
-{
-	const PLCEdge &e = plc.edge(eid);
-
-	// Find encroaching points
-	index_t ref_vid, curr_tet;
-	findReferenceEncroachingPoint(eid, ref_vid, curr_tet, &enc_verts);
-	// Check the validity of encroaching points
-	OMC_EXPENSIVE_ASSERT(!enc_verts.empty(), "Empty encroaching points.");
-
-	IPoint_LNC steiner_pnt;
-
-#if 1 // SiHang's strategy
-	// Get the Steiner point to split the segment
-	if (e.type == PLCEdgeType::BOTH_ACUTE_VERTEX)
-		steiner_pnt = middlePoint(e);
-	else if (e.type == PLCEdgeType::NO_ACUTE_VERTEX)
-		steiner_pnt = splitSegment_NoAcuteVertex(eid, ref_vid);
-	else // ONE_ACUTE_VERTEX
-		steiner_pnt = splitSegment_OneAcuteVertex(eid, ref_vid);
-#elif 0 // simple middle point strategy
-	steiner_pnt = middlePoint(e);
-#elif 0
-	steiner_pnt = reduceMostEncroachingPoints(eid, enc_verts);
-#endif
-
-#ifdef OMC_CDT_PROTECT_SPHERE
-	if (e.type == PLCEdgeType::ONE_ACUTE_VERTEX && e.hasEp(e.acute_vid))
-	{ // use a protecting sphere to protect edges around the acute vertex.
-		if (DoIntersect()(Sphere(AsEP()(gpnt(e.acute_vid)),
-		                         protecting_sphere_squared_radius[e.acute_vid]),
-		                  AsGP()(steiner_pnt)))
-		{
-			// the Steiner point is inside the protecting sphere of the acute vertex.
-			// we need to protect the acute vertex and incident edge.
-			steiner_pnt = splitSegment_ProtectingSphere(eid);
-		}
-	}
-#endif
-
-	return steiner_pnt;
-}
-
-/**
- * @brief Calculates the priority of a segment based on the number of reduced
- * encroaching points and encroaching segments.
- *
- * @param eid The index of the edge for which the priority is being calculated.
- * @param steiner_pnt The Steiner point used in the calculation.
- * @param enc_verts A vector of indices representing the encroaching vertices.
- * @return The calculated priority of the segment.
- */
-template <typename Traits>
-double SegmentRecover<Traits>::getSegPriority(
-  index_t eid, const IPoint_LNC &steiner_pnt,
-  const AuxVector64<index_t> &enc_verts) const
-{
-	const PLCEdge &e   = plc.edge(eid);
-	// Get the endpoints of the edge.
-	const GPoint  &ep0 = gpnt(e.ep0()), &ep1 = gpnt(e.ep1());
-	const GPoint  &steiner_gpnt = static_cast<const GPoint &>(steiner_pnt);
-
-	// 1. Calculate the number of reduced encroaching points
-	size_t original_enc_verts = enc_verts.size();
-
-	// Two diametral spheres defined by (ep0, steiner_pnt) and (ep1, steiner_pnt)
-	size_t enc_s0 = 0, enc_s1 = 0;
-	for (index_t vid : enc_verts)
-	{
-		const GPoint &pnt = gpnt(vid);
-		if (inSphere(ep0, steiner_gpnt, pnt))
-			enc_s0++;
-		else if (inSphere(ep1, steiner_gpnt, pnt))
-			enc_s1++;
-	}
-	size_t reduced_enc_verts = original_enc_verts - (enc_s0 + enc_s1);
-
-	// 2. Calculate the number of encroaching segments by the Steiner point
-	AuxVector64<index_t> possible_enc_segs;
-	sph_tree.all_intersections(steiner_gpnt, possible_enc_segs);
-
-	size_t num_enc_segs = 0;
-	for (index_t possible_enc_eid : possible_enc_segs)
-	{
-		const PLCEdge &possible_enc_e = plc.edge(possible_enc_eid);
-		if (inSphere(gpnt(possible_enc_e.ep0()), gpnt(possible_enc_e.ep1()),
-		             steiner_gpnt))
-			num_enc_segs++;
-	}
-
-	double priority = 1.0 * reduced_enc_verts - 0.1 * num_enc_segs;
-	return priority;
-}
-
-template <typename Traits>
-void SegmentRecover<Traits>::missingSegmentsInCavity(
-  const AuxVector64<index_t> &cavity_tets,
-  const AuxVector64<index_t> &cavity_corners,
-  AuxVector64<index_t>       &missing_segs)
-{
-	// collect edges of cavity
-	boost::container::flat_set<UIPair> cavity_edges;
-	for (index_t tet_idoff : cavity_tets)
-	{
-		for (index_t i = 0; i < 3; i++)
-		{
-			index_t vi = tet_mesh.tetNode(tet_idoff + i);
-			for (index_t j = i + 1; j < 4; j++)
-			{
-				index_t vj = tet_mesh.tetNode(tet_idoff + j);
-				cavity_edges.insert(unique_pair(vi, vj));
-			}
-		}
-	}
-	// collect boundary edges of cavity
-	boost::container::flat_set<UIPair> cavity_boundary_edges;
-	for (index_t idoff : cavity_corners)
-	{
-		index_t id = TetMesh::clipId(idoff);
-		index_t v1 = tet_mesh.tetNode(id + TetMesh::tetNi(idoff, 1)),
-		        v2 = tet_mesh.tetNode(id + TetMesh::tetNi(idoff, 2)),
-		        v3 = tet_mesh.tetNode(id + TetMesh::tetNi(idoff, 3));
-		cavity_boundary_edges.insert(unique_pair(v1, v2));
-		cavity_boundary_edges.insert(unique_pair(v2, v3));
-		cavity_boundary_edges.insert(unique_pair(v3, v1));
-	}
-	// get inner edges of the cavity
-	AuxVector64<UIPair> cavity_inner_edges;
-	std::set_difference(
-	  cavity_edges.begin(), cavity_edges.end(), cavity_boundary_edges.begin(),
-	  cavity_boundary_edges.end(),
-	  std::inserter(cavity_inner_edges, cavity_inner_edges.end()));
-	// find missing segments in the cavity
-	for (const UIPair &edge : cavity_inner_edges)
-	{
-		index_t vi = edge.first, vj = edge.second;
-		index_t inner_eid = plc.edgeExists(vi, vj);
-		if (is_valid_idx(inner_eid))
-			missing_segs.push_back(inner_eid);
-	}
-}
-
-template <typename Traits>
-auto SegmentRecover<Traits>::reduceMostEncroachingPoints(
-  index_t eid, const AuxVector64<index_t> &enc_verts) const -> IPoint_LNC
-{
-	const PLCEdge &e = plc.edge(eid);
+	const PLCEdge &e     = plc.edge(eid);
+	const PLCEdge &anc_e = plc.edge(plc.ancestorEdge(eid));
 
 	// Get the endpoints of the edge and its original edge.
 	index_t ep0 = e.ep0(), ep1 = e.ep1();
-	index_t oep0 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep0() : ep0;
-	index_t oep1 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep1() : ep1;
-
-	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
-	                     "Input points contain implicit points.");
+	index_t oep0 = anc_e.ep0(), oep1 = anc_e.ep1();
 	// Get the interpolation parameters
 	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
+
+	OMC_EXPENSIVE_ASSERT(
+	  center_vid == oep0 || center_vid == oep1,
+	  "The center vertex is not an endpoint of the original edge.");
+	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
+	                     "Input points contain implicit points.");
 
 	// Get the vectors of related points.
 	Vec3 oe0_v = AsEP()(gpnt(oep0)).as_vec();
 	Vec3 oe1_v = AsEP()(gpnt(oep1)).as_vec();
-	Vec3 e0_v  = ToEP()(gpnt(ep0)).as_vec();
-	Vec3 e1_v  = ToEP()(gpnt(ep1)).as_vec();
 
-	using Interval = std::pair<double, double>;
-	// find all intervals that reduce at least an encroaching point
-	AuxVector64<Interval> intervals;
-	for (index_t enc_vid : enc_verts)
-	{
-		Vec3   enc_v    = ToEP()(gpnt(enc_vid)).as_vec();
-		// Calculate the valid interval
-		double valid_t0 = linePlaneIntersection(oe0_v, oe1_v, enc_v, e0_v - enc_v);
-		double valid_t1 = linePlaneIntersection(oe0_v, oe1_v, enc_v, e1_v - enc_v);
-		// Ensure that the interval is inside the edge.
-		if (valid_t1 < valid_t0)
-			std::swap(valid_t0, valid_t1);
-		valid_t0 = std::max(valid_t0, t0);
-		valid_t1 = std::min(valid_t1, t1);
-
-		intervals.emplace_back(valid_t0, valid_t1);
-	}
-
-	// find the interval that reduce the most encroaching points
-
-	// -- cut the axis to smaller intervals by the endpoints of the intervals
-	AuxVector64<double> cut_points;
-	for (const Interval &interval : intervals)
-	{
-		cut_points.push_back(interval.first);
-		cut_points.push_back(interval.second);
-	}
-	cut_points.erase(std::unique(cut_points.begin(), cut_points.end()),
-	                 cut_points.end());
-
-	phmap::flat_hash_map<double, index_t> cut_point_map;
-	for (index_t i = 0; i < cut_points.size(); i++)
-		cut_point_map[cut_points[i]] = i;
-
-	// -- count all intervals that contain each interval
-	AuxVector64<uint32_t> interval_count(cut_points.size() - 1, 0);
-	for (const Interval &interval : intervals)
-	{
-		index_t start = cut_point_map[interval.first];
-		index_t end   = cut_point_map[interval.second];
-		for (index_t i = start; i < end; i++)
-			interval_count[i]++;
-	}
-
-	// -- find the interval that has the maximum count
-	auto max_count =
-	  *std::max_element(interval_count.begin(), interval_count.end());
-
-	// -- get the Steiner point to maximize sub-segments' length
-	double t = -1.0, mid_t = (t0 + t1) * 0.5;
-	for (index_t i = 0; i < cut_points.size() - 1; i++)
-	{
-		if (interval_count[i] != max_count)
-			continue;
-
-		double _t = -1.0;
-		if (cut_points[i + 1] < mid_t)
-			_t = cut_points[i + 1];
-		else if (cut_points[i] > mid_t)
-			_t = cut_points[i];
-		else
-			_t = mid_t;
-
-		if (std::abs(_t - mid_t) < std::abs(t - mid_t))
-			t = _t;
-	}
-
-	if (t <= t0 || t >= t1)
-	{ // if invalid (maybe caused by numerical error), return the middle point
-		t = (t0 + t1) * 0.5;
-	}
-
-	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
-}
-
-template <typename Traits>
-double
-SegmentRecover<Traits>::linePlaneIntersection(const Vec3 &e0, const Vec3 &e1,
-                                              const Vec3 &p, const Vec3 &n)
-{
-	// The line is defined by two points e0 and e1.
-	// The plane is defined by a point p and a normal vector n.
-
-	// Let the intersection point be x = e0 + t * (e1 - e0).
-	// x statisfy the plane equation: n dot (x - p) = 0.
-
-	// So we can solve the equation: t = (n dot (p - e0)) / (n dot (e1 - e0)).
-	return n.dot(p - e0) / n.dot(e1 - e0);
-}
-
-template <typename Traits>
-auto SegmentRecover<Traits>::splitSegment_ProtectingSphere(index_t eid)
-  -> IPoint_LNC
-{
-	const PLCEdge &e = plc.edge(eid);
-
-	// Get the endpoints of the edge and its original edge.
-	index_t ep0 = e.ep0(), ep1 = e.ep1();
-	index_t oep0 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep0() : ep0;
-	index_t oep1 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep1() : ep1;
-
-	index_t acute_vid = e.acute_vid;
-
-	OMC_EXPENSIVE_ASSERT(
-	  acute_vid == oep0 || acute_vid == oep1,
-	  "The acute vertex is not an endpoint of the original edge.");
-	OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
-	                     "Input points contain implicit points.");
-
-	// Get the vectors of related points.
-	Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
-	Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
-	// Get the interpolation parameters
-	auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
-	OMC_EXPENSIVE_ASSERT(t0 < t1, "Invalid interpolation parameters.");
 	// Parameterize the sphere radius to the original segment
-	double t = std::sqrt(protecting_sphere_squared_radius[acute_vid] /
+	double t = std::sqrt(protecting_sphere_squared_radius[center_vid] /
 	                     (oe1_v - oe0_v).sqrnorm());
-	t        = acute_vid == oep0 ? t : 1.0 - t;
+	t        = center_vid == oep0 ? t : 1.0 - t;
 	// WARN t still has numerical error
 	OMC_EXPENSIVE_ASSERT((t0 < t && t < t1), "The point is outside the edge.");
 	return CreateLNC()(gpnt(oep0), gpnt(oep1), t);

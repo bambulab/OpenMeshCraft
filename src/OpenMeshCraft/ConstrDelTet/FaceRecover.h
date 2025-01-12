@@ -98,11 +98,12 @@ public: /* Algorithms ******************************************************/
 
 public: /* Data ************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
-	std::vector<GPoint *> &verts;
+	const std::vector<GPoint *> &verts;
+
 	/// Tetrahedral mesh
-	TetMesh               &tet_mesh;
+	TetMesh &tet_mesh;
 	/// Constrained piecewise linear complex
-	PLC                   &plc;
+	PLC     &plc;
 
 	/* Auxiliary data defined between tetrahedral mesh and PLC */
 

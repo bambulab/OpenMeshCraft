@@ -91,19 +91,20 @@ public: /* Common operations used by recovery algorithms *********************/
 	index_t newVtx(PointType new_pnt);
 
 public: /* SiHang's Recovery Algorithm ***************************************/
-	void segmentRecovery_SiHang();
+	void segmentRecovery_SiHang(size_t num_loop = 0);
 
 	/* sub-algorithms for segment recovery */
 
 	index_t splitMissingSegment(index_t eid);
 
-	void findReferenceEncroachingPoint(
-	  index_t eid, index_t &ref_vid, index_t &ref_tid,
-	  AuxVector64<index_t> *enc_verts = nullptr) const;
+	template <typename Container = AuxVector64<index_t>>
+	void findReferenceEncroachingPoint(index_t eid, index_t &ref_vid,
+	                                   index_t   &ref_tid,
+	                                   Container *enc_verts = nullptr) const;
 
-	IPoint_LNC splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid);
+	IPoint_LNC splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid) const;
 
-	IPoint_LNC splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid);
+	IPoint_LNC splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid) const;
 
 	/* Low level details for edge recovery (predicates, utils, marks...) */
 
@@ -126,45 +127,16 @@ public: /* SiHang's Recovery Algorithm ***************************************/
 	IPoint_LNC lineSphereIntersection_noAc(index_t eid, bool reverse,
 	                                       index_t ref_vid) const;
 
-	IPoint_LNC lineSphereIntersection_oneAc(index_t eid, index_t ref_vid) const;
+	IPoint_LNC lineSphereIntersection_oneAc(index_t eid, index_t acute_vid,
+	                                        index_t ref_vid) const;
 
-public: /* Greedy Recovery Algorithm *****************************************/
-	void segmentRecovery_Greedy();
-
-	size_t initializeTrees();
-
+public: /* Protecting sphere *************************************************/
 	void buildProtectingSphere();
 
-	/* Data structures used for greedy strategy */
+	void protectVertex(index_t eid, IPoint_LNC &steiner_point) const;
 
-	/// @brief The priority queue of segments
-	using SegPriorityQueue = IndexDenseHeap<double, std::greater<double>>;
-	using SegSteinerPoint  = std::vector<IPoint_LNC>;
-
-	template <bool AllowUpdate = true>
-	void pushSegmentToQueue(index_t eid);
-
-	IPoint_LNC getSteinerPoint(index_t eid, AuxVector64<index_t> &enc_verts);
-
-	double getSegPriority(index_t eid, const IPoint_LNC &steiner_pnt,
-	                      const AuxVector64<index_t> &enc_verts) const;
-
-	/* Help functions used for greedy strategy */
-
-	void missingSegmentsInCavity(const AuxVector64<index_t> &cavity_tets,
-	                             const AuxVector64<index_t> &cavity_corners,
-	                             AuxVector64<index_t>       &missing_segs);
-
-	IPoint_LNC
-	reduceMostEncroachingPoints(index_t                     eid,
-	                            const AuxVector64<index_t> &enc_verts) const;
-
-	static double linePlaneIntersection(const Vec3 &e0, const Vec3 &e1,
-	                                    const Vec3 &p, const Vec3 &n);
-
-	/* Help functions used for protecting sphere */
-
-	IPoint_LNC splitSegment_ProtectingSphere(index_t eid);
+	IPoint_LNC splitSegment_ProtectingSphere(index_t eid,
+	                                         index_t center_vid) const;
 
 public: /* Data **************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
@@ -177,6 +149,8 @@ public: /* Data **************************************************************/
 	PLC                   &plc;
 
 	/* Data used by explicit protecting sphere */
+
+	bool protecting_sphere_initialized;
 
 	/// The segment tree
 	/// - The tree is build on the initial (input) constrained segments.
@@ -193,20 +167,6 @@ public: /* Data **************************************************************/
 	/// - The squared radius is set to negative value if the vertex need not
 	/// protection.
 	std::vector<double> protecting_sphere_squared_radius;
-
-	/* Data used by greedy recovery algorithm */
-
-	/// The segments' diametral sphere tree
-	/// - The tree is built on the segments' diametral spheres.
-	/// - The segments in tree have the same indices as the PLC edges.
-	/// - The tree is used to quickly find encroached segments by a Steiner point.
-	/// - The tree is updated when a segment is split.
-	SegSphereTree sph_tree;
-
-	/// The priority queue of segments to be split.
-	SegPriorityQueue seg_queue;
-	/// The Steiner point of segments to be split.
-	SegSteinerPoint  seg_steiner_point;
 
 public: /* Flags and configurations ******************************************/
 	ConstrDelTet_Config config;

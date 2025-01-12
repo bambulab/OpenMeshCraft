@@ -59,6 +59,9 @@ public: /* Auxiliary data structures ****************************************/
 		/// the ancestor (not the parent) edge is the original edge before splitting
 		/// (set to InvalidIndex if this edge is not a sub-edge)
 		index_t     ancestor_id;
+		/// the parent edge is the edge before splitting
+		/// (set to InvalidIndex if this edge is not a sub-edge)
+		index_t     parent_id;
 		/// the child edge is the edge after splitting
 		/// (set to InvalidIndex if this edge is not splitted)
 		/// (every edge is splitted to two subsequent child edges)
@@ -71,7 +74,12 @@ public: /* Auxiliary data structures ****************************************/
 		PLCEdge() = default;
 		PLCEdge(index_t e0, index_t e1);
 		PLCEdge(PLCEdgeType _type, index_t e0, index_t e1, index_t _ancestor_id,
-		        index_t _child_id, index_t _acute_vid);
+		        index_t _parent_id, index_t _child_id, index_t _acute_vid);
+
+		PLCEdge(const PLCEdge &rhs)            = default;
+		PLCEdge(PLCEdge &&rhs)                 = default;
+		PLCEdge &operator=(const PLCEdge &rhs) = default;
+		PLCEdge &operator=(PLCEdge &&rhs)      = default;
 
 	public: /* Interfaces ***************************************************/
 		index_t       &ep0() { return ep.first; }
@@ -79,10 +87,17 @@ public: /* Auxiliary data structures ****************************************/
 		index_t       &ep1() { return ep.second; }
 		const index_t &ep1() const { return ep.second; }
 
+		bool isDeleted() const { return type == PLCEdgeType::TO_DELETE; }
 		bool isFlat() const { return type == PLCEdgeType::FLAT_EDGE; }
+
 		bool hasAncestor() const { return is_valid_idx(ancestor_id); }
+		bool hasParent() const { return is_valid_idx(parent_id); }
 		bool isSplit() const { return is_valid_idx(child_id); }
-		bool isConstraint() const { return !isFlat() && !isSplit(); }
+
+		bool isConstraint() const
+		{
+			return !isDeleted() && !isFlat() && !isSplit();
+		}
 
 		bool hasEp(index_t vid) const { return ep0() == vid || ep1() == vid; }
 
@@ -202,9 +217,14 @@ public: /* Interfaces ******************************************************/
 
 	void newVtx(index_t new_vid);
 
-	index_t edgeWrtSteiner(index_t vid) const;
+	// clang-format off
+	index_t& edgeWrtSteiner(index_t vid) { return edge_wrt_steiner[vid - input_nv]; }
+	index_t edgeWrtSteiner(index_t vid) const { return edge_wrt_steiner[vid - input_nv]; }
+	// clang-format on
 
 	index_t steinerOfEdge(index_t eid) const;
+
+	void removeIsolatedSteiner(index_t iso_vid);
 
 	/* Operations on PLC edge */
 
@@ -214,11 +234,17 @@ public: /* Interfaces ******************************************************/
 
 	index_t ancestorEdge(index_t eid) const;
 
+	index_t parentEdge(index_t eid) const;
+
 	index_t oppV2E(const PLCEdge &edge, index_t tid) const;
 
 	void splitPLCEdge(index_t eid, index_t vid);
 
-	index_t edgeExists(index_t e0, index_t e1) const;
+	index_t edgeExists(index_t ep0, index_t ep1) const;
+
+	index_t collapsePLCEdge(index_t ep0, index_t ep1);
+
+	void removeIsolatedEdges(index_t eid0, index_t eid1);
 
 	/* Operations on PLC face */
 
@@ -291,7 +317,7 @@ public: /* Data ************************************************************/
 	/* Incidence data for PLC */
 
 	/// Vertex --- Edge
-	/// (We store incident edges for input edges and split edges separately.)
+	/// (We store incident edges for input vertices and split vertices separately)
 	std::vector<AuxVector16<index_t>> vertex_inc_edge_input;
 	std::vector<AuxVector2<index_t>>  vertex_inc_edge_steiner;
 

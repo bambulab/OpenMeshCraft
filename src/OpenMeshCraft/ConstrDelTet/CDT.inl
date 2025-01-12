@@ -144,6 +144,10 @@ public: /* Pipeline **********************************************************/
 
 	void collectCleanResults(ArrCleanMesh<Traits> &CM);
 
+	void segmentRecovery();
+
+	void faceRecovery();
+
 	template <typename iPoint, typename iPoints, typename iTet, typename iTets>
 	void computeExplicitResult(iPoints &final_points, iTets &final_tets);
 
@@ -230,20 +234,18 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 	                     "The Delaunay tetrahedralization is incorrect.");
 
 	/***** Constraints Recovery *****/
-
 	pnt_arenas = std::vector<PntArena>(1);
 	plc        = std::make_unique<PLC>(cdt_out_verts, cdt_in_edges, cdt_in_tris);
 
 	OMC_CDT_START_ELAPSE(start_seg);
-	SegmentRecover<Traits> SR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc, config,
-	                          stats);
-	SR.segmentRecovery();
+	segmentRecovery();
 	OMC_CDT_SAVE_ELAPSED(start_seg, seg_elapsed, "Segment recovery");
 
 	OMC_CDT_START_ELAPSE(start_face);
-	FaceRecover<Traits> FR(cdt_out_verts, *tet_mesh, *plc, config, stats);
-	FR.faceRecovery();
+	faceRecovery();
 	OMC_CDT_SAVE_ELAPSED(start_face, face_elapsed, "Face recovery");
+
+	/***** Postprocessing ******/
 
 	tet_mesh->markInfiniteTetsDeleted();
 	tet_mesh->removeDeletedTets();
@@ -265,6 +267,29 @@ void ConstrDelTet_Impl<Traits>::collectCleanResults(ArrCleanMesh<Traits> &CM)
 	cdt_out_labels.num = CM.num_labels;
 	// collect info about duplicated triangles
 	dupl_triangles     = std::move(CM.dupl_triangles);
+}
+
+template <typename Traits>
+void ConstrDelTet_Impl<Traits>::segmentRecovery()
+{
+	// Initialization
+	plc->initPLCEdges();
+
+	// Segment recovery
+	SegmentRecover<Traits> SR(cdt_out_verts, pnt_arenas, *tet_mesh, *plc, config,
+	                          stats);
+	SR.segmentRecovery_SiHang();
+}
+
+template <typename Traits>
+void ConstrDelTet_Impl<Traits>::faceRecovery()
+{
+	// Initialization
+	plc->initPLCFaces();
+
+	// Face recovery
+	FaceRecover<Traits> FR(cdt_out_verts, *tet_mesh, *plc, config, stats);
+	FR.faceRecovery();
 }
 
 /**

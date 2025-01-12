@@ -153,47 +153,53 @@ public:
 	void ET(index_t vid0, index_t vid1, ContainerT &adj_tets) const;
 
 	void faceAdjTets(index_t vid0, index_t vid1, index_t vid2, index_t &t0,
-	                 index_t &t1);
+	                 index_t &t1) const;
 
 	void faceCorners(index_t vid0, index_t vid1, index_t vid2, index_t &c0,
-	                 index_t &c1);
+	                 index_t &c1) const;
 
 	/* Connectivity operations for the whole tetrahedra mesh */
 
 	size_t classifyInOut(std::vector<uint8_t> &corner_is_boundary,
-	                     index_t               start_tet_idoff = InvalidIndex);
+	                     index_t start_tet_idoff = InvalidIndex) const;
 
 	/* Operations about marks */
 
 	// clang-format off
 
 	/// mark the tetrahedron with the given bit
-	void mark(index_t idoff, TET_MARK bit) const { tet_mark[getId(idoff)] |= (uint32_t)bit; }
+	void mark(index_t idoff, TET_MARK bit) const { mt_tet_mark[thread_id][getId(idoff)] |= (uint32_t)bit; }
 	/// unmark the tetrahedron with the given bit
-	void unmark(index_t idoff, TET_MARK bit) const { tet_mark[getId(idoff)] &= ~((uint32_t)bit); }
+	void unmark(index_t idoff, TET_MARK bit) const { mt_tet_mark[thread_id][getId(idoff)] &= ~((uint32_t)bit); }
 	/// check if the tetrahedron is marked with the given bit
-	bool isMarked(index_t idoff, TET_MARK bit) const { return tet_mark[getId(idoff)] & ((uint32_t)bit); }
+	bool isMarked(index_t idoff, TET_MARK bit) const { return mt_tet_mark[thread_id][getId(idoff)] & ((uint32_t)bit); }
 	/// clear all marks of the tetrahedron
-	void clearTetMark(index_t idoff) const { tet_mark[getId(idoff)] = (uint32_t)TET_MARK::NO_MARK; }
+	void clearTetMark(index_t idoff) const { mt_tet_mark[thread_id][getId(idoff)] = (uint32_t)TET_MARK::NO_MARK; }
 	/// check if the tetrahedron has no mark
-	bool isTetUnmarked(index_t idoff) const { return tet_mark[getId(idoff)] == (uint32_t)TET_MARK::NO_MARK; }
+	bool isTetUnmarked(index_t idoff) const { return mt_tet_mark[thread_id][getId(idoff)] == (uint32_t)TET_MARK::NO_MARK; }
 
-	uint32_t &tetMark(index_t tid) { return tet_mark[tid]; }
-	uint32_t  tetMark(index_t tid) const { return tet_mark[tid]; }
+	uint32_t &tetMark(index_t tid) { return mt_tet_mark[thread_id][tid]; }
+	uint32_t  tetMark(index_t tid) const { return mt_tet_mark[thread_id][tid]; }
+
+	std::vector<uint32_t> &tetMarks() { return mt_tet_mark[thread_id]; }
+	const std::vector<uint32_t> &tetMarks() const { return mt_tet_mark[thread_id]; }
 
 	/// mark the vertex with the given bit
-	void mark(index_t vid, VTX_MARK bit) const { vtx_mark[vid] |= (uint32_t)bit; }
+	void mark(index_t vid, VTX_MARK bit) const { mt_vtx_mark[thread_id][vid] |= (uint32_t)bit; }
 	/// unmark the vertex with the given bit
-	void unmark(index_t vid, VTX_MARK bit) const { vtx_mark[vid] &= ~((uint32_t)bit); }
+	void unmark(index_t vid, VTX_MARK bit) const { mt_vtx_mark[thread_id][vid] &= ~((uint32_t)bit); }
 	/// check if the vertex is marked with the given bit
-	bool isMarked(index_t vid, VTX_MARK bit) const { return vtx_mark[vid] & ((uint32_t)bit); }
+	bool isMarked(index_t vid, VTX_MARK bit) const { return mt_vtx_mark[thread_id][vid] & ((uint32_t)bit); }
 	/// clear all marks of the vertex
-	void clearVtxMark(index_t vid) const { vtx_mark[vid] = (uint32_t)VTX_MARK::NO_MARK; }
+	void clearVtxMark(index_t vid) const { mt_vtx_mark[thread_id][vid] = (uint32_t)VTX_MARK::NO_MARK; }
 	/// check if the vertex has no mark
-	bool isVtxUnmarked(index_t vid) const { return vtx_mark[vid] == (uint32_t)VTX_MARK::NO_MARK; }
+	bool isVtxUnmarked(index_t vid) const { return mt_vtx_mark[thread_id][vid] == (uint32_t)VTX_MARK::NO_MARK; }
 
-	uint32_t &vtxMark(index_t vid) { return vtx_mark[vid]; }
-	uint32_t  vtxMark(index_t vid) const { return vtx_mark[vid]; }
+	uint32_t &vtxMark(index_t vid) { return mt_vtx_mark[thread_id][vid]; }
+	uint32_t  vtxMark(index_t vid) const { return mt_vtx_mark[thread_id][vid]; }
+
+	std::vector<uint32_t> &vtxMarks() { return mt_vtx_mark[thread_id]; }
+	const std::vector<uint32_t> &vtxMarks() const { return mt_vtx_mark[thread_id]; }
 
 	// clang-format on
 
@@ -234,12 +240,23 @@ public:
 
 	Sign symbolicPerturbation(index_t *indices) const;
 
+	/* Multi-thread helpers */
+
+	static void enableMultiThreadEnv(size_t num_threads_);
+
+	void initMultiThreadVariables();
+
+	static void setTheadId(size_t tid);
+
+	static void disableMultiThreadEnv();
+
+	static bool isMultiThread() { return num_threads > 0; }
+
 public: /* Data ************************************************************/
 	/// Vertices (pointers to points in arena)
 	///
 	/// We assume that:
-	/// 1. all vertices are explicit points.
-	/// 2. no coincident vertices exist.
+	/// - no coincident vertices exist.
 	const std::vector<GPoint *> &verts;
 
 	/// Vertex-(one_of_the)incident-tetrahedron relation.
@@ -266,11 +283,12 @@ public: /* Data ************************************************************/
 
 	/* Auxiliary data */
 
+#if 0 // not used, mt_vtx_mark and mt_tet_mark are used instead
 	/// Mark for each vertex (See details for each bit above).
 	mutable std::vector<uint32_t> vtx_mark;
-
 	/// Mark for each tetrahedron (See details for each bit above).
 	mutable std::vector<uint32_t> tet_mark;
+#endif
 
 	/// Collect all deleted tetrahedra.
 	/// 1. Once a tetrahedron is marked as deleted, it may still "connect" to
@@ -302,7 +320,23 @@ public: /* Data ************************************************************/
 	/// ...is stored in tet_neigh.
 	/// @verbatim
 	std::vector<index_t> tet_neigh;
+
+	/* Data for TBB multi-threaded environment */
+
+	static size_t               num_threads;
+	static thread_local index_t thread_id;
+
+	/// Multi-threaded mark for each vertex.
+	mutable std::vector<std::vector<uint32_t>>  mt_vtx_mark;
+	/// Multi-threaded mark for each tetrahedron.
+	mutable std::vector<std::vector<uint32_t>>  mt_tet_mark;
 };
+
+template <typename Traits>
+size_t TetrahedralMesh<Traits>::num_threads = 0;
+
+template <typename Traits>
+thread_local index_t TetrahedralMesh<Traits>::thread_id = 0;
 
 } // namespace OMC
 
