@@ -174,6 +174,8 @@ public:
 
 	using InCircle = InCircle_Indirect<FT, IT, ET>;
 	using InSphere = InSphere_Indirect<FT, IT, ET>;
+
+	using InPowerSphere = InPowerSphere_Indirect<FT, IT, ET>;
 	/// @}
 
 	/********************************************/

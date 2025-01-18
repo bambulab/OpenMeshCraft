@@ -3,6 +3,11 @@ implicitPoint3D(p2:l2x,l2y,l2z,d2)
 implicitPoint3D(p3:l3x,l3y,l3z,d3)
 implicitPoint3D(p4:l4x,l4y,l4z,d4)
 explicitPoint3D(pe:pex,pey,pez)
+w1
+w2
+w3
+w4
+we
 
 errorDefinition(SSI,S,3:lx;3;64;1.332267629550188e-15;2.000000000000002;ly;3;64;1.332267629550188e-15;2.000000000000002;lz;3;64;1.332267629550188e-15;2.000000000000002;d;2;16;8.881784197001253e-16;2.000000000000001)
 errorDefinition(LPI,L,3:lx;4;256;5.995204332975847e-15;6.000000000000008;ly;4;256;5.995204332975847e-15;6.000000000000008;lz;4;256;5.995204332975847e-15;6.000000000000008;d;3;192;4.886390771174922e-015;6.000000000000007)
@@ -35,6 +40,21 @@ pezd4 = pez * d4
 dex = l4x - pexd4
 dey = l4y - peyd4
 dez = l4z - pezd4
+
+w1e = w1 - we
+w2e = w2 - we
+w3e = w3 - we
+w4e = w4 - we
+
+d1sqr = d1 * d1
+d2sqr = d2 * d2
+d3sqr = d3 * d3
+d4sqr = d4 * d4
+
+w1e_d1sqr = w1e * d1sqr // d1^2
+w2e_d2sqr = w2e * d2sqr // d2^2
+w3e_d3sqr = w3e * d3sqr // d3^2
+w4e_d4sqr = w4e * d4sqr // d4^2
 
 aexbey = aex * bey
 bexaey = bex * aey
@@ -83,40 +103,44 @@ al1 = aex * aex
 al2 = aey * aey
 al3 = aez * aez
 al4 = al1 + al2
-alift = al4 + al3 // d1^2
+alift = al4 + al3          // d1^2
+walift = alift - w1e_d1sqr // d1^2
 
 bl1 = bex * bex
 bl2 = bey * bey
 bl3 = bez * bez
 bl4 = bl1 + bl2
-blift = bl4 + bl3 // d2^2
+blift = bl4 + bl3          // d2^2
+wblift = blift - w2e_d2sqr // d2^2
 
 cl1 = cex * cex
 cl2 = cey * cey
 cl3 = cez * cez
 cl4 = cl1 + cl2
-clift = cl4 + cl3 // d3^2
+clift = cl4 + cl3          // d3^2
+wclift = clift - w3e_d3sqr // d3^2
 
 dl1 = dex * dex
 dl2 = dey * dey
 dl3 = dez * dez
 dl4 = dl1 + dl2
-dlift = dl4 + dl3 // d4^2
+dlift = dl4 + dl3          // d4^2
+wdlift = dlift - w4e_d4sqr // d4^2
 
-ds1 = dlift * abc  // d1   d2   d3   d4^2
+ds1 = wdlift * abc // d1   d2   d3   d4^2
 ds12 = ds1 * d3    // d1   d2   d3^2 d4^2
-ds2 = clift * dab  // d1   d2   d3^2 d4
+ds2 = wclift * dab // d1   d2   d3^2 d4
 ds22 = ds2 * d4    // d1   d2   d3^2 d4^2
 dl = ds22 - ds12   // d1   d2   d3^2 d4^2
 dlx1 = dl * d1     // d1^2 d2   d3^2 d4^2
 dlx2 = dlx1 * d2   // d1^2 d2^2 d3^2 d4^2
 
-dr1 = blift * cda //  d1   d2^2 d3   d4
-dr12 = dr1 * d1   //  d1^2 d2^2 d3   d4
-dr2 = alift * bcd //  d1^2 d2   d3   d4
-dr22 = dr2 * d2   //  d1^2 d2^2 d3   d4
-dr = dr22 - dr12  //  d1^2 d2^2 d3   d4
-drx1 = dr * d3    //  d1^2 d2^2 d3^2 d4
-drx2 = drx1 * d4  //  d1^2 d2^2 d3^2 d4^2
+dr1 = wblift * cda // d1   d2^2 d3   d4
+dr12 = dr1 * d1    // d1^2 d2^2 d3   d4
+dr2 = walift * bcd // d1^2 d2   d3   d4
+dr22 = dr2 * d2    // d1^2 d2^2 d3   d4
+dr = dr22 - dr12   // d1^2 d2^2 d3   d4
+drx1 = dr * d3     // d1^2 d2^2 d3^2 d4
+drx2 = drx1 * d4   // d1^2 d2^2 d3^2 d4^2
 
 det = dlx2 + drx2

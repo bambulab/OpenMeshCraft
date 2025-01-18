@@ -4,7 +4,7 @@ explicitPoint3D(pc:pcx,pcy,pcz)
 explicitPoint3D(pd:pdx,pdy,pdz)
 
 // pa and pb are the two points of the segment.
-// pa, pb and pc form a smallest sphere, so as pa, pb and pd.
+// pa, pb and pc form a circum-sphere on their spaning plane, so as pa, pb and pd.
 // This predicate compares the radius of the two spheres.
 
 // Let alpha be the angle of the corner at pc of the triangle abc,

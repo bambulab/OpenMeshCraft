@@ -48,7 +48,10 @@ void tokenize(const std::string &line, std::vector<std::string> &tokens,
 	std::stringstream check(line);
 	std::string       intermediate;
 	while (std::getline(check, intermediate, separator))
-		tokens.push_back(intermediate);
+	{
+		if (!intermediate.empty())
+			tokens.push_back(intermediate);
+	}
 }
 
 void create_heading_comment(std::string &s)

@@ -264,4 +264,104 @@ Sign InSphere_GNR<NT>::operator()(const NT &ax, const NT &ay, const NT &az,
 	return OMC::sign(det);
 }
 
+template <typename NT>
+Sign InPowerCircle_GNR<NT>::operator()(const PointT &p, const NT &wp,
+                                       const PointT &q, const NT &wq,
+                                       const PointT &r, const NT &wr,
+                                       const PointT &query, const NT &wquery)
+{
+	return operator()(p.x(), p.y(), wp, q.x(), q.y(), wq, r.x(),
+	                  r.y(), wr, query.x(), query.y(), wquery);
+}
+
+template <typename NT>
+Sign InPowerCircle_GNR<NT>::operator()(const NT &px, const NT &py, const NT &wp,
+                                       const NT &qx, const NT &qy, const NT &wq,
+                                       const NT &rx, const NT &ry, const NT &wr,
+                                       const NT &queryx, const NT &queryy,
+                                       const NT &wquery)
+{
+	// Lift p, q, r and query to parabolla p', q', r' and query' (x, y,
+	// x^2+y^2), then test the orientation of query' with respect to the
+	// hyperplane formed by p',q' and r'.
+
+	// More efficiently, lift (p-query), (q-query) and (r-query), then
+	// test the orientation of origin with respect to the hyperplane.
+
+	// For power circle, the lifted point is (x, y, x^2 + y^2 - w)
+	NT px_ = px - queryx;
+	NT py_ = py - queryy;
+	NT pz_ = px_ * px_ + py_ * py_ - wp + wquery;
+	NT qx_ = qx - queryx;
+	NT qy_ = qy - queryy;
+	NT qz_ = qx_ * qx_ + qy_ * qy_ - wq + wquery;
+	NT rx_ = rx - queryx;
+	NT ry_ = ry - queryy;
+	NT rz_ = rx_ * rx_ + ry_ * ry_ - wr + wquery;
+
+	return OMC::sign(pz_ * (qx_ * ry_ - qy_ * rx_) -
+	                 qz_ * (px_ * ry_ - py_ * rx_) +
+	                 rz_ * (px_ * qy_ - py_ * qx_));
+}
+
+template <typename NT>
+Sign InPowerSphere_GNR<NT>::operator()(const PointT &a, const NT &wa,
+                                       const PointT &b, const NT &wb,
+                                       const PointT &c, const NT &wc,
+                                       const PointT &d, const NT &wd,
+                                       const PointT &query, const NT &wquery)
+{
+	return operator()(a.x(), a.y(), a.z(), wa, b.x(), b.y(), b.z(), wb, c.x(),
+	                  c.y(), c.z(), wc, d.x(), d.y(), d.z(), wd, query.x(),
+	                  query.y(), query.z(), wquery);
+}
+
+template <typename NT>
+Sign InPowerSphere_GNR<NT>::operator()(const NT &ax, const NT &ay, const NT &az,
+                                       const NT &aw, const NT &bx, const NT &by,
+                                       const NT &bz, const NT &bw, const NT &cx,
+                                       const NT &cy, const NT &cz, const NT &cw,
+                                       const NT &dx, const NT &dy, const NT &dz,
+                                       const NT &dw, const NT &queryx,
+                                       const NT &queryy, const NT &queryz,
+                                       const NT &queryw)
+{
+	// Lift a, b, c, d and query to parabolla, then test the orientation of lifted
+	// query with respect to the hyperplane formed by lifted a, b, c and d.
+
+	// More efficiently, lift (a-query), (b-query), (c-query) and (d-query), then
+	// test the orientation of origin with respect to the hyperplane.
+
+	// For power sphere, the lifted point is (x, y, z, x^2 + y^2 + z^2 - w)
+	NT ax_   = ax - queryx;
+	NT ay_   = ay - queryy;
+	NT az_   = az - queryz;
+	NT bx_   = bx - queryx;
+	NT by_   = by - queryy;
+	NT bz_   = bz - queryz;
+	NT cx_   = cx - queryx;
+	NT cy_   = cy - queryy;
+	NT cz_   = cz - queryz;
+	NT dx_   = dx - queryx;
+	NT dy_   = dy - queryy;
+	NT dz_   = dz - queryz;
+	NT ab    = ax_ * by_ - bx_ * ay_;
+	NT bc    = bx_ * cy_ - cx_ * by_;
+	NT cd    = cx_ * dy_ - dx_ * cy_;
+	NT da    = dx_ * ay_ - ax_ * dy_;
+	NT ac    = ax_ * cy_ - cx_ * ay_;
+	NT bd    = bx_ * dy_ - dx_ * by_;
+	NT abc   = az_ * bc + cz_ * ab - bz_ * ac;
+	NT bcd   = bz_ * cd + dz_ * bc - cz_ * bd;
+	NT cda   = cz_ * da + az_ * cd + dz_ * ac;
+	NT dab   = dz_ * ab + bz_ * da + az_ * bd;
+	NT alift = ax_ * ax_ + ay_ * ay_ + az_ * az_ - aw + queryw;
+	NT blift = bx_ * bx_ + by_ * by_ + bz_ * bz_ - bw + queryw;
+	NT clift = cx_ * cx_ + cy_ * cy_ + cz_ * cz_ - cw + queryw;
+	NT dlift = dx_ * dx_ + dy_ * dy_ + dz_ * dz_ - dw + queryw;
+
+	NT det = clift * dab - dlift * abc + alift * bcd - blift * cda;
+	return OMC::sign(det);
+}
+
 } // namespace OMC

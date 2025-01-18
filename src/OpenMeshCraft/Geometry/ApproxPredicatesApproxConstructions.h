@@ -152,6 +152,12 @@ public:
 
 	using LessThan2D = LessThan2D_GNR<NT>;
 	using LessThan3D = LessThan3D_GNR<NT>;
+
+	using InCircle = InCircle_GNR<NT>;
+	using InSphere = InSphere_GNR<NT>;
+
+	using InPowerCircle = InPowerCircle_GNR<NT>;
+	using InPowerSphere = InPowerSphere_GNR<NT>;
 	/// @}
 
 	/********************************************/

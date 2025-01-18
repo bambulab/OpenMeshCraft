@@ -643,6 +643,50 @@ public:
 	                  const PointT &d);
 };
 
+TEMPLATE_DECL
+class InPowerSphere_Indirect
+{
+public:
+	using VecT   = Vec3T<FT>;
+	using PointT = GenericPoint3T<IT, ET>;
+
+public:
+	/**
+	 * @brief In 3D, test a weighted point `e` is inside the power circumsphere of
+	 * four weighted points `a`, `b`, `c`, and `d` with their weights `wa`, `wb`,
+	 * `wc` and `wd`.
+	 *
+	 * The first four points are must be ordered so that they have a positive
+	 * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
+	 * reversed.
+	 * @param points Given in generic points.
+	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+	 */
+	Sign operator()(const PointT &a, FT wa, const PointT &b, FT wb,
+	                const PointT &c, FT wc, const PointT &d, FT wd,
+	                const PointT &e, FT we);
+
+	/**
+	 * @brief In 3D, test a weighted point `e` is inside the circumsphere of four
+	 * weighted points `a`, `b`, `c`, and `d`. Their weights are given in the
+	 * third number in the number vector.
+	 *
+	 * The first four points are must be ordered so that they have a positive
+	 * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
+	 * reversed.
+	 * @param points Given in number pointers.
+	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+	 */
+	Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d,
+	                const FT *e);
+
+	/**
+	 * @brief Same as above, but the weights are given separately.
+	 */
+	Sign operator()(const FT *a, FT wa, const FT *b, FT wb, const FT *c, FT wc,
+	                const FT *d, FT wd, const FT *e, FT we);
+};
+
 #undef TEMPLATE_DECL
 
 } // namespace OMC

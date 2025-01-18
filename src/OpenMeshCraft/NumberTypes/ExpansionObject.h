@@ -16,6 +16,7 @@ namespace OMC {
 
 // An instance of the following must be created to access functions for
 // expansion arithmetic
+// REFACTOR (1) wrap with overload operators (2) allocate mem on stack.
 class expansionObject
 {
 public:

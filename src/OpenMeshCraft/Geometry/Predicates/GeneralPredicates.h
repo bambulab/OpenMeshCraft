@@ -312,6 +312,80 @@ public:
 	                const NT &queryx, const NT &queryy, const NT &queryz);
 };
 
+template <typename NT>
+class InPowerCircle_GNR
+{
+public:
+	using PointT = Point2T<NT>;
+
+public:
+	/**
+	 * @brief In 2D, test a weighted \p query point is inside the power
+	 * circumcircle of three weighted points \p p, \p q, and \p r.
+	 *
+	 * We assume that p, q and r are given in couter-clock-wise order when being
+	 * viewed from +z.
+	 * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
+	 * @note If p, q and r are given in clock-wise order, the result should be
+	 * inversed.
+	 */
+	Sign operator()(const PointT &p, const NT &wp, const PointT &q, const NT &wq,
+	                const PointT &r, const NT &wr, const PointT &query,
+	                const NT &wquery);
+
+	/**
+	 * @brief In 2D, test a weighted \p query point is inside the power
+	 * circumcircle of three weighted points \p p, \p q, and \p r.
+	 *
+	 * We assume that p, q and r are given in couter-clock-wise order when being
+	 * viewed from +z.
+	 * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
+	 * @note If p, q and r are given in clock-wise order, the result should be
+	 * inversed.
+	 */
+	Sign operator()(const NT &px, const NT &py, const NT &wp, const NT &qx,
+	                const NT &qy, const NT &wq, const NT &rx, const NT &ry,
+	                const NT &wr, const NT &queryx, const NT &queryy,
+	                const NT &wquery);
+};
+
+template <typename NT>
+class InPowerSphere_GNR
+{
+public:
+	using PointT = Point3T<NT>;
+
+public:
+	/**
+	 * @brief In 3D, test a weighted \p query point is inside the power
+	 * circumcircle of four weighted points \p a, \p b, \p c and \p d.
+	 *
+	 * We assume that the tetrahedron formed by a, b, c and d has a positive
+	 * volume. In another word, a, b and c form a triangle (in CCW order), the
+	 * vector from a to d must point to the same direction of the normal.
+	 * @return 1: inside, 0: exactly on , -1: outside.
+	 */
+	Sign operator()(const PointT &a, const NT &wa, const PointT &b, const NT &wb,
+	                const PointT &c, const NT &wc, const PointT &d, const NT &wd,
+	                const PointT &query, const NT &wquery);
+
+	/**
+	 * @brief In 3D, test a weighted \p query point is inside the power
+	 * circumcircle of four weighted points \p a, \p b, \p c and \p d.
+	 *
+	 * We assume that the tetrahedron formed by a, b, c and d has a positive
+	 * volume. In another word, a, b and c form a triangle (in CCW order), the
+	 * vector from a to d must point to the same direction of the normal.
+	 * @return 1: inside, 0: exactly on , -1: outside.
+	 */
+	Sign operator()(const NT &ax, const NT &ay, const NT &az, const NT &aw,
+	                const NT &bx, const NT &by, const NT &bz, const NT &bw,
+	                const NT &cx, const NT &cy, const NT &cz, const NT &cw,
+	                const NT &dx, const NT &dy, const NT &dz, const NT &dw,
+	                const NT &queryx, const NT &queryy, const NT &queryz,
+	                const NT &queryw);
+};
+
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL

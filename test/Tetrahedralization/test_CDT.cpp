@@ -3,7 +3,7 @@
 // Tetrahedra soup traits
 #include "OpenMeshCraft/Mesh/TetSoup.h"
 // Constrained Delaunay Tetrahedralization (CDT)
-#include "OpenMeshCraft/ConstrDelTet/CDT.h"
+#include "OpenMeshCraft/Tetrahedralization/CDT.h"
 
 #include "test_utils.h"
 

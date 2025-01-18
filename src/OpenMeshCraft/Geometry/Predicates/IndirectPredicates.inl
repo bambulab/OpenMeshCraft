@@ -268,7 +268,7 @@ TEMPLATE_DECL
 Sign SquaredDistance3D_Indirect<FT, IT, ET>::operator()(const PointT &a,
                                                         const PointT &b,
                                                         const PointT &c,
-                                                        FT sqr_dis)
+                                                        FT            sqr_dis)
 {
 	if (a.is_explicit() && b.is_explicit() && c.is_explicit())
 		return squaredDistance3Dseg(a, b, c, sqr_dis);
@@ -853,21 +853,21 @@ Sign InSphere_Indirect<FT, IT, ET>::operator()(const PointT &a, const PointT &b,
 	switch (arr)
 	{
 	case PntArr3::EEE:
-		return inSphere3p<TP>(a, b, c);
+		return inSegmentDiametricalSphere<TP>(a, b, c);
 	case PntArr3::EEI: // swap c due to EEI
-		return inSphere3p_EEI<TP>(c, a, b);
+		return inSegmentDiametricalSphere_EEI<TP>(c, a, b);
 	case PntArr3::EIE:
-		return inSphere3p_IEE<TP>(b, a, c);
+		return inSegmentDiametricalSphere_IEE<TP>(b, a, c);
 	case PntArr3::EII: // swap a and c due to IEI
-		return inSphere3p_IEI<TP>(b, c, a);
+		return inSegmentDiametricalSphere_IEI<TP>(b, c, a);
 	case PntArr3::IEE:
-		return inSphere3p_IEE<TP>(a, b, c);
+		return inSegmentDiametricalSphere_IEE<TP>(a, b, c);
 	case PntArr3::IEI: // swap b and c due to IEI
-		return inSphere3p_IEI<TP>(a, c, b);
+		return inSegmentDiametricalSphere_IEI<TP>(a, c, b);
 	case PntArr3::IIE:
-		return inSphere3p_IIE<TP>(a, b, c);
+		return inSegmentDiametricalSphere_IIE<TP>(a, b, c);
 	default: // PntArr3::III
-		return inSphere3p_III<TP>(a, b, c);
+		return inSegmentDiametricalSphere_III<TP>(a, b, c);
 	}
 }
 
@@ -878,10 +878,64 @@ Sign InSphere_Indirect<FT, IT, ET>::largerSphere(const PointT &a,
                                                  const PointT &d)
 {
 	if (a.is_explicit() && b.is_explicit() && c.is_explicit() && d.is_explicit())
-		return largerSphere3p(a, b, c, d);
+		return largerTriangleCircumSphere(a, b, c, d);
 
 	OMC_ASSERT(false, "largerSphere - should not happen");
 	return Sign::ZERO; // warning killer
+}
+
+TEMPLATE_DECL
+Sign InPowerSphere_Indirect<FT, IT, ET>::operator()(const PointT &a, FT wa,
+                                                    const PointT &b, FT wb,
+                                                    const PointT &c, FT wc,
+                                                    const PointT &d, FT wd,
+                                                    const PointT &e, FT we)
+{
+	const int num_explicit = a.is_explicit() + b.is_explicit() + c.is_explicit() +
+	                         d.is_explicit() + e.is_explicit();
+	if (num_explicit == 5)
+		return inSphere<TP>(a, b, c, d, e);
+
+	// clang-format off
+	std::array<uint32_t, 5> pos{0, 1, 2, 3, 4},
+	  types{static_cast<uint32_t>(a.is_explicit() ? PointT::PointType::Explicit : PointT::PointType::Implicit),
+	        static_cast<uint32_t>(b.is_explicit() ? PointT::PointType::Explicit : PointT::PointType::Implicit),
+	        static_cast<uint32_t>(c.is_explicit() ? PointT::PointType::Explicit : PointT::PointType::Implicit),
+	        static_cast<uint32_t>(d.is_explicit() ? PointT::PointType::Explicit : PointT::PointType::Implicit),
+	        static_cast<uint32_t>(e.is_explicit() ? PointT::PointType::Explicit : PointT::PointType::Implicit)};
+	uint32_t swap_cnt;
+	sort_pnts_arr3(types, pos, swap_cnt);
+	const PointT *A[5] = {&a, &b, &c, &d, &e};
+	const FT W[5] = {wa, wb, wc, wd, we};
+	Sign sign;
+	if (num_explicit == 4) sign = inPowerSphere_IEEEE<TP>(*A[pos[0]], *A[pos[1]], *A[pos[2]], *A[pos[3]], *A[pos[4]], W[pos[0]], W[pos[1]], W[pos[2]], W[pos[3]], W[pos[4]]);
+	else if (num_explicit == 3) sign = inPowerSphere_IIEEE<TP>(*A[pos[0]], *A[pos[1]], *A[pos[2]], *A[pos[3]], *A[pos[4]], W[pos[0]], W[pos[1]], W[pos[2]], W[pos[3]], W[pos[4]]);
+	else if (num_explicit == 2) sign = inPowerSphere_IIIEE<TP>(*A[pos[0]], *A[pos[1]], *A[pos[2]], *A[pos[3]], *A[pos[4]], W[pos[0]], W[pos[1]], W[pos[2]], W[pos[3]], W[pos[4]]);
+	else if (num_explicit == 1) sign = inPowerSphere_IIIIE<TP>(*A[pos[0]], *A[pos[1]], *A[pos[2]], *A[pos[3]], *A[pos[4]], W[pos[0]], W[pos[1]], W[pos[2]], W[pos[3]], W[pos[4]]);
+	else sign = inPowerSphere_IIIII<TP>(*A[pos[0]], *A[pos[1]], *A[pos[2]], *A[pos[3]], *A[pos[4]], W[pos[0]], W[pos[1]], W[pos[2]], W[pos[3]], W[pos[4]]);
+	// clang-format on
+	return swap_cnt % 2 == 1 ? reverse_sign(sign) : sign;
+}
+
+TEMPLATE_DECL
+Sign InPowerSphere_Indirect<FT, IT, ET>::operator()(const FT *a, const FT *b,
+                                                    const FT *c, const FT *d,
+                                                    const FT *e)
+{
+	return operator()(a, a[3], b, b[3], c, c[3], d, d[3], e, e[3]);
+}
+
+TEMPLATE_DECL
+Sign InPowerSphere_Indirect<FT, IT, ET>::operator()(const FT *a, FT wa,
+                                                    const FT *b, FT wb,
+                                                    const FT *c, FT wc,
+                                                    const FT *d, FT wd,
+                                                    const FT *e, FT we)
+{
+	// TODO faster implementation
+	return inPowerSphere<IT, ET>(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1],
+	                             c[2], d[0], d[1], d[2], e[0], e[1], e[2], wa, wb,
+	                             wc, wd, we);
 }
 
 #undef TEMPLATE_TYPE
