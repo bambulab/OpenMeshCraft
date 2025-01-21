@@ -894,7 +894,7 @@ Sign InPowerSphere_Indirect<FT, IT, ET>::operator()(const PointT &a, FT wa,
 	const int num_explicit = a.is_explicit() + b.is_explicit() + c.is_explicit() +
 	                         d.is_explicit() + e.is_explicit();
 	if (num_explicit == 5)
-		return inSphere<TP>(a, b, c, d, e);
+		return inPowerSphere<TP>(a, b, c, d, e, wa, wb, wc, wd, we);
 
 	// clang-format off
 	std::array<uint32_t, 5> pos{0, 1, 2, 3, 4},

@@ -5,8 +5,26 @@
 namespace OMC {
 
 template <typename Traits>
-TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &points)
-  : verts(points)
+template <typename /*Enable by SFINAE*/>
+TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &_vertices)
+  : vertices(_vertices)
+	, weights(nullptr)
+{
+	initialize();
+}
+
+template <typename Traits>
+template <typename /*Enable by SFINAE*/>
+TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &_vertices,
+                                         const std::vector<NT>       &_weights)
+  : vertices(_vertices)
+  , weights(&_weights)
+{
+	initialize();
+}
+
+template <typename Traits>
+void TetrahedralMesh<Traits>::initialize()
 {
 	inc_tet.resize(sizeVerts(), InvalidIndex);
 
@@ -807,10 +825,10 @@ void TetrahedralMesh<Traits>::clearVerts()
 	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
 
 	inc_tet.clear();
-	inc_tet.resize(verts.size(), InvalidIndex);
+	inc_tet.resize(vertices.size(), InvalidIndex);
 
 	vtxMarks().clear();
-	vtxMarks().resize(verts.size(), static_cast<uint32_t>(VTX_MARK::NO_MARK));
+	vtxMarks().resize(vertices.size(), static_cast<uint32_t>(VTX_MARK::NO_MARK));
 }
 
 /**
@@ -828,17 +846,6 @@ void TetrahedralMesh<Traits>::clearTets()
 	tetMarks()  = std::vector<uint32_t>();
 }
 
-/**
- * @brief Check if the vertex is inside the circumsphere of the tetrahedron.
- * The checking process is divided into two cases:
- * (1) For a finite tetrahedron, directly apply the inSphere predicate;
- * (2) For an infinite tetrahedron, first check if the vertex is in the outer
- * half-space of the boundary face, and then check if it is inside the
- * circumcircle of the boundary face.
- * @param tet_idoff Tetrahedron's id offset
- * @param vid Vertex id
- * @return True if the vertex is inside the circumsphere, otherwise false
- */
 template <typename Traits>
 bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
                                                 index_t vid) const
@@ -909,13 +916,20 @@ template <typename Traits>
 bool TetrahedralMesh<Traits>::vertexInTetSphere(const index_t *node,
                                                 index_t        vid) const
 {
-	Sign ori = InSphere()(gpnt(node[0]), gpnt(node[1]), gpnt(node[2]),
-	                      gpnt(node[3]), gpnt(vid));
+	Sign ori;
+	if constexpr (!WEIGHTED)
+		ori = InSphere()(gpnt(node[0]), gpnt(node[1]), gpnt(node[2]), gpnt(node[3]),
+		                 gpnt(vid));
+	else
+		ori =
+		  InPowerSphere()(gpnt(node[0]), weight(node[0]), gpnt(node[1]),
+		                  weight(node[1]), gpnt(node[2]), weight(node[2]),
+		                  gpnt(node[3]), weight(node[3]), gpnt(vid), weight(vid));
 	if (ori != Sign::ZERO)
 		return ori == Sign::POSITIVE;
 
 	index_t nn[5] = {node[0], node[1], node[2], node[3], vid};
-	ori           = symbolicPerturbation(nn);
+	ori           = inSphereSymbolicPerturbation(nn);
 
 	OMC_ASSERT(ori != Sign::ZERO, "symbolic perturbation failed.");
 	return ori == Sign::POSITIVE;
@@ -931,9 +945,30 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(const index_t *node,
  * - Edelsbrunner, H. and Mücke, E. P. Simulation of simplicity: a technique
  * to cope with degenerate cases in geometric algorithms. ACM Transactions on
  * Graphics, 9, 1 (1990), 66-104.
+ * @details
+ * The symbolic perturbation term for index `i` is `eps(i) = epsilon^{2^i}`.
+ * (The full term is for index `i` and axis `j`, we only need part of it.)
+ *
+ * The original determinant:
+ *   | ax  ay  az  (a^2 - aw)  1 |
+ *   | bx  by  bz  (b^2 - bw)  1 |
+ *   | cx  cy  cz  (c^2 - cw)  1 |
+ *   | dx  dy  dz  (d^2 - dw)  1 |
+ *   | ex  ey  ez  (e^2 - ew)  1 |
+ * is symbolically perturbed as:
+ *   | ax  ay  az  (a^2 - aw + eps(i_a))  1 |
+ *   | bx  by  bz  (b^2 - bw + eps(i_b))  1 |
+ *   | cx  cy  cz  (c^2 - cw + eps(i_c))  1 |
+ *   | dx  dy  dz  (d^2 - dw + eps(i_d))  1 |
+ *   | ex  ey  ez  (e^2 - ew + eps(i_e))  1 |
+ * and perturbed determinant is expanded along the perturbed column.
+ *
+ * For the unweighted version, just ignore the weights.
+ * The perturbation is same for both the weighted and unweighted versions.
  */
 template <typename Traits>
-Sign TetrahedralMesh<Traits>::symbolicPerturbation(index_t *indices) const
+Sign TetrahedralMesh<Traits>::inSphereSymbolicPerturbation(
+  index_t *indices) const
 {
 	int swaps = 0;
 	int n     = 5;

@@ -5,14 +5,20 @@
 namespace OMC {
 
 /**
- * @brief Apply a Delaunay tetrahedralization to a point set.
+ * @brief Apply a (weighted) Delaunay tetrahedralization to a (weighted) point
+ * set.
  * @details
  * - Theory reference: [Gmsh] Marot, C., Pellerin, J. and Remacle, J. F. One
- * machine, one minute, three billion tetrahedra. International Journal for
- * Numerical Methods in Engineering (2018).
+ *   machine, one minute, three billion tetrahedra. International Journal for
+ *   Numerical Methods in Engineering (2018).
  * - Implementation reference: [RobustCDT] Diazzi, L., Panozzo, D., Vaxman, A.
- * and Attene, M. Constrained Delaunay Tetrahedrization: A Robust and Practical
- * Approach. ACM Transactions on Graphics, 42, 6 (2023), 1-15.
+ *   and Attene, M. Constrained Delaunay Tetrahedrization: A Robust and
+ *   Practical Approach. ACM Transactions on Graphics, 42, 6 (2023), 1-15.
+ * - To implement the `weighted` part, we referece the CGAL library:
+ *   CGAL\Triangulation\include\CGAL\Regular_triangulation.h.
+ *   Actually, the details to handle weighted and unweighted cases are hidden
+ *   in the TetMesh::vertexInTetSphere. The top level algorithms (walk, cavity,
+ *   and filling) are nearly same.
  */
 template <typename Traits>
 class DelaunayTet
@@ -30,10 +36,13 @@ public: /* Traits **********************************************************/
 
 	using Orient3D         = typename Traits::Orient3D;
 	using LessThan3D       = typename Traits::LessThan3D;
-	using InSphere         = typename Traits::InSphere;
 	using CollinearPoints3 = typename Traits::CollinearPoints3;
 
-	using TetMesh = TetrahedralMesh<Traits>;
+	using TetMesh  = TetrahedralMesh<Traits>;
+	using TET_MARK = typename TetMesh::TET_MARK;
+	using VTX_MARK = typename TetMesh::VTX_MARK;
+
+	const static bool WEIGHTED = TetMesh::WEIGHTED;
 
 public: /* Constructor & Destructor ****************************************/
 	DelaunayTet() = delete;
@@ -77,6 +86,8 @@ public: /* Checks **********************************************************/
 	bool verifyNeighbor(index_t tet_idoff) const;
 
 	bool verifyDelaunay(index_t vid) const;
+
+	bool verifyWalk(index_t vid, index_t tet) const;
 
 public: /* Data ************************************************************/
 	TetMesh &mesh;

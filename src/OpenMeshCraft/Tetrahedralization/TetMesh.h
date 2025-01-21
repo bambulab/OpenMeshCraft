@@ -10,6 +10,12 @@
 
 namespace OMC {
 
+// abbreviate SFINAE used in TetrahedralMesh
+#define ENABLE_IF_WEIGHTED \
+	typename Enable = typename std::enable_if_t<WEIGHTED, int>
+#define ENABLE_IF_NOT_WEIGHTED \
+	typename Enable = typename std::enable_if_t<!WEIGHTED, int>
+
 template <typename Traits>
 class TetrahedralMesh
 {
@@ -26,7 +32,11 @@ public:
 
 	using Orient3D         = typename Traits::Orient3D;
 	using InSphere         = typename Traits::InSphere;
+	using InPowerSphere    = typename Traits::InPowerSphere;
 	using CollinearPoints3 = typename Traits::CollinearPoints3;
+
+	/// Whether the vertex has weight
+	const static bool WEIGHTED = Traits::WEIGHTED;
 
 	/// Infinite vertex index
 	const static index_t INFINITE_VERTEX = InvalidIndex;
@@ -58,15 +68,23 @@ public:
 public:
 	/* Constructors and Destructors */
 	TetrahedralMesh() = delete;
-	TetrahedralMesh(const std::vector<GPoint *> &points);
+
+	template <ENABLE_IF_NOT_WEIGHTED>
+	TetrahedralMesh(const std::vector<GPoint *> &_vertices);
+
+	template <ENABLE_IF_WEIGHTED>
+	TetrahedralMesh(const std::vector<GPoint *> &_vertices,
+	                const std::vector<NT>       &_weights);
+
+	void initialize();
 
 public:
 	/* Connectivity operations on tetrahedra mesh */
 
 	/// Get the point of the vertex
-	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
-	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
-	const EPoint &epnt(index_t vid) const { return AsEP()(*verts[vid]); }
+	const GPoint &gpnt(index_t vid) const { return *vertices[vid]; }
+	/// Get the weight of the vertex
+	NT            weight(index_t vid) const { return (*weights)[vid]; }
 
 	/// Get the index (NOT the idoff) to the incident tetrahedron of a vertex
 	index_t       &incTet(index_t vid) { return inc_tet[vid]; }
@@ -169,12 +187,16 @@ public:
 
 	/// mark the tetrahedron with the given bit
 	void mark(index_t idoff, TET_MARK bit) const { mt_tet_mark[thread_id][getId(idoff)] |= (uint32_t)bit; }
+
 	/// unmark the tetrahedron with the given bit
 	void unmark(index_t idoff, TET_MARK bit) const { mt_tet_mark[thread_id][getId(idoff)] &= ~((uint32_t)bit); }
+
 	/// check if the tetrahedron is marked with the given bit
 	bool isMarked(index_t idoff, TET_MARK bit) const { return mt_tet_mark[thread_id][getId(idoff)] & ((uint32_t)bit); }
+
 	/// clear all marks of the tetrahedron
 	void clearTetMark(index_t idoff) const { mt_tet_mark[thread_id][getId(idoff)] = (uint32_t)TET_MARK::NO_MARK; }
+
 	/// check if the tetrahedron has no mark
 	bool isTetUnmarked(index_t idoff) const { return mt_tet_mark[thread_id][getId(idoff)] == (uint32_t)TET_MARK::NO_MARK; }
 
@@ -186,12 +208,16 @@ public:
 
 	/// mark the vertex with the given bit
 	void mark(index_t vid, VTX_MARK bit) const { mt_vtx_mark[thread_id][vid] |= (uint32_t)bit; }
+
 	/// unmark the vertex with the given bit
 	void unmark(index_t vid, VTX_MARK bit) const { mt_vtx_mark[thread_id][vid] &= ~((uint32_t)bit); }
+
 	/// check if the vertex is marked with the given bit
 	bool isMarked(index_t vid, VTX_MARK bit) const { return mt_vtx_mark[thread_id][vid] & ((uint32_t)bit); }
+
 	/// clear all marks of the vertex
 	void clearVtxMark(index_t vid) const { mt_vtx_mark[thread_id][vid] = (uint32_t)VTX_MARK::NO_MARK; }
+
 	/// check if the vertex has no mark
 	bool isVtxUnmarked(index_t vid) const { return mt_vtx_mark[thread_id][vid] == (uint32_t)VTX_MARK::NO_MARK; }
 
@@ -229,7 +255,7 @@ public:
 
 	/* Operations about query */
 
-	size_t sizeVerts() const { return verts.size(); }
+	size_t sizeVerts() const { return vertices.size(); }
 	size_t sizeTets() const { return tet_node.size() >> 2; }
 
 	/* Common geometric predicates */
@@ -238,7 +264,7 @@ public:
 
 	bool vertexInTetSphere(const index_t *node, index_t vid) const;
 
-	Sign symbolicPerturbation(index_t *indices) const;
+	Sign inSphereSymbolicPerturbation(index_t *indices) const;
 
 	/* Multi-thread helpers */
 
@@ -255,9 +281,27 @@ public:
 public: /* Data ************************************************************/
 	/// Vertices (pointers to points in arena)
 	///
-	/// We assume that:
-	/// - no coincident vertices exist.
-	const std::vector<GPoint *> &verts;
+	/// We assume that no coincident vertices exist.
+	const std::vector<GPoint *> &vertices;
+
+	/// Weights for each vertex (optional, set if `WEIGHTED` is true)
+	///
+	/// Distance:
+	/// The distance between two weighted vertices is:
+	///  sqrt(||v1 - v2||^2 - (w1 + w2))
+	///
+	/// Coincidence:
+	/// Weighted vertices are considered coincident if both their coordinates and
+	/// weights are identical. We assume that no coincident weighted vertices
+	/// exist.
+	///
+	/// Hidden Vertices:
+	/// A unique weighted vertex may be hidden by other weighted vertices if it
+	/// does not appear in the mesh. The hidden vertices still exist in `vertices`
+	/// (and `weights`) but are not used in the mesh.
+	/// We do not support the deletion of vertices in the mesh, so once a vertex
+	/// is hidden, it will not be exposed again.
+	const std::vector<NT> *weights;
 
 	/// Vertex-(one_of_the)incident-tetrahedron relation.
 	/// Each index is the id of the incident tetrahedron.
@@ -327,9 +371,9 @@ public: /* Data ************************************************************/
 	static thread_local index_t thread_id;
 
 	/// Multi-threaded mark for each vertex.
-	mutable std::vector<std::vector<uint32_t>>  mt_vtx_mark;
+	mutable std::vector<std::vector<uint32_t>> mt_vtx_mark;
 	/// Multi-threaded mark for each tetrahedron.
-	mutable std::vector<std::vector<uint32_t>>  mt_tet_mark;
+	mutable std::vector<std::vector<uint32_t>> mt_tet_mark;
 };
 
 template <typename Traits>

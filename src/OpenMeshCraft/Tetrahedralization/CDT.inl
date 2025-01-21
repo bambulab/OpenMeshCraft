@@ -61,6 +61,7 @@ public:
 	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
 	using InCircle           = typename K::InCircle;
 	using InSphere           = typename K::InSphere;
+	using InPowerSphere      = typename K::InPowerSphere;
 	using DotProduct3D       = typename K::DotProductSign3D;
 	using CollinearPoints3   = typename K::CollinearPoints3;
 	// constructions
@@ -78,6 +79,9 @@ public:
 	using Tetrahedron3_Segment3_DoIntersect  = typename K::Tetrahedron3_Segment3_DoIntersect;
 	using Tetrahedron3_Triangle3_DoIntersect = typename K::Tetrahedron3_Triangle3_DoIntersect;
 	// clang-format on
+
+	// Tetrahedral mesh settings
+	const static bool WEIGHTED = false;
 };
 
 /// @brief Implement class of ConstrDelTet

@@ -13,9 +13,8 @@ template <typename PrimsIterT, typename IndicesIter>
 void DAABBTree<Traits>::insert(PrimsIterT pfirst, PrimsIterT pbeyond,
                                IndicesIter ifirst, IndicesIter ibeyond)
 {
-	OMC_EXPENSIVE_ASSERT(std::distance(pfirst, pbeyond) ==
-	                       std::distance(ifirst, ibeyond),
-	                     "The number of primitives and indices must be equal.");
+	OMC_ASSERT(std::distance(pfirst, pbeyond) == std::distance(ifirst, ibeyond),
+	           "The number of primitives and indices must be equal.");
 
 	m_primitives.reserve(m_primitives.size() + std::distance(pfirst, pbeyond));
 	m_ex_map2_in.reserve(m_ex_map2_in.size() + std::distance(pfirst, pbeyond));
