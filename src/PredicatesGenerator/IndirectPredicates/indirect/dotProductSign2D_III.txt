@@ -1,19 +1,29 @@
-// Sign of (p-q).dot(r-q)
 implicitPoint2D(p:lpx,lpy,dp)
 implicitPoint2D(r:lrx,lry,dr)
 implicitPoint2D(q:lqx,lqy,dq)
-qxd = lqx * dp
-qyd = lqy * dp
-lpxq = lpx * dq
-lpyq = lpy * dq
-lx = lpxq - qxd
-ly = lpyq - qyd
-qxr = lqx * dr
-qyr = lqy * dr
-lrxq = lrx * dq
-lryq = lry * dq
-gx = lrxq - qxr
-gy = lryq - qyr
+
+errorDefinition(SSI,S,2:x;3;1024;2.221313410988302e-015;4.000000000000004;y;3;1024;2.221313410988302e-015;4.000000000000004;d;2;1024;8.883952601346225e-016;2.000000000000001)
+
+// p, r and q form two vectors (p-q) and (r-q), q is the common point.
+// dotProductSign2D: (p-q) dot (r-q).
+// Assume that dp > 0, dr > 0 and dq > 0.
+
+//   (p-q) dot (r-q)
+// = (lpx / dp - lqx / dq)(lrx / dr - lqx / dq) + (lpy / dp - lqy / dq)(lry / dr - lqy / dq)
+// = (lpx * dq - lqx * dp)(lrx * dq - lqx * dr) + (lpy * dq - lqy * dp)(lry * dq - lqy * dr)
+
+lqxdp = lqx * dp
+lqydp = lqy * dp
+lpxdq = lpx * dq
+lpydq = lpy * dq
+lx = lpxdq - lqxdp
+ly = lpydq - lqydp
+lqxdr = lqx * dr
+lqydr = lqy * dr
+lrxdq = lrx * dq
+lrydq = lry * dq
+gx = lrxdq - lqxdr
+gy = lrydq - lqydr
 dx = lx * gx
 dy = ly * gy
 d = dx + dy

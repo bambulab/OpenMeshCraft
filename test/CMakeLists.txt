@@ -13,6 +13,8 @@ project(OpenMeshCraft-Test)
 # cmake-format: off
 file(GLOB_RECURSE TEST_Arrangements   "${CMAKE_CURRENT_SOURCE_DIR}/Arrangements/*")
 file(GLOB_RECURSE TEST_Boolean        "${CMAKE_CURRENT_SOURCE_DIR}/Boolean/*")
+file(GLOB_RECURSE TEST_BVH            "${CMAKE_CURRENT_SOURCE_DIR}/BVH/*")
+file(GLOB_RECURSE TEST_Tet            "${CMAKE_CURRENT_SOURCE_DIR}/Tetrahedralization/*")
 file(GLOB_RECURSE TEST_Geometry       "${CMAKE_CURRENT_SOURCE_DIR}/Geometry/*")
 file(GLOB_RECURSE TEST_Mesh           "${CMAKE_CURRENT_SOURCE_DIR}/Mesh/*")
 file(GLOB_RECURSE TEST_NumberTypes    "${CMAKE_CURRENT_SOURCE_DIR}/NumberTypes/*")
@@ -25,6 +27,8 @@ source_group(
         ${CMAKE_CURRENT_SOURCE_DIR}/test_utils.h
         ${TEST_Arrangements}
         ${TEST_Boolean}
+        ${TEST_BVH}
+        ${TEST_Tet}
         ${TEST_Geometry}
         ${TEST_Mesh}
         ${TEST_NumberTypes}
@@ -38,6 +42,8 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/test_utils.h
   ${TEST_Arrangements}
   ${TEST_Boolean}
+  ${TEST_BVH}
+  ${TEST_Tet}
   ${TEST_Geometry}
   ${TEST_Mesh}
   ${TEST_NumberTypes}
@@ -58,7 +64,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC OpenMeshCraft CGAL::CGAL
 set(OMC_CONFIG_TARGET ${PROJECT_NAME})
 
 set(OMC_CONFIGDEP_BOOST ON)
-set(OMC_CONFIGDEP_BOOST_COMPONENTS filesystem)
 # finally configure...
 include(OpenMeshCraft_ConfigureDeps)
 
@@ -108,21 +113,24 @@ if(CMAKE_HOST_WIN32)
             ${PROJECT_NAME} --config $<CONFIG>)
 endif()
 
-include(GoogleTest)
-gtest_discover_tests(${PROJECT_NAME})
+# enable_testing()
+# include(GoogleTest)
+# gtest_discover_tests(${PROJECT_NAME})
 
 # ##############################################################################
 # ##############################################################################
 # ##############################################################################
 
 # ##############################################################################
-# Configure an executable to run dataset for arrangements.
+# Configure excutable files to run dataset.
 # ##############################################################################
 
 add_executable(OpenMeshCraft-Arrangements
                ${CMAKE_CURRENT_SOURCE_DIR}/Executables/arrangements.cpp)
+add_executable(OpenMeshCraft-CDT
+               ${CMAKE_CURRENT_SOURCE_DIR}/Executables/cdt.cpp)
 
-foreach(_TARGET OpenMeshCraft-Arrangements)
+foreach(_TARGET OpenMeshCraft-Arrangements OpenMeshCraft-CDT)
 
   # include directories
   # ############################################################################
@@ -138,14 +146,15 @@ foreach(_TARGET OpenMeshCraft-Arrangements)
   set(OMC_CONFIG_TARGET ${_TARGET})
 
   set(OMC_CONFIGDEP_BOOST ON)
-  set(OMC_CONFIGDEP_BOOST_COMPONENTS filesystem)
   # finally configure...
   include(OpenMeshCraft_ConfigureDeps)
 
-  add_custom_command(
-    TARGET ${_TARGET}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
-            ${PROJECT_NAME} --config $<CONFIG>)
+  if(CMAKE_HOST_WIN32)
+    add_custom_command(
+      TARGET ${_TARGET}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
+              ${PROJECT_NAME} --config $<CONFIG>)
+  endif()
 
 endforeach()

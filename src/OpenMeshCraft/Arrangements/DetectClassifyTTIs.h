@@ -23,7 +23,7 @@ public:
 
 	using DoIntersect        = typename Traits::DoIntersect;
 	using Orient3D           = typename Traits::Orient3D;
-	using CollinearPoints3D  = typename Traits::CollinearPoints3D;
+	using CollinearPoints3   = typename Traits::CollinearPoints3;
 	using OrientOn2D         = typename Traits::OrientOn2D;
 	using LessThan3D         = typename Traits::LessThan3D;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;

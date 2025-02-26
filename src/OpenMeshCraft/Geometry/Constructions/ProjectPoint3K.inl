@@ -10,6 +10,7 @@ template <typename Kernel>
 auto ProjectPoint3K<Kernel>::operator()(const SegmentT &segment,
                                         const GPointT  &point) const -> EPointT
 {
+#if 0 // when needed, figure out a better way to handle this
 	typename CheckDegenerate3::DgnType degeneration = CheckDegenerate3()(segment);
 
 	if (std::holds_alternative<typename CheckDegenerate3::NoDgn>(degeneration))
@@ -19,21 +20,18 @@ auto ProjectPoint3K<Kernel>::operator()(const SegmentT &segment,
 	else if (std::holds_alternative<GPointT>(degeneration))
 	{
 		// segment is degenerate to point, point is projected to point.
-		return std::get<GPointT>(std::move(degeneration));
+		return ToEP()(std::get<GPointT>(std::move(degeneration)));
 	}
-
-#if OMC_ENABLE_ASSERT
-	OMC_ASSERT(false, "Unexpected degenenration type");
-#else
-	return EPointT();
 #endif
+
+	return proj_to_segment(segment, point);
 }
 
 template <typename Kernel>
 auto ProjectPoint3K<Kernel>::operator()(const TriangleT &triangle,
                                         const GPointT   &point) const -> EPointT
 {
-
+#if 0 // when needed, figure out a better way to handle this
 	typename CheckDegenerate3::DgnType degeneration =
 	  CheckDegenerate3()(triangle);
 
@@ -49,13 +47,11 @@ auto ProjectPoint3K<Kernel>::operator()(const TriangleT &triangle,
 	else if (std::holds_alternative<GPointT>(degeneration))
 	{
 		// segment is degenerate to point, point is projected to point.
-		return std::get<GPointT>(std::move(degeneration));
+		return ToEP()(std::get<GPointT>(std::move(degeneration)));
 	}
-#if OMC_ENABLE_ASSERT
-	OMC_ASSERT(false, "Unexpected degenenration type");
-#else
-	return EPointT();
 #endif
+
+	return proj_to_triangle(triangle, point);
 }
 
 template <typename Kernel>

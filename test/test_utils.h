@@ -7,6 +7,10 @@
 #include "OpenMeshCraft/Mesh/IO/STLReader.h"
 #include "OpenMeshCraft/Mesh/IO/STLWriter.h"
 
+#include "OpenMeshCraft/Mesh/IO/MEDITWriter.h"
+#include "OpenMeshCraft/Mesh/IO/VTKWriter.h"
+
+#include "OpenMeshCraft/Mesh/TetSoup.h"
 #include "OpenMeshCraft/Mesh/TriSoup.h"
 
 #include "OpenMeshCraft/Utils/StringUtils.h"
@@ -22,8 +26,10 @@
 
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <stack>
 #include <string>
 #include <vector>
@@ -80,15 +86,22 @@ inline bool make_dir_writable(const std::string &dirname)
 
 using index_t       = OMC::index_t;
 using TriSoupTraits = OMC::TriSoupTraits;
+using TetSoupTraits = OMC::TetSoupTraits;
 
-using Points    = typename TriSoupTraits::Points;
+using TriPoints = typename TriSoupTraits::Points;
 using Triangles = typename TriSoupTraits::Triangles;
+
+using TetPoints  = typename TetSoupTraits::Points;
+using Tetrahedra = typename TetSoupTraits::Tetrahedra;
 
 // Define reader and writer
 using OBJReader = OMC::OBJReader<TriSoupTraits>;
 using OBJWriter = OMC::OBJWriter<TriSoupTraits>;
 using STLReader = OMC::STLReader<TriSoupTraits>;
 using STLWriter = OMC::STLWriter<TriSoupTraits>;
+
+using MEDITWriter = OMC::MEDITWriter<TetSoupTraits>;
+using VTKWriter   = OMC::VTKWriter<TetSoupTraits>;
 
 using IOOptions = OMC::IOOptions;
 
@@ -100,7 +113,7 @@ using IOOptions = OMC::IOOptions;
  * @param triangles The triangles of the mesh.
  * @param io_options The IO options.
  */
-inline void read_mesh(const std::string &filename, Points &points,
+inline void read_mesh(const std::string &filename, TriPoints &points,
                       Triangles &triangles, IOOptions &io_options)
 {
 	if (OMC::ends_with(filename, ".obj") || OMC::ends_with(filename, ".OBJ"))
@@ -133,7 +146,7 @@ inline void read_mesh(const std::string &filename, Points &points,
  * @param triangles The triangles of the mesh.
  * @param io_options The IO options.
  */
-inline void write_mesh(const std::string &filename, const Points &points,
+inline void write_mesh(const std::string &filename, const TriPoints &points,
                        const Triangles &triangles, IOOptions &io_options)
 {
 	if (OMC::ends_with(filename, ".obj") || OMC::ends_with(filename, ".OBJ"))
@@ -152,6 +165,29 @@ inline void write_mesh(const std::string &filename, const Points &points,
 		writer.m_triangles    = std::move(triangles);
 		io_options.stl_binary = true;
 		writer.write(new_fn, io_options, DBL_DIG);
+	}
+	else
+	{
+		throw std::runtime_error("unsupported file type.");
+	}
+};
+
+inline void write_mesh(const std::string &filename, const TetPoints &points,
+                       const Tetrahedra &tetrahedra, IOOptions &io_options)
+{
+	if (OMC::ends_with(filename, ".mesh") || OMC::ends_with(filename, ".MESH"))
+	{
+		MEDITWriter writer;
+		writer.m_points     = std::move(points);
+		writer.m_tetrahedra = std::move(tetrahedra);
+		writer.write(filename, io_options, DBL_DIG);
+	}
+	else if (OMC::ends_with(filename, ".vtk") || OMC::ends_with(filename, ".VTK"))
+	{
+		VTKWriter writer;
+		writer.m_points     = std::move(points);
+		writer.m_tetrahedra = std::move(tetrahedra);
+		writer.write(filename, io_options, DBL_DIG);
 	}
 	else
 	{

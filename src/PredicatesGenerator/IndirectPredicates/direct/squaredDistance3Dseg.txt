@@ -1,0 +1,57 @@
+explicitPoint3D(pa:pax,pay,paz)
+explicitPoint3D(pb:pbx,pby,pbz)
+explicitPoint3D(pc:pcx,pcy,pcz)
+sq_dis
+
+// a and b define a segment (line), c is a point.
+// calculate the projecting distance of c on the line ab and compare it with the sq_dis.
+
+// let the angle between ab and ac be theta.
+// cos^2(theta) = (ab dot ac)^2 / (|ab|^2 * |ac|^2)
+// let the projecting distance of c on ab be d.
+// d^2 = |ac|^2 * sin^2(theta) = |ac|^2 * (1 - cos^2(theta))
+//     = |ac|^2 - (ab dot ac)^2 / |ab|^2
+
+// d^2 - sq_dis = |ac|^2 - (ab dot ac)^2 / |ab|^2 - sq_dis
+// sign = (|ac|^2 - sq_dis) * |ab|^2 - (ab dot ac)^2
+
+// -- NEGATIVE: less than sq_dis
+// -- ZERO: exactly equal to sq_dis
+// -- POSITIVE: greater than sq_dis
+
+// -- b - a
+abx = pbx - pax
+aby = pby - pay
+abz = pbz - paz
+
+// -- (b - a).squaredNorm
+abx2 = abx * abx
+aby2 = aby * aby
+abz2 = abz * abz
+t0 = abx2 + aby2
+absqr = t0 + abz2
+
+// -- c - a
+acx = pcx - pax
+acy = pcy - pay
+acz = pcz - paz
+
+// -- (c - a).squaredNorm
+acx2 = acx * acx
+acy2 = acy * acy
+acz2 = acz * acz
+t1 = acx2 + acy2
+acsqr = t1 + acz2
+
+// -- (b - a) dot (c - a)
+abacx = abx * acx
+abacy = aby * acy
+abacz = abz * acz
+t2 = abacx + abacy
+abac = t2 + abacz
+abacsqr = abac * abac
+
+// -- (|ac|^2 - sq_dis) * |ab|^2 - (ab dot ac)^2
+t3 = acsqr - sq_dis
+t4 = t3 * absqr
+d = t4 - abacsqr

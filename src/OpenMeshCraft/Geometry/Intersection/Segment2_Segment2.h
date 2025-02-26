@@ -5,7 +5,21 @@
 namespace OMC {
 
 /**
- * @brief Check if Triangle2 and Point2 intersect.
+ * @brief Check if Segment2 and Segment2 intersect.
+ *
+ * From the simplex view, the intersection can be classified into 4 types:
+ *
+ * - DO_NOT_INTERSECT : two segments do not intersect at any point.
+ *
+ * - SIMPLICIAL_COMPLEX : two segments intersect only at a common vertex
+ * or at both vertices (i.e., the same segment).
+ *
+ * - INTERSECT : two segments intersect at a single interior point.
+ *
+ * - OVERLAP : two segments partially overlap.
+ * 
+ * The last three types are all considered as intersect.
+ *
  * @tparam Kernel
  */
 template <typename Kernel>

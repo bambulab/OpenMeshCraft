@@ -1,7 +1,7 @@
 #include "OpenMeshCraft/Geometry/ExactIndirectPredicatesApproxConstructions.h"
 #include "OpenMeshCraft/Geometry/Intersection/Tetrahedron3_Point3.h"
 #include "OpenMeshCraft/Geometry/Intersection/Tetrahedron3_Segment3.h"
-#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicateDetails.h"
+#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicates.h"
 #include "OpenMeshCraft/NumberTypes/FPU.h"
 #include "OpenMeshCraft/Utils/Macros.h"
 
@@ -26,7 +26,7 @@ protected:
 	using Pnt2 = EIAC::Point2;
 	using Pnt3 = EIAC::Point3;
 
-	using CollinearPoints3D               = EIAC::CollinearPoints3D;
+	using CollinearPoints3                = EIAC::CollinearPoints3;
 	using Tetrahedron3_Point3_DoIntersect = EIAC::Tetrahedron3_Point3_DoIntersect;
 	using Tetrahedron3_Segment3_DoIntersect =
 	  EIAC::Tetrahedron3_Segment3_DoIntersect;

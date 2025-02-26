@@ -39,8 +39,8 @@ Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
   const GPointT &t10, const GPointT &t11, const GPointT &t12) const
 {
 	// triangle_is_degenerate_3d
-	OMC_EXPENSIVE_ASSERT(CollinearPoints3D().misaligned(t00, t01, t02) &&
-	                       CollinearPoints3D().misaligned(t10, t11, t12),
+	OMC_EXPENSIVE_ASSERT(CollinearPoints3().misaligned(t00, t01, t02) &&
+	                       CollinearPoints3().misaligned(t10, t11, t12),
 	                     "degenerate triangle");
 
 	// binary flags to mark coincident vertices in t0 and t1
@@ -173,8 +173,8 @@ Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
   const NT *t1_perm) const
 {
 	// triangle_is_degenerate_3d
-	OMC_EXPENSIVE_ASSERT(CollinearPoints3D().misaligned(t00, t01, t02) &&
-	                       CollinearPoints3D().misaligned(t10, t11, t12),
+	OMC_EXPENSIVE_ASSERT(CollinearPoints3().misaligned(t00, t01, t02) &&
+	                       CollinearPoints3().misaligned(t10, t11, t12),
 	                     "degenerate triangle");
 	OMC_INTER_PROFILE_INC_TOTAL(IntersectionNames::T3T3);
 

@@ -1,0 +1,122 @@
+implicitPoint3D(p1:l1x,l1y,l1z,d1)
+explicitPoint3D(pb:pbx,pby,pbz)
+explicitPoint3D(pc:pcx,pcy,pcz)
+explicitPoint3D(pd:pdx,pdy,pdz)
+explicitPoint3D(pe:pex,pey,pez)
+w1
+wb
+wc
+wd
+we
+
+errorDefinition(SSI,S,3:lx;3;64;1.332267629550188e-15;2.000000000000002;ly;3;64;1.332267629550188e-15;2.000000000000002;lz;3;64;1.332267629550188e-15;2.000000000000002;d;2;16;8.881784197001253e-16;2.000000000000001)
+errorDefinition(LPI,L,3:lx;4;256;5.995204332975847e-15;6.000000000000008;ly;4;256;5.995204332975847e-15;6.000000000000008;lz;4;256;5.995204332975847e-15;6.000000000000008;d;3;192;4.886390771174922e-015;6.000000000000007)
+errorDefinition(TPI,T,3:lx;7;256;3.073097332162437e-13;144.0000000000005;ly;7;256;3.073097332162437e-13;144.0000000000005;lz;7;256;3.073097332162437e-13;144.0000000000005;d;6;256;1.314504061156187e-13;72.00000000000019)
+
+pexd = pex * d1
+peyd = pey * d1
+pezd = pez * d1
+aex = l1x - pexd
+aey = l1y - peyd
+aez = l1z - pezd
+
+bex = pbx - pex
+bey = pby - pey
+bez = pbz - pez
+cex = pcx - pex
+cey = pcy - pey
+cez = pcz - pez
+dex = pdx - pex
+dey = pdy - pey
+dez = pdz - pez
+
+w1e = w1 - we
+wbe = wb - we
+wce = wc - we
+wde = wd - we
+
+d1sqr = d1 * d1
+w1e_d1sqr = w1e * d1sqr
+
+aexbey = aex * bey
+bexaey = bex * aey
+ab = aexbey - bexaey
+bexcey = bex * cey
+cexbey = cex * bey
+bc = bexcey - cexbey
+cexdey = cex * dey
+dexcey = dex * cey
+cd = cexdey - dexcey
+dexaey = dex * aey
+aexdey = aex * dey
+da = dexaey - aexdey
+aexcey = aex * cey
+cexaey = cex * aey
+ac = aexcey - cexaey
+bexdey = bex * dey
+dexbey = dex * bey
+bd = bexdey - dexbey
+
+abc1 = aez * bc
+abc2 = bez * ac
+abc3 = cez * ab
+abc4 = abc1 + abc3
+abc = abc4 - abc2
+
+bcd1 = bez * cd
+bcd2 = cez * bd
+bcd3 = dez * bc
+bcd4 = bcd1 + bcd3
+bcd = bcd4 - bcd2
+
+cda1 = cez * da
+cda2 = dez * ac
+cda3 = aez * cd
+cda4 = cda1 + cda3
+cda = cda4 + cda2
+
+dab1 = dez * ab
+dab2 = aez * bd
+dab3 = bez * da
+dab4 = dab1 + dab3
+dab = dab4 + dab2
+
+al1 = aex * aex
+al2 = aey * aey
+al3 = aez * aez
+al4 = al1 + al2
+alift = al4 + al3
+walift = alift - w1e_d1sqr
+
+bl1 = bex * bex
+bl2 = bey * bey
+bl3 = bez * bez
+bl4 = bl1 + bl2
+blift = bl4 + bl3
+wblift = blift - wbe
+
+cl1 = cex * cex
+cl2 = cey * cey
+cl3 = cez * cez
+cl4 = cl1 + cl2
+clift = cl4 + cl3
+wclift = clift - wce
+
+dl1 = dex * dex
+dl2 = dey * dey
+dl3 = dez * dez
+dl4 = dl1 + dl2
+dlift = dl4 + dl3
+wdlift = dlift - wde
+
+ds1 = wdlift * abc
+ds2 = wclift * dab
+dlp = ds2 - ds1
+dl = dlp * d1
+
+dr1p = wblift * cda
+dr1 = dr1p * d1
+dr2 = walift * bcd
+dr = dr2 - dr1
+
+det = dl + dr

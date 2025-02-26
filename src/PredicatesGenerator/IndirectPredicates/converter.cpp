@@ -48,7 +48,10 @@ void tokenize(const std::string &line, std::vector<std::string> &tokens,
 	std::stringstream check(line);
 	std::string       intermediate;
 	while (std::getline(check, intermediate, separator))
-		tokens.push_back(intermediate);
+	{
+		if (!intermediate.empty())
+			tokens.push_back(intermediate);
+	}
 }
 
 void create_heading_comment(std::string &s)
@@ -498,8 +501,10 @@ Predicate::Predicate(bool _append, bool _output_filtered, bool _output_interval,
 
 	// "2" is a special variable representing the constant 2
 	all_vars.push_back(Variable(std::string("2")));
+	name_2_vars["2"] = &all_vars[0];
 	// "1" is a special variable representing the constant 1
 	all_vars.push_back(Variable(std::string("1")));
+	name_2_vars["1"] = &all_vars[1];
 }
 
 Variable *Predicate::getVarByName(const std::string &name)

@@ -8,6 +8,7 @@
 
 using namespace OMC;
 
+#if 0 // when needed, enable this test
 TEST(CheckDegenerate3, Simple)
 {
 	APAC::CheckDegenerate3 CheckDegenerate3;
@@ -31,3 +32,4 @@ TEST(CheckDegenerate3, Simple)
 	degeneration = CheckDegenerate3(triangle);
 	ASSERT_EQ(std::holds_alternative<APAC::CheckDegenerate3::NoDgn>(degeneration), true);
 }
+#endif

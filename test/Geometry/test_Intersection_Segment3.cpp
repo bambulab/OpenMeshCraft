@@ -1,7 +1,7 @@
 #include "OpenMeshCraft/Geometry/ExactIndirectPredicatesApproxConstructions.h"
 #include "OpenMeshCraft/Geometry/Intersection/Segment3_Point3.h"
 #include "OpenMeshCraft/Geometry/Intersection/Segment3_Segment3.h"
-#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicateDetails.h"
+#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicates.h"
 #include "OpenMeshCraft/NumberTypes/FPU.h"
 #include "OpenMeshCraft/Utils/Macros.h"
 

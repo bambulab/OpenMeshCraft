@@ -1,25 +1,37 @@
-// Sign of (p-q).dot(r-q)
 implicitPoint3D(p:lpx,lpy,lpz,dp)
 implicitPoint3D(r:lrx,lry,lrz,dr)
 implicitPoint3D(q:lqx,lqy,lqz,dq)
-qxd = lqx * dp
-qyd = lqy * dp
-qzd = lqz * dp
-lpxq = lpx * dq
-lpyq = lpy * dq
-lpzq = lpz * dq
-lx = lpxq - qxd
-ly = lpyq - qyd
-lz = lpzq - qzd
-qxr = lqx * dr
-qyr = lqy * dr
-qzr = lqz * dr
-lrxq = lrx * dq
-lryq = lry * dq
-lrzq = lrz * dq
-gx = lrxq - qxr
-gy = lryq - qyr
-gz = lrzq - qzr
+
+errorDefinition(SSI,S,3:lx;3;64;1.332267629550188e-15;2.000000000000002;ly;3;64;1.332267629550188e-15;2.000000000000002;lz;3;64;1.332267629550188e-15;2.000000000000002;d;2;16;8.881784197001253e-16;2.000000000000001)
+errorDefinition(LPI,L,3:lx;4;256;5.995204332975847e-15;6.000000000000008;ly;4;256;5.995204332975847e-15;6.000000000000008;lz;4;256;5.995204332975847e-15;6.000000000000008;d;3;192;4.886390771174922e-015;6.000000000000007)
+errorDefinition(TPI,T,3:lx;7;256;3.073097332162437e-13;144.0000000000005;ly;7;256;3.073097332162437e-13;144.0000000000005;lz;7;256;3.073097332162437e-13;144.0000000000005;d;6;256;1.314504061156187e-13;72.00000000000019)
+
+// p, r and q form two vectors (p-q) and (r-q), q is the common point.
+// dotProductSign2D: (p-q) dot (r-q).
+// Assume that dp > 0, dr > 0 and dq > 0.
+
+//   (p-q) dot (r-q)
+// = (lpx / dp - lqx / dq)(lrx / dr - lqx / dq) + ...y... + ...z...
+// = (lpx * dq - lqx * dp)(lrx * dq - lqx * dr) + ...y... + ...z...
+
+lqxdp = lqx * dp
+lqydp = lqy * dp
+lqzdp = lqz * dp
+lpxdq = lpx * dq
+lpydq = lpy * dq
+lpzdq = lpz * dq
+lqxdr = lqx * dr
+lqydr = lqy * dr
+lqzdr = lqz * dr
+lrxdq = lrx * dq
+lrydq = lry * dq
+lrzdq = lrz * dq
+lx = lpxdq - lqxdp
+ly = lpydq - lqydp
+lz = lpzdq - lqzdp
+gx = lrxdq - lqxdr
+gy = lrydq - lqydr
+gz = lrzdq - lqzdr
 dx = lx * gx
 dy = ly * gy
 dz = lz * gz

@@ -1,40 +1,51 @@
 #pragma once
 
+#include "ImplicitPoints/GlobalCachedValues.h"
+
 #include "ExplicitPoint2T.h"
 #include "GenericPoint2T.h"
-#include "GlobalCachedValues.h"
 
-#include <memory>
+#include "OpenMeshCraft/Geometry/Utils.h"
 
 namespace OMC {
 
-/// @brief Implicit exact 2D point defined by the intersection of two lines.
+/**
+ * @brief Implicit exact 2D point defined by the intersection of two lines.
+ * Two lines (segments) are defined by two endpoints respectively.
+ *
+ * The point has a homogeneous representation (lx, ly, d), which defines the
+ * coordinates of the point as (x, y) = (lx, ly) / d.
+ *
+ * The homogeneous representation avoids the division operation, which enables
+ * efficient exact arithmetic operations.
+ */
 template <typename IT_, typename ET_>
 class ImplicitPoint2T_SSI : public GenericPoint2T<IT_, ET_>
 {
 public: /* types *************************************************************/
-	using FT = double;
-	using IT = IT_;
-	using ET = ET_;
+	using NT = double; ///< floating point type
+	using IT = IT_;    ///< interval type
+	using ET = ET_;    ///< exact type
 
 	using EP = ExplicitPoint2T<IT, ET>;
 	using IP = ImplicitPoint2T_SSI<IT, ET>;
 	using GP = GenericPoint2T<IT, ET>;
 
+	/// An enum class to indicate the type of the point.
 	using PointType = typename GP::PointType;
 
-	using GCV = GlobalCachedValues<IT, ET, OnePointCachedValues2<IT, ET>>;
-
-public: /* functions about types *********************************************/
-	void get_Explicit(EP &e) const;
-	EP   to_Explicit() const;
+	/// A class to store cached values for one point.
+	using GCV = GlobalCachedValues<OnePointCachedValues2<IT, ET>>;
 
 public: /* Constructors ******************************************************/
+	/// @brief default constructor
 	ImplicitPoint2T_SSI() noexcept;
-	/// @brief init SSI point with segment(l11, l12) and segment(l21, l22)
-	ImplicitPoint2T_SSI(const EP &l11, const EP &l12, const EP &l21,
-	                    const EP &l22) noexcept;
-	~ImplicitPoint2T_SSI() noexcept;
+
+	/// @brief init SSI point with segment(a, b) and segment(c, d)
+	ImplicitPoint2T_SSI(const EP &a, const EP &b, const EP &c,
+	                    const EP &d) noexcept;
+
+	~ImplicitPoint2T_SSI() noexcept {}
 
 	ImplicitPoint2T_SSI(const IP &rhs) noexcept;
 	ImplicitPoint2T_SSI(IP &&rhs) noexcept;
@@ -43,24 +54,37 @@ public: /* Constructors ******************************************************/
 	IP &operator=(IP &&rhs);
 
 public: /* Members ***********************************************************/
-	const EP &L1_1() const { return *l1_1; }
-	const EP &L1_2() const { return *l1_2; }
-	const EP &L2_1() const { return *l2_1; }
-	const EP &L2_2() const { return *l2_2; }
+	const EP &A() const { return *ia; }
+	const EP &B() const { return *ib; }
+	const EP &P() const { return *ip; }
+	const EP &Q() const { return *iq; }
 
 public: /* Lambdas ***********************************************************/
-	bool getFilteredLambda(FT &lx, FT &ly, FT &d, FT &mv) const;
+	/**
+	 * @brief Get the Lambda values represented by interval numbers.
+	 * @return true if the sign of d is reliable.
+	 */
 	bool getIntervalLambda(IT &lx, IT &ly, IT &d) const;
+
+	/**
+	 * @brief Get the Lambda values represented by exact numbers.
+	 */
 	void getExactLambda(ET &lx, ET &ly, ET &d) const;
-	void getExpansionLambda(FT **lx, int &lx_len, FT **ly, int &ly_len, FT **d,
+
+	/**
+	 * @brief Get the Lambda values represented by expansion numbers.
+	 */
+	void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **d,
 	                        int &d_len) const;
 
+public: /* Cache *************************************************************/
 	static GCV &gcv() { return global_cached_values; }
 
 private:
-	const EP *l1_1, *l1_2; // the first segment
-	const EP *l2_1, *l2_2; // the second segment
+	const EP *ia, *ib; ///< the first segment(a, b)
+	const EP *ip, *iq; ///< the second segment(p, q)
 
+	/// global cached lambda values
 	static GCV global_cached_values;
 };
 
@@ -73,5 +97,5 @@ typename ImplicitPoint2T_SSI<IT_, ET_>::GCV
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "ImplicitPoint2T.inl"
+	#include "ImplicitPoints/ImplicitPoint2T_SSI.inl"
 #endif

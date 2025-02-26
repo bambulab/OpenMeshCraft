@@ -1,0 +1,15 @@
+explicitPoint3D(p:px,py,pz)
+explicitPoint3D(q:qx,qy,qz)
+sq_dis
+
+// squaredDistance3D: (p-q).squareNorm - sq_dis
+
+lx = px - qx
+ly = py - qy
+lz = pz - qz
+lx2 = lx * lx
+ly2 = ly * ly
+lz2 = lz * lz
+sqrnormxy = lx2 + ly2
+sqrnorm = sqrnormxy + lz2
+diff = sqrnorm - sq_dis

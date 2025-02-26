@@ -16,6 +16,7 @@ namespace OMC {
 
 // An instance of the following must be created to access functions for
 // expansion arithmetic
+// REFACTOR (1) wrap with overload operators (2) allocate mem on stack.
 class expansionObject
 {
 public:
@@ -149,7 +150,7 @@ public:
 			h[i] = 2 * e[i];
 	}
 
-	// [h] = [e] * 2		Multiplies an expansion by n
+	// [h] = [e] * n		Multiplies an expansion by n
 	// If 'n' is a power of two, the multiplication is exact
 	inline void ExactScale(const int elen, double *e, const double n)
 	{

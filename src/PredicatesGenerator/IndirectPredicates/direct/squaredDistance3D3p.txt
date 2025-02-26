@@ -1,0 +1,36 @@
+explicitPoint3D(pa:pax,pay,paz)
+explicitPoint3D(pb:pbx,pby,pbz)
+explicitPoint3D(pc:pcx,pcy,pcz)
+
+// compare the distance between `a` and `b` and the distance between `a` and `c`.
+// sign = (b - a).squaredNorm - (c - a).squaredNorm
+// -- NEGATIVE: ab is less than ac
+// -- ZERO: ab exactly equal to ac
+// -- POSITIVE: ab is greater than ac
+
+// -- b - a
+abx = pbx - pax
+aby = pby - pay
+abz = pbz - paz
+
+// -- (b - a).squaredNorm
+abx2 = abx * abx
+aby2 = aby * aby
+abz2 = abz * abz
+t0 = abx2 + aby2
+absqr = t0 + abz2
+
+// -- c - a
+acx = pcx - pax
+acy = pcy - pay
+acz = pcz - paz
+
+// -- (c - a).squaredNorm
+acx2 = acx * acx
+acy2 = acy * acy
+acz2 = acz * acz
+t1 = acx2 + acy2
+acsqr = t1 + acz2
+
+// -- sign = (b - a).squaredNorm - (c - a).squaredNorm
+d = absqr - acsqr

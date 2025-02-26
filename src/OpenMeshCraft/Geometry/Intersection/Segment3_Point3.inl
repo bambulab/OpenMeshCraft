@@ -18,7 +18,7 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &s0,
                                                       const GPointT &s1,
                                                       const GPointT &pnt) const
 {
-	if (CollinearPoints3D().misaligned(s0, s1, pnt))
+	if (CollinearPoints3().misaligned(s0, s1, pnt))
 		return false; // strictly outside
 
 	Sign seq_x = LessThan3D().on_x(s0, s1);
@@ -144,7 +144,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 	if (LessThan3D().coincident(p, s1))
 		return PointInSimplexType::ON_VERT1;
 
-	if (CollinearPoints3D().misaligned(s0, s1, p))
+	if (CollinearPoints3().misaligned(s0, s1, p))
 		return PointInSimplexType::STRICTLY_OUTSIDE;
 
 	// clang-format off
@@ -192,7 +192,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 	if (vec_equals_3d(p, s1))
 		return PointInSimplexType::ON_VERT1;
 
-	if (CollinearPoints3D().misaligned(s0, s1, p))
+	if (CollinearPoints3().misaligned(s0, s1, p))
 		return PointInSimplexType::STRICTLY_OUTSIDE;
 
 	if ((p[0] > std::min(s0[0], s1[0]) && p[0] < std::max(s0[0], s1[0])) ||

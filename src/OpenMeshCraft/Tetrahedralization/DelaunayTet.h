@@ -1,0 +1,100 @@
+#pragma once
+
+#include "TetMesh.h"
+
+namespace OMC {
+
+/**
+ * @brief Apply a (weighted) Delaunay tetrahedralization to a (weighted) point
+ * set.
+ * @details
+ * - Theory reference: [Gmsh] Marot, C., Pellerin, J. and Remacle, J. F. One
+ *   machine, one minute, three billion tetrahedra. International Journal for
+ *   Numerical Methods in Engineering (2018).
+ * - Implementation reference: [RobustCDT] Diazzi, L., Panozzo, D., Vaxman, A.
+ *   and Attene, M. Constrained Delaunay Tetrahedrization: A Robust and
+ *   Practical Approach. ACM Transactions on Graphics, 42, 6 (2023), 1-15.
+ * - To implement the `weighted` part, we referece the CGAL library:
+ *   CGAL\Triangulation\include\CGAL\Regular_triangulation.h.
+ *   Actually, the details to handle weighted and unweighted cases are hidden
+ *   in the TetMesh::vertexInTetSphere. The top level algorithms (walk, cavity,
+ *   and filling) are nearly same.
+ */
+template <typename Traits>
+class DelaunayTet
+{
+public: /* Traits **********************************************************/
+	using Self = DelaunayTet<Traits>;
+
+	using NT     = typename Traits::NT;
+	using EPoint = typename Traits::EPoint;
+	using GPoint = typename Traits::GPoint;
+
+	using AsGP = typename Traits::AsGP;
+	using AsEP = typename Traits::AsEP;
+	using ToEP = typename Traits::ToEP;
+
+	using Orient3D         = typename Traits::Orient3D;
+	using LessThan3D       = typename Traits::LessThan3D;
+	using CollinearPoints3 = typename Traits::CollinearPoints3;
+
+	using TetMesh  = TetrahedralMesh<Traits>;
+	using TET_MARK = typename TetMesh::TET_MARK;
+	using VTX_MARK = typename TetMesh::VTX_MARK;
+
+	const static bool WEIGHTED = TetMesh::WEIGHTED;
+
+public: /* Constructor & Destructor ****************************************/
+	DelaunayTet() = delete;
+	DelaunayTet(TetMesh &_mesh)
+	  : mesh(_mesh)
+	{
+	}
+
+public: /* Algorithm *******************************************************/
+	/* Pipeline of the algorithm
+	 * - Initialize the Delaunay tetrahedralization
+	 * - Insert vertices into the Delaunay tetrahedralization
+	 * - Remove deleted tetrahedra
+	 */
+	void tetrahedralize();
+
+	/* Initialize the Delaunay tetrahedralization */
+	void initialize(index_t &k, index_t &l);
+
+	/* Insert a vertex into the Delaunay tetrahedralization */
+	void insertVertex(const index_t vid, index_t &tet);
+
+	/* Sub-steps of inserting a vertex */
+
+	void walk(const index_t vid, index_t &tet);
+
+	void cavity(const index_t vid, const index_t tet,
+	            AuxVector64<index_t> &cavity_tets,
+	            AuxVector64<index_t> &cavity_corners);
+
+	void filling(const index_t vid, const AuxVector64<index_t> &cavity_corners);
+
+public: /* Checks **********************************************************/
+	/* Verify the correctness of the Delaunay tetrahedralization */
+	bool verify() const;
+
+	bool localVerify(index_t vid) const;
+
+	bool verifyVolume(index_t tet_idoff) const;
+
+	bool verifyNeighbor(index_t tet_idoff) const;
+
+	bool verifyDelaunay(index_t vid) const;
+
+	bool verifyWalk(index_t vid, index_t tet) const;
+
+public: /* Data ************************************************************/
+	TetMesh &mesh;
+};
+
+} // namespace OMC
+
+#ifdef OMC_HAS_IMPL
+	#include "DelaunayTet.inl"
+#endif

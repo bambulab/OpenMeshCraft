@@ -7,6 +7,18 @@ namespace OMC {
 
 /**
  * @brief Check if Triangle3 and Point3 intersect.
+ * 
+ * From the simplex and bounded side views, the intersection can be classified
+ * into 3 types:
+ *
+ * - DO_NOT_INTERSECT : the triangle does not intersect the point.
+ *
+ * - SIMPLICIAL_COMPLEX : the point is a vertex of the triangle.
+ *
+ * - INTERSECT : the point is on the edge or inside the triangle.
+ *
+ * The last two types are considered as intersect.
+ * 
  * @tparam Kernel
  */
 template <typename Kernel>
@@ -20,10 +32,10 @@ public:
 	using GPointT   = typename K::GPoint3;
 	using TriangleT = typename K::Triangle3;
 
-	using LessThan3D        = typename K::LessThan3D;
-	using OrientOn2D        = typename K::OrientOn2D;
-	using Orient3D          = typename K::Orient3D;
-	using CollinearPoints3D = typename K::CollinearPoints3D;
+	using LessThan3D       = typename K::LessThan3D;
+	using OrientOn2D       = typename K::OrientOn2D;
+	using Orient3D         = typename K::Orient3D;
+	using CollinearPoints3 = typename K::CollinearPoints3;
 
 	using Segment3_Point3_DoInter = Segment3_Point3_Do_Intersect<Kernel>;
 

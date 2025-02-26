@@ -6,6 +6,17 @@ namespace OMC {
 
 /**
  * @brief Check if Segment3 and Point3 intersect.
+ * 
+ * From the simplex view, the intersection can be classified into 3 types:
+ * 
+ * - DO_NOT_INTERSECT : the segment and point do not intersect.
+ * 
+ * - SIMPLICIAL_COMPLEX : the point is one of the vertices of the segment.
+ * 
+ * - INTERSECT : the point is on the interior of the segment.
+ * 
+ * The last two types are considered as intersect.
+ * 
  * @tparam Kernel
  */
 template <typename Kernel>
@@ -21,7 +32,7 @@ public:
 
 	using OrientOn2D       = typename K::OrientOn2D;
 	using Orient3D         = typename K::Orient3D;
-	using CollinearPoints3D = typename K::CollinearPoints3D;
+	using CollinearPoints3 = typename K::CollinearPoints3;
 	using LessThan3D       = typename K::LessThan3D;
 
 public:

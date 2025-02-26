@@ -77,6 +77,11 @@ public: /* Interfaces ********************************************************/
 	/// (optionally) save explicit result to output mesh.
 	void meshArrangements();
 
+	/// @brief Check if there is any intersection between input triangles.
+	/// Valid simplicial complex is not seen as intersection.
+	/// @return true if intersection is detected, false otherwise.
+	bool checkIntersection();
+
 	/// @brief An interface to set configuration (flags and parameters).
 	void setConfig(MeshArrangements_Config _config);
 

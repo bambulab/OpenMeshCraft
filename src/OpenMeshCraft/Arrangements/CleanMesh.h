@@ -12,7 +12,7 @@ class ArrCleanMesh
 public: /* Traits ************************************************************/
 	using NT = typename Traits::NT;
 
-	using CollinearPoints3D  = typename Traits::CollinearPoints3D;
+	using CollinearPoints3  = typename Traits::CollinearPoints3;
 
 public: /* Constructors ******************************************************/
 	ArrCleanMesh() = delete;

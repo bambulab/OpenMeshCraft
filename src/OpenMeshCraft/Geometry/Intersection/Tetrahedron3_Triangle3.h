@@ -8,6 +8,20 @@ namespace OMC {
 
 /**
  * @brief Check if Tetrahedron3 and Triangle3 intersect.
+ *
+ * From the simplex and bounded side views, the intersection can be classified
+ * into 3 types:
+ *
+ * - DO_NOT_INTERSECT : the triangle does not intersect the tetrahedron.
+ *
+ * - SIMPLICIAL_COMPLEX : the triangle shares only a face, an edge or a vertex
+ * of the tetrahedron.
+ *
+ * - INTERSECT : the segment intersects tetrahedron at at least a point
+ * (vertex, edge, face, or interior) except the SIMPLICIAL_COMPLEX case.
+ *
+ * The last two types are considered as intersect.
+ *
  * @tparam Kernel
  */
 template <typename Kernel>
@@ -23,10 +37,10 @@ public:
 	using TriangleT    = typename K::Triangle3;
 	using TetrahedronT = typename K::Tetrahedron3;
 
-	using LessThan3D        = typename K::LessThan3D;
-	using OrientOn2D        = typename K::OrientOn2D;
-	using Orient3D          = typename K::Orient3D;
-	using CollinearPoints3D = typename K::CollinearPoints3D;
+	using LessThan3D       = typename K::LessThan3D;
+	using OrientOn2D       = typename K::OrientOn2D;
+	using Orient3D         = typename K::Orient3D;
+	using CollinearPoints3 = typename K::CollinearPoints3;
 
 	using Triangle3_Triangle3_DoInter = Triangle3_Triangle3_Do_Intersect<Kernel>;
 	using Tetrahedron3_Point3_DoInter = Tetrahedron3_Point3_Do_Intersect<Kernel>;

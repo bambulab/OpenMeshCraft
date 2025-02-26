@@ -235,6 +235,7 @@ int expansionObject::Gen_Product_With_PreAlloc(const int alen, const double *a,
 		if (newlen < 8)
 			newlen = 8;
 		*h = AllocDoubles(newlen);
+		OMC_PRED_PROFILE_INC_MALLOC(newlen);
 	}
 	return Gen_Product(alen, a, blen, b, *h);
 }

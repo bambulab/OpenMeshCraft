@@ -15,13 +15,9 @@ namespace OMC {
 
 #define E2 0 // Explicit
 #define I2 1 // Implicit
-#define S2 2 // SSI
 
 #define E3 0 // Explicit
 #define I3 1 // Implicit
-#define S3 2 // SSI
-#define L3 3 // LPI
-#define T3 4 // TPI
 
 #define BEP 4 // bits for each point
 // clang-format off
@@ -50,17 +46,12 @@ enum class PntArr2 : size_t
 {
 	E    = E2,
 	I    = I2,
-	S    = S2,
 	// #################################
 	EE   = Map2(E2, E2),
 	// E/I * 2  (full arrangement)
 	IE   = Map2(I2, E2),
 	EI   = Map2(E2, I2),
 	II   = Map2(I2, I2),
-	// E/S * 2  (full arrangement)
-	SE   = Map2(S2, E2),
-	ES   = Map2(E2, S2),
-	SS   = Map2(S2, S2),
 	// #################################
 	EEE  = Map3(E2, E2, E2),
 	// E/I * 3  (full arrangement)
@@ -71,14 +62,6 @@ enum class PntArr2 : size_t
 	IEI  = Map3(I2, E2, I2),
 	EII  = Map3(E2, I2, I2),
 	III  = Map3(I2, I2, I2),
-	// E/S * 3  (full arrangement)
-	SEE  = Map3(S2, E2, E2),
-	ESE  = Map3(E2, S2, E2),
-	SSE  = Map3(S2, S2, E2),
-	EES  = Map3(E2, E2, S2),
-	SES  = Map3(S2, E2, S2),
-	ESS  = Map3(E2, S2, S2),
-	SSS  = Map3(S2, S2, S2),
 	// #################################
 	EEEE = Map4(E2, E2, E2, E2)
 
@@ -89,22 +72,12 @@ enum class PntArr3 : size_t
 {
 	E     = E3,
 	I     = I3,
-	S     = S3,
-	L     = L3,
-	T     = T3,
 	// #################################
 	EE    = Map2(E3, E3),
 	// E/I * 2  (full arrangement)
 	IE    = Map2(I3, E3),
 	EI    = Map2(E3, I3),
 	II    = Map2(I3, I3),
-	// E/S/L/T * 2  (not full arrangement)
-	SS    = Map2(S3, S3),
-	LS    = Map2(L3, S3),
-	TS    = Map2(T3, S3),
-	LL    = Map2(L3, L3),
-	TL    = Map2(T3, L3),
-	TT    = Map2(T3, T3),
 	// #################################
 	EEE   = Map3(E3, E3, E3),
 	// E/I * 3  (full arrangement)
@@ -115,17 +88,6 @@ enum class PntArr3 : size_t
 	IEI   = Map3(I3, E3, I3),
 	EII   = Map3(E3, I3, I3),
 	III   = Map3(I3, I3, I3),
-	// E/S/L/T * 3  (not full arrangement)
-	SSS   = Map3(S3, S3, S3),
-	LSS   = Map3(L3, S3, S3),
-	TSS   = Map3(T3, S3, S3),
-	LLS   = Map3(L3, L3, S3),
-	TLS   = Map3(T3, L3, S3),
-	TTS   = Map3(T3, T3, S3),
-	LLL   = Map3(L3, L3, L3),
-	TLL   = Map3(T3, L3, L3),
-	TTL   = Map3(T3, T3, L3),
-	TTT   = Map3(T3, T3, T3),
 	// #################################
 	// E * 4
 	EEEE  = Map4(E3, E3, E3, E3),
@@ -145,23 +107,6 @@ enum class PntArr3 : size_t
 	IEII  = Map4(I3, E3, I3, I3),
 	EIII  = Map4(E3, I3, I3, I3),
 	IIII  = Map4(I3, I3, I3, I3),
-	// E/S/L/T * 4 (not full arrangement)
-	// 4
-	SSSS  = Map4(S3, S3, S3, S3),
-	LSSS  = Map4(L3, S3, S3, S3),
-	TSSS  = Map4(T3, S3, S3, S3),
-	LLSS  = Map4(L3, L3, S3, S3),
-	TLSS  = Map4(T3, L3, S3, S3),
-	TTSS  = Map4(T3, T3, S3, S3),
-	LLLS  = Map4(L3, L3, L3, S3),
-	TLLS  = Map4(T3, L3, L3, S3),
-	TTLS  = Map4(T3, T3, L3, S3),
-	TTTS  = Map4(T3, T3, T3, S3),
-	LLLL  = Map4(L3, L3, L3, L3),
-	TLLL  = Map4(T3, L3, L3, L3),
-	TTLL  = Map4(T3, T3, L3, L3),
-	TTTL  = Map4(T3, T3, T3, L3),
-	TTTT  = Map4(T3, T3, T3, T3),
 	// #################################
 	// E * 5
 	EEEEE = Map5(E3, E3, E3, E3, E3),
@@ -199,90 +144,62 @@ void sort_types(std::array<uint32_t, N> &pos, std::array<uint32_t, N> &types,
 	}
 }
 
-template <bool ToEI>
-PntArr2 get_pnts_arr2(uint32_t p0, uint32_t p1)
+inline PntArr2 get_pnts_arr2(uint32_t p0, uint32_t p1)
 {
-	if constexpr (ToEI)
-	{
-		p0 = p0 > I2 ? I2 : E2;
-		p1 = p1 > I2 ? I2 : E2;
-	}
+	p0 = p0 > I2 ? I2 : E2;
+	p1 = p1 > I2 ? I2 : E2;
 	return static_cast<PntArr2>(Map2(p0, p1));
 }
 
-template <bool ToEI>
-PntArr2 get_pnts_arr2(uint32_t p0, uint32_t p1, uint32_t p2)
+inline PntArr2 get_pnts_arr2(uint32_t p0, uint32_t p1, uint32_t p2)
 {
-	if constexpr (ToEI)
-	{
-		p0 = p0 > I2 ? I2 : E2;
-		p1 = p1 > I2 ? I2 : E2;
-		p2 = p2 > I2 ? I2 : E2;
-	}
+	p0 = p0 > I2 ? I2 : E2;
+	p1 = p1 > I2 ? I2 : E2;
+	p2 = p2 > I2 ? I2 : E2;
 	return static_cast<PntArr2>(Map3(p0, p1, p2));
 }
 
-template <bool ToEI>
-PntArr2 get_pnts_arr2(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3)
+inline PntArr2 get_pnts_arr2(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3)
 {
-	if constexpr (ToEI)
-	{
-		p0 = p0 > I2 ? I2 : E2;
-		p1 = p1 > I2 ? I2 : E2;
-		p2 = p2 > I2 ? I2 : E2;
-		p3 = p3 > I2 ? I2 : E2;
-	}
+	p0 = p0 > I2 ? I2 : E2;
+	p1 = p1 > I2 ? I2 : E2;
+	p2 = p2 > I2 ? I2 : E2;
+	p3 = p3 > I2 ? I2 : E2;
 	return static_cast<PntArr2>(Map4(p0, p1, p2, p3));
 }
 
-template <bool ToEI>
-PntArr3 get_pnts_arr3(uint32_t p0, uint32_t p1)
+inline PntArr3 get_pnts_arr3(uint32_t p0, uint32_t p1)
 {
-	if constexpr (ToEI)
-	{
-		p0 = p0 > I3 ? I3 : E3;
-		p1 = p1 > I3 ? I3 : E3;
-	}
+	p0 = p0 > I3 ? I3 : E3;
+	p1 = p1 > I3 ? I3 : E3;
 	return static_cast<PntArr3>(Map2(p0, p1));
 }
 
-template <bool ToEI>
-PntArr3 get_pnts_arr3(uint32_t p0, uint32_t p1, uint32_t p2)
+inline PntArr3 get_pnts_arr3(uint32_t p0, uint32_t p1, uint32_t p2)
 {
-	if constexpr (ToEI)
-	{
-		p0 = p0 > I3 ? I3 : E3;
-		p1 = p1 > I3 ? I3 : E3;
-		p2 = p2 > I3 ? I3 : E3;
-	}
+	p0 = p0 > I3 ? I3 : E3;
+	p1 = p1 > I3 ? I3 : E3;
+	p2 = p2 > I3 ? I3 : E3;
 	return static_cast<PntArr3>(Map3(p0, p1, p2));
 }
 
-template <bool ToEI>
-PntArr3 get_pnts_arr3(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3)
+inline PntArr3 get_pnts_arr3(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3)
 {
-	if constexpr (ToEI)
-	{
-		p0 = p0 > I3 ? I3 : E3;
-		p1 = p1 > I3 ? I3 : E3;
-		p2 = p2 > I3 ? I3 : E3;
-		p3 = p3 > I3 ? I3 : E3;
-	}
+	p0 = p0 > I3 ? I3 : E3;
+	p1 = p1 > I3 ? I3 : E3;
+	p2 = p2 > I3 ? I3 : E3;
+	p3 = p3 > I3 ? I3 : E3;
 	return static_cast<PntArr3>(Map4(p0, p1, p2, p3));
 }
 
-template <bool ToEI>
-PntArr3 get_pnts_arr3(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3,
-                      uint32_t p4)
+inline PntArr3 get_pnts_arr3(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3,
+                             uint32_t p4)
 {
-	if constexpr (ToEI)
-	{
-		p0 = p0 > I3 ? I3 : E3;
-		p1 = p1 > I3 ? I3 : E3;
-		p2 = p2 > I3 ? I3 : E3;
-		p3 = p3 > I3 ? I3 : E3;
-		p4 = p4 > I3 ? I3 : E3;
-	}
+	p0 = p0 > I3 ? I3 : E3;
+	p1 = p1 > I3 ? I3 : E3;
+	p2 = p2 > I3 ? I3 : E3;
+	p3 = p3 > I3 ? I3 : E3;
+	p4 = p4 > I3 ? I3 : E3;
 	return static_cast<PntArr3>(Map5(p0, p1, p2, p3, p4));
 }
 
@@ -343,12 +260,8 @@ inline PntArr3 sort_pnts_arr3(std::array<uint32_t, 5> &types,
 
 #undef E2
 #undef I2
-#undef S2
 #undef E3
 #undef I3
-#undef S3
-#undef L3
-#undef T3
 #undef Map2
 #undef Map3
 #undef Map4
@@ -502,10 +415,10 @@ struct PredicatesProfile
 	#define OMC_PRED_PROFILE_INIT
 	#define OMC_PRED_PROFILE_PRINT
 
-	#define OMC_PRED_PROFILE_INC_FILTER(pred, arr)
-	#define OMC_PRED_PROFILE_INC_SSFAIL(pred, arr)
-	#define OMC_PRED_PROFILE_INC_DFAIL(pred, arr)
-	#define OMC_PRED_PROFILE_INC_REALZERO(ret, pred, arr)
+	#define OMC_PRED_PROFILE_INC_FILTER(pred)
+	#define OMC_PRED_PROFILE_INC_SSFAIL(pred)
+	#define OMC_PRED_PROFILE_INC_DFAIL(pred)
+	#define OMC_PRED_PROFILE_INC_REALZERO(ret, pred)
 
 	#define OMC_PRED_PROFILE_INC_IP_TOTAL(name)
 

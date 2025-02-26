@@ -7,6 +7,18 @@ namespace OMC {
 
 /**
  * @brief Check if Tetrahedron3 and Point3 intersect.
+ *
+ * From the simplex and bounded side views, the intersection can be classified
+ * into 3 types:
+ *
+ * - DO_NOT_INTERSECT : the point is strictly outside the tetrahedron.
+ *
+ * - SIMPLICIAL_COMPLEX : the point is one of the vertices of the tetrahedron.
+ *
+ * - INTERSECT : the point is on the edge, face, or inside the tetrahedron.
+ *
+ * The last two types are considered as intersect.
+ *
  * @tparam Kernel
  */
 template <typename Kernel>
@@ -20,10 +32,10 @@ public:
 	using GPointT      = typename K::GPoint3;
 	using TetrahedronT = typename K::Tetrahedron3;
 
-	using LessThan3D        = typename K::LessThan3D;
-	using OrientOn2D        = typename K::OrientOn2D;
-	using Orient3D          = typename K::Orient3D;
-	using CollinearPoints3D = typename K::CollinearPoints3D;
+	using LessThan3D       = typename K::LessThan3D;
+	using OrientOn2D       = typename K::OrientOn2D;
+	using Orient3D         = typename K::Orient3D;
+	using CollinearPoints3 = typename K::CollinearPoints3;
 
 public:
 	/**

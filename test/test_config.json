@@ -6,15 +6,21 @@
       "thread_num": 16,
       "verbose": true,
       "explicit": true,
-      "write": false
+      "write": false,
+      "set_parameter": false,
+      "parameters": {
+        "tree_enlarge_ratio": 1.01,
+        "tree_adaptive_thres": 0.1,
+        "tree_split_size_thres": 50
+      }
     },
     "TestDataSet": {
       "models_dir": "who-knows",
       "verbose": false,
       "explicit": false,
       "skip_step": 0,
-      "set_parameter": false,
       "thread_num": 16,
+      "set_parameter": false,
       "parameters": {
         "tree_enlarge_ratio": 1.01,
         "tree_adaptive_thres": 0.1,
@@ -28,14 +34,44 @@
       "mesh_path_2": "./data/boolean_data/cow25k.obj"
     }
   },
+  "ConstrDelTet": {
+    "TestIfCrash": {
+      "dir": "./data/CDT_data/",
+      "filename": "112544.obj",
+      "verbose": true,
+      "explicit": true,
+      "write": true,
+      "thread_num": 1,
+      "set_parameter": false,
+      "parameters": {
+        "Steiner_point_thres": 10
+      }
+    },
+    "TestDataSet": {
+      "models_dir": "who-knows",
+      "verbose": false,
+      "explicit": false,
+      "skip_step": 0,
+      "thread_num": 1,
+      "set_parameter": false,
+      "parameters": {
+        "Steiner_point_thres": 10
+      }
+    }
+  },
   "AABBTreeClosestPoint": {
     "SetUp": {
-      "model_path": "./data/boolean_data/bunny25k.obj"
+      "filename": "./data/boolean_data/bunny25k.obj"
     }
   },
   "AABBTreeIntersection": {
     "SetUp": {
-      "model_path": "./data/boolean_data/bunny25k.obj"
+      "filename": "./data/boolean_data/bunny25k.obj"
+    }
+  },
+  "DynamicAABBTree": {
+    "SetUp": {
+      "filename": "./data/boolean_data/bunny25k.obj"
     }
   },
   "AdapOrthTree": {
@@ -50,7 +86,7 @@
   },
   "OrthogonalTree": {
     "SetUp": {
-      "filename": "./data/arrangements_data/318844.stl"
+      "filename": "./data/boolean_data/bunny25k.obj"
     }
   }
 }

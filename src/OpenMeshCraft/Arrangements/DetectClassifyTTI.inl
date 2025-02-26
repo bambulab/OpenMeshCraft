@@ -135,8 +135,8 @@ void DetectClassifyTTI<Traits>::check_TTI(index_t ta, index_t tb)
 
 	// check if any triangle is degenerate
 	OMC_EXPENSIVE_ASSERT(
-	  CollinearPoints3D().misaligned(ha.v[0], ha.v[1], ha.v[2]) &&
-	    CollinearPoints3D().misaligned(hb.v[0], hb.v[1], hb.v[2]),
+	  CollinearPoints3().misaligned(ha.v[0], ha.v[1], ha.v[2]) &&
+	    CollinearPoints3().misaligned(hb.v[0], hb.v[1], hb.v[2]),
 	  "Detect degenerate triangle in check TTI.");
 	OMC_ARR_PROF_TTI_INCT;
 
@@ -2287,8 +2287,8 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_noncoplanar_edge(
 
 		for (size_t i = 0; i < 12; i += 3)
 		{
-			if (CollinearPoints3D().misaligned(_pnts[_tri[i]], _pnts[_tri[i + 1]],
-			                                   _pnts[_tri[i + 2]]))
+			if (CollinearPoints3().misaligned(_pnts[_tri[i]], _pnts[_tri[i + 1]],
+			                                  _pnts[_tri[i + 2]]))
 			{
 				plane = MaxCompInTriNormal()(_pnts[_tri[i]], _pnts[_tri[i + 1]],
 				                             _pnts[_tri[i + 2]]);

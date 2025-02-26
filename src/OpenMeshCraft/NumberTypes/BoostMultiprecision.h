@@ -105,4 +105,22 @@ inline double to_double(const BoostFloat &n)
 	return BoostMpToDouble()(n);
 }
 
+template <>
+inline std::pair<double, double> to_interval(const BoostRational &n)
+{
+	return BoostMpToInterval()(n);
+}
+
+template <>
+inline std::pair<double, double> to_interval(const BoostFloat &n)
+{
+	return BoostMpToInterval()(n);
+}
+
+template <>
+inline std::pair<double, double> to_interval(const BoostMpzInt &n)
+{
+	return BoostMpToInterval()(n);
+}
+
 } // namespace OMC

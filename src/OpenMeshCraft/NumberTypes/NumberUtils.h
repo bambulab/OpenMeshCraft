@@ -158,10 +158,22 @@ inline NT negate(const NT &n)
 /*                     Number type convertor                     */
 /*****************************************************************/
 
+/// @brief A template converter to convert a number type to `double`.
+/// @note For each number type `NT`, define a specialization of this template.
 template <typename NT>
 inline double to_double(const NT &n)
 {
 	return static_cast<double>(n);
+}
+
+/// @brief A template converter to convert a number type to a interval number.
+/// @note For each number type `NT`, define a specialization of this template.
+/// @return A pair of double, representing the interval [inf, sup].
+template <typename NT>
+inline std::pair<double, double> to_interval(const NT &n)
+{
+	double dn = to_double(n);
+	return std::make_pair(dn, dn);
 }
 
 } // namespace OMC
