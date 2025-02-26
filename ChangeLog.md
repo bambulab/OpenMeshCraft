@@ -1,5 +1,21 @@
 # ChangeLog
 
+## 1.1.0 (2024.02.26)
+
+New Features:
+
+- Delaunay tetrahedralization
+- Constrained Delaunay tetrahedralization
+
+Refactor:
+
+- Geometry primitives and predicates
+- Bounding volume hierarchies (BVH)
+
+Docs:
+
+- Update README.md
+
 ## 1.0.3 (2024.10.15)
 
 New Features:

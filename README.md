@@ -2,7 +2,7 @@
 
 ## Main projects
 
-> Last updated: 2024.09.02-15:32.
+> Last updated: 2025.02.26-20:43.
 
 ### Mesh arrangements
 
@@ -15,6 +15,7 @@
   * `test/Executables/arrangements.cpp` (in CMake target `OpenMeshCraft-Arrangements`)
   * `test/Arrangements/test_arrangements.cpp` (in CMake target `OpenMeshCraft-Test`)
 * Tested on Thingi10k dataset and one dataset from the first reference paper.
+* The original reference implementation for the first reference paper is available at branch `mesh_arrangements`.
 
 ### Mesh boolean
 
@@ -25,6 +26,20 @@
 * Running examples
   * `test/Boolean/test_boolean.cpp` (in CMake target `OpenMeshCraft-Test`)
 * Haven't been tested thoroughly.
+
+### Tetrahedralization
+
+* (Weighted) Delaunay tetrahedralization
+  * A robust minimal implementation.
+  * Reference paper: Marot, C., Pellerin, J. and Remacle, J. F. One machine, one minute, three billion tetrahedra. International Journal for Numerical Methods in Engineering (2018).
+  * Source code: `src/OpenMeshCraft/Tetrahedralization/DelaunayTet.*`
+  * Running example: `test/Tetrahedralization/test_WDT.cpp`
+* Constrained Delaunay tetrahedralization
+  * A robust minimal implementation.
+  * Reference paper: Diazzi, L., Panozzo, D., Vaxman, A. and Attene, M. Constrained Delaunay Tetrahedrization: A Robust and Practical Approach. ACM Transactions on Graphics, 42, 6 (2023), 1-15.
+  * Source code: `src/OpenMeshCraft/Tetrahedralization/CDT.*`
+  * Running example: `test/Tetrahedralization/test_CDT.cpp`
+  * The modified gift-wrapping method in the reference paper is not implemented yet.
 
 ## Documents
 
@@ -41,13 +56,13 @@
 
 ### Verified environment
 
-> Last updated: 2024.06.10-23:15.
+> Last updated: 2025.02.26-20:48.
 
 |        | Host         | Compiler                         |
 |--------| ------------ | -------------------------------- |
 |&check; | Windows10    | VS 2019 (vc142), VS 2022 (vc143) |
 |&check; | Windows11    | VS 2022 (vc143)                  |
-|&check; | Ubuntu 24.04 | GCC 14.0.1 X86_64                |
+|&cross; | Ubuntu 24.04 | GCC 14.0.1 X86_64                |
 
 ### external libraries
 
