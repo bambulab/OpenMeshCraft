@@ -970,10 +970,6 @@ void PiecewiseLinearComplex<Traits>::removeIsolatedSteiner(index_t iso_vid)
 	OMC_ASSERT(iso_vid >= input_nv && !is_valid_idx(edgeWrtSteiner(iso_vid)),
 	           "Not isolated Steiner vertices.");
 
-	index_t last_vid = vertices.size() - 1;
-	if (iso_vid == last_vid)
-		goto func_end;
-
 	auto replace_vertex_in_edge = [](PLCEdge &e, index_t old_vid, index_t new_vid)
 	{
 		if (e.ep0() == old_vid)
@@ -981,6 +977,11 @@ void PiecewiseLinearComplex<Traits>::removeIsolatedSteiner(index_t iso_vid)
 		else if (e.ep1() == old_vid)
 			e.ep1() = new_vid;
 	};
+
+	index_t last_vid = vertices.size() - 1;
+	if (iso_vid == last_vid)
+		goto func_end;
+
 	// update PLCEdge's ep
 	// for incident edges of `last_vid`, replace `last_vid` with `iso_vid`
 	for (index_t eid : vertex_inc_edge_steiner[last_vid - input_nv])

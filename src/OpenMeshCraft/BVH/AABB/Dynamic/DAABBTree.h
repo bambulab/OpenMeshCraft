@@ -2,6 +2,8 @@
 
 #include "DAABBNode.h"
 
+#include <cstdint>
+
 #include <vector>
 
 namespace OMC {
@@ -36,7 +38,7 @@ public: /* Types *************************************************************/
 	/* Types used by dynamic AABB tree */
 
 	/// Tree type
-	using ThisT = typename DAABBTree<Traits>;
+	using ThisT = DAABBTree<Traits>;
 
 	/// Primitives
 	using Prims = std::vector<PrimT>;

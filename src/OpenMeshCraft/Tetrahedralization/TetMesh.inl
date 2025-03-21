@@ -5,20 +5,10 @@
 namespace OMC {
 
 template <typename Traits>
-template <typename /*Enable by SFINAE*/>
-TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &_vertices)
-  : vertices(_vertices)
-	, weights(nullptr)
-{
-	initialize();
-}
-
-template <typename Traits>
-template <typename /*Enable by SFINAE*/>
 TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &_vertices,
-                                         const std::vector<NT>       &_weights)
+                                         const std::vector<NT>       *_weights)
   : vertices(_vertices)
-  , weights(&_weights)
+  , weights(_weights)
 {
 	initialize();
 }

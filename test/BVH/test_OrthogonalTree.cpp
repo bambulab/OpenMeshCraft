@@ -169,8 +169,6 @@ TEST_F(test_OrthogonalTree, OcTreeVertex)
 		OcTree::NodeRef cur_node     = tree.node(cur_node_idx);
 		nodes_to_traverse.pop();
 
-		APAC::Point3 center = tree.node_center(cur_node);
-
 		if (cur_node.is_leaf())
 		{
 			for (index_t i = 0; i < OcTree::Degree; i++)

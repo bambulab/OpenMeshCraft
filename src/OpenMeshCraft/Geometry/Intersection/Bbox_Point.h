@@ -1,5 +1,9 @@
 #pragma once
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+
+#include <type_traits>
+
 namespace OMC {
 
 /**

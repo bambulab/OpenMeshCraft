@@ -158,7 +158,7 @@ TEST_F(test_WeightedDelTet, TestIfCrash)
 
 	auto start = OMC::Logger::elapse_reset();
 
-	TetMesh mesh(vertices, weights);
+	TetMesh mesh(vertices, &weights);
 
 	DelTet dt(mesh);
 

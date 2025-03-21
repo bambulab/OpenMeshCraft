@@ -4,6 +4,8 @@
 
 #include "test_utils.h"
 
+#include <queue>
+
 template <typename TreeT>
 inline void visualizeBoxTree2D(const TreeT &tree, const std::string &filename)
 {
@@ -85,9 +87,6 @@ inline void visualizeBoxTree3D(const TreeT &tree, const std::string &filename)
 				nodes_to_traverse.push(cur_node.child(i));
 			continue;
 		}
-
-		APAC::Point3 minb = cur_node.box().min_bound();
-		APAC::Point3 maxb = cur_node.box().max_bound();
 
 		//            xyz
 		APAC::Point3 p000 = cur_node.box().min_bound();

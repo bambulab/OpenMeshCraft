@@ -51,7 +51,6 @@ public:
 	using Sphere3      = typename K::Sphere3;
 	using Tetrahedron3 = typename K::Tetrahedron3;
 	using Triangle3    = typename K::Triangle3;
-	using Sphere3      = typename K::Sphere3;
 
 public:
 	// clang-format off

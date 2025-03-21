@@ -11,7 +11,7 @@
 // Traits
 #include "OpenMeshCraft/Mesh/TetSoup.h"
 // Arrangements
-#include "OpenMeshCraft/ConstrDelTet/CDT.h"
+#include "OpenMeshCraft/Tetrahedralization/CDT.h"
 
 #include "test_utils.h"
 

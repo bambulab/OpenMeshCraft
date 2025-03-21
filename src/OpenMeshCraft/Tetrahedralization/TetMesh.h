@@ -10,12 +10,6 @@
 
 namespace OMC {
 
-// abbreviate SFINAE used in TetrahedralMesh
-#define ENABLE_IF_WEIGHTED \
-	typename Enable = typename std::enable_if_t<WEIGHTED, int>
-#define ENABLE_IF_NOT_WEIGHTED \
-	typename Enable = typename std::enable_if_t<!WEIGHTED, int>
-
 template <typename Traits>
 class TetrahedralMesh
 {
@@ -69,12 +63,8 @@ public:
 	/* Constructors and Destructors */
 	TetrahedralMesh() = delete;
 
-	template <ENABLE_IF_NOT_WEIGHTED>
-	TetrahedralMesh(const std::vector<GPoint *> &_vertices);
-
-	template <ENABLE_IF_WEIGHTED>
 	TetrahedralMesh(const std::vector<GPoint *> &_vertices,
-	                const std::vector<NT>       &_weights);
+	                const std::vector<NT>       *_weights = nullptr);
 
 	void initialize();
 

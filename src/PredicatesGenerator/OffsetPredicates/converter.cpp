@@ -1,5 +1,13 @@
 #include "converter.h"
 
+#include <cstdint>
+
+#include <algorithm>
+#include <format>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+
 // floating-point number type in generated code
 std::string FT      = "double";
 // interval number type (IT) in generated code

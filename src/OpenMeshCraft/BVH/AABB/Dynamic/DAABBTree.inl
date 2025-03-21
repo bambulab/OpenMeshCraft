@@ -74,7 +74,6 @@ void DAABBTree<Traits>::insert(const PrimT &prim, index_t ex_prim_idx)
 	{
 	case 1: // only one just added primitive, no node exists.
 	{
-		using iterator                 = std::array<index_t, 1>::iterator;
 		std::array<index_t, 1> indices = {in_prim_idx};
 		expand(indices.begin(), indices.end(), /*parent_idx*/ InvalidIndex);
 	}

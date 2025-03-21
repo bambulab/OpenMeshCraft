@@ -1,5 +1,12 @@
 #include "converter.h"
 
+#include <format>
+#include <iostream>
+
+#ifdef __unix__
+	#include <fenv.h>
+#endif
+
 int main(int argc, char *argv[])
 {
 	// insufficient parameters
@@ -37,7 +44,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
+#ifdef __unix__
+	fesetround(FE_UPWARD);
+#else // Win32
 	_controlfp(_RC_UP, _MCW_RC);
+#endif
 
 	Predicate predicate(append, output_filtered_function,
 	                    output_interval_function, output_exact_function,
@@ -63,7 +74,11 @@ int main(int argc, char *argv[])
 
 	// predicate.printErrorBounds();
 
+#ifdef __unix__
+	fesetround(FE_TONEAREST);
+#else // Win32
 	_controlfp(_RC_NEAR, _MCW_RC);
+#endif
 
 	return 0;
 }

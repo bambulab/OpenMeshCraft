@@ -82,7 +82,8 @@ TEST_F(test_DynamicAABBTree, Construct)
 		const auto  seg0      = Segment(points[f[0]], mid_point);
 		const auto  seg1      = Segment(mid_point, points[f[1]]);
 
-		tree.split(i, idx++, seg0, idx++, seg1);
+		tree.split(i, idx, seg0, idx + 1, seg1);
+		idx += 2;
 	}
 	tree.build();
 }

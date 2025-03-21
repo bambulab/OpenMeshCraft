@@ -12,8 +12,8 @@
 * Source codes
   * `src/OpenMeshCraft/Arrangements`
 * Running examples
-  * `test/Executables/arrangements.cpp` (in CMake target `OpenMeshCraft-Arrangements`)
-  * `test/Arrangements/test_arrangements.cpp` (in CMake target `OpenMeshCraft-Test`)
+  * `test/Executables/arrangements.cpp` (CMake target `OpenMeshCraft-Arrangements`)
+  * `test/Arrangements/test_arrangements.cpp` (CMake target `OpenMeshCraft-Test`)
 * Tested on Thingi10k dataset and one dataset from the first reference paper.
 * The original reference implementation for the first reference paper is available at branch `mesh_arrangements`.
 
@@ -24,7 +24,7 @@
 * Source codes
   * `src/OpenMeshCraft/Boolean`
 * Running examples
-  * `test/Boolean/test_boolean.cpp` (in CMake target `OpenMeshCraft-Test`)
+  * `test/Boolean/test_boolean.cpp` (CMake target `OpenMeshCraft-Test`)
 * Haven't been tested thoroughly.
 
 ### Tetrahedralization
@@ -56,13 +56,12 @@
 
 ### Verified environment
 
-> Last updated: 2025.02.26-20:48.
+> Last updated: 2025.03.21-11:26.
 
 |        | Host         | Compiler                         |
 |--------| ------------ | -------------------------------- |
-|&check; | Windows10    | VS 2019 (vc142), VS 2022 (vc143) |
 |&check; | Windows11    | VS 2022 (vc143)                  |
-|&cross; | Ubuntu 24.04 | GCC 14.0.1 X86_64                |
+|&check; | Ubuntu 24.04 | GCC 13.3.0 X86_64                |
 
 ### external libraries
 
@@ -82,7 +81,7 @@
 
 > Last updated: 2024.06.10-23:16.
 
-We provide gmp and mpfr libs in the "external" directory.
+We include gmp and mpfr libs in the "external" directory.
 You can also install them on your computer and link to new ones.
 
 * gmp
@@ -92,7 +91,7 @@ You can also install them on your computer and link to new ones.
   * Install `libmpfr-dev`
   * Or use mpfr in external/mpfr/unix
 
-We do not provide boost, so you need to install it on your computer and link to it.
+We do not include boost in the "external" direcotry, so you need to install it on your computer and link to it.
 
 * boost
   * Download [boost](https://www.boost.org/users/download/), required version >= 1.78.0
