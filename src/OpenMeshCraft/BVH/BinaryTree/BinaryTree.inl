@@ -5,6 +5,7 @@
 #include "OpenMeshCraft/Utils/IndexDef.h"
 
 #include <algorithm>
+#include <numeric>
 #include <stack>
 
 namespace OMC {

@@ -4,6 +4,7 @@
 
 #include "OpenMeshCraft/Utils/StringUtils.h"
 
+#include <algorithm>
 #include <fstream>
 
 namespace OMC {

@@ -4,6 +4,8 @@
 
 #include "OpenMeshCraft/Utils/ContainerOp.h"
 
+#include <set>
+
 namespace OMC {
 
 /**

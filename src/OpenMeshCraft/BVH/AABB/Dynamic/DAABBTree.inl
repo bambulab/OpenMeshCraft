@@ -4,6 +4,7 @@
 
 #include "OpenMeshCraft/Utils/Exception.h"
 
+#include <array>
 #include <numeric>
 
 namespace OMC {

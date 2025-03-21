@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <bitset>
 #include <deque>
+#include <numeric>
 #include <queue>
 
 namespace OMC {
