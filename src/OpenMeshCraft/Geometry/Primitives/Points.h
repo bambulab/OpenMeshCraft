@@ -41,8 +41,8 @@ public:
 	const EP2 &operator()(const GP2 &src) { return src; }
 	const EP3 &operator()(const GP3 &src) { return src; }
 
-	bool is_explicit(const GP2 &src) { return true; }
-	bool is_explicit(const GP3 &src) { return true; }
+	bool is_explicit(OMC_UNUSED const GP2 &src) { return true; }
+	bool is_explicit(OMC_UNUSED const GP3 &src) { return true; }
 };
 
 template <typename NT>
@@ -68,8 +68,8 @@ public:
 	using EP2     = Point2T<NT>;
 	using IP2_SSI = Point2T<NT>;
 
-	IP2_SSI operator()(const GP2 &l11, const GP2 &l12, const GP2 &l21,
-	                   const GP2 &l22)
+	IP2_SSI operator()(OMC_UNUSED const GP2 &l11, OMC_UNUSED const GP2 &l12,
+	                   OMC_UNUSED const GP2 &l21, OMC_UNUSED const GP2 &l22)
 	{
 		OMC_THROW_NOT_IMPLEMENTED();
 		return IP2_SSI();
@@ -85,8 +85,9 @@ public:
 	using IP3_SSI = Point3T<NT>;
 
 public:
-	IP3_SSI operator()(const GP3 &a, const GP3 &b, const GP3 &p, const GP3 &q,
-	                   int plane)
+	IP3_SSI operator()(OMC_UNUSED const GP3 &a, OMC_UNUSED const GP3 &b,
+	                   OMC_UNUSED const GP3 &p, OMC_UNUSED const GP3 &q,
+	                   OMC_UNUSED int plane)
 	{
 		OMC_THROW_NOT_IMPLEMENTED();
 		return IP3_SSI();
@@ -102,7 +103,8 @@ public:
 	using IP3_LNC = Point3T<NT>;
 
 public:
-	IP3_LNC operator()(const GP3 &p, const GP3 &q, const NT t)
+	IP3_LNC operator()(OMC_UNUSED const GP3 &p, OMC_UNUSED const GP3 &q,
+	                   OMC_UNUSED const NT t)
 	{
 		OMC_THROW_NOT_IMPLEMENTED();
 		return IP3_LNC();
@@ -118,8 +120,9 @@ public:
 	using IP3_LPI = Point3T<NT>;
 
 public:
-	IP3_LPI operator()(const GP3 &p, const GP3 &q, const GP3 &r, const GP3 &s,
-	                   const GP3 &t)
+	IP3_LPI operator()(OMC_UNUSED const GP3 &p, OMC_UNUSED const GP3 &q,
+	                   OMC_UNUSED const GP3 &r, OMC_UNUSED const GP3 &s,
+	                   OMC_UNUSED const GP3 &t)
 	{
 		OMC_THROW_NOT_IMPLEMENTED();
 		return IP3_LPI();
@@ -134,9 +137,11 @@ public:
 	using EP3     = Point3T<NT>;
 	using IP3_TPI = Point3T<NT>;
 
-	IP3_TPI operator()(const GP3 &v1, const GP3 &v2, const GP3 &v3, const GP3 &w1,
-	                   const GP3 &w2, const GP3 &w3, const GP3 &u1, const GP3 &u2,
-	                   const GP3 &u3)
+	IP3_TPI operator()(OMC_UNUSED const GP3 &v1, OMC_UNUSED const GP3 &v2,
+	                   OMC_UNUSED const GP3 &v3, OMC_UNUSED const GP3 &w1,
+	                   OMC_UNUSED const GP3 &w2, OMC_UNUSED const GP3 &w3,
+	                   OMC_UNUSED const GP3 &u1, OMC_UNUSED const GP3 &u2,
+	                   OMC_UNUSED const GP3 &u3)
 	{
 		OMC_THROW_NOT_IMPLEMENTED();
 		return IP3_TPI();

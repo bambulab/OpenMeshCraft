@@ -2,8 +2,10 @@
 
 #include "BinaryTree.h"
 
+#include "OpenMeshCraft/Utils/IndexDef.h"
+
 #include <algorithm>
-#include <execution>
+#include <stack>
 
 namespace OMC {
 

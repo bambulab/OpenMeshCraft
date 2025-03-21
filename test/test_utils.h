@@ -26,13 +26,8 @@
 
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
 
-#include <chrono>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <stack>
 #include <string>
-#include <vector>
 
 extern boost::property_tree::ptree omc_test_config;
 

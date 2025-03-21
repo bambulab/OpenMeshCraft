@@ -1,7 +1,6 @@
 #pragma once
 
 #include "OpenMeshCraft/Utils/Exception.h"
-#include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
 
 #include <cmath>
 #include <type_traits>

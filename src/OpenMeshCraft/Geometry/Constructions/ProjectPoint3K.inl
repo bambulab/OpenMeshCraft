@@ -1,8 +1,7 @@
 #pragma once
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 #include "ProjectPoint3K.h"
-
-#include <variant>
 
 namespace OMC {
 

@@ -5,8 +5,6 @@
 #include "ExplicitPoint2T.h"
 #include "GenericPoint2T.h"
 
-#include "OpenMeshCraft/Geometry/Utils.h"
-
 namespace OMC {
 
 /**

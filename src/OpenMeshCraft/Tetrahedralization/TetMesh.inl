@@ -2,6 +2,8 @@
 
 #include "TetMesh.h"
 
+#include "OpenMeshCraft/Utils/Exception.h"
+
 namespace OMC {
 
 template <typename Traits>
@@ -158,7 +160,7 @@ bool TetrahedralMesh<Traits>::edgeExists(index_t vid0, index_t vid1) const
 	// find the first adajcent tetrahedron
 	index_t tet_idoff = toIdOff(incTet(vid0));
 
-	AuxVector64<index_t> tets;
+	InlinedVector64<index_t> tets;
 	tets.push_back(tet_idoff);
 	mark(tet_idoff, TET_MARK::VISITED);
 
@@ -214,7 +216,7 @@ bool TetrahedralMesh<Traits>::faceExists(index_t vid0, index_t vid1,
 	// find the first adajcent tetrahedron
 	index_t tet_idoff = toIdOff(incTet(vid0));
 
-	AuxVector64<index_t> tets;
+	InlinedVector64<index_t> tets;
 	tets.push_back(tet_idoff);
 	mark(tet_idoff, TET_MARK::VISITED);
 
@@ -307,7 +309,7 @@ void TetrahedralMesh<Traits>::VV(index_t vid, ContainerT &adj_verts) const
 	OMC_EXPENSIVE_ASSERT(vid < sizeVerts(), "Invalid vertex index.");
 	index_t tet_idoff = toIdOff(incTet(vid));
 
-	AuxVector64<index_t> tets;
+	InlinedVector64<index_t> tets;
 	tets.push_back(tet_idoff);
 	mark(tet_idoff, TET_MARK::VISITED);
 
@@ -398,7 +400,7 @@ void TetrahedralMesh<Traits>::faceAdjTets(index_t vid0, index_t vid1,
 	// find the first adajcent tetrahedron
 	index_t tet_idoff = toIdOff(incTet(vid0));
 
-	AuxVector64<index_t> tets;
+	InlinedVector64<index_t> tets;
 	tets.push_back(tet_idoff);
 	mark(tet_idoff, TET_MARK::VISITED);
 
@@ -609,7 +611,7 @@ index_t TetrahedralMesh<Traits>::newTet()
  */
 template <typename Traits>
 void TetrahedralMesh<Traits>::newTets(size_t                inc_size,
-                                      AuxVector64<index_t> &new_tets)
+                                      InlinedVector64<index_t> &new_tets)
 {
 	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");
 

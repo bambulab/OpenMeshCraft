@@ -1,6 +1,8 @@
 #pragma once
 
-#include "BinaryTree.h"
+#include "OpenMeshCraft/Utils/IndexDef.h"
+
+#include <vector>
 
 namespace OMC {
 

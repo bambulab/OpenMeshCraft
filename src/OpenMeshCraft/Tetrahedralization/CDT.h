@@ -2,6 +2,8 @@
 
 #include "Utils.h"
 
+#include "OpenMeshCraft/Utils/IndexDef.h"
+
 namespace OMC {
 
 template <typename Traits>
@@ -104,15 +106,17 @@ private:
 	class loadMultipleMeshes;
 };
 
-// forward declaration
-class ExactIndirectPredicatesApproxConstructions;
-using EIAC = ExactIndirectPredicatesApproxConstructions;
-class TetSoupTraits;
-
-extern template class ConstrDelTet<EIAC, TetSoupTraits>;
-
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
 	#include "CDT.inl"
 #endif
+
+// Tetrahedra soup
+#include "OpenMeshCraft/Mesh/TetSoup.h"
+// Geometry kernel
+#include "OpenMeshCraft/Geometry/ExactIndirectPredicatesApproxConstructions.h"
+
+namespace OMC {
+extern template class ConstrDelTet<EIAC, TetSoupTraits>;
+}

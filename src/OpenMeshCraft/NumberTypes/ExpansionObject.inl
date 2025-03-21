@@ -1,8 +1,9 @@
 #pragma once
 
 #include "ExpansionObject.h"
-
 #include "FPU.h"
+
+#include "OpenMeshCraft/Geometry/Predicates/IndirectDefinitions.h"
 
 namespace OMC {
 

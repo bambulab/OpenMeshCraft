@@ -1,9 +1,11 @@
 #include "IndirectDefinitions.h"
 
+#ifdef OMC_PRED_PROFILE
 #include <format>
 #include <iostream>
 #include <string>
 #include <vector>
+#endif
 
 namespace OMC {
 

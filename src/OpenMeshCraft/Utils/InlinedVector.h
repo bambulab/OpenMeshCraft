@@ -1,6 +1,15 @@
 #pragma once
 
+#include "boost/container/small_vector.hpp"
+
+#include <cstddef>
+
+#include <algorithm>
+#include <type_traits>
+#include <vector>
+
 namespace OMC {
+
 /// @brief It's similar to absl::inlined_vector, but more simple and more
 /// friendly for debug.
 /// @note Use this inlined vector to store simple types!!!
@@ -297,4 +306,37 @@ public:
 
 	size_t cur_elem_size;
 };
+
+#if 1
+
+template <typename T>
+using InlinedVector64 = boost::container::small_vector<T, 64>;
+template <typename T>
+using InlinedVector32 = boost::container::small_vector<T, 32>;
+template <typename T>
+using InlinedVector16 = boost::container::small_vector<T, 16>;
+template <typename T>
+using InlinedVector8 = boost::container::small_vector<T, 8>;
+template <typename T>
+using InlinedVector4 = boost::container::small_vector<T, 4>;
+template <typename T>
+using InlinedVector2 = boost::container::small_vector<T, 2>;
+
+#else
+
+template <typename T>
+using InlinedVector64 = InlinedVector<T, 64>;
+template <typename T>
+using InlinedVector32 = InlinedVector<T, 32>;
+template <typename T>
+using InlinedVector16 = InlinedVector<T, 16>;
+template <typename T>
+using InlinedVector8 = InlinedVector<T, 8>;
+template <typename T>
+using InlinedVector4 = InlinedVector<T, 4>;
+template <typename T>
+using InlinedVector2 = InlinedVector<T, 2>;
+
+#endif
+
 } // namespace OMC

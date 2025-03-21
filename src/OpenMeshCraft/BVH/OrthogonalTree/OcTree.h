@@ -2,8 +2,6 @@
 
 #include "OrthogonalTree.h"
 
-#include <algorithm>
-
 namespace OMC {
 
 /**

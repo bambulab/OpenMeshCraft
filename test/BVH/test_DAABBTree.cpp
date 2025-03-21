@@ -1,11 +1,7 @@
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
 
-#include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTraits.h"
-#include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTraversalTraits.h"
 #include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTree.h"
 #include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_SegSphere_Intersection.h"
-
-#include "OpenMeshCraft/Utils/Macros.h"
 
 #include "test_utils.h"
 

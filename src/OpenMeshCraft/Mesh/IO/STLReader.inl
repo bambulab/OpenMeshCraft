@@ -3,15 +3,17 @@
 #include "STLReader.h"
 
 #include "OpenMeshCraft/Utils/Macros.h"
+#include "OpenMeshCraft/Utils/StringUtils.h"
 
+// clang-format off
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
-
 #include "parallel_hashmap/btree.h"
-
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
 #include <cfloat>
-#include <map>
+
+#include <fstream>
 
 namespace OMC {
 

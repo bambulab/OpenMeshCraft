@@ -1,7 +1,11 @@
 #pragma once
 
-// Definitions from mesh arrangements
-#include "OpenMeshCraft/Arrangements/Utils.h"
+#include "OpenMeshCraft/Utils/IndexDef.h"
+#include "OpenMeshCraft/Utils/Label.h"
+
+#include <memory>
+#include <type_traits>
+#include <vector>
 
 namespace OMC {
 
@@ -135,15 +139,17 @@ private: /* Auxiliary classes and functions ***********************************/
 	void booleanPipeline(MeshBooleanOp op);
 };
 
-// forward declaration
-class ExactIndirectPredicatesApproxConstructions;
-using EIAC = ExactIndirectPredicatesApproxConstructions;
-class TriSoupTraits;
-
-extern template class MeshBoolean<EIAC, TriSoupTraits>;
-
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
 	#include "MeshBoolean.inl"
 #endif
+
+// Triangle soup for input and output
+#include "OpenMeshCraft/Mesh/TriSoup.h"
+// Kernel
+#include "OpenMeshCraft/Geometry/ExactIndirectPredicatesApproxConstructions.h"
+
+namespace OMC {
+extern template class MeshBoolean<EIAC, TriSoupTraits>;
+}

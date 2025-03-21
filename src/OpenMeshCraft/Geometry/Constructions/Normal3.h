@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 namespace OMC {
 
 template <typename Kernel>

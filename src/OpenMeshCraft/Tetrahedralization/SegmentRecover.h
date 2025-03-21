@@ -1,11 +1,10 @@
 #pragma once
 
 #include "DelaunayTet.h"
-#include "PLC.h"
 #include "TetMesh.h"
 #include "Tree.h"
-
-#include "OpenMeshCraft/Utils/IndexHeap.h"
+#include "PLC.h"
+#include "Utils.h"
 
 namespace OMC {
 
@@ -97,7 +96,7 @@ public: /* SiHang's Recovery Algorithm ***************************************/
 
 	index_t splitMissingSegment(index_t eid);
 
-	template <typename Container = AuxVector64<index_t>>
+	template <typename Container = InlinedVector64<index_t>>
 	void findReferenceEncroachingPoint(index_t eid, index_t &ref_vid,
 	                                   index_t   &ref_tid,
 	                                   Container *enc_verts = nullptr) const;

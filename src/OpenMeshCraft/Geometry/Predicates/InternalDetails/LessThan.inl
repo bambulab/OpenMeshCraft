@@ -2,9 +2,9 @@
 
 #include "OpenMeshCraft/Geometry/Predicates/IndirectDefinitions.h"
 
+#include "OpenMeshCraft/Geometry/Primitives/GenericPoint3T.h"
 #include "OpenMeshCraft/NumberTypes/ExpansionObject.h"
-#include "OpenMeshCraft/NumberTypes/IntervalNumber.h"
-#include "OpenMeshCraft/NumberTypes/LazyNumber.h"
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 
 #pragma intrinsic(fabs)
 
@@ -183,8 +183,7 @@ std::array<Sign, 3> lessThanOnAll_EE(const GenericPoint3T<IT, ET> &a,
 
 template <typename IT, typename ET>
 std::array<Sign, 3> lessThanOnAll_IE(const GenericPoint3T<IT, ET> &p1,
-                                     double x2, double y2, double z2,
-                                     PntArr3 arr)
+                                     double x2, double y2, double z2)
 {
 	Sign retx = lessThanOnX_IE<IT, ET>(p1, x2);
 	Sign rety = lessThanOnY_IE<IT, ET>(p1, y2);
@@ -194,16 +193,14 @@ std::array<Sign, 3> lessThanOnAll_IE(const GenericPoint3T<IT, ET> &p1,
 
 template <typename IT, typename ET>
 std::array<Sign, 3> lessThanOnAll_IE(const GenericPoint3T<IT, ET> &a,
-                                     const GenericPoint3T<IT, ET> &b,
-                                     PntArr3                       arr)
+                                     const GenericPoint3T<IT, ET> &b)
 {
 	return lessThanOnAll_IE<IT, ET>(a, b.x(), b.y(), b.z());
 }
 
 template <typename IT, typename ET>
 std::array<Sign, 3> lessThanOnAll_II(const GenericPoint3T<IT, ET> &p1,
-                                     const GenericPoint3T<IT, ET> &p2,
-                                     PntArr3                       arr)
+                                     const GenericPoint3T<IT, ET> &p2)
 {
 	Sign retx = lessThanOnX_II<IT, ET>(p1, p2);
 	Sign rety = lessThanOnY_II<IT, ET>(p1, p2);

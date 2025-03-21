@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Bbox_Point.h"
-#include "IntersectionUtils.h"
 
 namespace OMC {
 

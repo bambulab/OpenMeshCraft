@@ -2,9 +2,9 @@
 
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
 
-#include "CGAL/AABB_traits.h"
+#include "CGAL/AABB_traits_3.h"
 #include "CGAL/AABB_tree.h"
-#include "CGAL/AABB_triangle_primitive.h"
+#include "CGAL/AABB_triangle_primitive_3.h"
 #include "CGAL/Simple_cartesian.h"
 
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
@@ -24,8 +24,8 @@ protected:
 	using Point     = typename K::Point_3;
 	using Triangle  = typename K::Triangle_3;
 	using Iterator  = typename std::vector<Triangle>::iterator;
-	using Primitive = typename CGAL::AABB_triangle_primitive<K, Iterator>;
-	using AABB_triangle_traits = typename CGAL::AABB_traits<K, Primitive>;
+	using Primitive = typename CGAL::AABB_triangle_primitive_3<K, Iterator>;
+	using AABB_triangle_traits = typename CGAL::AABB_traits_3<K, Primitive>;
 	using CGAL_Tree            = typename CGAL::AABB_tree<AABB_triangle_traits>;
 
 protected:

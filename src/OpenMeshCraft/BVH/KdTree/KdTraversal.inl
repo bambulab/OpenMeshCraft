@@ -2,6 +2,8 @@
 
 #include "KdTraversal.h"
 
+#include <limits>
+
 namespace OMC {
 
 template <typename KdTraits>

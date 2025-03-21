@@ -1,17 +1,25 @@
 #pragma once
 
+#include "Tree.h"
 #include "Utils.h"
 
+#include "OpenMeshCraft/Geometry/Utils.h"
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+#include "OpenMeshCraft/Utils/Hashers.h"
+#include "OpenMeshCraft/Utils/InlinedVector.h"
+
+// clang-format off
+#include "OpenMeshCraft/Utils/DisableWarnings.h"
+#include "parallel_hashmap/phmap.h"
+#include "tbb/tbb.h"
 #ifdef OMC_ARR_GLOBAL_POINT_SET
-	#include "OpenMeshCraft/Utils/DisableWarnings.h"
-
 	#include "parallel_hashmap/btree.h"
-
-	#include "OpenMeshCraft/Utils/EnableWarnings.h"
+#else
+	#include "boost/container/flat_set.hpp"
 #endif
+#include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
-#include <bitset>
-#include <map>
 #include <vector>
 
 namespace OMC {
@@ -82,8 +90,8 @@ public: /* Types **************************************************************/
 
 #ifndef OMC_ARR_GLOBAL_POINT_SET
 	struct EdgeComparator;
-	using Edge2PntsSet =
-	  boost::container::flat_set<index_t, EdgeComparator, AuxVector8<index_t>>;
+	using Edge2PntsSet = boost::container::flat_set<index_t, EdgeComparator,
+	                                                InlinedVector8<index_t>>;
 #else
 	using Edge2PntsSet = concurrent_vector<index_t>;
 #endif
@@ -93,7 +101,7 @@ public: /* Types **************************************************************/
 #ifndef OMC_ARR_GLOBAL_POINT_SET
 	struct SegComparator;
 	using Seg2PntsSet =
-	  boost::container::flat_set<index_t, SegComparator, AuxVector8<index_t>>;
+	  boost::container::flat_set<index_t, SegComparator, InlinedVector8<index_t>>;
 #else
 	using Seg2PntsSet = concurrent_vector<index_t>;
 #endif

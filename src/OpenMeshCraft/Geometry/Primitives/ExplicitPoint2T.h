@@ -2,6 +2,8 @@
 
 #include "GenericPoint2T.h"
 
+#include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
+
 namespace OMC {
 
 /**

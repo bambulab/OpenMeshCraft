@@ -1,8 +1,5 @@
 #pragma once
 
-#include "OpenMeshCraft/Geometry/Primitives/Triangle3T.h"
-#include "OpenMeshCraft/Utils/Exception.h"
-
 #include <type_traits>
 
 namespace OMC {

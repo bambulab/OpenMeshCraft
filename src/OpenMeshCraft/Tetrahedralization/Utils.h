@@ -2,34 +2,9 @@
 
 // clang-format off
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
-#include "boost/container/flat_set.hpp"
-#include "boost/container/small_vector.hpp"
-#include "parallel_hashmap/phmap.h"
-#include "parallel_hashmap/btree.h"
 #include "tbb/tbb.h"
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
 // clang-format on
-
-#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
-
-#include "OpenMeshCraft/Geometry/Intersection/IntersectionUtils.h"
-#include "OpenMeshCraft/Geometry/Utils.h"
-
-#include "OpenMeshCraft/Utils/ContainerOp.h"
-#include "OpenMeshCraft/Utils/Exception.h"
-#include "OpenMeshCraft/Utils/Hashers.h"
-#include "OpenMeshCraft/Utils/IndexDef.h"
-#include "OpenMeshCraft/Utils/Label.h"
-#include "OpenMeshCraft/Utils/Logger.h"
-#include "OpenMeshCraft/Utils/Macros.h"
-
-#include "OpenMeshCraft/Arrangements/Utils.h"
-
-#include <bitset>
-#include <fstream>
-#include <memory>
-#include <stack>
-#include <vector>
 
 namespace OMC {
 
@@ -71,14 +46,6 @@ struct ConstrDelTet_Stats
 
 	size_t seg_steiner = 0; // number of Steiner points
 };
-
-// TODO Rename to InlinedVector2, and extract both Arrangements and CDT's
-// AuxVector to a common place.
-template <typename T>
-using AuxVector2 = boost::container::small_vector<index_t, 2>;
-
-using AuxVecIter      = typename AuxVector2<index_t>::iterator;
-using AuxVecConstIter = typename AuxVector2<index_t>::const_iterator;
 
 template <typename Traits>
 struct CDTPointArena

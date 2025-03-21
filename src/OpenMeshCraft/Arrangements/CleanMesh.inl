@@ -2,6 +2,16 @@
 
 #include "CleanMesh.h"
 
+#include "OpenMeshCraft/Utils/Hashers.h"
+
+// clang-format off
+#include "OpenMeshCraft/Utils/DisableWarnings.h"
+#include "parallel_hashmap/phmap.h"
+#include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
+
+#include <execution>
+
 namespace OMC {
 template <typename Traits>
 ArrCleanMesh<Traits>::ArrCleanMesh(const std::vector<NT>      &_in_coords,

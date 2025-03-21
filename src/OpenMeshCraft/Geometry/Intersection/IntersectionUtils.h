@@ -1,8 +1,5 @@
 #pragma once
 
-#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
-#include "OpenMeshCraft/Utils/Exception.h"
-
 namespace OMC {
 
 enum class PointInType

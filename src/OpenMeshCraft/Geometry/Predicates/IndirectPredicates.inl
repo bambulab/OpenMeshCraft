@@ -15,8 +15,6 @@
 
 #include "OpenMeshCraft/Utils/Exception.h"
 
-#include <bitset>
-
 namespace OMC {
 
 #define TEMPLATE_DECL template <typename FT, typename IT, typename ET>
@@ -121,9 +119,9 @@ Sign DotProductSign3D_Indirect<FT, IT, ET>::operator()(const PointT &p,
 }
 
 TEMPLATE_DECL
-Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_xy(const PointT &p,
-                                                    const PointT &r,
-                                                    const PointT &q)
+Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_xy(OMC_UNUSED const PointT &p,
+                                                    OMC_UNUSED const PointT &r,
+                                                    OMC_UNUSED const PointT &q)
 {
 	OMC_EXIT("DotProductSignOn2Dxy - should not happen");
 	return Sign::ZERO; // warning killer
@@ -148,9 +146,9 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_xy(const PointT &p,
 }
 
 TEMPLATE_DECL
-Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_yz(const PointT &p,
-                                                    const PointT &r,
-                                                    const PointT &q)
+Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_yz(OMC_UNUSED const PointT &p,
+                                                    OMC_UNUSED const PointT &r,
+                                                    OMC_UNUSED const PointT &q)
 {
 	OMC_EXIT("DotProductSignOn2Dyz - should not happen");
 	return Sign::ZERO; // warning killer
@@ -175,9 +173,9 @@ Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_yz(const PointT &p,
 }
 
 TEMPLATE_DECL
-Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_zx(const PointT &p,
-                                                    const PointT &r,
-                                                    const PointT &q)
+Sign DotProductSignOn2D_Indirect<FT, IT, ET>::on_zx(OMC_UNUSED const PointT &p,
+                                                    OMC_UNUSED const PointT &r,
+                                                    OMC_UNUSED const PointT &q)
 {
 	OMC_EXIT("DotProductSignOn2Dzx - should not happen");
 	return Sign::ZERO; // warning killer

@@ -5,6 +5,7 @@
 #include "OpenMeshCraft/Utils/Macros.h"
 
 #include <execution>
+#include <fstream>
 
 namespace OMC {
 

@@ -6,13 +6,8 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <optional>
-#include <thread>
-#include <tuple>
 #include <type_traits>
 #include <utility>
-#include <variant>
-#include <vector>
 
 namespace OMC {
 

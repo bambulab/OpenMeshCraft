@@ -2,6 +2,9 @@
 
 #include "Tetrahedron3_Point3.h"
 
+#include "OpenMeshCraft/Utils/Exception.h"
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+
 namespace OMC {
 
 template <typename Kernel>
@@ -54,7 +57,7 @@ PointInSimplexType Tetrahedron3_Point3_Do_Intersect<Kernel>::intersection_type(
 
 	// clang-format off
 
-  // three non-zero: on one vertex
+	// three non-zero: on one vertex
 	if (p_wrt_f1 == Sign::ZERO && p_wrt_f2 == Sign::ZERO && p_wrt_f3 == Sign::ZERO)
 		return PointInSimplexType::ON_VERT0;
 	if (p_wrt_f0 == Sign::ZERO && p_wrt_f2 == Sign::ZERO && p_wrt_f3 == Sign::ZERO)
@@ -64,7 +67,7 @@ PointInSimplexType Tetrahedron3_Point3_Do_Intersect<Kernel>::intersection_type(
 	if (p_wrt_f0 == Sign::ZERO && p_wrt_f1 == Sign::ZERO && p_wrt_f2 == Sign::ZERO)
 		return PointInSimplexType::ON_VERT3;
 
-  // two non-zero: colinear with one edge
+	// two non-zero: colinear with one edge
 	if (p_wrt_f2 == Sign::ZERO && p_wrt_f3 == Sign::ZERO && p_wrt_f0 == p_wrt_f1)
 		return PointInSimplexType::ON_EDGE0;// edge: v0-v1
 	if (p_wrt_f1 == Sign::ZERO && p_wrt_f3 == Sign::ZERO && p_wrt_f0 == p_wrt_f2)
@@ -77,16 +80,16 @@ PointInSimplexType Tetrahedron3_Point3_Do_Intersect<Kernel>::intersection_type(
 		return PointInSimplexType::ON_EDGE4;// edge: v1-v3
 	if (p_wrt_f0 == Sign::ZERO && p_wrt_f1 == Sign::ZERO && p_wrt_f2 == p_wrt_f3)
 		return PointInSimplexType::ON_EDGE5;// edge: v2-v3
-  
-  // one non-zero: coplanar with one face
-  if (p_wrt_f0 == Sign::ZERO && p_wrt_f1 == p_wrt_f2 && p_wrt_f2 == p_wrt_f3)
-    return PointInSimplexType::ON_FACE0;// face: v1-v2-v3
-  if (p_wrt_f1 == Sign::ZERO && p_wrt_f0 == p_wrt_f2 && p_wrt_f2 == p_wrt_f3)
-    return PointInSimplexType::ON_FACE1;// face: v0-v2-v3
-  if (p_wrt_f2 == Sign::ZERO && p_wrt_f0 == p_wrt_f1 && p_wrt_f1 == p_wrt_f3)
-    return PointInSimplexType::ON_FACE2;// face: v0-v1-v3
-  if (p_wrt_f3 == Sign::ZERO && p_wrt_f0 == p_wrt_f1 && p_wrt_f1 == p_wrt_f2)
-    return PointInSimplexType::ON_FACE3;// face: v0-v1-v2
+
+	// one non-zero: coplanar with one face
+	if (p_wrt_f0 == Sign::ZERO && p_wrt_f1 == p_wrt_f2 && p_wrt_f2 == p_wrt_f3)
+		return PointInSimplexType::ON_FACE0;// face: v1-v2-v3
+	if (p_wrt_f1 == Sign::ZERO && p_wrt_f0 == p_wrt_f2 && p_wrt_f2 == p_wrt_f3)
+		return PointInSimplexType::ON_FACE1;// face: v0-v2-v3
+	if (p_wrt_f2 == Sign::ZERO && p_wrt_f0 == p_wrt_f1 && p_wrt_f1 == p_wrt_f3)
+		return PointInSimplexType::ON_FACE2;// face: v0-v1-v3
+	if (p_wrt_f3 == Sign::ZERO && p_wrt_f0 == p_wrt_f1 && p_wrt_f1 == p_wrt_f2)
+		return PointInSimplexType::ON_FACE3;// face: v0-v1-v2
 
 	// clang-format on
 	return PointInSimplexType::STRICTLY_OUTSIDE;

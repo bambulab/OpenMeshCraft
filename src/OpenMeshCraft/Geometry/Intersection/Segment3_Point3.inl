@@ -2,6 +2,8 @@
 
 #include "Segment3_Point3.h"
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+
 namespace OMC {
 
 template <typename Kernel>
@@ -28,7 +30,7 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &s0,
 	  if ((seq_x == Sign::NEGATIVE && LessThan3D().on_x(s0, pnt) <= Sign::ZERO && LessThan3D().on_x(pnt, s1) <= Sign::ZERO) ||
 	      (seq_x == Sign::POSITIVE && LessThan3D().on_x(s1, pnt) <= Sign::ZERO && LessThan3D().on_x(pnt, s0) <= Sign::ZERO))
 			return true;	// inside
-		else
+		 else
 			return false;	// strictly outside
 	}
 
@@ -38,7 +40,7 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &s0,
 	  if ((seq_y == Sign::NEGATIVE && LessThan3D().on_y(s0, pnt) <= Sign::ZERO && LessThan3D().on_y(pnt, s1) <= Sign::ZERO) ||
 	      (seq_y == Sign::POSITIVE && LessThan3D().on_y(s1, pnt) <= Sign::ZERO && LessThan3D().on_y(pnt, s0) <= Sign::ZERO))
 			return true;	// inside
-		else
+		 else
 			return false;	// strictly outside
 	}
 
@@ -48,7 +50,7 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &s0,
 	  if ((seq_z == Sign::NEGATIVE && LessThan3D().on_z(s0, pnt) <= Sign::ZERO && LessThan3D().on_z(pnt, s1) <= Sign::ZERO) ||
 	      (seq_z == Sign::POSITIVE && LessThan3D().on_z(s1, pnt) <= Sign::ZERO && LessThan3D().on_z(pnt, s0) <= Sign::ZERO))
 			return true;	// inside
-		else
+		 else
 			return false;	// strictly outside
 	}
 	// clang-format on
@@ -100,7 +102,7 @@ PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment_collinear(
 	  if ((seq_x == Sign::NEGATIVE && LessThan3D().on_x(s0, pnt) == Sign::NEGATIVE && LessThan3D().on_x(pnt, s1) == Sign::NEGATIVE) ||
 	      (seq_x == Sign::POSITIVE && LessThan3D().on_x(s1, pnt) == Sign::NEGATIVE && LessThan3D().on_x(pnt, s0) == Sign::NEGATIVE))
 			return PointInType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInType::STRICTLY_OUTSIDE;
 	}
 
@@ -110,7 +112,7 @@ PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment_collinear(
 	  if ((seq_y == Sign::NEGATIVE && LessThan3D().on_y(s0, pnt) == Sign::NEGATIVE && LessThan3D().on_y(pnt, s1) == Sign::NEGATIVE) ||
 	      (seq_y == Sign::POSITIVE && LessThan3D().on_y(s1, pnt) == Sign::NEGATIVE && LessThan3D().on_y(pnt, s0) == Sign::NEGATIVE))
 			return PointInType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInType::STRICTLY_OUTSIDE;
 	}
 
@@ -120,7 +122,7 @@ PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment_collinear(
 	  if ((seq_z == Sign::NEGATIVE && LessThan3D().on_z(s0, pnt) == Sign::NEGATIVE && LessThan3D().on_z(pnt, s1) == Sign::NEGATIVE) ||
 	      (seq_z == Sign::POSITIVE && LessThan3D().on_z(s1, pnt) == Sign::NEGATIVE && LessThan3D().on_z(pnt, s0) == Sign::NEGATIVE))
 		  return PointInType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInType::STRICTLY_OUTSIDE;
 	}
 	// clang-format on
@@ -155,7 +157,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 	  if ((seq_x == Sign::NEGATIVE && LessThan3D().on_x(s0, p) == Sign::NEGATIVE && LessThan3D().on_x(p, s1) == Sign::NEGATIVE) ||
 	      (seq_x == Sign::POSITIVE && LessThan3D().on_x(s1, p) == Sign::NEGATIVE && LessThan3D().on_x(p, s0) == Sign::NEGATIVE))
 			return PointInSimplexType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInSimplexType::STRICTLY_OUTSIDE;
 	}
 
@@ -165,7 +167,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 	  if ((seq_y == Sign::NEGATIVE && LessThan3D().on_y(s0, p) == Sign::NEGATIVE && LessThan3D().on_y(p, s1) == Sign::NEGATIVE) ||
 	      (seq_y == Sign::POSITIVE && LessThan3D().on_y(s1, p) == Sign::NEGATIVE && LessThan3D().on_y(p, s0) == Sign::NEGATIVE))
 			return PointInSimplexType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInSimplexType::STRICTLY_OUTSIDE;
 	}
 
@@ -175,7 +177,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 	  if ((seq_z == Sign::NEGATIVE && LessThan3D().on_z(s0, p) == Sign::NEGATIVE && LessThan3D().on_z(p, s1) == Sign::NEGATIVE) ||
 	      (seq_z == Sign::POSITIVE && LessThan3D().on_z(s1, p) == Sign::NEGATIVE && LessThan3D().on_z(p, s0) == Sign::NEGATIVE))
 		  return PointInSimplexType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInSimplexType::STRICTLY_OUTSIDE;
 	}
 	// clang-format on
@@ -223,7 +225,7 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const SegmentT &seg,
 	  if ((seq_x == Sign::NEGATIVE && LessThan3D().on_x(s0, pnt) <= Sign::ZERO && LessThan3D().on_x(pnt, s1) <= Sign::ZERO) ||
 	      (seq_x == Sign::POSITIVE && LessThan3D().on_x(s1, pnt) <= Sign::ZERO && LessThan3D().on_x(pnt, s0) <= Sign::ZERO))
 			return true;	// inside
-		else
+		 else
 			return false;	// strictly outside
 	}
 
@@ -233,7 +235,7 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const SegmentT &seg,
 	  if ((seq_y == Sign::NEGATIVE && LessThan3D().on_y(s0, pnt) <= Sign::ZERO && LessThan3D().on_y(pnt, s1) <= Sign::ZERO) ||
 	      (seq_y == Sign::POSITIVE && LessThan3D().on_y(s1, pnt) <= Sign::ZERO && LessThan3D().on_y(pnt, s0) <= Sign::ZERO))
 			return true;	// inside
-		else
+		 else
 			return false;	// strictly outside
 	}
 
@@ -243,7 +245,7 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const SegmentT &seg,
 	  if ((seq_z == Sign::NEGATIVE && LessThan3D().on_z(s0, pnt) <= Sign::ZERO && LessThan3D().on_z(pnt, s1) <= Sign::ZERO) ||
 	      (seq_z == Sign::POSITIVE && LessThan3D().on_z(s1, pnt) <= Sign::ZERO && LessThan3D().on_z(pnt, s0) <= Sign::ZERO))
 			return true;	// inside
-		else
+		 else
 			return false;	// strictly outside
 	}
 	// clang-format on
@@ -292,7 +294,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 	  if ((seq_x == Sign::NEGATIVE && LessThan3D().on_x(s0, p) == Sign::NEGATIVE && LessThan3D().on_x(p, s1) == Sign::NEGATIVE) ||
 	      (seq_x == Sign::POSITIVE && LessThan3D().on_x(s1, p) == Sign::NEGATIVE && LessThan3D().on_x(p, s0) == Sign::NEGATIVE))
 			return PointInSimplexType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInSimplexType::STRICTLY_OUTSIDE;
 	}
 
@@ -302,7 +304,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 	  if ((seq_y == Sign::NEGATIVE && LessThan3D().on_y(s0, p) == Sign::NEGATIVE && LessThan3D().on_y(p, s1) == Sign::NEGATIVE) ||
 	      (seq_y == Sign::POSITIVE && LessThan3D().on_y(s1, p) == Sign::NEGATIVE && LessThan3D().on_y(p, s0) == Sign::NEGATIVE))
 			return PointInSimplexType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInSimplexType::STRICTLY_OUTSIDE;
 	}
 
@@ -312,7 +314,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 	  if ((seq_z == Sign::NEGATIVE && LessThan3D().on_z(s0, p) == Sign::NEGATIVE && LessThan3D().on_z(p, s1) == Sign::NEGATIVE) ||
 	      (seq_z == Sign::POSITIVE && LessThan3D().on_z(s1, p) == Sign::NEGATIVE && LessThan3D().on_z(p, s0) == Sign::NEGATIVE))
 		  return PointInSimplexType::STRICTLY_INSIDE;
-		else
+		 else
 			return PointInSimplexType::STRICTLY_OUTSIDE;
 	}
 	// clang-format on

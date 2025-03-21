@@ -5,8 +5,6 @@
 
 #include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 
-#include <tuple>
-
 namespace OMC {
 
 #define TEMPLATE_DECL template <typename FT, typename IT, typename ET>

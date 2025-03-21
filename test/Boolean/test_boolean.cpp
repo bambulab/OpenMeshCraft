@@ -1,6 +1,3 @@
-#include <chrono>
-#include <iostream>
-
 // Kernel
 #include "OpenMeshCraft/Geometry/ExactIndirectPredicatesApproxConstructions.h"
 // triangle soup traits

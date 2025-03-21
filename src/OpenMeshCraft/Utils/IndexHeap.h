@@ -1,7 +1,6 @@
 #pragma once
 
 #include "IndexDef.h"
-
 #include "Exception.h"
 
 #include <vector>

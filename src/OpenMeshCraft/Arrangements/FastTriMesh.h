@@ -1,8 +1,16 @@
 #pragma once
 
-#include "Utils.h"
-
+#include "OpenMeshCraft/Geometry/Utils.h"
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 #include "OpenMeshCraft/Utils/IndexDef.h"
+#include "OpenMeshCraft/Utils/InlinedVector.h"
+#include "OpenMeshCraft/Utils/Label.h"
+
+// clang-format off
+#include "OpenMeshCraft/Utils/DisableWarnings.h"
+#include "parallel_hashmap/phmap.h"
+#include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
 namespace OMC {
 
@@ -124,11 +132,11 @@ public: /* Ajdacencies *******************************************************/
 
 	bool triContainsVert(index_t t_id, index_t v_id) const;
 
-	const AuxVector4<index_t> &adjE2T(index_t e_id) const;
+	const InlinedVector4<index_t> &adjE2T(index_t e_id) const;
 
-	const AuxVector16<index_t> &adjV2T(index_t v_id) const;
+	const InlinedVector16<index_t> &adjV2T(index_t v_id) const;
 
-	const AuxVector16<index_t> &adjV2E(index_t v_id) const;
+	const InlinedVector16<index_t> &adjV2E(index_t v_id) const;
 
 	const std::array<index_t, 3> &adjT2E(index_t t_id) const;
 
@@ -223,14 +231,14 @@ private:
 	std::vector<iEdge>   edges;
 	std::vector<iTri>    triangles;
 
-	std::vector<AuxVector16<index_t>> v2e;
-	std::vector<AuxVector16<index_t>> v2t;
-	std::vector<AuxVector4<index_t>>  e2t;
+	std::vector<InlinedVector16<index_t>> v2e;
+	std::vector<InlinedVector16<index_t>> v2t;
+	std::vector<InlinedVector4<index_t>>  e2t;
 
 	phmap::flat_hash_map<index_t, index_t> rev_vtx_map;
 
 	OrPlane triangle_plane;
-	Sign  orientation;
+	Sign    orientation;
 };
 
 } // namespace OMC

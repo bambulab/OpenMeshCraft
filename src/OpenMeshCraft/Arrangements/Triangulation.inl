@@ -2,7 +2,8 @@
 
 #include "Triangulation.h"
 
-#include <execution>
+#include "OpenMeshCraft/Geometry/Intersection/IntersectionUtils.h"
+
 #include <stack>
 
 namespace OMC {
@@ -258,7 +259,7 @@ void Triangulation<Traits>::splitSingleEdge(FTriMesh &subm, index_t v0_id,
 	points.back()  = v1_id;
 
 	// avoid error caused by reallocating
-	AuxVector4<index_t> e2t = subm.adjE2T(e_id);
+	InlinedVector4<index_t> e2t = subm.adjE2T(e_id);
 	// make new_triangles
 	for (auto i = points.begin(), j = i + 1; j < points.end(); ++i, ++j)
 	{
@@ -470,8 +471,8 @@ void Triangulation<Traits>::addConstraintSegment(
 	}
 
 	// find intersected edges and triangles of current segment
-	AuxVector64<index_t> intersected_edges;
-	AuxVector64<index_t> intersected_tris;
+	InlinedVector64<index_t> intersected_edges;
+	InlinedVector64<index_t> intersected_tris;
 
 	findIntersectingElements(subm, v_start, v_stop, intersected_edges,
 	                         intersected_tris, segment_list, sub_segs_map,
@@ -481,7 +482,7 @@ void Triangulation<Traits>::addConstraintSegment(
 		return;
 
 	// walk along the border
-	AuxVector64<index_t> h0, h1;
+	InlinedVector64<index_t> h0, h1;
 	boundaryWalker(subm, v_start, v_stop, intersected_tris.begin(),
 	               intersected_edges.begin(), h0);
 	boundaryWalker(subm, v_stop, v_start, intersected_tris.rbegin(),
@@ -491,7 +492,7 @@ void Triangulation<Traits>::addConstraintSegment(
 	OMC_EXPENSIVE_ASSERT(h1.size() >= 3, "insufficient edges of border");
 
 	// cut ears
-	AuxVector64<index_t> new_tris;
+	InlinedVector64<index_t> new_tris;
 	earcutLinear(subm, h0, new_tris);
 	earcutLinear(subm, h1, new_tris);
 
@@ -509,8 +510,8 @@ void Triangulation<Traits>::addConstraintSegment(
 template <typename Traits>
 void Triangulation<Traits>::findIntersectingElements(
   FTriMesh &subm, index_t &v_start, index_t &v_stop,
-  AuxVector64<index_t> &intersected_edges,
-  AuxVector64<index_t> &intersected_tris, std::vector<Segment> &segment_list,
+  InlinedVector64<index_t> &intersected_edges,
+  InlinedVector64<index_t> &intersected_tris, std::vector<Segment> &segment_list,
   SubSegMap &sub_segs_map, OMC_UNUSED TPI2Segs &tpi2segs)
 {
 	using IdxPair  = std::pair<index_t, index_t>;
@@ -660,7 +661,7 @@ void Triangulation<Traits>::findIntersectingElements(
 		if (/*isTPI*/ subm.vertFlag(v_inter))
 		{ // if v_inter is a TPI point, fix indices stored in related segments.
 			const RefSegs &seg_ids   = sub_segs_map.at(unique_pair(v_start, v_stop));
-			AuxVector4<index_t> &t2s = tpi2segs.at(v_inter);
+			InlinedVector4<index_t> &t2s = tpi2segs.at(v_inter);
 			for (index_t seg_id : seg_ids)
 			{
 				if (std::find(t2s.begin(), t2s.end(), seg_id) != t2s.end())
@@ -845,7 +846,7 @@ void Triangulation<Traits>::findIntersectingElements(
 		if (/*isTPI*/ subm.vertFlag(v_inter))
 		{ // if v_inter is a TPI point, fix indices stored in related segments.
 			const RefSegs &seg_ids   = sub_segs_map.at(unique_pair(v_start, v_stop));
-			AuxVector4<index_t> &t2s = tpi2segs.at(v_inter);
+			InlinedVector4<index_t> &t2s = tpi2segs.at(v_inter);
 			for (index_t seg_id : seg_ids)
 			{
 				if (std::find(t2s.begin(), t2s.end(), seg_id) != t2s.end())
@@ -973,7 +974,7 @@ void Triangulation<Traits>::findIntersectingElements(
 	// add two segments to tpi2segs
 	OMC_EXPENSIVE_ASSERT(tpi2segs.find(local_tpi_id) == tpi2segs.end(),
 	                     "the new tpi point has existed.");
-	AuxVector4<index_t> &t2s = tpi2segs[local_tpi_id];
+	InlinedVector4<index_t> &t2s = tpi2segs[local_tpi_id];
 	t2s.insert(t2s.end(), seg0_ids.begin(), seg0_ids.end());
 	t2s.insert(t2s.end(), seg1_ids.begin(), seg1_ids.end());
 
@@ -1245,7 +1246,7 @@ void Triangulation<Traits>::boundaryWalker(const FTriMesh &subm,
                                            index_t v_start, index_t v_stop,
                                            tri_iterator          curr_p,
                                            edge_iterator         curr_e,
-                                           AuxVector64<index_t> &h)
+                                           InlinedVector64<index_t> &h)
 {
 	h.clear();
 	h.push_back(v_start);
@@ -1289,8 +1290,8 @@ void Triangulation<Traits>::boundaryWalker(const FTriMesh &subm,
 
 template <typename Traits>
 void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
-                                         const AuxVector64<index_t> &poly,
-                                         AuxVector64<index_t>       &tris)
+                                         const InlinedVector64<index_t> &poly,
+                                         InlinedVector64<index_t>       &tris)
 {
 	OMC_EXPENSIVE_ASSERT(poly.size() >= 3, "no valid poly dimension");
 
@@ -1299,20 +1300,20 @@ void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
 	// doubly linked list for fat polygon inspection
 	size_t size = poly.size();
 
-	AuxVector64<index_t> prev(size);
-	AuxVector64<index_t> next(size);
+	InlinedVector64<index_t> prev(size);
+	InlinedVector64<index_t> next(size);
 	std::iota(prev.begin(), prev.end(), -1);
 	std::iota(next.begin(), next.end(), 1);
 	prev.front() = size - 1;
 	next.back()  = 0;
 
 	// keep a list of the ears to be cut
-	AuxVector64<index_t> ears;
+	InlinedVector64<index_t> ears;
 	ears.reserve(size);
 
 	// this always has size |poly|, and keeps track of ears
 	// (corners that were not ears at the beginning may become so later on)
-	AuxVector64<bool> is_ear(size, false);
+	InlinedVector64<bool> is_ear(size, false);
 
 	/*********************************************************************/
 	/*       Cut all ears containing TPI points                          */
@@ -1570,7 +1571,7 @@ void Triangulation<Traits>::findPocketsInTriangle(
 		tri_polygons.emplace_back();
 		Polygon &curr_tri_poly = tri_polygons.back();
 
-		std::stack<index_t, AuxVector64<index_t>> stack;
+		std::stack<index_t, InlinedVector64<index_t>> stack;
 		stack.push(t_seed);
 
 		while (!stack.empty())

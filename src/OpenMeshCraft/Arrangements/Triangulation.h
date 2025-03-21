@@ -4,6 +4,13 @@
 #include "Tree.h"
 #include "TriangleSoup.h"
 
+// clang-format off
+#include "OpenMeshCraft/Utils/DisableWarnings.h"
+#include "boost/container/flat_set.hpp"
+#include "parallel_hashmap/phmap.h"
+#include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
+
 namespace OMC {
 
 template <typename Traits>
@@ -45,14 +52,14 @@ private:
 	// Segment will be split to sub-segments by TPI points,
 	// map sub-segments to its original segment id.
 	using RefSegs      = boost::container::flat_set<index_t, std::less<index_t>,
-	                                                AuxVector4<index_t>>;
+	                                                InlinedVector4<index_t>>;
 	using SubSegMap    = phmap::flat_hash_map<Segment, RefSegs, hash<Segment>>;
 	// Store segments adajcent to TPI points in a triangle.
-	using TPI2Segs     = phmap::flat_hash_map<index_t, AuxVector4<index_t>>;
+	using TPI2Segs     = phmap::flat_hash_map<index_t, InlinedVector4<index_t>>;
 	// Pockets
-	using Pocket       = AuxVector16<index_t>;
+	using Pocket       = InlinedVector16<index_t>;
 	using Polygon      = boost::container::flat_set<index_t, std::less<index_t>,
-	                                                AuxVector16<index_t>>;
+	                                                InlinedVector16<index_t>>;
 
 public:
 	Triangulation(TriSoup &_ts, std::vector<index_t> &new_tris,
@@ -106,8 +113,8 @@ private:
 
 	void findIntersectingElements(FTriMesh &subm, index_t &v_start,
 	                              index_t              &v_stop,
-	                              AuxVector64<index_t> &intersected_edges,
-	                              AuxVector64<index_t> &intersected_tris,
+	                              InlinedVector64<index_t> &intersected_edges,
+	                              InlinedVector64<index_t> &intersected_tris,
 	                              std::vector<Segment> &segment_list,
 	                              SubSegMap &sub_segs_map, TPI2Segs &tpi2segs);
 
@@ -124,10 +131,10 @@ private:
 	template <typename tri_iterator, typename edge_iterator>
 	void boundaryWalker(const FTriMesh &subm, index_t v_start, index_t v_stop,
 	                    tri_iterator curr_p, edge_iterator curr_e,
-	                    AuxVector64<index_t> &h);
+	                    InlinedVector64<index_t> &h);
 
-	void earcutLinear(const FTriMesh &subm, const AuxVector64<index_t> &poly,
-	                  AuxVector64<index_t> &tris);
+	void earcutLinear(const FTriMesh &subm, const InlinedVector64<index_t> &poly,
+	                  InlinedVector64<index_t> &tris);
 
 	/* Solve pockets ************************************************************/
 

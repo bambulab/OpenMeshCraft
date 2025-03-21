@@ -2,6 +2,10 @@
 
 #include "FaceRecover.h"
 
+#include "OpenMeshCraft/Utils/Hashers.h"
+
+#include <iostream>
+
 namespace OMC {
 
 /**
@@ -160,9 +164,9 @@ void FaceRecover<Traits>::getTetsIntersectingFace(index_t               fid,
 
 	// Initialize four vertices of adajcent tetrahedron.
 	// First essemble the two endpoints of the first bounding edge.
-	index_t              tet_v[4] = {e0p0, e0p1, InvalidIndex, InvalidIndex};
+	index_t                  tet_v[4] = {e0p0, e0p1, InvalidIndex, InvalidIndex};
 	// Get the incident tets of the first bounding edge
-	AuxVector64<index_t> edge_incident_tets;
+	InlinedVector64<index_t> edge_incident_tets;
 	tet_mesh.ET(tet_v[0], tet_v[1], edge_incident_tets);
 
 	// ## If the face just has one triangle and is not splitted,
@@ -202,7 +206,7 @@ void FaceRecover<Traits>::getTetsIntersectingFace(index_t               fid,
 	auto isVtxBounding = [this](index_t vid) { return v_count[vid] > 0; };
 
 	// The vector to store intersected tetrahedra
-	AuxVector64<index_t> B;
+	InlinedVector64<index_t> B;
 
 	// ## Find the intersected tetrahedra around flat vertices
 	if (!face.flat_vertices.empty())
@@ -210,7 +214,7 @@ void FaceRecover<Traits>::getTetsIntersectingFace(index_t               fid,
 		// find in VT
 		for (index_t vid : face.flat_vertices)
 		{
-			AuxVector64<index_t> tmp_B;
+			InlinedVector64<index_t> tmp_B;
 			tet_mesh.VT(vid, tmp_B);
 			B.insert(B.end(), tmp_B.begin(), tmp_B.end());
 		}
@@ -485,7 +489,7 @@ void FaceRecover<Traits>::recoverFace_cavityExpanding(
 
 	// indices of the vertices of the two half cavities.
 	// - vertices on the PLC face belong to both sides.
-	AuxVector64<index_t> top_vertices, bottom_vertices;
+	InlinedVector64<index_t> top_vertices, bottom_vertices;
 
 	// boundary faces of the two half cavities.
 	// - each boundary face has a corresponding corner in an adjacent untouched
@@ -493,7 +497,7 @@ void FaceRecover<Traits>::recoverFace_cavityExpanding(
 	//   (see explanation of `corner` in TetMesh::tet_node.(3))
 	// - store the indices of corners in below vectors.
 	// - faces on the PLC face are ignored.
-	AuxVector64<index_t> top_faces, bottom_faces;
+	InlinedVector64<index_t> top_faces, bottom_faces;
 
 	for (index_t tet_idoff : tets)
 	{
@@ -738,8 +742,8 @@ void FaceRecover<Traits>::recoverFace_cavityExpanding(
  */
 template <typename Traits>
 bool FaceRecover<Traits>::cavityHasMissingFace(
-  const TetMesh &local_mesh, const AuxVector64<index_t> &vertices,
-  const AuxVector64<index_t> &faces, index_t &missing_face)
+  const TetMesh &local_mesh, const InlinedVector64<index_t> &vertices,
+  const InlinedVector64<index_t> &faces, index_t &missing_face)
 {
 	missing_face = InvalidIndex;
 	// map global index in `tet_mesh` to local index in `local_mesh`
@@ -781,8 +785,8 @@ bool FaceRecover<Traits>::cavityHasMissingFace(
  * @param [out] new_vertex The new vertex of the cavity after expanding.
  */
 template <typename Traits>
-void FaceRecover<Traits>::expandCavity(AuxVector64<index_t> &vertices,
-                                       AuxVector64<index_t> &faces,
+void FaceRecover<Traits>::expandCavity(InlinedVector64<index_t> &vertices,
+                                       InlinedVector64<index_t> &faces,
                                        index_t missing_face, index_t &new_tet,
                                        index_t &new_vertex)
 {
@@ -867,8 +871,8 @@ void FaceRecover<Traits>::expandCavity(AuxVector64<index_t> &vertices,
  */
 template <typename Traits>
 void FaceRecover<Traits>::embedMeshedCavity(
-  TetMesh &local_mesh, const AuxVector64<index_t> &vertices,
-  const AuxVector64<index_t> &faces, AuxVector64<index_t> &base)
+  TetMesh &local_mesh, const InlinedVector64<index_t> &vertices,
+  const InlinedVector64<index_t> &faces, InlinedVector64<index_t> &base)
 {
 	std::vector<uint8_t> corner_is_boundary(local_mesh.sizeTets() * 4, false);
 
@@ -878,7 +882,7 @@ void FaceRecover<Traits>::embedMeshedCavity(
 		index_t c1;  // the other corner in the local mesh.
 		index_t bnd; // boundary corner in the global mesh.
 	} BCP;
-	AuxVector64<BCP> bcpairs;
+	InlinedVector64<BCP> bcpairs;
 
 	// (1) Map the global corners (with corresponding boundary face) to local ones
 
@@ -1124,8 +1128,8 @@ bool FaceRecover<Traits>::tetIntersectsFace(index_t        tet_idoff,
 
 			Sign oei = orient3dCached(t0, t1, t2, ei);
 			Sign oej = orient3dCached(t0, t1, t2, ej);
-			if (oei >= Sign::ZERO && oej >= Sign::ZERO ||
-			    oei <= Sign::ZERO && oej <= Sign::ZERO)
+			if ((oei >= Sign::ZERO && oej >= Sign::ZERO) ||
+			    (oei <= Sign::ZERO && oej <= Sign::ZERO))
 				continue; // the inner edge does not crosses the face
 
 			if (segCrossesFace(ei, ej, face))

@@ -1,12 +1,10 @@
 #pragma once
 
-#include "OrthogonalTraits.h"
+#include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
 
-#include "OpenMeshCraft/Utils/Exception.h"
+#include <cstddef>
 
-#include <array>
-#include <bitset>
-#include <memory>
+#include <utility>
 
 namespace OMC {
 

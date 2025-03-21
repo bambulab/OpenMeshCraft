@@ -2,36 +2,16 @@
 
 // clang-format off
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
-#include "boost/container/flat_set.hpp"
-#include "boost/container/small_vector.hpp"
-#include "parallel_hashmap/phmap.h"
-#include "parallel_hashmap/btree.h"
 #include "tbb/tbb.h"
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
 // clang-format on
 
-#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
-
-#include "OpenMeshCraft/Geometry/Intersection/IntersectionUtils.h"
-#include "OpenMeshCraft/Geometry/Utils.h"
-
-#include "OpenMeshCraft/Utils/CStyleVector.h"
-#include "OpenMeshCraft/Utils/ContainerOp.h"
-#include "OpenMeshCraft/Utils/Exception.h"
-#include "OpenMeshCraft/Utils/Hashers.h"
 #include "OpenMeshCraft/Utils/IndexDef.h"
 #include "OpenMeshCraft/Utils/Label.h"
-#include "OpenMeshCraft/Utils/Macros.h"
 
 #include <algorithm>
-#include <bitset>
 #include <deque>
-#include <execution>
-#include <iterator>
-#include <memory>
 #include <queue>
-#include <ranges>
-#include <set>
 #include <vector>
 
 namespace OMC {
@@ -82,17 +62,6 @@ struct MeshArrangements_Stats
 
 	double tr_elapsed = 0.; // timings of triangulation
 };
-
-template <typename T>
-using AuxVector64 = boost::container::small_vector<T, 64>;
-template <typename T>
-using AuxVector32 = boost::container::small_vector<T, 32>;
-template <typename T>
-using AuxVector16 = boost::container::small_vector<T, 16>;
-template <typename T>
-using AuxVector8 = boost::container::small_vector<T, 8>;
-template <typename T>
-using AuxVector4 = boost::container::small_vector<T, 4>;
 
 /// @brief Each output triangle has a surface label and inside label.
 struct ArrLabels

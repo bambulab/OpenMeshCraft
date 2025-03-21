@@ -4,9 +4,6 @@
 
 #include "tbb/tbb.h"
 
-#include <deque>
-#include <queue>
-
 namespace OMC {
 
 /**

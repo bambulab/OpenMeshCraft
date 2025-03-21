@@ -1,16 +1,12 @@
 #include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
 
+// clang-format off
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
-
-#include "CGAL/Exact_predicates_inexact_constructions_kernel.h"
 #include "CGAL/Simple_cartesian.h"
-#include "CGAL/intersection_3.h"
-
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
-#include "test_utils.h"
-
-#include <type_traits>
+#include "gtest/gtest.h"
 
 class test_Intersection_Box3 : public testing::Test
 {

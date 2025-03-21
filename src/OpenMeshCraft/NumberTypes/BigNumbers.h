@@ -1,9 +1,13 @@
 #pragma once
 
-#include "OpenMeshCraft/Utils/Exception.h"
 #include "NumberUtils.h"
 
+#include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
 #include <iostream>
 #include <string>
 
@@ -1140,6 +1144,5 @@ inline double to_double(const bigfloat &x)
 {
 	return BigNumbersToDouble()(x);
 }
-
 
 } // namespace OMC

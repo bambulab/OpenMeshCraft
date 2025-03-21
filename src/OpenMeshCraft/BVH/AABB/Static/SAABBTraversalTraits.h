@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenMeshCraft/Utils/SFINAE.h"
+#include <vector>
 
 namespace OMC {
 

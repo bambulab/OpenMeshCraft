@@ -1,7 +1,6 @@
 #pragma once
 
 #include "IntersectionUtils.h"
-#include "Triangle3_Point3.h"
 
 namespace OMC {
 

@@ -1,17 +1,10 @@
 #pragma once
 
-#include "Utils.h"
-
-#include "OpenMeshCraft/BVH/AABB/Dynamic/DAABBTree.h"
-#include "OpenMeshCraft/BVH/AABB/Static/SAABBTree.h"
-
 #include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_GPoint_Intersection.h"
 #include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_SegSphere_Intersection.h"
 #include "OpenMeshCraft/BVH/AABB/Instance/AABBTree_Segment_Intersection.h"
 
 #include "OpenMeshCraft/NumberTypes/IntervalNumber.h"
-
-#include <vector>
 
 namespace OMC {
 

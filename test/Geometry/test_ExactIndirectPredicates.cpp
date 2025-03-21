@@ -1,22 +1,19 @@
-#include "OpenMeshCraft/Geometry/ApproxPredicatesApproxConstructions.h"
 #include "OpenMeshCraft/Geometry/ExactIndirectPredicatesApproxConstructions.h"
-#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicates.h"
-#include "OpenMeshCraft/NumberTypes/FPU.h"
-#include "OpenMeshCraft/Utils/Macros.h"
+#include "OpenMeshCraft/Geometry/Primitives/Point2T.h"
+#include "OpenMeshCraft/Geometry/Primitives/Point3T.h"
 
+// clang-format off
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
-
 #include "CGAL/Exact_predicates_inexact_constructions_kernel.h"
-#include "CGAL/Simple_cartesian.h"
-#include "CGAL/intersection_3.h"
-
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
 #include "gtest/gtest.h"
 
-#include <execution>
-
 // #define CHECK_EACH
+#ifdef CHECK_EACH
+#include <execution>
+#endif
 
 class test_ExactIndirectPredicates : public testing::Test
 {

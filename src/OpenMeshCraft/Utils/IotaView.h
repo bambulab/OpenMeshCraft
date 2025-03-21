@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iterator>
+
 namespace OMC {
 /**
  * @brief IotaView contains a sequential numbers from begin to (unbounded) end.

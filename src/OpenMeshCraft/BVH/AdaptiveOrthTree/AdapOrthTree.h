@@ -3,11 +3,11 @@
 #include "AdapOrthNode.h"
 
 #include "OpenMeshCraft/Utils/CStyleVector.h"
+#include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
 
 #include "tbb/tbb.h"
 
-#include <deque>
-#include <queue>
+#include <bitset>
 
 namespace OMC {
 

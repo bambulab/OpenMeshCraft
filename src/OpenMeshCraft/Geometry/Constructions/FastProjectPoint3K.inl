@@ -2,6 +2,8 @@
 
 #include "FastProjectPoint3K.h"
 
+#include <cmath>
+
 #include <type_traits>
 
 namespace OMC {

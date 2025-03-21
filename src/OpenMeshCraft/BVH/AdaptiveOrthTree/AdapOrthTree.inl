@@ -7,8 +7,8 @@
 #include "tbb/tbb.h"
 
 #include <algorithm>
+#include <bitset>
 #include <deque>
-#include <execution>
 #include <queue>
 
 namespace OMC {

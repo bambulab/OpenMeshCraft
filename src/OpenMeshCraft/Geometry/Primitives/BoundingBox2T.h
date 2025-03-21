@@ -66,8 +66,8 @@ public:
 	 * The result is the minimal bounding box that bounds \p points .
 	 * @param[in] points a set of points, stored in STL container.
 	 */
-	template <template <typename, typename> class STL_Container>
-	BoundingBox2T(const STL_Container<PointT, std::allocator<PointT>> &points)
+	template <typename Container>
+	BoundingBox2T(const Container &points)
 	  : BoundingBox2T()
 	{
 		for (const auto &p : points)

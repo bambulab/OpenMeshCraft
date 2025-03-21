@@ -1,10 +1,8 @@
 #pragma once
 
-#include "OpenMeshCraft/Geometry/Predicates/IndirectDefinitions.h"
-
+#include "OpenMeshCraft/Geometry/Primitives/GenericPoint3T.h"
 #include "OpenMeshCraft/NumberTypes/ExpansionObject.h"
-#include "OpenMeshCraft/NumberTypes/IntervalNumber.h"
-#include "OpenMeshCraft/NumberTypes/LazyNumber.h"
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 
 #pragma intrinsic(fabs)
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "OrthogonalTree.h"
+#include "OpenMeshCraft/Utils/IndexDef.h"
 
-#include "OpenMeshCraft/Utils/SFINAE.h"
+#include <vector>
 
 namespace OMC {
 

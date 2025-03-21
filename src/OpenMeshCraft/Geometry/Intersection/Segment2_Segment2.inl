@@ -2,6 +2,9 @@
 
 #include "Segment2_Segment2.h"
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+#include "OpenMeshCraft/Utils/Exception.h"
+
 namespace OMC {
 
 template <typename Kernel>
@@ -76,39 +79,39 @@ Segment2_Segment2_Do_Intersect<Kernel>::intersection_type(
 	// clang-format off
   // test s00 against s1 range
   if (Xmin_s1 != Sign::ZERO &&
-      (Xmin_s1 == Sign::NEGATIVE && LessThan2D().on_x(s10, s00) == Sign::NEGATIVE && LessThan2D().on_x(s00, s11) == Sign::NEGATIVE ||
-       Xmin_s1 == Sign::POSITIVE && LessThan2D().on_x(s11, s00) == Sign::NEGATIVE && LessThan2D().on_x(s00, s10) == Sign::NEGATIVE))
+      ((Xmin_s1 == Sign::NEGATIVE && LessThan2D().on_x(s10, s00) == Sign::NEGATIVE && LessThan2D().on_x(s00, s11) == Sign::NEGATIVE) ||
+       (Xmin_s1 == Sign::POSITIVE && LessThan2D().on_x(s11, s00) == Sign::NEGATIVE && LessThan2D().on_x(s00, s10) == Sign::NEGATIVE)))
     return SimplexIntersectionType::OVERLAP;
   if (Ymin_s1 != Sign::ZERO &&
-      (Ymin_s1 == Sign::NEGATIVE && LessThan2D().on_y(s10, s00) == Sign::NEGATIVE && LessThan2D().on_y(s00, s11) == Sign::NEGATIVE ||
-       Ymin_s1 == Sign::POSITIVE && LessThan2D().on_y(s11, s00) == Sign::NEGATIVE && LessThan2D().on_y(s00, s10) == Sign::NEGATIVE))
+      ((Ymin_s1 == Sign::NEGATIVE && LessThan2D().on_y(s10, s00) == Sign::NEGATIVE && LessThan2D().on_y(s00, s11) == Sign::NEGATIVE) ||
+       (Ymin_s1 == Sign::POSITIVE && LessThan2D().on_y(s11, s00) == Sign::NEGATIVE && LessThan2D().on_y(s00, s10) == Sign::NEGATIVE)))
     return SimplexIntersectionType::OVERLAP;
   // test s01 against s1 range
   if (Xmin_s1 != Sign::ZERO &&
-      (Xmin_s1 == Sign::NEGATIVE && LessThan2D().on_x(s10, s01) == Sign::NEGATIVE && LessThan2D().on_x(s01, s11) == Sign::NEGATIVE ||
-       Xmin_s1 == Sign::POSITIVE && LessThan2D().on_x(s11, s01) == Sign::NEGATIVE && LessThan2D().on_x(s01, s10) == Sign::NEGATIVE))
+      ((Xmin_s1 == Sign::NEGATIVE && LessThan2D().on_x(s10, s01) == Sign::NEGATIVE && LessThan2D().on_x(s01, s11) == Sign::NEGATIVE) ||
+       (Xmin_s1 == Sign::POSITIVE && LessThan2D().on_x(s11, s01) == Sign::NEGATIVE && LessThan2D().on_x(s01, s10) == Sign::NEGATIVE)))
     return SimplexIntersectionType::OVERLAP;
   if (Ymin_s1 != Sign::ZERO &&
-      (Ymin_s1 == Sign::NEGATIVE && LessThan2D().on_y(s10, s01) == Sign::NEGATIVE && LessThan2D().on_y(s01, s11) == Sign::NEGATIVE ||
-       Ymin_s1 == Sign::POSITIVE && LessThan2D().on_y(s11, s01) == Sign::NEGATIVE && LessThan2D().on_y(s01, s10) == Sign::NEGATIVE))
+      ((Ymin_s1 == Sign::NEGATIVE && LessThan2D().on_y(s10, s01) == Sign::NEGATIVE && LessThan2D().on_y(s01, s11) == Sign::NEGATIVE) ||
+       (Ymin_s1 == Sign::POSITIVE && LessThan2D().on_y(s11, s01) == Sign::NEGATIVE && LessThan2D().on_y(s01, s10) == Sign::NEGATIVE)))
     return SimplexIntersectionType::OVERLAP;
   // test s10 against s0 range
   if (Xmin_s0 != Sign::ZERO &&
-      (Xmin_s0 == Sign::NEGATIVE && LessThan2D().on_x(s00, s10) == Sign::NEGATIVE && LessThan2D().on_x(s10, s01) == Sign::NEGATIVE ||
-       Xmin_s0 == Sign::POSITIVE && LessThan2D().on_x(s01, s10) == Sign::NEGATIVE && LessThan2D().on_x(s10, s00) == Sign::NEGATIVE))
+      ((Xmin_s0 == Sign::NEGATIVE && LessThan2D().on_x(s00, s10) == Sign::NEGATIVE && LessThan2D().on_x(s10, s01) == Sign::NEGATIVE) ||
+       (Xmin_s0 == Sign::POSITIVE && LessThan2D().on_x(s01, s10) == Sign::NEGATIVE && LessThan2D().on_x(s10, s00) == Sign::NEGATIVE)))
     return SimplexIntersectionType::OVERLAP;
   if (Ymin_s0 != Sign::ZERO &&
-      (Ymin_s0 == Sign::NEGATIVE && LessThan2D().on_y(s00, s10) == Sign::NEGATIVE && LessThan2D().on_y(s10, s01) == Sign::NEGATIVE ||
-       Ymin_s0 == Sign::POSITIVE && LessThan2D().on_y(s01, s10) == Sign::NEGATIVE && LessThan2D().on_y(s10, s00) == Sign::NEGATIVE))
+      ((Ymin_s0 == Sign::NEGATIVE && LessThan2D().on_y(s00, s10) == Sign::NEGATIVE && LessThan2D().on_y(s10, s01) == Sign::NEGATIVE) ||
+       (Ymin_s0 == Sign::POSITIVE && LessThan2D().on_y(s01, s10) == Sign::NEGATIVE && LessThan2D().on_y(s10, s00) == Sign::NEGATIVE)))
     return SimplexIntersectionType::OVERLAP;
   // test s11 against s0 range
   if (Xmin_s0 != Sign::ZERO &&
-      (Xmin_s0 == Sign::NEGATIVE && LessThan2D().on_x(s00, s11) == Sign::NEGATIVE && LessThan2D().on_x(s11, s01) == Sign::NEGATIVE ||
-       Xmin_s0 == Sign::POSITIVE && LessThan2D().on_x(s01, s11) == Sign::NEGATIVE && LessThan2D().on_x(s11, s00) == Sign::NEGATIVE))
+      ((Xmin_s0 == Sign::NEGATIVE && LessThan2D().on_x(s00, s11) == Sign::NEGATIVE && LessThan2D().on_x(s11, s01) == Sign::NEGATIVE) ||
+       (Xmin_s0 == Sign::POSITIVE && LessThan2D().on_x(s01, s11) == Sign::NEGATIVE && LessThan2D().on_x(s11, s00) == Sign::NEGATIVE)))
     return SimplexIntersectionType::OVERLAP;
   if (Ymin_s0 != Sign::ZERO &&
-      (Ymin_s0 == Sign::NEGATIVE && LessThan2D().on_y(s00, s11) == Sign::NEGATIVE && LessThan2D().on_y(s11, s01) == Sign::NEGATIVE ||
-       Ymin_s0 == Sign::POSITIVE && LessThan2D().on_y(s01, s11) == Sign::NEGATIVE && LessThan2D().on_y(s11, s00) == Sign::NEGATIVE))
+      ((Ymin_s0 == Sign::NEGATIVE && LessThan2D().on_y(s00, s11) == Sign::NEGATIVE && LessThan2D().on_y(s11, s01) == Sign::NEGATIVE) ||
+       (Ymin_s0 == Sign::POSITIVE && LessThan2D().on_y(s01, s11) == Sign::NEGATIVE && LessThan2D().on_y(s11, s00) == Sign::NEGATIVE)))
     return SimplexIntersectionType::OVERLAP;
 	// clang-format on
 

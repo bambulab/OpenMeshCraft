@@ -1,9 +1,8 @@
 #pragma once
 
-#include "OpenMeshCraft/Utils/Macros.h"
-
 #include <cassert>
-#include <iostream>
+#include <cmath>
+
 #include <limits>
 
 #undef FALSE

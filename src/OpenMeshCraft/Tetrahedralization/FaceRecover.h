@@ -3,7 +3,7 @@
 #include "DelaunayTet.h"
 #include "PLC.h"
 #include "TetMesh.h"
-#include "Tree.h"
+#include "Utils.h"
 
 namespace OMC {
 
@@ -69,19 +69,19 @@ public: /* Algorithms ******************************************************/
 	                                 const std::vector<index_t> &tets,
 	                                 bool &succeed, bool &expanded);
 
-	bool cavityHasMissingFace(const TetMesh              &local_mesh,
-	                          const AuxVector64<index_t> &vertices,
-	                          const AuxVector64<index_t> &faces,
-	                          index_t                    &missing_face);
+	bool cavityHasMissingFace(const TetMesh                  &local_mesh,
+	                          const InlinedVector64<index_t> &vertices,
+	                          const InlinedVector64<index_t> &faces,
+	                          index_t                        &missing_face);
 
-	void expandCavity(AuxVector64<index_t> &vertices, AuxVector64<index_t> &faces,
-	                  index_t missing_face, index_t &new_tet,
-	                  index_t &new_vertex);
+	void expandCavity(InlinedVector64<index_t> &vertices,
+	                  InlinedVector64<index_t> &faces, index_t missing_face,
+	                  index_t &new_tet, index_t &new_vertex);
 
-	void embedMeshedCavity(TetMesh                    &local_mesh,
-	                       const AuxVector64<index_t> &vertices,
-	                       const AuxVector64<index_t> &faces,
-	                       AuxVector64<index_t>       &base);
+	void embedMeshedCavity(TetMesh                        &local_mesh,
+	                       const InlinedVector64<index_t> &vertices,
+	                       const InlinedVector64<index_t> &faces,
+	                       InlinedVector64<index_t>       &base);
 
 	/* Low level details for face recovery (predicates, utils, marks...) */
 

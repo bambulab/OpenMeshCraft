@@ -2,6 +2,8 @@
 
 #include "TriangleSoup.h"
 
+#include "OpenMeshCraft/Utils/ContainerOp.h"
+
 namespace OMC {
 
 /**

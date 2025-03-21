@@ -3,6 +3,7 @@
 #include "OpenMeshCraft/Utils/Exception.h"
 
 #include <cfenv>
+
 #include <type_traits>
 
 namespace OMC {

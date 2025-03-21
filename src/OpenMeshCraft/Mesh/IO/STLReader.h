@@ -3,12 +3,6 @@
 #include "IOOptions.h"
 #include "OpenMeshCraft/Mesh/TriSoup.h"
 
-#include "OpenMeshCraft/Utils/Exception.h"
-#include "OpenMeshCraft/Utils/Macros.h"
-#include "OpenMeshCraft/Utils/StringUtils.h"
-
-#include <array>
-#include <fstream>
 #include <string>
 #include <vector>
 

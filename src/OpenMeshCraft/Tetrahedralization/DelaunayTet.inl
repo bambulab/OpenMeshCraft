@@ -124,8 +124,8 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
 template <typename Traits>
 void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
 {
-	AuxVector64<index_t> cavity_tets;
-	AuxVector64<index_t> cavity_corners;
+	InlinedVector64<index_t> cavity_tets;
+	InlinedVector64<index_t> cavity_corners;
 
 	walk(vid, tet);
 	cavity(vid, tet, cavity_tets, cavity_corners);
@@ -224,8 +224,8 @@ void DelaunayTet<Traits>::walk(const index_t vid, index_t &tet)
  */
 template <typename Traits>
 void DelaunayTet<Traits>::cavity(const index_t vid, const index_t tet,
-                                 AuxVector64<index_t> &cavity_tets,
-                                 AuxVector64<index_t> &cavity_corners)
+                                 InlinedVector64<index_t> &cavity_tets,
+                                 InlinedVector64<index_t> &cavity_corners)
 {
 	if constexpr (WEIGHTED)
 	{ // In the weighted version, the inserted vertex may be hidden by the
@@ -308,7 +308,7 @@ void DelaunayTet<Traits>::cavity(const index_t vid, const index_t tet,
  */
 template <typename Traits>
 void DelaunayTet<Traits>::filling(const index_t               vid,
-                                  const AuxVector64<index_t> &cavity_corners)
+                                  const InlinedVector64<index_t> &cavity_corners)
 {
 	// ==========================================================================
 	// Step 3: Filling
@@ -318,7 +318,7 @@ void DelaunayTet<Traits>::filling(const index_t               vid,
 	static const index_t fi[4][3] = {{2, 1, 3}, {0, 2, 3}, {1, 0, 3}, {0, 1, 2}};
 
 	// Resize the mesh to host the new tets
-	AuxVector64<index_t> new_tets(cavity_corners.size());
+	InlinedVector64<index_t> new_tets(cavity_corners.size());
 	mesh.newTets(cavity_corners.size(), new_tets);
 
 	// Create a new tet for each cavity corner.
@@ -448,7 +448,7 @@ bool DelaunayTet<Traits>::verify() const
 template <typename Traits>
 bool DelaunayTet<Traits>::localVerify(index_t vid) const
 {
-	AuxVector64<index_t> tets;
+	InlinedVector64<index_t> tets;
 	mesh.VT(vid, tets);
 	for (index_t tet_idoff : tets)
 	{
@@ -551,7 +551,7 @@ template <typename Traits>
 bool DelaunayTet<Traits>::verifyDelaunay(index_t vid) const
 {
 	// 3. Check if the Delaunay condition is satisfied for all vertices
-	AuxVector64<index_t> check_tets;
+	InlinedVector64<index_t> check_tets;
 	check_tets.push_back(TetMesh::toIdOff(mesh.incTet(vid)));
 
 	for (index_t first = 0; first < check_tets.size(); first++)

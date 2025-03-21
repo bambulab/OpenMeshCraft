@@ -2,6 +2,8 @@
 
 #include "Triangle2_Point2.h"
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+
 namespace OMC {
 
 template <typename Kernel>

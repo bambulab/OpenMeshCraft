@@ -1,13 +1,11 @@
 #include "OpenMeshCraft/NumberTypes/LazyNumber.h"
-
+// clang-format off
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
-
-#include "CGAL/Exact_predicates_exact_constructions_kernel.h"
 #include "CGAL/Lazy_exact_nt.h"
-
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
-#include "test_utils.h"
+#include "gtest/gtest.h"
 
 #include <type_traits>
 

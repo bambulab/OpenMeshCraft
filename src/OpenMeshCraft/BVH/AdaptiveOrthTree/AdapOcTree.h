@@ -2,8 +2,6 @@
 
 #include "AdapOrthTree.h"
 
-#include <algorithm>
-
 namespace OMC {
 
 /**

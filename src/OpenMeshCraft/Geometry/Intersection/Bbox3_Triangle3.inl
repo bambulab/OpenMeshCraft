@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Bbox3_Triangle3.h"
-#include "Bbox_Point.h"
 
 namespace OMC {
 

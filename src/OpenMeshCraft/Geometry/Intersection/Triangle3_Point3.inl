@@ -2,6 +2,8 @@
 
 #include "Triangle3_Point3.h"
 
+#include "OpenMeshCraft/Utils/Exception.h"
+
 namespace OMC {
 
 template <typename Kernel>

@@ -2,14 +2,8 @@
 
 #include "KdNode.h"
 #include "KdPointContainer.h"
-#include "KdTraversal.h"
 
-#include "OpenMeshCraft/Utils/Exception.h"
-#include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
-
-#include <algorithm>
 #include <deque>
-#include <vector>
 
 namespace OMC {
 

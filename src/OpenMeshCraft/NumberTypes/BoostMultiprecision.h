@@ -2,11 +2,8 @@
 
 #include "NumberUtils.h"
 
-#include "OpenMeshCraft/Utils/Exception.h"
-#include "OpenMeshCraft/Utils/Macros.h"
-
+// clang-format off
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
-
 #if defined(_WIN32) && defined(__GNUC__)
   // When I compile on windows with gcc14, I get errors about duplicate
   // definitions from STL and Boost. Adding below macro succeeds to bypass the
@@ -17,9 +14,8 @@
 	#define BOOST_CSTDFLOAT_NO_LIBQUADMATH_SUPPORT
 #endif
 #include "boost/multiprecision/gmp.hpp"
-#include "boost/operators.hpp"
-
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
 namespace OMC {
 

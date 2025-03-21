@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Bbox_Point.h"
+
 namespace OMC {
 
 /**

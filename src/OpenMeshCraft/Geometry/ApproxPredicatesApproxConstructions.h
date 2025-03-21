@@ -3,7 +3,6 @@
 // Primitives
 #include "Primitives/Vector2T.h"
 #include "Primitives/Vector3T.h"
-#include "Primitives/VectorXT.h"
 
 #include "Primitives/Points.h"
 

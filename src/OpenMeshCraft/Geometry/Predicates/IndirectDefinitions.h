@@ -1,12 +1,9 @@
 #pragma once
 
-#include "OpenMeshCraft/Geometry/Primitives/GenericPoint2T.h"
-#include "OpenMeshCraft/Geometry/Primitives/GenericPoint3T.h"
-
-#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+#include <cstddef>
+#include <cstdint>
 
 #include <array>
-#include <atomic>
 
 namespace OMC {
 

@@ -2,8 +2,6 @@
 
 #include "GeneralPredicates.h"
 
-#include <tuple>
-
 namespace OMC {
 
 template <typename NT>

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Utils.h"
+#include "OpenMeshCraft/Utils/IndexDef.h"
+#include "OpenMeshCraft/Utils/InlinedVector.h"
 
 namespace OMC {
 
@@ -147,7 +148,7 @@ public: /* Auxiliary data structures ****************************************/
 	public: /* Data *********************************************************/
 		/// Original triangles composing the face
 		/// (triangle index, mutiple 3 with offset to point to `triangles`)
-		AuxVector2<index_t> triangles;
+		InlinedVector2<index_t> triangles;
 
 		/// Edges bounding the face (index to `plc_edges`)
 		/// - The face may not be simply connected, i.e., there may be holes and
@@ -155,13 +156,16 @@ public: /* Auxiliary data structures ****************************************/
 		/// - Duplicate bounding edges may exist during construction, these
 		/// duplicate edges may be subsequent or not. We will remove the duplicate
 		/// edges finally.
-		AuxVector4<BoundingEdge> bounding_edges;
+		InlinedVector4<BoundingEdge> bounding_edges;
 
 		/// The unordered bounding vertices of the face (index to `vertices`)
-		AuxVector4<index_t> bounding_vertices;
+		InlinedVector4<index_t> bounding_vertices;
 		/// The unordered flat vertices of the face (index to `vertices`)
-		AuxVector4<index_t> flat_vertices;
+		InlinedVector4<index_t> flat_vertices;
 	};
+
+	// Inlined Vector Const Iterator
+	using IVCIter = typename InlinedVector16<index_t>::const_iterator;
 
 public: /* Constructor & Destructor ****************************************/
 	PiecewiseLinearComplex() = delete;
@@ -262,7 +266,7 @@ public: /* Interfaces ******************************************************/
 	size_t  numEdgeIncTri(index_t eid) const { return edge_inc_tri[eid].size(); }
 	index_t edgeIncTri(index_t eid, index_t j) { return edge_inc_tri[eid][j]; }
 
-	std::pair<AuxVecConstIter, AuxVecConstIter> vertIncEdges(index_t vid) const;
+	std::pair<IVCIter, IVCIter> vertIncEdges(index_t vid) const;
 
 	void updateVertIncEdge(index_t vid, index_t old_eid, index_t new_eid);
 
@@ -318,12 +322,12 @@ public: /* Data ************************************************************/
 
 	/// Vertex --- Edge
 	/// (We store incident edges for input vertices and split vertices separately)
-	std::vector<AuxVector16<index_t>> vertex_inc_edge_input;
-	std::vector<AuxVector2<index_t>>  vertex_inc_edge_steiner;
+	std::vector<InlinedVector16<index_t>> vertex_inc_edge_input;
+	std::vector<InlinedVector2<index_t>>  vertex_inc_edge_steiner;
 
 	/// Edge --- Triangle
 	/// (We only store incident triangles for original input edges.)
-	std::vector<AuxVector4<index_t>> edge_inc_tri;
+	std::vector<InlinedVector4<index_t>> edge_inc_tri;
 };
 
 } // namespace OMC

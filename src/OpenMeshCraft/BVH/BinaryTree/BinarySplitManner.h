@@ -1,6 +1,7 @@
 #pragma once
 
-#include "BinaryTree.h"
+#include "OpenMeshCraft/Utils/Exception.h"
+#include "OpenMeshCraft/Utils/IndexDef.h"
 
 #define OMC_BSM_SAMPLE
 #define OMC_BSM_SAMPLE_COUNT 1024

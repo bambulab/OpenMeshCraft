@@ -2,23 +2,21 @@
 #include "OpenMeshCraft/Geometry/Intersection/Triangle3_Point3.h"
 #include "OpenMeshCraft/Geometry/Intersection/Triangle3_Segment3.h"
 #include "OpenMeshCraft/Geometry/Intersection/Triangle3_Triangle3.h"
-#include "OpenMeshCraft/Geometry/Predicates/IndirectPredicates.h"
-#include "OpenMeshCraft/NumberTypes/FPU.h"
-#include "OpenMeshCraft/Utils/Macros.h"
+#include "OpenMeshCraft/Geometry/Primitives/Point2T.h"
+#include "OpenMeshCraft/Geometry/Primitives/Point3T.h"
+
+// clang-format off
+#include "OpenMeshCraft/Utils/DisableWarnings.h"
+#include "CGAL/Exact_predicates_inexact_constructions_kernel.h"
+#include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
 #include "gtest/gtest.h"
 
-#include "OpenMeshCraft/Utils/DisableWarnings.h"
-
-#include "CGAL/Exact_predicates_inexact_constructions_kernel.h"
-#include "CGAL/Simple_cartesian.h"
-#include "CGAL/intersection_3.h"
-
-#include "OpenMeshCraft/Utils/EnableWarnings.h"
-
-#include <execution>
-
 // #define CHECK_EACH
+#ifdef CHECK_EACH
+#include <execution>
+#endif
 
 class test_Intersection_Triangle3 : public testing::Test
 {

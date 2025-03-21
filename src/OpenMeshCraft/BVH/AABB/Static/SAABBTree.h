@@ -2,7 +2,6 @@
 
 #include "SAABBNode.h"
 
-#include <deque>
 #include <vector>
 
 namespace OMC {

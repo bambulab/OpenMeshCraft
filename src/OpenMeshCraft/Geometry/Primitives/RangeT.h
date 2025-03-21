@@ -42,13 +42,13 @@ int RangeT<NT>::contains(const NT &value) const
 template <class NT>
 int RangeT<NT>::contains(const RangeT<NT> &range) const
 {
-	return ((range.low() >= m_low) && (range.High() <= m_high));
+	return ((range.low() >= m_low) && (range.high() <= m_high));
 }
 
 template <class NT>
 int RangeT<NT>::operator==(const RangeT<NT> &range) const
 {
-	return ((range.low() == m_low) && (range.High() == m_high));
+	return ((range.low() == m_low) && (range.high() == m_high));
 }
 
 } // namespace OMC

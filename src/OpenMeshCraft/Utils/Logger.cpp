@@ -1,5 +1,8 @@
 #include "Logger.h"
 
+#include <format>
+#include <iostream>
+
 namespace OMC {
 
 void Logger::trace(OMC_UNUSED const std::string &msg)

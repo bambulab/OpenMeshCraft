@@ -123,15 +123,21 @@ private:
 	class loadMultipleMeshes;
 };
 
-// forward declaration
-class ExactIndirectPredicatesApproxConstructions;
-using EIAC = ExactIndirectPredicatesApproxConstructions;
-class TriSoupTraits;
-
-extern template class MeshArrangements<EIAC, TriSoupTraits>;
-
 } // namespace OMC
+
+// include the implementation file
 
 #ifdef OMC_HAS_IMPL
 	#include "MeshArrangements.inl"
 #endif
+
+// include the template specializations
+
+// Triangle soup
+#include "OpenMeshCraft/Mesh/TriSoup.h"
+// Geometry kernel
+#include "OpenMeshCraft/Geometry/ExactIndirectPredicatesApproxConstructions.h"
+
+namespace OMC {
+extern template class MeshArrangements<EIAC, TriSoupTraits>;
+}

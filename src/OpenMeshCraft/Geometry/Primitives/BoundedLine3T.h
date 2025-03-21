@@ -34,8 +34,10 @@ public:
 	explicit BoundedLine3T(const PointT &start, bool start_bounded,
 	                       const PointT &end, bool end_bounded) noexcept
 	{
-		m_start = start;
-		m_end   = end;
+		m_start         = start;
+		m_end           = end;
+		m_start_bounded = start_bounded;
+		m_end_bounded   = end_bounded;
 	}
 
 	/// @name Acess the data of Line

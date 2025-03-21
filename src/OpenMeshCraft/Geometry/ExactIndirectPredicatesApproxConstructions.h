@@ -3,10 +3,8 @@
 // Primitives
 #include "Primitives/Vector2T.h"
 #include "Primitives/Vector3T.h"
-#include "Primitives/VectorXT.h"
 
 #include "Primitives/ImplicitPoints.h"
-#include "Primitives/Points.h"
 
 #include "Primitives/RangeT.h"
 
@@ -46,6 +44,9 @@
 // Bounding Volume Calculation
 #include "Constructions/CalcBoundingBox2K.h"
 #include "Constructions/CalcBoundingBox3K.h"
+
+// Number types
+#include "OpenMeshCraft/NumberTypes/BoostMultiprecision.h"
 
 namespace OMC {
 

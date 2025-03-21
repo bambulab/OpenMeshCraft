@@ -1,9 +1,11 @@
 #include "IntersectionUtils.h"
 
+#ifdef OMC_INTER_PROFILE
 #include <format>
 #include <iostream>
 #include <string>
 #include <vector>
+#endif
 
 namespace OMC {
 

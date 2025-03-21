@@ -1,6 +1,9 @@
 #pragma once
 
-#include "OpenMeshCraft/Utils/SFINAE.h"
+#include "OpenMeshCraft/Utils/Macros.h"
+#include "OpenMeshCraft/Utils/IndexDef.h"
+
+#include <vector>
 
 namespace OMC {
 

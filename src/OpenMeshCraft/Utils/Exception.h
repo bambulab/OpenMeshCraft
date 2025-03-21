@@ -3,7 +3,7 @@
 #include "Logger.h"
 
 #include <cassert>
-#include <iostream>
+
 #include <stdexcept>
 
 namespace OMC {

@@ -4,7 +4,14 @@
 // Arrangements
 #include "OpenMeshCraft/Arrangements/FastTriMesh.h"
 #include "OpenMeshCraft/Arrangements/MeshArrangements.h"
-#include "OpenMeshCraft/Arrangements/TriangleSoup.h"
+
+// clang-format off
+#include "OpenMeshCraft/Utils/DisableWarnings.h"
+#include "parallel_hashmap/btree.h"
+#include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
+
+#include <stack>
 
 namespace OMC {
 

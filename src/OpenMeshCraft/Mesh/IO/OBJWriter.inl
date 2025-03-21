@@ -2,6 +2,8 @@
 
 #include "OBJWriter.h"
 
+#include <fstream>
+
 namespace OMC {
 
 template <typename Traits>

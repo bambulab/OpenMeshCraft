@@ -2,6 +2,18 @@
 
 #include "PLC.h"
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+#include "OpenMeshCraft/Utils/Exception.h"
+
+// clang-format off
+#include "OpenMeshCraft/Utils/DisableWarnings.h"
+#include "parallel_hashmap/phmap.h"
+#include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
+
+#include <numeric>
+#include <stack>
+
 namespace OMC {
 
 /**
@@ -155,12 +167,12 @@ void PiecewiseLinearComplex<Traits>::buildInitialPLCEdges()
 	{
 		// record the first unique edge
 		PLCEdge             &first_e       = plc_edges[eid];
-		AuxVector4<index_t> &first_inc_tri = edge_inc_tri[first_e.ancestor_id];
+		InlinedVector4<index_t> &first_inc_tri = edge_inc_tri[first_e.ancestor_id];
 		// find the subsequent duplicate edges
 		while ((++eid) < plc_edges.size() && (first_e == plc_edges[eid]))
 		{
 			PLCEdge             &curr_e       = plc_edges[eid];
-			AuxVector4<index_t> &curr_inc_tri = edge_inc_tri[curr_e.ancestor_id];
+			InlinedVector4<index_t> &curr_inc_tri = edge_inc_tri[curr_e.ancestor_id];
 			// merge the incident triangle to the first edge
 			if (curr_inc_tri.size() == 1)
 				first_inc_tri.push_back(curr_inc_tri[0]);
@@ -177,7 +189,7 @@ void PiecewiseLinearComplex<Traits>::buildInitialPLCEdges()
 	                plc_edges.end());
 	init_npe = plc_edges.size();
 	// ### Restore incident triangles
-	std::vector<AuxVector4<index_t>> tmp_edge_inc_tri(plc_edges.size());
+	std::vector<InlinedVector4<index_t>> tmp_edge_inc_tri(plc_edges.size());
 	for (index_t eid = 0; eid < plc_edges.size(); eid++)
 	{
 		index_t &ancestor_id  = plc_edges[eid].ancestor_id;
@@ -397,7 +409,7 @@ void PiecewiseLinearComplex<Traits>::initSubEdges()
 	auto findSubEdges = [this](index_t eid)
 	{
 		// deep first search to find all sub-edges for edge `ei`
-		AuxVector64<index_t> sub_edge_stack;
+		InlinedVector64<index_t> sub_edge_stack;
 		sub_edge_stack.push_back(eid);
 
 		while (!sub_edge_stack.empty())
@@ -677,7 +689,7 @@ void PiecewiseLinearComplex<Traits>::mergeFacesArossFlatEdges()
 		// |<-- 1 -->| |<-- 2 -->| |<-- 3 -->| |<-- 4 -->|
 
 		// Connect the cut rings by merging the edges
-		AuxVector4<BoundingEdge> new_edges;
+		InlinedVector4<BoundingEdge> new_edges;
 		new_edges.reserve(src_edges.size() + dst_edges.size());
 		// Sequentially put cut rings (1,2,3,4) to the new ring `new_edges`
 		if (dst_pos != dst_edges.begin())
@@ -805,7 +817,7 @@ void PiecewiseLinearComplex<Traits>::removeDuplicateBoundingEdges()
 		// Note this removal will cut one boundary to multiple disjointed ones.
 		// OPT sequential duplicate edges may still appear in this step, remove them
 		// more efficiently?
-		AuxVector4<BoundingEdge> tmp_bnd_edges = bnd_edges;
+		InlinedVector4<BoundingEdge> tmp_bnd_edges = bnd_edges;
 		std::sort(tmp_bnd_edges.begin(), tmp_bnd_edges.end());
 		for (size_t i = 0; i < tmp_bnd_edges.size() - 1; i++)
 		{
@@ -822,7 +834,7 @@ void PiecewiseLinearComplex<Traits>::removeDuplicateBoundingEdges()
 			// Actually, |<-2->| is separated from the original ring to be a new ring.
 
 			// temporary store |<-2->| in `new_edges`
-			AuxVector4<BoundingEdge> new_edges(first_pos + 1, second_pos);
+			InlinedVector4<BoundingEdge> new_edges(first_pos + 1, second_pos);
 			// remove [ first_pos |<-2->| second_pos ] from the original ring
 			bnd_edges.erase(first_pos, second_pos + 1);
 			// append the |<-2->| to the `bnd_edges`
@@ -905,7 +917,7 @@ void PiecewiseLinearComplex<Traits>::extractBoundingVertices()
 		  f.bounding_vertices.end());
 
 		// traverse triangles of this face and extract all vertices
-		AuxVector4<index_t> temp_flat_vertices;
+		InlinedVector4<index_t> temp_flat_vertices;
 		for (index_t tid : f.triangles)
 		{
 			temp_flat_vertices.push_back(triangles[tid * 3]);
@@ -1281,7 +1293,7 @@ func_end:
 
 template <typename Traits>
 auto PiecewiseLinearComplex<Traits>::vertIncEdges(index_t vid) const
-  -> std::pair<AuxVecConstIter, AuxVecConstIter>
+  -> std::pair<IVCIter, IVCIter>
 {
 	if (vid < input_nv)
 		return {vertex_inc_edge_input[vid].cbegin(),

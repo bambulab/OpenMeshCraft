@@ -2,6 +2,12 @@
 
 #include "SegmentRecover.h"
 
+#include "Utils.h"
+
+#include "boost/container/flat_set.hpp"
+
+#include <iostream>
+
 namespace OMC {
 
 /**
@@ -125,7 +131,7 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang(size_t num_loop)
 			tet_mesh.mark(ep0, VTX_MARK::TO_CHECK);
 			tet_mesh.mark(ep1, VTX_MARK::TO_CHECK);
 			tet_mesh.mark(new_vid, VTX_MARK::TO_CHECK);
-			AuxVector64<index_t> local_vv;
+			InlinedVector64<index_t> local_vv;
 			tet_mesh.VV(new_vid, local_vv);
 			for (index_t vid : local_vv)
 				tet_mesh.mark(vid, VTX_MARK::TO_CHECK);
@@ -251,8 +257,8 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
   index_t eid, index_t &ref_vid, index_t &ref_tidoff,
   Container *enc_verts) const
 {
-	AuxVector64<index_t> encroach_tets;
-	const PLCEdge       &edge = plc.edge(eid);
+	InlinedVector64<index_t> encroach_tets;
+	const PLCEdge           &edge = plc.edge(eid);
 
 	// find tetrahedra adjacent to the first endpoint `ep0`
 	tet_mesh.VT(edge.ep0(), encroach_tets);
@@ -764,7 +770,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 
 		boost::container::flat_set<index_t> inc_edges;
 		auto [inc_edges_begin, inc_edges_end] = plc.vertIncEdges(vid);
-		for (AuxVecConstIter iter = inc_edges_begin; iter != inc_edges_end; iter++)
+		for (auto iter = inc_edges_begin; iter != inc_edges_end; iter++)
 		{
 			index_t        eid = *iter;
 			const PLCEdge &e   = plc.edge(eid);
@@ -803,10 +809,10 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		                       shortest_non_acute_edge * (4.0 / 9.0)));
 
 		// find segments that intersect the currect sphere
-		AuxVector64<index_t> intersected_edges;
+		InlinedVector64<index_t> intersected_edges;
 		{
 			// find possible intersected segments by AABB tree
-			AuxVector64<index_t> possible_intersected_edges;
+			InlinedVector64<index_t> possible_intersected_edges;
 			seg_tree.all_intersections(sphere, possible_intersected_edges);
 			// find really intersected segments
 			boost::container::flat_set<index_t> _intersected_edges;
@@ -831,7 +837,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		}
 
 		// otherwise, we need to shrink the sphere.
-		AuxVector64<Segment> intersected_segs;
+		InlinedVector64<Segment> intersected_segs;
 		for (index_t eid : intersected_edges)
 		{
 			const PLCEdge &e = plc.edge(eid);
@@ -877,21 +883,18 @@ void SegmentRecover<Traits>::protectVertex(index_t     eid,
 	const PLCEdge &anc_edge = plc.edge(plc.ancestorEdge(eid));
 	index_t        oep0 = anc_edge.ep0(), oep1 = anc_edge.ep1();
 
-	size_t intersected_count = 0;
 	if (protecting_sphere_squared_radius[oep0] > 0.0 &&
 	    DoIntersect()(
 	      Sphere(AsEP()(gpnt(oep0)), protecting_sphere_squared_radius[oep0]),
 	      AsGP()(steiner_point)))
 	{
-		intersected_count++;
 		steiner_point = splitSegment_ProtectingSphere(eid, oep0);
 	}
 	else if (protecting_sphere_squared_radius[oep1] > 0.0 &&
-	    DoIntersect()(
-	      Sphere(AsEP()(gpnt(oep1)), protecting_sphere_squared_radius[oep1]),
-	      AsGP()(steiner_point)))
+	         DoIntersect()(
+	           Sphere(AsEP()(gpnt(oep1)), protecting_sphere_squared_radius[oep1]),
+	           AsGP()(steiner_point)))
 	{
-		intersected_count++;
 		steiner_point = splitSegment_ProtectingSphere(eid, oep1);
 	}
 }

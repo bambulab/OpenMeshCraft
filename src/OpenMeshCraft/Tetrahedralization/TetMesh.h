@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Utils.h"
-
 #include "OpenMeshCraft/NumberTypes/NumberUtils.h"
-
-#include "OpenMeshCraft/Utils/Exception.h"
 #include "OpenMeshCraft/Utils/IndexDef.h"
-#include "OpenMeshCraft/Utils/Macros.h"
+#include "OpenMeshCraft/Utils/InlinedVector.h"
+
+#include <cstdint>
+#include <vector>
 
 namespace OMC {
 
@@ -224,7 +223,7 @@ public:
 	void newVtx(index_t new_vid);
 
 	index_t newTet();
-	void    newTets(size_t inc_size, AuxVector64<index_t> &new_tets);
+	void    newTets(size_t inc_size, InlinedVector64<index_t> &new_tets);
 
 	/* Operations about deletion */
 

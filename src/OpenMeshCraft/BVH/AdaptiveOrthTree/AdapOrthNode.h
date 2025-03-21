@@ -5,8 +5,6 @@
 #include "OpenMeshCraft/Utils/Exception.h"
 
 #include <array>
-#include <bitset>
-#include <memory>
 #include <vector>
 
 namespace OMC {

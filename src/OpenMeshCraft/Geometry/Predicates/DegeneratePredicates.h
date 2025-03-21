@@ -2,7 +2,7 @@
 
 #include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 
-#include <variant>
+#include <tuple>
 
 namespace OMC {
 

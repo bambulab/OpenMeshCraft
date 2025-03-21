@@ -1,6 +1,5 @@
 #pragma once
 
-#include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
 #include "OpenMeshCraft/Utils/IndexDef.h"
 #include "OpenMeshCraft/Utils/SFINAE.h"
 

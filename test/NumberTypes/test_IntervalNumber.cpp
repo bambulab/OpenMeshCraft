@@ -1,6 +1,6 @@
 #include "OpenMeshCraft/NumberTypes/IntervalNumber.h"
 
-#include "test_utils.h"
+#include "gtest/gtest.h"
 
 #include "CGAL/Interval_nt.h"
 

@@ -2,6 +2,10 @@
 
 #include "OBJReader.h"
 
+#include "OpenMeshCraft/Utils/StringUtils.h"
+
+#include <fstream>
+
 namespace OMC {
 
 template <typename Traits>

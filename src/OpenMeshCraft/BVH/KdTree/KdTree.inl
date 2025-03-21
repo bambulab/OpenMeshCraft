@@ -1,6 +1,10 @@
 #pragma once
 
 #include "KdTree.h"
+#include "KdTraversal.h"
+
+#include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
+#include "OpenMeshCraft/Utils/Exception.h"
 
 namespace OMC {
 

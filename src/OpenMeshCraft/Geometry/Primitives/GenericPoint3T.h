@@ -6,7 +6,6 @@
 #include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 
 #include <cassert>
-#include <variant>
 
 namespace OMC {
 

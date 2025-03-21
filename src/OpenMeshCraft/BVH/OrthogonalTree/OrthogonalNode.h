@@ -1,8 +1,10 @@
 #pragma once
 
+#include "OrthogonalTraits.h"
 #include "OrthogonalVertex.h"
 
-#include <array>
+#include "OpenMeshCraft/Utils/Exception.h"
+
 #include <bitset>
 #include <memory>
 #include <vector>

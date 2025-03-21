@@ -2,8 +2,6 @@
 
 #include "AdapQuadTree.h"
 
-#include <algorithm>
-
 namespace OMC {
 
 template <typename Traits>

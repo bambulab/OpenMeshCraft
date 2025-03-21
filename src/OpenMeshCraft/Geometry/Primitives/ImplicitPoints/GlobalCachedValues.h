@@ -2,16 +2,12 @@
 
 #include "OpenMeshCraft/Geometry/Utils.h"
 #include "OpenMeshCraft/Utils/Exception.h"
-#include "OpenMeshCraft/Utils/Macros.h"
 
 #include "parallel_hashmap/phmap.h"
 #include "tbb/tbb.h"
 
 #include <atomic>
 #include <deque>
-#include <memory>
-#include <thread>
-#include <unordered_map>
 
 namespace OMC {
 

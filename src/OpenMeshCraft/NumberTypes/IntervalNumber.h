@@ -4,13 +4,11 @@
 #include "NumberUtils.h"
 
 #include "OpenMeshCraft/Utils/Exception.h"
-#include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
 
 #ifdef OMC_SSE2
 	#include "immintrin.h"
 #endif
 
-#include <numeric>
 #include <utility>
 
 #include <cfloat>

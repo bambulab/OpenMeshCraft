@@ -145,7 +145,7 @@ LambdaVariable::LambdaVariable(std::string &n)
 
 std::string LambdaVariable::get_type_string() const
 {
-	auto pointXD = [this](int x)
+	auto pointXD = [](int x)
 	{ return std::format("GenericPoint{}T<{}, {}>", x, IT, ET); };
 
 	if (dim == 2)
@@ -214,7 +214,7 @@ ExplicitVariable::ExplicitVariable(std::string &n)
 
 std::string ExplicitVariable::get_type_string() const
 {
-	auto pointXD = [this](size_t x)
+	auto pointXD = [](size_t x)
 	{ return std::format("GenericPoint{}T<{}, {}>", x, IT, ET); };
 
 	return pointXD(dim);

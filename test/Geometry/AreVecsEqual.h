@@ -3,13 +3,13 @@
 #include "OpenMeshCraft/Geometry/Primitives/Vector3T.h"
 #include "OpenMeshCraft/Geometry/Primitives/VectorXT.h"
 
+// clang-format off
 #include "OpenMeshCraft/Utils/DisableWarnings.h"
-
 #include "Eigen/Dense"
-
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
+// clang-format on
 
-#include "test_utils.h"
+#include "gtest/gtest.h"
 
 template <typename T, typename S, size_t dim>
 class AreVecsEqual

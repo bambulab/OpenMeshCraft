@@ -3,6 +3,8 @@
 #include "TriangleSoup.h"
 #include "Utils.h"
 
+#include "OpenMeshCraft/Geometry/Intersection/IntersectionUtils.h"
+
 namespace OMC {
 
 /// @brief Detect and Classify Triangle-Triangle-Intersection in one pass.
@@ -45,9 +47,9 @@ protected:
 	struct TTIHelper;
 	struct CoplanarEEI;
 
-	using IntersectionPoints = AuxVector4<index_t>;
-	using IntersectionTypes  = AuxVector4<PointInSimplexType>;
-	using CoplanarEEIList    = AuxVector4<CoplanarEEI>;
+	using IntersectionPoints = InlinedVector4<index_t>;
+	using IntersectionTypes  = InlinedVector4<PointInSimplexType>;
+	using CoplanarEEIList    = InlinedVector4<CoplanarEEI>;
 
 protected:
 	index_t get_e_id(TTIHelper &ha, index_t ea);

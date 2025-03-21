@@ -3,7 +3,6 @@
 #include "DetectClassifyTTI.h"
 #include "DetectClassifyTTIs.h"
 
-#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
 #include "OpenMeshCraft/Utils/Exception.h"
 
 #if defined(OMC_ARR_PROFILE) && 0

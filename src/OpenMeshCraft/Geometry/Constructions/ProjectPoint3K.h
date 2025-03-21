@@ -1,9 +1,5 @@
 #pragma once
 
-#include "OpenMeshCraft/Utils/Exception.h"
-
-#include <variant>
-
 namespace OMC {
 
 /**

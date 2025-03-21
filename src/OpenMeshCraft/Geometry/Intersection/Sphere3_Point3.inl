@@ -2,6 +2,8 @@
 
 #include "Sphere3_Point3.h"
 
+#include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+
 namespace OMC {
 
 template <typename Kernel>

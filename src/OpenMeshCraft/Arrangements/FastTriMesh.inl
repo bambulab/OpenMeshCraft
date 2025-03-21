@@ -4,7 +4,7 @@
 #include "Tree.h"
 
 #include "OpenMeshCraft/NumberTypes/NumberUtils.h"
-#include "OpenMeshCraft/Utils/Macros.h"
+#include "OpenMeshCraft/Utils/ContainerOp.h"
 
 namespace OMC {
 
@@ -27,7 +27,7 @@ FastTriMesh<Traits>::FastTriMesh(const std::vector<GPoint *> &in_verts,
 	}
 	v2t.resize(vertices.size());
 	v2e.resize(vertices.size());
-	if constexpr (std::is_same_v<AuxVector16<index_t>, std::vector<index_t>>)
+	if constexpr (std::is_same_v<InlinedVector16<index_t>, std::vector<index_t>>)
 	{
 		reserve(v2t, 16);
 		reserve(v2e, 16);
@@ -78,7 +78,7 @@ FastTriMesh<Traits>::FastTriMesh(const std::vector<GPoint *> &in_verts,
 
 	// build e2t
 	e2t.resize(edges.size());
-	if constexpr (std::is_same_v<AuxVector4<index_t>, std::vector<index_t>>)
+	if constexpr (std::is_same_v<InlinedVector4<index_t>, std::vector<index_t>>)
 	{
 		reserve(e2t, 4);
 	}
@@ -296,21 +296,21 @@ bool FastTriMesh<Traits>::triContainsVert(index_t t_id, index_t v_id) const
 }
 
 template <typename Traits>
-const AuxVector4<index_t> &FastTriMesh<Traits>::adjE2T(index_t e_id) const
+const InlinedVector4<index_t> &FastTriMesh<Traits>::adjE2T(index_t e_id) const
 {
 	OMC_EXPENSIVE_ASSERT(e_id < numEdges(), "edge id out of range");
 	return e2t[e_id];
 }
 
 template <typename Traits>
-const AuxVector16<index_t> &FastTriMesh<Traits>::adjV2T(index_t v_id) const
+const InlinedVector16<index_t> &FastTriMesh<Traits>::adjV2T(index_t v_id) const
 {
 	OMC_EXPENSIVE_ASSERT(v_id < numVerts(), "vtx id out of range");
 	return v2t[v_id];
 }
 
 template <typename Traits>
-const AuxVector16<index_t> &FastTriMesh<Traits>::adjV2E(index_t v_id) const
+const InlinedVector16<index_t> &FastTriMesh<Traits>::adjV2E(index_t v_id) const
 {
 	OMC_EXPENSIVE_ASSERT(v_id < numVerts(), "vtx id out of range");
 	return v2e[v_id];
@@ -411,7 +411,7 @@ index_t FastTriMesh<Traits>::addVert(const GPoint *p, index_t origin_v_id)
 
 	v2e.emplace_back();
 	v2t.emplace_back();
-	if constexpr (std::is_same_v<AuxVector16<index_t>, std::vector<index_t>>)
+	if constexpr (std::is_same_v<InlinedVector16<index_t>, std::vector<index_t>>)
 	{
 		v2e.back().reserve(8);
 		v2t.back().reserve(8);
@@ -436,7 +436,7 @@ index_t FastTriMesh<Traits>::addEdge(index_t ev0_id, index_t ev1_id)
 	edges.emplace_back(ev0_id, ev1_id, /*constr*/ false);
 
 	e2t.emplace_back();
-	if constexpr (std::is_same_v<AuxVector4<index_t>, std::vector<index_t>>)
+	if constexpr (std::is_same_v<InlinedVector4<index_t>, std::vector<index_t>>)
 	{
 		e2t.back().reserve(4);
 	}
@@ -547,7 +547,7 @@ void FastTriMesh<Traits>::splitEdge(const index_t e_id, index_t v_id)
 	index_t ev1_id = edges[e_id].verts.second;
 
 	// for each adjacent triangle
-	AuxVector4<index_t> tmp_e2t = e2t[e_id];
+	InlinedVector4<index_t> tmp_e2t = e2t[e_id];
 	for (index_t t_id : tmp_e2t)
 	{
 		index_t v_opp = triVertOppositeTo(t_id, ev0_id, ev1_id);
@@ -570,7 +570,7 @@ void FastTriMesh<Traits>::splitEdge(const index_t e_id, index_t v_id,
 	index_t             ev0_id  = edges[e_id].verts.first;
 	index_t             ev1_id  = edges[e_id].verts.second;
 	// for each adjacent triangle
-	AuxVector4<index_t> tmp_e2t = e2t[e_id];
+	InlinedVector4<index_t> tmp_e2t = e2t[e_id];
 	for (index_t t_id : tmp_e2t)
 	{
 		index_t v_opp = triVertOppositeTo(t_id, ev0_id, ev1_id);

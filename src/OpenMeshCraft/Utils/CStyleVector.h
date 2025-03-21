@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Exception.h"
-
 #include <cstddef>
 #include <cstdlib>
-#include <memory>
+
+#include <iterator>
 #include <type_traits>
 
 namespace OMC {
@@ -115,7 +114,7 @@ public: /* Acess and Modify **************************************************/
 		if (m_size == m_capacity)
 			return;
 		if (m_size != 0)
-		{	// shrink capacity to fit size while keeping original data.
+		{ // shrink capacity to fit size while keeping original data.
 			// out of memory exception may be throwed by malloc, just let it throw.
 			T *tmp_data = (T *)malloc(m_size * sizeof(T));
 			// it's better to use copy constructor of T.
