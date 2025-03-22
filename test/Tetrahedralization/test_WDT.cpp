@@ -39,63 +39,9 @@ protected:
 
 	using Kernel = OMC::EIAC;
 
-	class DelTetTraits
+	class DelTetTraits : public Kernel
 	{
 	public:
-		using K = Kernel;
-
-		using NT         = typename K::NT;
-		using Vec2       = typename K::Vec2;
-		using Vec3       = typename K::Vec3;
-		using EPoint     = typename K::EPoint3;
-		using GPoint     = typename K::GPoint3;
-		using IPoint_SSI = typename K::IPoint3T_SSI;
-		using IPoint_LNC = typename K::IPoint3T_LNC;
-		using IPoint_LPI = typename K::IPoint3T_LPI;
-		using IPoint_TPI = typename K::IPoint3T_TPI;
-
-		using AsGP      = typename K::AsGP;
-		using AsEP      = typename K::AsEP;
-		using ToEP      = typename K::ToEP;
-		using CreateSSI = typename K::CreateSSI3;
-		using CreateLNC = typename K::CreateLNC;
-		using CreateLPI = typename K::CreateLPI;
-		using CreateTPI = typename K::CreateTPI;
-
-		using Sphere      = typename K::Sphere3;
-		using Segment     = typename K::Segment3;
-		using Triangle    = typename K::Triangle3;
-		using BoundingBox = typename K::BoundingBox3;
-
-		// predicates
-		using Orient2D           = typename K::Orient2D;
-		using Orient3D           = typename K::Orient3D;
-		using OrientOn2D         = typename K::OrientOn2D;
-		using LessThan3D         = typename K::LessThan3D;
-		using SquaredDistance3D  = typename K::SquaredDistance3D;
-		using LongestAxis        = typename K::LongestAxis;
-		using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
-		using InCircle           = typename K::InCircle;
-		using InSphere           = typename K::InSphere;
-		using InPowerSphere      = typename K::InPowerSphere;
-		using DotProduct3D       = typename K::DotProductSign3D;
-		using CollinearPoints3   = typename K::CollinearPoints3;
-		// constructions
-		using CalcBbox           = typename K::CalcBoundingBox3;
-		using ProjectPoint       = typename K::ProjectPoint3;
-
-		// clang-format off
-		using DoIntersect                        = typename K::DoIntersect;
-		using Segment3_Point3_DoIntersect        = typename K::Segment3_Point3_DoIntersect;
-		using Segment3_Segment3_DoIntersect      = typename K::Segment3_Segment3_DoIntersect;
-		using Triangle3_Point3_DoIntersect       = typename K::Triangle3_Point3_DoIntersect;
-		using Triangle3_Segment3_DoIntersect     = typename K::Triangle3_Segment3_DoIntersect;
-		using Triangle3_Triangle3_DoIntersect    = typename K::Triangle3_Triangle3_DoIntersect;
-		using Tetrahedron3_Point3_DoIntersect    = typename K::Tetrahedron3_Point3_DoIntersect;
-		using Tetrahedron3_Segment3_DoIntersect  = typename K::Tetrahedron3_Segment3_DoIntersect;
-		using Tetrahedron3_Triangle3_DoIntersect = typename K::Tetrahedron3_Triangle3_DoIntersect;
-		// clang-format on
-
 		// Tetrahedral mesh settings
 		const static bool WEIGHTED = true;
 	};
@@ -135,8 +81,8 @@ TEST_F(test_WeightedDelTet, TestIfCrash)
 	read_mesh(dir + filename, input_points, input_triangles, io_options);
 
 	// convert to generic points
-	std::deque<typename DelTetTraits::EPoint>    points;
-	std::vector<typename DelTetTraits::GPoint *> vertices;
+	std::deque<typename DelTetTraits::EPoint3>    points;
+	std::vector<typename DelTetTraits::GPoint3 *> vertices;
 
 	for (const auto &p : input_points)
 	{

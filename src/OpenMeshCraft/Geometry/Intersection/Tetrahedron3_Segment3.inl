@@ -5,18 +5,18 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Tetrahedron3_Segment3_Do_Intersect<Kernel>::operator()(
-  const TetrahedronT &tet, const SegmentT &seg) const
+bool Tetrahedron3_Segment3_DoIntersectK<Kernel>::operator()(
+  const Tetrahedron3 &tet, const Segment3 &seg) const
 {
-	const GPointT &t0 = tet.v0(), &t1 = tet.v1(), &t2 = tet.v2(), &t3 = tet.v3();
-	const GPointT &s0 = seg.start(), &s1 = seg.end();
+	const GPoint3 &t0 = tet.v0(), &t1 = tet.v1(), &t2 = tet.v2(), &t3 = tet.v3();
+	const GPoint3 &s0 = seg.start(), &s1 = seg.end();
 	return operator()(t0, t1, t2, t3, s0, s1);
 }
 
 template <typename Kernel>
-bool Tetrahedron3_Segment3_Do_Intersect<Kernel>::operator()(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2, const GPointT &t3,
-  const GPointT &s0, const GPointT &s1) const
+bool Tetrahedron3_Segment3_DoIntersectK<Kernel>::operator()(
+  const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2, const GPoint3 &t3,
+  const GPoint3 &s0, const GPoint3 &s1) const
 {
 	return intersection_type(t0, t1, t2, t3, s0, s1) >=
 	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
@@ -24,19 +24,19 @@ bool Tetrahedron3_Segment3_Do_Intersect<Kernel>::operator()(
 
 template <typename Kernel>
 SimplexIntersectionType
-Tetrahedron3_Segment3_Do_Intersect<Kernel>::intersection_type(
-  const TetrahedronT &tet, const SegmentT &seg) const
+Tetrahedron3_Segment3_DoIntersectK<Kernel>::intersection_type(
+  const Tetrahedron3 &tet, const Segment3 &seg) const
 {
-	const GPointT &t0 = tet.v0(), &t1 = tet.v1(), &t2 = tet.v2(), &t3 = tet.v3();
-	const GPointT &s0 = seg.start(), &s1 = seg.end();
+	const GPoint3 &t0 = tet.v0(), &t1 = tet.v1(), &t2 = tet.v2(), &t3 = tet.v3();
+	const GPoint3 &s0 = seg.start(), &s1 = seg.end();
 	return intersection_type(t0, t1, t2, t3, s0, s1);
 }
 
 template <typename Kernel>
 SimplexIntersectionType
-Tetrahedron3_Segment3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2, const GPointT &t3,
-  const GPointT &s0, const GPointT &s1) const
+Tetrahedron3_Segment3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2, const GPoint3 &t3,
+  const GPoint3 &s0, const GPoint3 &s1) const
 {
 	// the tetrahedron is abbreviated as t, and the segment as s
 	PointInSimplexType s0_in_tet =

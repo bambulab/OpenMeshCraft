@@ -25,31 +25,30 @@ namespace OMC {
  * @tparam Kernel
  */
 template <typename Kernel>
-class Triangle3_Segment3_Do_Intersect
+class Triangle3_Segment3_DoIntersectK
 {
 public:
 	using K  = Kernel;
 	using NT = typename K::NT;
 
-	using VecT      = typename K::Vec3;
-	using GPointT   = typename K::GPoint3;
-	using SegmentT  = typename K::Segment3;
-	using TriangleT = typename K::Triangle3;
+	using GPoint3   = typename K::GPoint3;
+	using Segment3  = typename K::Segment3;
+	using Triangle3 = typename K::Triangle3;
 
 	using LessThan3D         = typename K::LessThan3D;
 	using OrientOn2D         = typename K::OrientOn2D;
 	using Orient3D           = typename K::Orient3D;
 	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
 
-	using Triangle3_Point3_DoInter  = Triangle3_Point3_Do_Intersect<Kernel>;
-	using Segment3_Segment3_DoInter = Segment3_Segment3_Do_Intersect<Kernel>;
+	using Triangle3_Point3_DoInter  = Triangle3_Point3_DoIntersectK<Kernel>;
+	using Segment3_Segment3_DoInter = Segment3_Segment3_DoIntersectK<Kernel>;
 
 public:
 	/**
 	 * @brief Check if triangle and segment intersect.
 	 * @note Assume no one is degenerate.
 	 */
-	bool operator()(const TriangleT &tri, const SegmentT &seg) const;
+	bool operator()(const Triangle3 &tri, const Segment3 &seg) const;
 
 	/**
 	 * @brief Check if triangle and segment intersect.
@@ -57,8 +56,8 @@ public:
 	 * @param s1_s2 two vertices of segment
 	 * @note Assume no one is degenerate.
 	 */
-	bool operator()(const GPointT &v1, const GPointT &v2, const GPointT &v3,
-	                const GPointT &s1, const GPointT &s2) const;
+	bool operator()(const GPoint3 &v1, const GPoint3 &v2, const GPoint3 &v3,
+	                const GPoint3 &s1, const GPoint3 &s2) const;
 
 	/**
 	 * @brief Check if the closure of triangle and segment cross at a single point
@@ -66,7 +65,7 @@ public:
 	 * @return TRUE if they intersect at a point.
 	 * @note Assume no one is degenerate.
 	 */
-	bool cross(const TriangleT &tri, const SegmentT &seg) const;
+	bool cross(const Triangle3 &tri, const Segment3 &seg) const;
 
 	/**
 	 * @brief Check if the interior of triangle and segment cross at a single
@@ -74,7 +73,7 @@ public:
 	 * @return TRUE if they intersect at a point.
 	 * @note Assume no one is degenerate.
 	 */
-	bool cross_inner(const TriangleT &tri, const SegmentT &seg) const;
+	bool cross_inner(const Triangle3 &tri, const Segment3 &seg) const;
 
 	/**
 	 * @brief Check if the closure of triangle and segment cross at a single point
@@ -84,8 +83,8 @@ public:
 	 * @return TRUE if they intersect at a point.
 	 * @note Assume no one is degenerate.
 	 */
-	bool cross(const GPointT &v1, const GPointT &v2, const GPointT &v3,
-	           const GPointT &s1, const GPointT &s2) const;
+	bool cross(const GPoint3 &v1, const GPoint3 &v2, const GPoint3 &v3,
+	           const GPoint3 &s1, const GPoint3 &s2) const;
 
 	/**
 	 * @brief Check if the interior of triangle and segment cross at a single
@@ -95,15 +94,15 @@ public:
 	 * @return TRUE if they intersect at a point.
 	 * @note Assume no one is degenerate.
 	 */
-	bool cross_inner(const GPointT &v1, const GPointT &v2, const GPointT &v3,
-	                 const GPointT &s1, const GPointT &s2) const;
+	bool cross_inner(const GPoint3 &v1, const GPoint3 &v2, const GPoint3 &v3,
+	                 const GPoint3 &s1, const GPoint3 &s2) const;
 
 	/**
 	 * @brief Get the intersection type between triangle and segment.
 	 * @note Assume no one is degenerate.
 	 */
-	SimplexIntersectionType intersection_type(const TriangleT &tri,
-	                                          const SegmentT  &seg) const;
+	SimplexIntersectionType intersection_type(const Triangle3 &tri,
+	                                          const Segment3  &seg) const;
 
 	/**
 	 * @brief Get the intersection type between triangle and segment.
@@ -112,8 +111,8 @@ public:
 	 * @note Assume no one is degenerate.
 	 */
 	SimplexIntersectionType
-	intersection_type(const GPointT &v1, const GPointT &v2, const GPointT &v3,
-	                  const GPointT &s1, const GPointT &s2) const;
+	intersection_type(const GPoint3 &v1, const GPoint3 &v2, const GPoint3 &v3,
+	                  const GPoint3 &s1, const GPoint3 &s2) const;
 
 	/**
 	 * @brief Get the intersection type between triangle and segment.

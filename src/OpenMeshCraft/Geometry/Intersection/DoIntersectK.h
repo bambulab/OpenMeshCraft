@@ -55,45 +55,45 @@ public:
 public:
 	// clang-format off
 	template <typename GPT, typename = std::enable_if_t<std::is_same_v<GPT, GPoint2> && !std::is_same_v<GPT, EPoint2>>>
-	bool operator()(const BoundingBox2 &box,  const GPT          &point)  const { return Bbox_Point_Do_Intersect<K>()(box, point); }
-	bool operator()(const BoundingBox2 &box,  const EPoint2      &point)  const { return Bbox_Point_Do_Intersect<K>()(box, point); }
-	bool operator()(const BoundingBox2 &box1, const BoundingBox2 &box2)   const { return Bbox_Bbox_Do_Intersect<K>()(box1, box2); }
-	bool operator()(const BoundingBox2 &box,  const Sphere2      &sphere) const { return Bbox_Sphere_Do_Intersect<K>()(box, sphere); }
-	bool operator()(const Segment2     &seg1, const Segment2     &seg2)   const { return Segment2_Segment2_Do_Intersect<K>()(seg1, seg2); }
-	bool operator()(const Triangle2    &tri,  const GPoint2      &point)  const { return Triangle2_Point2_Do_Intersect<K>()(tri, point); }
+	bool operator()(const BoundingBox2 &box,  const GPT          &point)  const { return Bbox_Point_DoIntersectK<K>()(box, point); }
+	bool operator()(const BoundingBox2 &box,  const EPoint2      &point)  const { return Bbox_Point_DoIntersectK<K>()(box, point); }
+	bool operator()(const BoundingBox2 &box1, const BoundingBox2 &box2)   const { return Bbox_Bbox_DoIntersectK<K>()(box1, box2); }
+	bool operator()(const BoundingBox2 &box,  const Sphere2      &sphere) const { return Bbox_Sphere_DoIntersectK<K>()(box, sphere); }
+	bool operator()(const Segment2     &seg1, const Segment2     &seg2)   const { return Segment2_Segment2_DoIntersectK<K>()(seg1, seg2); }
+	bool operator()(const Triangle2    &tri,  const GPoint2      &point)  const { return Triangle2_Point2_DoIntersectK<K>()(tri, point); }
 
 	template <typename GPT, typename = std::enable_if_t<std::is_same_v<GPT, GPoint3> && !std::is_same_v<GPT, EPoint3>>>
-	bool operator()(const BoundingBox3 &box,  const GPT          &point)    const { return Bbox_Point_Do_Intersect<K>()(box, point); }
-	bool operator()(const BoundingBox3 &box,  const EPoint3      &point)    const { return Bbox_Point_Do_Intersect<K>()(box, point); }
-	bool operator()(const BoundingBox3 &box1, const BoundingBox3 &box2)     const { return Bbox_Bbox_Do_Intersect<K>()(box1, box2); }
-	bool operator()(const BoundingBox3 &box,  const Sphere3      &sphere)   const { return Bbox_Sphere_Do_Intersect<K>()(box, sphere); }
-	bool operator()(const BoundingBox3 &box,  const Segment3     &segment)  const { return Bbox3_Segment3_Do_Intersect<K>()(box, segment); }
-	bool operator()(const BoundingBox3 &box,  const BoundedLine3 &line)     const { return Bbox3_BoundedLine3_Do_Intersect<K>()( box, line.start(), line.start_bounded(), line.end(), line.end_bounded()); }
-	bool operator()(const BoundingBox3 &box,  const Line3        &line)     const { return Bbox3_Line3_Do_Intersect<K>()(box, line); }
-	bool operator()(const BoundingBox3 &box,  const Ray3         &ray)      const { return Bbox3_Ray3_Do_Intersect<K>()(box, ray); }
-	bool operator()(const BoundingBox3 &box,  const Triangle3    &triangle) const { return Bbox3_Triangle3_Do_Intersect<K>()(box, triangle); }
+	bool operator()(const BoundingBox3 &box,  const GPT          &point)    const { return Bbox_Point_DoIntersectK<K>()(box, point); }
+	bool operator()(const BoundingBox3 &box,  const EPoint3      &point)    const { return Bbox_Point_DoIntersectK<K>()(box, point); }
+	bool operator()(const BoundingBox3 &box1, const BoundingBox3 &box2)     const { return Bbox_Bbox_DoIntersectK<K>()(box1, box2); }
+	bool operator()(const BoundingBox3 &box,  const Sphere3      &sphere)   const { return Bbox_Sphere_DoIntersectK<K>()(box, sphere); }
+	bool operator()(const BoundingBox3 &box,  const Segment3     &segment)  const { return Bbox3_Segment3_DoIntersectK<K>()(box, segment); }
+	bool operator()(const BoundingBox3 &box,  const BoundedLine3 &line)     const { return Bbox3_BoundedLine3_DoIntersectK<K>()( box, line.start(), line.start_bounded(), line.end(), line.end_bounded()); }
+	bool operator()(const BoundingBox3 &box,  const Line3        &line)     const { return Bbox3_Line3_DoIntersectK<K>()(box, line); }
+	bool operator()(const BoundingBox3 &box,  const Ray3         &ray)      const { return Bbox3_Ray3_DoIntersectK<K>()(box, ray); }
+	bool operator()(const BoundingBox3 &box,  const Triangle3    &triangle) const { return Bbox3_Triangle3_DoIntersectK<K>()(box, triangle); }
 
 	template <typename GPT, typename = std::enable_if_t<std::is_same_v<GPT, GPoint3> && !std::is_same_v<GPT, EPoint3>>>
-	bool operator()(const Segment3 &seg,  const GPT      &point) const { return Segment3_Point3_Do_Intersect<K>()(seg, point); }
-	bool operator()(const Segment3 &seg,  const EPoint3  &point) const { return Segment3_Point3_Do_Intersect<K>()(seg, point); }
-	bool operator()(const Segment3 &seg1, const Segment3 &seg2)  const { return Segment3_Segment3_Do_Intersect<K>()(seg1, seg2); }
+	bool operator()(const Segment3 &seg,  const GPT      &point) const { return Segment3_Point3_DoIntersectK<K>()(seg, point); }
+	bool operator()(const Segment3 &seg,  const EPoint3  &point) const { return Segment3_Point3_DoIntersectK<K>()(seg, point); }
+	bool operator()(const Segment3 &seg1, const Segment3 &seg2)  const { return Segment3_Segment3_DoIntersectK<K>()(seg1, seg2); }
 
 	template <typename GPT, typename = std::enable_if_t<std::is_same_v<GPT, GPoint3> && !std::is_same_v<GPT, EPoint3>>>
-	bool operator()(const Triangle3 &tri,  const GPT       &point) const { return Triangle3_Point3_Do_Intersect<K>()(tri, point); }
-	bool operator()(const Triangle3 &tri,  const EPoint3   &point) const { return Triangle3_Point3_Do_Intersect<K>()(tri, point); }
-	bool operator()(const Triangle3 &tri,  const Segment3  &seg)   const { return Triangle3_Segment3_Do_Intersect<K>()(tri, seg); }
-	bool operator()(const Triangle3 &tri1, const Triangle3 &tri2)  const { return Triangle3_Triangle3_Do_Intersect<K>()(tri1, tri2); }
+	bool operator()(const Triangle3 &tri,  const GPT       &point) const { return Triangle3_Point3_DoIntersectK<K>()(tri, point); }
+	bool operator()(const Triangle3 &tri,  const EPoint3   &point) const { return Triangle3_Point3_DoIntersectK<K>()(tri, point); }
+	bool operator()(const Triangle3 &tri,  const Segment3  &seg)   const { return Triangle3_Segment3_DoIntersectK<K>()(tri, seg); }
+	bool operator()(const Triangle3 &tri1, const Triangle3 &tri2)  const { return Triangle3_Triangle3_DoIntersectK<K>()(tri1, tri2); }
 
 	template <typename GPT, typename = std::enable_if_t<std::is_same_v<GPT, GPoint3> && !std::is_same_v<GPT, EPoint3>>>
-	bool operator()(const Tetrahedron3 &tet,  const GPT       &point) const { return Tetrahedron3_Point3_Do_Intersect<K>()(tet, point); }
-	bool operator()(const Tetrahedron3 &tet,  const EPoint3   &point) const { return Tetrahedron3_Point3_Do_Intersect<K>()(tet, point); }
-	bool operator()(const Tetrahedron3 &tet,  const Segment3  &seg)   const { return Tetrahedron3_Segment3_Do_Intersect<K>()(tet, seg); }
-	bool operator()(const Tetrahedron3 &tet,  const Triangle3 &tri)   const { return Tetrahedron3_Triangle3_Do_Intersect<K>()(tet, tri); }
+	bool operator()(const Tetrahedron3 &tet,  const GPT       &point) const { return Tetrahedron3_Point3_DoIntersectK<K>()(tet, point); }
+	bool operator()(const Tetrahedron3 &tet,  const EPoint3   &point) const { return Tetrahedron3_Point3_DoIntersectK<K>()(tet, point); }
+	bool operator()(const Tetrahedron3 &tet,  const Segment3  &seg)   const { return Tetrahedron3_Segment3_DoIntersectK<K>()(tet, seg); }
+	bool operator()(const Tetrahedron3 &tet,  const Triangle3 &tri)   const { return Tetrahedron3_Triangle3_DoIntersectK<K>()(tet, tri); }
 
 	template <typename GPT, typename = std::enable_if_t<std::is_same_v<GPT, GPoint3> && !std::is_same_v<GPT, EPoint3>>>
-	bool operator()(const Sphere3 &sph,  const GPT       &point) const { return Sphere3_Point3_Do_Intersect<K>()(sph, point); }
-	bool operator()(const Sphere3 &sph,  const EPoint3   &point) const { return Sphere3_Point3_Do_Intersect<K>()(sph, point); }
-	bool operator()(const Sphere3 &sph,  const Segment3  &seg)   const { return Sphere3_Segment3_Do_Intersect<K>()(sph, seg); }
+	bool operator()(const Sphere3 &sph,  const GPT       &point) const { return Sphere3_Point3_DoIntersectK<K>()(sph, point); }
+	bool operator()(const Sphere3 &sph,  const EPoint3   &point) const { return Sphere3_Point3_DoIntersectK<K>()(sph, point); }
+	bool operator()(const Sphere3 &sph,  const Segment3  &seg)   const { return Sphere3_Segment3_DoIntersectK<K>()(sph, seg); }
 	// clang-format on
 };
 

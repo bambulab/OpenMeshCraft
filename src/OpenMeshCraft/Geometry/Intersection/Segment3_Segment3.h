@@ -18,27 +18,26 @@ namespace OMC {
  * - INTERSECT : two segments intersect at a single interior point.
  *
  * - OVERLAP : two segments partially overlap.
- * 
+ *
  * The last three types are all considered as intersect.
- * 
+ *
  * @tparam Kernel
  */
 template <typename Kernel>
-class Segment3_Segment3_Do_Intersect
+class Segment3_Segment3_DoIntersectK
 {
 public:
 	using K  = Kernel;
 	using NT = typename K::NT;
 
-	using VecT     = typename K::Vec3;
-	using GPointT  = typename K::GPoint3;
-	using SegmentT = typename K::Segment3;
+	using GPoint3  = typename K::GPoint3;
+	using Segment3 = typename K::Segment3;
 
 	using LessThan3D = typename K::LessThan3D;
 	using OrientOn2D = typename K::OrientOn2D;
 	using Orient3D   = typename K::Orient3D;
 
-	using Segment2_Segment2_DoInter = Segment2_Segment2_Do_Intersect<Kernel>;
+	using Segment2_Segment2_DoInter = Segment2_Segment2_DoIntersectK<Kernel>;
 
 public:
 	/**
@@ -46,7 +45,7 @@ public:
 	 * are assumed to be coplanar, otherwise the result is undetermined.
 	 * @note Assume that no segment is degenerate.
 	 */
-	bool operator()(const SegmentT &seg0, const SegmentT &seg1) const;
+	bool operator()(const Segment3 &seg0, const Segment3 &seg1) const;
 
 	/**
 	 * @brief Check if two segments intersect. Two segments
@@ -55,8 +54,8 @@ public:
 	 * @param PQ Point P and Q form the second segment
 	 * @note Assume that no segment is degenerate.
 	 */
-	bool operator()(const GPointT &A, const GPointT &B, const GPointT &P,
-	                const GPointT &Q) const;
+	bool operator()(const GPoint3 &A, const GPoint3 &B, const GPoint3 &P,
+	                const GPoint3 &Q) const;
 
 	/*************************************************************************/
 	/******* Below functions all assume that two segments are coplanar *******/
@@ -69,7 +68,7 @@ public:
 	 * @return TRUE if the closure of two segments intersect at a single point.
 	 * @note Assume that no segment is degenerate and two segments are coplanar.
 	 */
-	bool cross(const SegmentT &seg0, const SegmentT &seg1) const;
+	bool cross(const Segment3 &seg0, const Segment3 &seg1) const;
 
 	/**
 	 * @brief Check if the interior of two segments in 3D intersect at a single
@@ -78,7 +77,7 @@ public:
 	 * @return TRUE if the interior of two segments intersect at a single point.
 	 * @note Assume that no segment is degenerate and two segments are coplanar.
 	 */
-	bool cross_inner(const SegmentT &seg0, const SegmentT &seg1) const;
+	bool cross_inner(const Segment3 &seg0, const Segment3 &seg1) const;
 
 	/**
 	 * @brief Check if the closure of two segments intersect at a single point
@@ -89,8 +88,8 @@ public:
 	 * @return TRUE if the closure of two segments intersect at a single point.
 	 * @note Assume that no segment is degenerate and two segments are coplanar.
 	 */
-	bool cross(const GPointT &A, const GPointT &B, const GPointT &P,
-	           const GPointT &Q) const;
+	bool cross(const GPoint3 &A, const GPoint3 &B, const GPoint3 &P,
+	           const GPoint3 &Q) const;
 
 	/**
 	 * @brief Check if the interior of two segments in 3D intersect at a single
@@ -101,24 +100,24 @@ public:
 	 * @return TRUE if the interior of two segments intersect at a single point.
 	 * @note Assume that no segment is degenerate and two segments are coplanar.
 	 */
-	bool cross_inner(const GPointT &A, const GPointT &B, const GPointT &P,
-	                 const GPointT &Q) const;
+	bool cross_inner(const GPoint3 &A, const GPoint3 &B, const GPoint3 &P,
+	                 const GPoint3 &Q) const;
 
 	// Equivalent but faster. They assume that points are coplanar and the
 	// dominant normal component is n_max (see MaxComponentInTriangleNormal).
 
-	bool cross(const GPointT &A, const GPointT &B, const GPointT &P,
-	           const GPointT &Q, int n_max) const;
+	bool cross(const GPoint3 &A, const GPoint3 &B, const GPoint3 &P,
+	           const GPoint3 &Q, int n_max) const;
 
-	bool cross_inner(const GPointT &A, const GPointT &B, const GPointT &P,
-	                 const GPointT &Q, int n_max) const;
+	bool cross_inner(const GPoint3 &A, const GPoint3 &B, const GPoint3 &P,
+	                 const GPoint3 &Q, int n_max) const;
 
 	/**
 	 * @brief Get the intersection type between two segments.
 	 * @note Assume that two segments are coplanar.
 	 */
-	SimplexIntersectionType intersection_type(const SegmentT &seg0,
-	                                          const SegmentT &seg1) const;
+	SimplexIntersectionType intersection_type(const Segment3 &seg0,
+	                                          const Segment3 &seg1) const;
 
 	/**
 	 * @brief Get the intersection type between two segments.
@@ -126,9 +125,9 @@ public:
 	 * @param PQ two points form the second segment.
 	 * @note Assume that two segments are coplanar.
 	 */
-	SimplexIntersectionType intersection_type(const GPointT &A, const GPointT &B,
-	                                          const GPointT &P,
-	                                          const GPointT &Q) const;
+	SimplexIntersectionType intersection_type(const GPoint3 &A, const GPoint3 &B,
+	                                          const GPoint3 &P,
+	                                          const GPoint3 &Q) const;
 
 	/**
 	 * @brief Get the intersection type between two segments.
@@ -162,11 +161,11 @@ protected:
 	 * @param AB two points form the first segment.
 	 * @param PQ two points form the second segment.
 	 * @param on2d 0: yz plane; 1: zx plane; 2: xy plane.
-	 * @note almostly same as Segment2_Segment2_Do_Intersect.
+	 * @note almostly same as Segment2_Segment2_DoIntersectK.
 	 */
 	SimplexIntersectionType
-	intersection_type_on2d(const GPointT &A, const GPointT &B, const GPointT &P,
-	                       const GPointT &Q, int on2d) const;
+	intersection_type_on2d(const GPoint3 &A, const GPoint3 &B, const GPoint3 &P,
+	                       const GPoint3 &Q, int on2d) const;
 };
 
 } // namespace OMC

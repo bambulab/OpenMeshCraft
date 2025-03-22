@@ -16,47 +16,9 @@
 namespace OMC {
 
 template <typename Kernel, typename Traits>
-class MeshBoolean<Kernel, Traits>::BooleanTraits
+class MeshBoolean<Kernel, Traits>::BooleanTraits : public Kernel
 {
-public:
-	using K = Kernel;
-
-	using NT         = typename K::NT;
-	using EPoint     = typename K::EPoint3;
-	using GPoint     = typename K::GPoint3;
-	using IPoint_SSI = typename K::IPoint3T_SSI;
-	using IPoint_LPI = typename K::IPoint3T_LPI;
-	using IPoint_TPI = typename K::IPoint3T_TPI;
-
-	using AsGP      = typename K::AsGP;
-	using AsEP      = typename K::AsEP;
-	using ToEP      = typename K::ToEP;
-	using CreateSSI = typename K::CreateSSI3;
-	using CreateLPI = typename K::CreateLPI;
-	using CreateTPI = typename K::CreateTPI;
-
-	using Segment     = typename K::Segment3;
-	using Triangle    = typename K::Triangle3;
-	using BoundingBox = typename K::BoundingBox3;
-
-	using Orient2D           = typename K::Orient2D;
-	using Orient3D           = typename K::Orient3D;
-	using OrientOn2D         = typename K::OrientOn2D;
-	using LessThan3D         = typename K::LessThan3D;
-	using LongestAxis        = typename K::LongestAxis;
-	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
-	using CollinearPoints3   = typename K::CollinearPoints3;
-
-	using CalcBbox = typename K::CalcBoundingBox3;
-
-	// clang-format off
-	using DoIntersect = typename K::DoIntersect;
-	using Segment3_Point3_DoIntersect     = typename K::Segment3_Point3_DoIntersect;
-	using Segment3_Segment3_DoIntersect   = typename K::Segment3_Segment3_DoIntersect;
-	using Triangle3_Point3_DoIntersect    = typename K::Triangle3_Point3_DoIntersect;
-	using Triangle3_Segment3_DoIntersect  = typename K::Triangle3_Segment3_DoIntersect;
-	using Triangle3_Triangle3_DoIntersect = typename K::Triangle3_Triangle3_DoIntersect;
-	// clang-format on
+	// There is nothing to add.
 };
 
 template <typename Traits>
@@ -64,22 +26,22 @@ class MeshBoolean_Impl
 {
 public: /* Traits ***********************************************************/
 	// primitives
-	using NT         = typename Traits::NT;
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_SSI = typename Traits::IPoint_SSI;
-	using IPoint_LPI = typename Traits::IPoint_LPI;
-	using IPoint_TPI = typename Traits::IPoint_TPI;
+	using NT           = typename Traits::NT;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
 
-	using AsGP      = typename Traits::AsGP;
-	using AsEP      = typename Traits::AsEP;
-	using ToEP      = typename Traits::ToEP;
-	using CreateSSI = typename Traits::CreateSSI;
-	using CreateLPI = typename Traits::CreateLPI;
-	using CreateTPI = typename Traits::CreateTPI;
+	using AsGP       = typename Traits::AsGP;
+	using AsEP       = typename Traits::AsEP;
+	using ToEP       = typename Traits::ToEP;
+	using CreateSSI3 = typename Traits::CreateSSI3;
+	using CreateLPI  = typename Traits::CreateLPI;
+	using CreateTPI  = typename Traits::CreateTPI;
 
-	using Segment  = typename Traits::Segment;
-	using Triangle = typename Traits::Triangle;
+	using Segment3  = typename Traits::Segment3;
+	using Triangle3 = typename Traits::Triangle3;
 
 	// predicates
 	using Orient2D           = typename Traits::Orient2D;
@@ -111,25 +73,25 @@ public: /* Auxiliary data structures *****************************************/
 
 	struct Ray
 	{
-		Segment segment;
-		index_t tv[3] = {InvalidIndex, InvalidIndex, InvalidIndex};
-		char    dir   = 'X';
+		Segment3 segment;
+		index_t  tv[3] = {InvalidIndex, InvalidIndex, InvalidIndex};
+		char     dir   = 'X';
 	};
 
 #define LESS_THAN(V)                                                      \
 	struct LessThanGPOn##V                                                  \
 	{                                                                       \
-		bool operator()(const std::pair<GPoint *, index_t> &p0,               \
-		                const std::pair<GPoint *, index_t> &p1) const         \
+		bool operator()(const std::pair<GPoint3 *, index_t> &p0,              \
+		                const std::pair<GPoint3 *, index_t> &p1) const        \
 		{                                                                     \
 			return LessThan3D().on_##V(*p0.first, *p1.first) != Sign::POSITIVE; \
 		}                                                                     \
-		bool operator()(const std::pair<GPoint *, index_t> &p0,               \
-		                const GPoint                       &p1) const                               \
+		bool operator()(const std::pair<GPoint3 *, index_t> &p0,              \
+		                const GPoint3                       &p1) const                              \
 		{                                                                     \
 			return LessThan3D().on_##V(*p0.first, p1) == Sign::NEGATIVE;        \
 		}                                                                     \
-		bool operator()(const GPoint &p0, const GPoint &p1) const             \
+		bool operator()(const GPoint3 &p0, const GPoint3 &p1) const           \
 		{                                                                     \
 			return LessThan3D().on_##V(p0, p1) == Sign::NEGATIVE;               \
 		}                                                                     \
@@ -195,20 +157,20 @@ private:
 
 	/* Ray intersection check utils *******************************************/
 
-	static IntersInfo fast2DCheckIntersectionOnRay(const Ray    &ray,
-	                                               const EPoint &tv0,
-	                                               const EPoint &tv1,
-	                                               const EPoint &tv2);
+	static IntersInfo fast2DCheckIntersectionOnRay(const Ray     &ray,
+	                                               const EPoint3 &tv0,
+	                                               const EPoint3 &tv1,
+	                                               const EPoint3 &tv2);
 
-	static bool checkIntersectionInsideTriangle3D(const Ray    &ray,
-	                                              const EPoint &tv0,
-	                                              const EPoint &tv1,
-	                                              const EPoint &tv2);
+	static bool checkIntersectionInsideTriangle3D(const Ray     &ray,
+	                                              const EPoint3 &tv0,
+	                                              const EPoint3 &tv1,
+	                                              const EPoint3 &tv2);
 
-	static bool checkIntersectionInsideTriangle3DImplPoints(const Ray    &ray,
-	                                                        const GPoint &tv0,
-	                                                        const GPoint &tv1,
-	                                                        const GPoint &tv2);
+	static bool checkIntersectionInsideTriangle3DImplPoints(const Ray     &ray,
+	                                                        const GPoint3 &tv0,
+	                                                        const GPoint3 &tv1,
+	                                                        const GPoint3 &tv2);
 	/* Topology utils **********************************************************/
 
 	static bool triContainsVert(index_t t_id, index_t v_id,
@@ -231,7 +193,7 @@ private:
 
 	Ray findRay(const phmap::flat_hash_set<index_t> &patch);
 
-	std::vector<index_t> intersects_box(const Segment &rayAABB);
+	std::vector<index_t> intersects_box(const Segment3 &rayAABB);
 
 	Ray perturbRay(const Ray &ray, size_t i, size_t j, size_t dir);
 
@@ -283,11 +245,11 @@ public:
 
 	/* Output data */
 	/// output vertices (pointers to points in arena)
-	std::vector<GPoint *> &arr_out_verts;
+	std::vector<GPoint3 *> &arr_out_verts;
 	/// output triangles
-	std::vector<index_t>  &arr_out_tris;
+	std::vector<index_t>   &arr_out_tris;
 	/// output labels for all unique triangles
-	ArrLabels             &arr_out_labels;
+	ArrLabels              &arr_out_labels;
 
 	/* Auxiliary data */
 	/// tree build on arr_in_tris (NOTE: not on in_tris)
@@ -508,7 +470,7 @@ void MeshBoolean_Impl<Traits>::computeInOut()
 
 template <typename Traits>
 bool MeshBoolean_Impl<Traits>::checkIntersectionInsideTriangle3DImplPoints(
-  const Ray &ray, const GPoint &tv0, const GPoint &tv1, const GPoint &tv2)
+  const Ray &ray, const GPoint3 &tv0, const GPoint3 &tv1, const GPoint3 &tv2)
 {
 	// clang-format off
 	// we check the orientation of ray.segment.end() with respct to the planes
@@ -582,9 +544,9 @@ auto MeshBoolean_Impl<Traits>::findRay(
 
 		if (is_valid_idx(v_id))
 		{
-			const GPoint &v     = tm.vert(v_id);
+			const GPoint3 &v    = tm.vert(v_id);
 			ray.segment.start() = AsEP()(v);
-			ray.segment.end()   = EPoint(max_coords[0], v.y(), v.z());
+			ray.segment.end()   = EPoint3(max_coords[0], v.y(), v.z());
 			return ray;
 		}
 	}
@@ -593,7 +555,7 @@ auto MeshBoolean_Impl<Traits>::findRay(
 	// clang-format off
 	for (index_t t_id : patch)
 	{
-		EPoint a, b, c;
+		EPoint3 a, b, c;
 		a = ToEP()(tm.triVert(t_id, 0));
 		b = ToEP()(tm.triVert(t_id, 1));
 		c = ToEP()(tm.triVert(t_id, 2));
@@ -604,20 +566,20 @@ auto MeshBoolean_Impl<Traits>::findRay(
 		int dir = MaxCompInTriNormal()(a.x(), a.y(), a.z(), b.x(), b.y(), b.z(), c.x(), c.y(), c.z());
 		if (dir == 0) // dir = X
 		{
-			ray.segment.start() = EPoint(((a.x() + b.x() + c.x()) / 3.0) - 0.1, (a.y() + b.y() + c.y()) / 3.0, (a.z() + b.z() + c.z()) / 3.0);
-			ray.segment.end() = EPoint(max_coords[0], ray.segment.start().y(), ray.segment.start().z());
+			ray.segment.start() = EPoint3(((a.x() + b.x() + c.x()) / 3.0) - 0.1, (a.y() + b.y() + c.y()) / 3.0, (a.z() + b.z() + c.z()) / 3.0);
+			ray.segment.end() = EPoint3(max_coords[0], ray.segment.start().y(), ray.segment.start().z());
 			ray.dir = 'X';
 		}
 		else if (dir == 1) // dir = Y
 		{
-			ray.segment.start() = EPoint((a.x() + b.x() + c.x()) / 3.0, ((a.y() + b.y() + c.y()) / 3.0) - 0.1, (a.z() + b.z() + c.z()) / 3.0);
-			ray.segment.end() = EPoint(ray.segment.start().x(), max_coords[1], ray.segment.start().z());
+			ray.segment.start() = EPoint3((a.x() + b.x() + c.x()) / 3.0, ((a.y() + b.y() + c.y()) / 3.0) - 0.1, (a.z() + b.z() + c.z()) / 3.0);
+			ray.segment.end() = EPoint3(ray.segment.start().x(), max_coords[1], ray.segment.start().z());
 			ray.dir = 'Y';
 		}
 		else // dir = Z
 		{
-			ray.segment.start() = EPoint((a.x() + b.x() + c.x()) / 3.0, (a.y() + b.y() + c.y()) / 3.0, ((a.z() + b.z() + c.z()) / 3.0) - 0.1);
-			ray.segment.end() = EPoint(ray.segment.start().x(), ray.segment.start().y(), max_coords[2]);
+			ray.segment.start() = EPoint3((a.x() + b.x() + c.x()) / 3.0, (a.y() + b.y() + c.y()) / 3.0, ((a.z() + b.z() + c.z()) / 3.0) - 0.1);
+			ray.segment.end() = EPoint3(ray.segment.start().x(), ray.segment.start().y(), max_coords[2]);
 			ray.dir = 'Z';
 		}
 
@@ -651,17 +613,19 @@ auto MeshBoolean_Impl<Traits>::findRay(
 
 template <typename Traits>
 std::vector<index_t>
-MeshBoolean_Impl<Traits>::intersects_box(const Segment &rayAABB)
+MeshBoolean_Impl<Traits>::intersects_box(const Segment3 &rayAABB)
 {
 	std::vector<index_t> ids;
-	tree.template all_intersections<Segment>(rayAABB, ids);
+	tree.template all_intersections<Segment3>(rayAABB, ids);
 	return ids;
 }
 
 template <typename Traits>
-auto MeshBoolean_Impl<Traits>::fast2DCheckIntersectionOnRay(
-  const Ray &ray, const EPoint &tv0, const EPoint &tv1,
-  const EPoint &tv2) -> IntersInfo
+auto MeshBoolean_Impl<Traits>::fast2DCheckIntersectionOnRay(const Ray     &ray,
+                                                            const EPoint3 &tv0,
+                                                            const EPoint3 &tv1,
+                                                            const EPoint3 &tv2)
+  -> IntersInfo
 {
 	NT v0[2]{}, v1[2]{}, v2[2]{}, vq[2]{};
 
@@ -758,7 +722,7 @@ auto MeshBoolean_Impl<Traits>::perturbRay(const Ray &ray, size_t i, size_t j,
 
 template <typename Traits>
 bool MeshBoolean_Impl<Traits>::checkIntersectionInsideTriangle3D(
-  const Ray &ray, const EPoint &tv0, const EPoint &tv1, const EPoint &tv2)
+  const Ray &ray, const EPoint3 &tv0, const EPoint3 &tv1, const EPoint3 &tv2)
 {
 	// we check the orientation of ray.segment.end() with
 	// respct to the planes v0-v1-ray.segment.start(),
@@ -779,11 +743,11 @@ void MeshBoolean_Impl<Traits>::sortIntersectedTrisAlongAxis(
   const Ray &ray, std::vector<index_t> &inters_tris)
 {
 	// new LPI points
-	std::vector<IPoint_LPI> arena_temp;
+	std::vector<IPoint3T_LPI> arena_temp;
 	arena_temp.reserve(inters_tris.size());
 
 	// set of <t_id, impl_point>
-	phmap::btree_set<std::pair<GPoint *, index_t>, Pred> inters_set;
+	phmap::btree_set<std::pair<GPoint3 *, index_t>, Pred> inters_set;
 
 	for (index_t t_id : inters_tris)
 	{
@@ -791,7 +755,7 @@ void MeshBoolean_Impl<Traits>::sortIntersectedTrisAlongAxis(
 		index_t v1_id = arr_in_tris[3 * t_id + 1];
 		index_t v2_id = arr_in_tris[3 * t_id + 2];
 
-		std::pair<GPoint *, index_t> pair;
+		std::pair<GPoint3 *, index_t> pair;
 		pair.first  = &AsGP()(arena_temp.emplace_back(CreateLPI()(
       ray.segment.start(), ray.segment.end(), AsEP()(*arr_out_verts[v0_id]),
       AsEP()(*arr_out_verts[v1_id]), AsEP()(*arr_out_verts[v2_id]))));
@@ -806,9 +770,9 @@ void MeshBoolean_Impl<Traits>::sortIntersectedTrisAlongAxis(
 	// we discard the intersection before ray.first along axis
 	if (ray.tv[0] != InvalidIndex) // the ray is generated
 	{
-		const GPoint &tv0 = *arr_out_verts[ray.tv[0]];
-		const GPoint &tv1 = *arr_out_verts[ray.tv[1]];
-		const GPoint &tv2 = *arr_out_verts[ray.tv[2]];
+		const GPoint3 &tv0 = *arr_out_verts[ray.tv[0]];
+		const GPoint3 &tv1 = *arr_out_verts[ray.tv[1]];
+		const GPoint3 &tv2 = *arr_out_verts[ray.tv[2]];
 
 		if (Orient3D()(tv0, tv1, tv2, AsGP()(ray.segment.end())) == Sign::POSITIVE)
 		{
@@ -856,9 +820,9 @@ int MeshBoolean_Impl<Traits>::perturbRayAndFindIntersTri(
 
 		for (index_t t_id : tris_to_test)
 		{
-			const EPoint tv0 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id]]);
-			const EPoint tv1 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id + 1]]);
-			const EPoint tv2 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id + 2]]);
+			const EPoint3 tv0 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id]]);
+			const EPoint3 tv1 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id + 1]]);
+			const EPoint3 tv2 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id + 2]]);
 
 			if (checkIntersectionInsideTriangle3D(p_ray, tv0, tv1, tv2))
 				inters_tris.push_back(t_id);
@@ -908,9 +872,9 @@ MeshBoolean_Impl<Traits>::pruneIntersectionsAndSortAlongRay(
 		if (patch_surface_label[uint_tri_label])
 			continue; // <-- triangle of the same label of the tested patch
 
-		const EPoint tv0 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id]]);
-		const EPoint tv1 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id + 1]]);
-		const EPoint tv2 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id + 2]]);
+		const EPoint3 tv0 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id]]);
+		const EPoint3 tv1 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id + 1]]);
+		const EPoint3 tv2 = ToEP()(*arr_out_verts[arr_in_tris[3 * t_id + 2]]);
 
 		IntersInfo ii = fast2DCheckIntersectionOnRay(ray, tv0, tv1, tv2);
 
@@ -1005,9 +969,9 @@ auto MeshBoolean_Impl<Traits>::analyzeSortedIntersections(
 		if (visited_labels[t_label])
 			continue; // already visited patch
 
-		const GPoint *tv0 = arr_out_verts[arr_in_tris[3 * t_id]];
-		const GPoint *tv1 = arr_out_verts[arr_in_tris[3 * t_id + 1]];
-		const GPoint *tv2 = arr_out_verts[arr_in_tris[3 * t_id + 2]];
+		const GPoint3 *tv0 = arr_out_verts[arr_in_tris[3 * t_id]];
+		const GPoint3 *tv1 = arr_out_verts[arr_in_tris[3 * t_id + 1]];
+		const GPoint3 *tv2 = arr_out_verts[arr_in_tris[3 * t_id + 2]];
 
 		// checkOrientation -> 1 if inside, 0 if outside
 		if (Orient3D()(tv0->data(), tv1->data(), tv2->data(),
@@ -1191,8 +1155,8 @@ void MeshBoolean_Impl<Traits>::computeFinalExplicitResult(
 	                  {
 		                  if (!is_valid_idx(vertex_index[v_id]))
 			                  return;
-		                  const GPoint *gp = arr_out_verts[v_id];
-		                  EPoint        ep = ToEP()(*gp);
+		                  const GPoint3 *gp = arr_out_verts[v_id];
+		                  EPoint3        ep = ToEP()(*gp);
 		                  final_points[vertex_index[v_id]] =
 		                    iPoint(ep.x(), ep.y(), ep.z());
 	                  });

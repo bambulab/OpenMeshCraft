@@ -14,7 +14,7 @@
 
 // #define CHECK_EACH
 #ifdef CHECK_EACH
-#include <execution>
+	#include <execution>
 #endif
 
 class test_Intersection_Segment3 : public testing::Test
@@ -24,9 +24,9 @@ protected:
 	using Pnt2 = EIAC::Point2;
 	using Pnt3 = EIAC::Point3;
 
-	using Segment3_Point3_DoIntersect = OMC::Segment3_Point3_Do_Intersect<EIAC>;
+	using Segment3_Point3_DoIntersect = OMC::Segment3_Point3_DoIntersectK<EIAC>;
 	using Segment3_Segment3_DoIntersect =
-	  OMC::Segment3_Segment3_Do_Intersect<EIAC>;
+	  OMC::Segment3_Segment3_DoIntersectK<EIAC>;
 
 	using FPnt2 = OMC::Point2T<double>;
 	using FPnt3 = OMC::Point3T<double>;

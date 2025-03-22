@@ -1,9 +1,9 @@
 #pragma once
 
 #include "DelaunayTet.h"
+#include "PLC.h"
 #include "TetMesh.h"
 #include "Tree.h"
-#include "PLC.h"
 #include "Utils.h"
 
 namespace OMC {
@@ -24,12 +24,12 @@ class SegmentRecover
 public: /* Traits **********************************************************/
 	using Self = DelaunayTet<Traits>;
 
-	using NT         = typename Traits::NT;
-	using Vec2       = typename Traits::Vec2;
-	using Vec3       = typename Traits::Vec3;
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_LNC = typename Traits::IPoint_LNC;
+	using NT           = typename Traits::NT;
+	using Vec2         = typename Traits::Vec2;
+	using Vec3         = typename Traits::Vec3;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_LNC = typename Traits::IPoint3T_LNC;
 
 	using AsGP = typename Traits::AsGP;
 	using AsEP = typename Traits::AsEP;
@@ -37,16 +37,16 @@ public: /* Traits **********************************************************/
 
 	using CreateLNC = typename Traits::CreateLNC;
 
-	using Sphere  = typename Traits::Sphere;
-	using Segment = typename Traits::Segment;
+	using Sphere3  = typename Traits::Sphere3;
+	using Segment3 = typename Traits::Segment3;
 
 	// predicates
 	using InSphere          = typename Traits::InSphere;
 	using SquaredDistance3D = typename Traits::SquaredDistance3D;
 	using DoIntersect       = typename Traits::DoIntersect;
 	// constructions
-	using CalcBbox          = typename Traits::CalcBbox;
-	using ProjectPoint      = typename Traits::ProjectPoint;
+	using CalcBoundingBox3  = typename Traits::CalcBoundingBox3;
+	using ProjectPoint3     = typename Traits::ProjectPoint3;
 
 	using TetMesh  = TetrahedralMesh<Traits>;
 	using TET_MARK = typename TetMesh::TET_MARK;
@@ -64,14 +64,14 @@ public: /* Traits **********************************************************/
 	using GenericSegment = GenericSegment3T<Traits>;
 	using SegSphereTree  = CDT_SegSphereTree<Traits>;
 
-	using IndexedSegment = PrimitiveWithAttribute<Segment, index_t>;
+	using IndexedSegment = PrimitiveWithAttribute<Segment3, index_t>;
 	using SegmentTree    = CDT_SegmentTree<Traits>;
 
 	using PntArena = CDTPointArena<Traits>;
 
 public: /* Constructor & Destructor ******************************************/
 	SegmentRecover() = delete;
-	SegmentRecover(std::vector<GPoint *> &_verts, std::vector<PntArena> &_ars,
+	SegmentRecover(std::vector<GPoint3 *> &_verts, std::vector<PntArena> &_ars,
 	               TetMesh &_tet_mesh, PLC &_plc, ConstrDelTet_Config _config,
 	               ConstrDelTet_Stats *_stats = nullptr);
 
@@ -83,8 +83,8 @@ public: /* Interface *********************************************************/
 public: /* Common operations used by recovery algorithms *********************/
 	/* Geometric & Topologic Operations on both TetMesh & PLC */
 
-	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
-	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
+	GPoint3       &gpnt(index_t vid) { return *verts[vid]; }
+	const GPoint3 &gpnt(index_t vid) const { return *verts[vid]; }
 
 	template <typename PointType>
 	index_t newVtx(PointType new_pnt);
@@ -101,51 +101,51 @@ public: /* SiHang's Recovery Algorithm ***************************************/
 	                                   index_t   &ref_tid,
 	                                   Container *enc_verts = nullptr) const;
 
-	IPoint_LNC splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid) const;
+	IPoint3T_LNC splitSegment_NoAcuteVertex(index_t eid, index_t ref_vid) const;
 
-	IPoint_LNC splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid) const;
+	IPoint3T_LNC splitSegment_OneAcuteVertex(index_t eid, index_t ref_vid) const;
 
 	/* Low level details for edge recovery (predicates, utils, marks...) */
 
-	static bool inSphere(const GPoint &a, const GPoint &b, const GPoint &c);
+	static bool inSphere(const GPoint3 &a, const GPoint3 &b, const GPoint3 &c);
 
-	static bool largerSphere(const GPoint &a, const GPoint &b, const GPoint &c,
-	                         const GPoint &d);
+	static bool largerSphere(const GPoint3 &a, const GPoint3 &b, const GPoint3 &c,
+	                         const GPoint3 &d);
 
-	static bool isLessThanDistance(const GPoint &a, const GPoint &b,
-	                               const GPoint &c);
+	static bool isLessThanDistance(const GPoint3 &a, const GPoint3 &b,
+	                               const GPoint3 &c);
 
-	static bool isLessThanHalfDistance(const GPoint &a, const GPoint &b,
-	                                   const GPoint &c);
+	static bool isLessThanHalfDistance(const GPoint3 &a, const GPoint3 &b,
+	                                   const GPoint3 &c);
 
 	std::pair<double, double> getInterpolateT(index_t oep0, index_t oep1,
 	                                          index_t ep0, index_t ep1) const;
 
-	IPoint_LNC middlePoint(const PLCEdge &e) const;
+	IPoint3T_LNC middlePoint(const PLCEdge &e) const;
 
-	IPoint_LNC lineSphereIntersection_noAc(index_t eid, bool reverse,
-	                                       index_t ref_vid) const;
+	IPoint3T_LNC lineSphereIntersection_noAc(index_t eid, bool reverse,
+	                                         index_t ref_vid) const;
 
-	IPoint_LNC lineSphereIntersection_oneAc(index_t eid, index_t acute_vid,
-	                                        index_t ref_vid) const;
+	IPoint3T_LNC lineSphereIntersection_oneAc(index_t eid, index_t acute_vid,
+	                                          index_t ref_vid) const;
 
 public: /* Protecting sphere *************************************************/
 	void buildProtectingSphere();
 
-	void protectVertex(index_t eid, IPoint_LNC &steiner_point) const;
+	void protectVertex(index_t eid, IPoint3T_LNC &steiner_point) const;
 
-	IPoint_LNC splitSegment_ProtectingSphere(index_t eid,
-	                                         index_t center_vid) const;
+	IPoint3T_LNC splitSegment_ProtectingSphere(index_t eid,
+	                                           index_t center_vid) const;
 
 public: /* Data **************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
-	std::vector<GPoint *> &verts;
+	std::vector<GPoint3 *> &verts;
 	/// All generated points in algorithm are stored in pnt_arena
-	std::vector<PntArena> &pnt_arenas;
+	std::vector<PntArena>  &pnt_arenas;
 	/// Tetrahedral mesh
-	TetMesh               &tet_mesh;
+	TetMesh                &tet_mesh;
 	/// Constrained piecewise linear complex
-	PLC                   &plc;
+	PLC                    &plc;
 
 	/* Data used by explicit protecting sphere */
 

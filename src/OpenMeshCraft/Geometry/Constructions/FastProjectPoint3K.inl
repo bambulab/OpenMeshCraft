@@ -9,18 +9,18 @@
 namespace OMC {
 
 template <typename Kernel>
-FastProjectPoint3K<Kernel>::AuxTriangle::AuxTriangle(const EPointT &p1,
-                                                     const EPointT &p2,
-                                                     const EPointT &p3)
+FastProjectPoint3K<Kernel>::AuxTriangle::AuxTriangle(const EPoint3 &p1,
+                                                     const EPoint3 &p2,
+                                                     const EPoint3 &p3)
 {
 	update_aux_triangle(p1, p2, p3);
 }
 
 template <typename Kernel>
 void FastProjectPoint3K<Kernel>::AuxTriangle::update_aux_triangle(
-  const EPointT &p1, const EPointT &p2, const EPointT &p3)
+  const EPoint3 &p1, const EPoint3 &p2, const EPoint3 &p3)
 {
-	VecT p12 = p2 - p1, p23 = p3 - p2, p31 = p1 - p3;
+	Vec3 p12 = p2 - p1, p23 = p3 - p2, p31 = p1 - p3;
 	// find obtuse angle, move obtuse angle point to ap_v0
 	if (p12.dot(p31) > 0)
 	{
@@ -69,8 +69,8 @@ void FastProjectPoint3K<Kernel>::AuxTriangle::update_aux_triangle(
 template <typename Kernel>
 template <typename PrimT>
 auto FastProjectPoint3K<Kernel>::operator()(const PrimT   &prim,
-                                            const GPointT &query) const
-  -> EPointT
+                                            const GPoint3 &query) const
+  -> EPoint3
 {
 	if constexpr (std::is_base_of_v<AuxTriangle, PrimT>)
 	{
@@ -82,23 +82,23 @@ auto FastProjectPoint3K<Kernel>::operator()(const PrimT   &prim,
 	// }
 	else
 	{
-		return EPointT();
+		return EPoint3();
 	}
 }
 
 template <typename Kernel>
 template <typename TriT>
 auto FastProjectPoint3K<Kernel>::project_to_aux_triangle(
-  const TriT &triangle, const GPointT &query) const -> EPointT
+  const TriT &triangle, const GPoint3 &query) const -> EPoint3
 {
-	EPointT     q = ToEP()(query);
+	EPoint3     q = ToEP()(query);
 	const TriT &t = triangle;
 	// If the plane is degenerate, then the triangle is degenerate, and
 	// one tries to find to which segment it is equivalent.
 	// Otherwise project to the non-degenerate triangle.
 	if (triangle.ap_is_plane_degenerate)
 	{
-		SegmentT longest_segment;
+		Segment3 longest_segment;
 		if (t.ap_edge_sqrlen01 > t.ap_edge_sqrlen12)
 		{
 			if (t.ap_edge_sqrlen01 > t.ap_edge_sqrlen02)
@@ -122,7 +122,7 @@ auto FastProjectPoint3K<Kernel>::project_to_aux_triangle(
 		{
 			// if there is no obtuse angle, when the proj_point is outside the
 			// triangle, the proj_point can be simplify projected to edge segment.
-			VecT v0_to_query = q - t.ap_v0;
+			Vec3 v0_to_query = q - t.ap_v0;
 			if (v0_to_query.dot(t.ap_edge_normal01) > 0.0)
 			{
 				// if it is outside edge 01, project it to edge 01
@@ -150,7 +150,7 @@ auto FastProjectPoint3K<Kernel>::project_to_aux_triangle(
 		{
 			// if there is obtuse angle, when the proj_point is outside the triangle,
 			// the proj_point can **NOT** be simplify projected to edge segment.
-			VecT v0_to_query = q - t.ap_v0;
+			Vec3 v0_to_query = q - t.ap_v0;
 			if (v0_to_query.dot(t.ap_edge_normal01) > 0.0)
 			{
 				// if it is outside edge 01, try to project it to edge 01
@@ -182,7 +182,7 @@ auto FastProjectPoint3K<Kernel>::project_to_aux_triangle(
 					return t.ap_v0 + (numerator / t.ap_edge_sqrlen02) * t.ap_edge_vec02;
 			}
 		}
-		VecT v1_to_query = q - t.ap_v1;
+		Vec3 v1_to_query = q - t.ap_v1;
 		if (v1_to_query.dot(t.ap_edge_normal12) > 0.0) // is outside edge 12 ?
 		{
 			NT numerator = v1_to_query.dot(t.ap_edge_vec12);

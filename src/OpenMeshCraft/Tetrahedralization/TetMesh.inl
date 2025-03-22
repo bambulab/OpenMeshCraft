@@ -7,8 +7,8 @@
 namespace OMC {
 
 template <typename Traits>
-TetrahedralMesh<Traits>::TetrahedralMesh(const std::vector<GPoint *> &_vertices,
-                                         const std::vector<NT>       *_weights)
+TetrahedralMesh<Traits>::TetrahedralMesh(
+  const std::vector<GPoint3 *> &_vertices, const std::vector<NT> *_weights)
   : vertices(_vertices)
   , weights(_weights)
 {
@@ -610,7 +610,7 @@ index_t TetrahedralMesh<Traits>::newTet()
  * tetrahedra.
  */
 template <typename Traits>
-void TetrahedralMesh<Traits>::newTets(size_t                inc_size,
+void TetrahedralMesh<Traits>::newTets(size_t                    inc_size,
                                       InlinedVector64<index_t> &new_tets)
 {
 	OMC_EXPENSIVE_ASSERT(!isMultiThread(), "Not thread-safe.");

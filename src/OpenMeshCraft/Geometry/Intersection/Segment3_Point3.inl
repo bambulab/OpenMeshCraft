@@ -7,18 +7,18 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const SegmentT &seg,
-                                                      const GPointT  &pnt) const
+bool Segment3_Point3_DoIntersectK<Kernel>::operator()(const Segment3 &seg,
+                                                      const GPoint3  &pnt) const
 {
-	const GPointT &s0 = seg.start();
-	const GPointT &s1 = seg.end();
+	const GPoint3 &s0 = seg.start();
+	const GPoint3 &s1 = seg.end();
 	return operator()(s0, s1, pnt);
 }
 
 template <typename Kernel>
-bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &s0,
-                                                      const GPointT &s1,
-                                                      const GPointT &pnt) const
+bool Segment3_Point3_DoIntersectK<Kernel>::operator()(const GPoint3 &s0,
+                                                      const GPoint3 &s1,
+                                                      const GPoint3 &pnt) const
 {
 	if (CollinearPoints3().misaligned(s0, s1, pnt))
 		return false; // strictly outside
@@ -60,15 +60,15 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &s0,
 
 template <typename Kernel>
 PointInType
-Segment3_Point3_Do_Intersect<Kernel>::in_segment(const SegmentT &seg,
-                                                 const GPointT  &pnt) const
+Segment3_Point3_DoIntersectK<Kernel>::in_segment(const Segment3 &seg,
+                                                 const GPoint3  &pnt) const
 {
 	return in_segment(seg.start(), seg.end(), pnt);
 }
 
 template <typename Kernel>
-PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment(
-  const GPointT &s0, const GPointT &s1, const GPointT &pnt) const
+PointInType Segment3_Point3_DoIntersectK<Kernel>::in_segment(
+  const GPoint3 &s0, const GPoint3 &s1, const GPoint3 &pnt) const
 {
 	PointInSimplexType type = intersection_type(s0, s1, pnt);
 	if (type == PointInSimplexType::STRICTLY_INSIDE)
@@ -80,15 +80,15 @@ PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment(
 }
 
 template <typename Kernel>
-PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment_collinear(
-  const SegmentT &seg, const GPointT &pnt) const
+PointInType Segment3_Point3_DoIntersectK<Kernel>::in_segment_collinear(
+  const Segment3 &seg, const GPoint3 &pnt) const
 {
 	return in_segment_collinear(seg.start(), seg.end(), pnt);
 }
 
 template <typename Kernel>
-PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment_collinear(
-  const GPointT &s0, const GPointT &s1, const GPointT &pnt) const
+PointInType Segment3_Point3_DoIntersectK<Kernel>::in_segment_collinear(
+  const GPoint3 &s0, const GPoint3 &s1, const GPoint3 &pnt) const
 {
 	if (LessThan3D().coincident(pnt, s0))
 		return PointInType::ON_BOUNDARY;
@@ -131,15 +131,15 @@ PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment_collinear(
 }
 
 template <typename Kernel>
-PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
-  const SegmentT &seg, const GPointT &pnt) const
+PointInSimplexType Segment3_Point3_DoIntersectK<Kernel>::intersection_type(
+  const Segment3 &seg, const GPoint3 &pnt) const
 {
 	return intersection_type(seg.start(), seg.end(), pnt);
 }
 
 template <typename Kernel>
-PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &s0, const GPointT &s1, const GPointT &p) const
+PointInSimplexType Segment3_Point3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &s0, const GPoint3 &s1, const GPoint3 &p) const
 {
 	if (LessThan3D().coincident(p, s0))
 		return PointInSimplexType::ON_VERT0;
@@ -186,7 +186,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 }
 
 template <typename Kernel>
-PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
+PointInSimplexType Segment3_Point3_DoIntersectK<Kernel>::intersection_type(
   const NT *s0, const NT *s1, const NT *p) const
 {
 	if (vec_equals_3d(p, s0))
@@ -208,12 +208,12 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 }
 
 template <typename Kernel>
-bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const SegmentT &seg,
-                                                      const GPointT  &pnt,
+bool Segment3_Point3_DoIntersectK<Kernel>::operator()(const Segment3 &seg,
+                                                      const GPoint3  &pnt,
                                                       int n_max) const
 {
-	const GPointT &s0 = seg.start();
-	const GPointT &s1 = seg.end();
+	const GPoint3 &s0 = seg.start();
+	const GPoint3 &s1 = seg.end();
 
 	if (OrientOn2D()(s0, s1, pnt, n_max) != Sign::ZERO)
 		return false; // strictly outside;
@@ -254,16 +254,16 @@ bool Segment3_Point3_Do_Intersect<Kernel>::operator()(const SegmentT &seg,
 }
 
 template <typename Kernel>
-PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment(
-  const SegmentT &seg, const GPointT &pnt, int n_max) const
+PointInType Segment3_Point3_DoIntersectK<Kernel>::in_segment(
+  const Segment3 &seg, const GPoint3 &pnt, int n_max) const
 {
 	return in_segment(seg.start(), seg.end(), pnt, n_max);
 }
 
 template <typename Kernel>
-PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment(const GPointT &s0,
-                                                             const GPointT &s1,
-                                                             const GPointT &pnt,
+PointInType Segment3_Point3_DoIntersectK<Kernel>::in_segment(const GPoint3 &s0,
+                                                             const GPoint3 &s1,
+                                                             const GPoint3 &pnt,
                                                              int n_max) const
 {
 	PointInSimplexType type = intersection_type(s0, s1, pnt, n_max);
@@ -276,8 +276,8 @@ PointInType Segment3_Point3_Do_Intersect<Kernel>::in_segment(const GPointT &s0,
 }
 
 template <typename Kernel>
-PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &s0, const GPointT &s1, const GPointT &p, int n_max) const
+PointInSimplexType Segment3_Point3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &s0, const GPoint3 &s1, const GPoint3 &p, int n_max) const
 {
 	if (LessThan3D().coincident(p, s0))
 		return PointInSimplexType::ON_VERT0;
@@ -323,7 +323,7 @@ PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
 }
 
 template <typename Kernel>
-PointInSimplexType Segment3_Point3_Do_Intersect<Kernel>::intersection_type(
+PointInSimplexType Segment3_Point3_DoIntersectK<Kernel>::intersection_type(
   const NT *s0, const NT *s1, const NT *p, int n_max) const
 {
 	if (vec_equals_3d(p, s0))

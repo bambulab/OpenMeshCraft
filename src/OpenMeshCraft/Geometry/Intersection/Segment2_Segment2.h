@@ -17,21 +17,20 @@ namespace OMC {
  * - INTERSECT : two segments intersect at a single interior point.
  *
  * - OVERLAP : two segments partially overlap.
- * 
+ *
  * The last three types are all considered as intersect.
  *
  * @tparam Kernel
  */
 template <typename Kernel>
-class Segment2_Segment2_Do_Intersect
+class Segment2_Segment2_DoIntersectK
 {
 public:
 	using K  = Kernel;
 	using NT = typename K::NT;
 
-	using VecT     = typename K::Vec2;
-	using GPointT  = typename K::GPoint2;
-	using SegmentT = typename K::Segment2;
+	using GPoint2  = typename K::GPoint2;
+	using Segment2 = typename K::Segment2;
 
 	using LessThan2D = typename K::LessThan2D;
 	using Orient2D   = typename K::Orient2D;
@@ -41,14 +40,14 @@ public:
 	 * @brief Check if segment and segment intersect.
 	 * @note assume thant no segment is degenerate.
 	 */
-	bool operator()(const SegmentT &seg0, const SegmentT &seg1) const;
+	bool operator()(const Segment2 &seg0, const Segment2 &seg1) const;
 
 	/**
 	 * @brief Get the intersection type between segment and segment.
 	 * @note assume thant no segment is degenerate.
 	 */
-	SimplexIntersectionType intersection_type(const SegmentT &seg0,
-	                                          const SegmentT &seg1) const;
+	SimplexIntersectionType intersection_type(const Segment2 &seg0,
+	                                          const Segment2 &seg1) const;
 
 	/**
 	 * @brief Get the intersection type between segment and segment.
@@ -56,10 +55,10 @@ public:
 	 * @param s10_s11 two vertices of the segment
 	 * @note assume thant no segment is degenerate.
 	 */
-	SimplexIntersectionType intersection_type(const GPointT &s00,
-	                                          const GPointT &s01,
-	                                          const GPointT &s10,
-	                                          const GPointT &s11) const;
+	SimplexIntersectionType intersection_type(const GPoint2 &s00,
+	                                          const GPoint2 &s01,
+	                                          const GPoint2 &s10,
+	                                          const GPoint2 &s11) const;
 
 	/**
 	 * @brief Get the intersection type between segment and segment.

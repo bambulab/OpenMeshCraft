@@ -17,18 +17,18 @@ template <typename Traits>
 class Triangulation
 {
 private:
-	using NT         = typename Traits::NT;
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_SSI = typename Traits::IPoint_SSI;
-	using IPoint_LPI = typename Traits::IPoint_LPI;
-	using IPoint_TPI = typename Traits::IPoint_TPI;
-	using AsGP       = typename Traits::AsGP;
-	using AsEP       = typename Traits::AsEP;
-	using ToEP       = typename Traits::ToEP;
-	using CreateSSI  = typename Traits::CreateSSI;
-	using CreateLPI  = typename Traits::CreateLPI;
-	using CreateTPI  = typename Traits::CreateTPI;
+	using NT           = typename Traits::NT;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
+	using AsGP         = typename Traits::AsGP;
+	using AsEP         = typename Traits::AsEP;
+	using ToEP         = typename Traits::ToEP;
+	using CreateSSI3   = typename Traits::CreateSSI3;
+	using CreateLPI    = typename Traits::CreateLPI;
+	using CreateTPI    = typename Traits::CreateTPI;
 
 	using Orient3D   = typename Traits::Orient3D;
 	using OrientOn2D = typename Traits::OrientOn2D;
@@ -90,14 +90,14 @@ private:
 	                                           const SplitTree &tree);
 
 	std::pair<index_t, bool> locatePointInTreeRecur(const FTriMesh  &subm,
-	                                                const GPoint    &p,
+	                                                const GPoint3   &p,
 	                                                const SplitTree &tree,
 	                                                index_t node_id, UIPair ev);
 #else
 	index_t locatePointInTree(const FTriMesh &subm, index_t p_id,
 	                          const SplitTree &tree);
 
-	index_t locatePointInTreeRecur(const FTriMesh &subm, const GPoint &p,
+	index_t locatePointInTreeRecur(const FTriMesh &subm, const GPoint3 &p,
 	                               const SplitTree &tree, index_t node_id);
 #endif
 
@@ -112,10 +112,10 @@ private:
 	                          SubSegMap &sub_segs_map, TPI2Segs &tpi2segs);
 
 	void findIntersectingElements(FTriMesh &subm, index_t &v_start,
-	                              index_t              &v_stop,
+	                              index_t                  &v_stop,
 	                              InlinedVector64<index_t> &intersected_edges,
 	                              InlinedVector64<index_t> &intersected_tris,
-	                              std::vector<Segment> &segment_list,
+	                              std::vector<Segment>     &segment_list,
 	                              SubSegMap &sub_segs_map, TPI2Segs &tpi2segs);
 
 	void splitSegmentInSubSegments(index_t v_start, index_t v_stop,
@@ -124,9 +124,9 @@ private:
 	index_t createTPI(FTriMesh &subm, index_t seg0_id, index_t seg1_id);
 
 	std::pair<bool, index_t> addAndFixTPI(index_t seg0_id, index_t seg1_id,
-	                                      IPoint_TPI *vtx);
+	                                      IPoint3T_TPI *vtx);
 
-	index_t fixTPI(index_t seg0_id, index_t seg1_id, IPoint_TPI *vtx);
+	index_t fixTPI(index_t seg0_id, index_t seg1_id, IPoint3T_TPI *vtx);
 
 	template <typename tri_iterator, typename edge_iterator>
 	void boundaryWalker(const FTriMesh &subm, index_t v_start, index_t v_stop,

@@ -51,7 +51,7 @@ Triangulation<Traits>::Triangulation(TriSoup                       &_ts,
 	index_t tpi_begin = ts.vertices.size();
 
 	// processing the triangles to split
-	GPoint::enable_global_cached_values(tbb::this_task_arena::max_concurrency());
+	GPoint3::enable_global_cached_values(tbb::this_task_arena::max_concurrency());
 #ifdef OMC_ARR_TR_PARA
 	std::shuffle(tris_to_split.begin(), tris_to_split.end(),
 	             std::mt19937(std::random_device()()));
@@ -77,7 +77,7 @@ Triangulation<Traits>::Triangulation(TriSoup                       &_ts,
 		              triangulateSingleTriangle(t_id, subm, new_tris, new_labels);
 	              });
 #endif
-	GPoint::disable_global_cached_values();
+	GPoint3::disable_global_cached_values();
 
 	postFixIndices(new_tris, new_labels, tpi_begin);
 }
@@ -87,7 +87,7 @@ void Triangulation<Traits>::triangulateSingleTriangle(
   index_t t_id, FTriMesh &subm, std::vector<index_t> &new_tris,
   std::vector<Label> &new_labels)
 {
-	GPoint::clear_global_cached_values();
+	GPoint3::clear_global_cached_values();
 	subm.setMeshInfo(t_id);
 	/*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	 *                                  POINTS AND SEGMENTS RECOVERY
@@ -290,8 +290,8 @@ Triangulation<Traits>::locatePointInTree(const FTriMesh &subm, index_t p_id,
 
 template <typename Traits>
 std::pair<index_t, bool> Triangulation<Traits>::locatePointInTreeRecur(
-  const FTriMesh &subm, const GPoint &p, const SplitTree &tree, index_t node_id,
-  UIPair ev)
+  const FTriMesh &subm, const GPoint3 &p, const SplitTree &tree,
+  index_t node_id, UIPair ev)
 {
 	const SplitTree::Node &nd = tree.getNode(node_id);
 
@@ -381,7 +381,7 @@ index_t Triangulation<Traits>::locatePointInTree(const FTriMesh  &subm,
 
 template <typename Traits>
 index_t Triangulation<Traits>::locatePointInTreeRecur(const FTriMesh  &subm,
-                                                      const GPoint    &p,
+                                                      const GPoint3   &p,
                                                       const SplitTree &tree,
                                                       index_t          node_id)
 {
@@ -511,8 +511,9 @@ template <typename Traits>
 void Triangulation<Traits>::findIntersectingElements(
   FTriMesh &subm, index_t &v_start, index_t &v_stop,
   InlinedVector64<index_t> &intersected_edges,
-  InlinedVector64<index_t> &intersected_tris, std::vector<Segment> &segment_list,
-  SubSegMap &sub_segs_map, OMC_UNUSED TPI2Segs &tpi2segs)
+  InlinedVector64<index_t> &intersected_tris,
+  std::vector<Segment> &segment_list, SubSegMap &sub_segs_map,
+  OMC_UNUSED TPI2Segs &tpi2segs)
 {
 	using IdxPair  = std::pair<index_t, index_t>;
 	using SignPair = std::pair<Sign, Sign>;
@@ -540,7 +541,7 @@ void Triangulation<Traits>::findIntersectingElements(
 			aux_separator[2] = nullptr;
 			for (index_t i = 0; i < 3; i++)
 			{
-				const GPoint &gv = subm.vert(i);
+				const GPoint3 &gv = subm.vert(i);
 
 				Sign ori_to_line =
 				  OrientOn2D()(aux_separator[0], aux_separator[1], gv.data(),
@@ -561,7 +562,7 @@ void Triangulation<Traits>::findIntersectingElements(
 		#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
 			for (index_t i = 0; i < 3; i++)
 			{
-				const GPoint &gv = subm.vert(i);
+				const GPoint3 &gv = subm.vert(i);
 
 				Sign ori_to_line =
 				  OrientOn2D()(aux_separator[0], aux_separator[1], gv.data(),
@@ -601,7 +602,7 @@ void Triangulation<Traits>::findIntersectingElements(
 
 			for (index_t i = 0; i < 3; i++)
 			{
-				const GPoint &gv = subm.vert(i);
+				const GPoint3 &gv = subm.vert(i);
 
 				Sign ori_to_plane = Orient3D()(aux_separator[0], aux_separator[1],
 				                               aux_separator[2], gv.data());
@@ -621,7 +622,7 @@ void Triangulation<Traits>::findIntersectingElements(
 		#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
 			for (index_t i = 0; i < 3; i++)
 			{
-				const GPoint &gv = subm.vert(i);
+				const GPoint3 &gv = subm.vert(i);
 
 				Sign ori_to_plane = Orient3D()(aux_separator[0], aux_separator[1],
 				                               aux_separator[2], gv.data());
@@ -660,13 +661,13 @@ void Triangulation<Traits>::findIntersectingElements(
 		// check if current segment encounters a TPI point
 		if (/*isTPI*/ subm.vertFlag(v_inter))
 		{ // if v_inter is a TPI point, fix indices stored in related segments.
-			const RefSegs &seg_ids   = sub_segs_map.at(unique_pair(v_start, v_stop));
+			const RefSegs &seg_ids = sub_segs_map.at(unique_pair(v_start, v_stop));
 			InlinedVector4<index_t> &t2s = tpi2segs.at(v_inter);
 			for (index_t seg_id : seg_ids)
 			{
 				if (std::find(t2s.begin(), t2s.end(), seg_id) != t2s.end())
 					continue;
-				IPoint_TPI *tpi_inter = (IPoint_TPI *)&subm.vert(v_inter);
+				IPoint3T_TPI *tpi_inter = (IPoint3T_TPI *)&subm.vert(v_inter);
 				for (index_t other_seg_id : t2s)
 				{
 					index_t suitable_vid = fixTPI(seg_id, other_seg_id, tpi_inter);
@@ -845,13 +846,13 @@ void Triangulation<Traits>::findIntersectingElements(
 		// check if current segment encounters a TPI point
 		if (/*isTPI*/ subm.vertFlag(v_inter))
 		{ // if v_inter is a TPI point, fix indices stored in related segments.
-			const RefSegs &seg_ids   = sub_segs_map.at(unique_pair(v_start, v_stop));
+			const RefSegs &seg_ids = sub_segs_map.at(unique_pair(v_start, v_stop));
 			InlinedVector4<index_t> &t2s = tpi2segs.at(v_inter);
 			for (index_t seg_id : seg_ids)
 			{
 				if (std::find(t2s.begin(), t2s.end(), seg_id) != t2s.end())
 					continue;
-				IPoint_TPI *tpi_inter = (IPoint_TPI *)&subm.vert(v_inter);
+				IPoint3T_TPI *tpi_inter = (IPoint3T_TPI *)&subm.vert(v_inter);
 				for (index_t other_seg_id : t2s)
 				{
 					index_t suitable_vid = fixTPI(seg_id, other_seg_id, tpi_inter);
@@ -982,7 +983,7 @@ void Triangulation<Traits>::findIntersectingElements(
 	// fix indices between them.
 	if (t2s.size() > 2)
 	{
-		IPoint_TPI *new_tpi = (IPoint_TPI *)&subm.vert(local_tpi_id);
+		IPoint3T_TPI *new_tpi = (IPoint3T_TPI *)&subm.vert(local_tpi_id);
 		for (index_t i = 0; i < t2s.size(); i++)
 		{
 			index_t seg_id = t2s[i];
@@ -1106,16 +1107,16 @@ index_t Triangulation<Traits>::createTPI(FTriMesh &subm, index_t seg0_id,
 
 	auto [t0, t1, t2] = planes;
 
-	std::array<const GPoint *, 3> t0_pnts = {
+	std::array<const GPoint3 *, 3> t0_pnts = {
 	  &ts.triVert(t0, 0), &ts.triVert(t0, 1), &ts.triVert(t0, 2)};
-	std::array<const GPoint *, 3> t1_pnts = {
+	std::array<const GPoint3 *, 3> t1_pnts = {
 	  &ts.triVert(t1, 0), &ts.triVert(t1, 1), &ts.triVert(t1, 2)};
-	std::array<const GPoint *, 3> t2_pnts = {
+	std::array<const GPoint3 *, 3> t2_pnts = {
 	  &ts.triVert(t2, 0), &ts.triVert(t2, 1), &ts.triVert(t2, 2)};
 
 	int cur_thread_idx = tbb::this_task_arena::current_thread_index();
 
-	IPoint_TPI *new_v = pnt_arenas[cur_thread_idx].emplace(
+	IPoint3T_TPI *new_v = pnt_arenas[cur_thread_idx].emplace(
 	  CreateTPI()(*t0_pnts[0], *t0_pnts[1], *t0_pnts[2], *t1_pnts[0], *t1_pnts[1],
 	              *t1_pnts[2], *t2_pnts[0], *t2_pnts[1], *t2_pnts[2]));
 
@@ -1129,7 +1130,7 @@ index_t Triangulation<Traits>::createTPI(FTriMesh &subm, index_t seg0_id,
 
 	if (!new_vertex_created)
 	{
-		IPoint_TPI::gcv().remove(new_v);
+		IPoint3T_TPI::gcv().remove(new_v);
 		pnt_arenas[cur_thread_idx].recycle(new_v);
 	}
 
@@ -1139,7 +1140,7 @@ index_t Triangulation<Traits>::createTPI(FTriMesh &subm, index_t seg0_id,
 template <typename Traits>
 std::pair<bool, index_t> Triangulation<Traits>::addAndFixTPI(index_t seg0_id,
                                                              index_t seg1_id,
-                                                             IPoint_TPI *vtx)
+                                                             IPoint3T_TPI *vtx)
 {
 	bool    new_vertex_created = false;
 	index_t suitable_vid = InvalidIndex, fix_vid = InvalidIndex;
@@ -1194,7 +1195,7 @@ std::pair<bool, index_t> Triangulation<Traits>::addAndFixTPI(index_t seg0_id,
 
 template <typename Traits>
 index_t Triangulation<Traits>::fixTPI(index_t seg0_id, index_t seg1_id,
-                                      IPoint_TPI *vtx)
+                                      IPoint3T_TPI *vtx)
 {
 	index_t suitable_vid = InvalidIndex, fix_vid = InvalidIndex;
 
@@ -1244,8 +1245,8 @@ template <typename Traits>
 template <typename tri_iterator, typename edge_iterator>
 void Triangulation<Traits>::boundaryWalker(const FTriMesh &subm,
                                            index_t v_start, index_t v_stop,
-                                           tri_iterator          curr_p,
-                                           edge_iterator         curr_e,
+                                           tri_iterator              curr_p,
+                                           edge_iterator             curr_e,
                                            InlinedVector64<index_t> &h)
 {
 	h.clear();
@@ -1289,7 +1290,7 @@ void Triangulation<Traits>::boundaryWalker(const FTriMesh &subm,
 }
 
 template <typename Traits>
-void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
+void Triangulation<Traits>::earcutLinear(const FTriMesh                 &subm,
                                          const InlinedVector64<index_t> &poly,
                                          InlinedVector64<index_t>       &tris)
 {
@@ -1332,9 +1333,9 @@ void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
 		if (subm.vert(poly[curr]).is_TPI())
 		{
 #ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-			const GPoint &p0 = subm.vert(poly[prev[curr]]);
-			const GPoint &p1 = subm.vert(poly[curr]);
-			const GPoint &p2 = subm.vert(poly[next[curr]]);
+			const GPoint3 &p0 = subm.vert(poly[prev[curr]]);
+			const GPoint3 &p1 = subm.vert(poly[curr]);
+			const GPoint3 &p2 = subm.vert(poly[next[curr]]);
 
 			Sign check = OrientOn2D()(p0, p1, p2, OrPlane_to_int(subm.refPlane()));
 			OMC_ASSERT(check == orientation, "TPI vertex is not convex.");
@@ -1370,9 +1371,9 @@ void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
 			if (subm.vert(poly[prev[curr]]).is_TPI())
 			{
 #ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-				const GPoint &p0 = subm.vert(poly[prev[prev[curr]]]);
-				const GPoint &p1 = subm.vert(poly[prev[curr]]);
-				const GPoint &p2 = subm.vert(poly[next[curr]]);
+				const GPoint3 &p0 = subm.vert(poly[prev[prev[curr]]]);
+				const GPoint3 &p1 = subm.vert(poly[prev[curr]]);
+				const GPoint3 &p2 = subm.vert(poly[next[curr]]);
 				Sign check = OrientOn2D()(p0, p1, p2, OrPlane_to_int(subm.refPlane()));
 				OMC_ASSERT(check == orientation, "TPI vertex is not convex.")
 #endif
@@ -1386,9 +1387,9 @@ void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
 			if (subm.vert(poly[next[curr]]).is_TPI())
 			{
 #ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-				const GPoint &p0 = subm.vert(poly[prev[curr]]);
-				const GPoint &p1 = subm.vert(poly[next[curr]]);
-				const GPoint &p2 = subm.vert(poly[next[next[curr]]]);
+				const GPoint3 &p0 = subm.vert(poly[prev[curr]]);
+				const GPoint3 &p1 = subm.vert(poly[next[curr]]);
+				const GPoint3 &p2 = subm.vert(poly[next[next[curr]]]);
 				Sign check = OrientOn2D()(p0, p1, p2, OrPlane_to_int(subm.refPlane()));
 				OMC_ASSERT(check == orientation, "TPI vertex is not convex.")
 #endif
@@ -1427,9 +1428,9 @@ void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
 		if (poly[prev[curr]] == poly[next[curr]] || is_ear[curr])
 			continue;
 
-		const GPoint &p0 = subm.vert(poly[prev[curr]]);
-		const GPoint &p1 = subm.vert(poly[curr]);
-		const GPoint &p2 = subm.vert(poly[next[curr]]);
+		const GPoint3 &p0 = subm.vert(poly[prev[curr]]);
+		const GPoint3 &p1 = subm.vert(poly[curr]);
+		const GPoint3 &p2 = subm.vert(poly[next[curr]]);
 
 		Sign check = OrientOn2D()(p0, p1, p2, OrPlane_to_int(subm.refPlane()));
 		if (check == orientation)
@@ -1471,9 +1472,9 @@ void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
 		// check if prev and next have become new_ears
 		if (!is_ear[prev[curr]] && prev[curr] != 0)
 		{
-			const GPoint &p0 = subm.vert(poly[prev[prev[curr]]]);
-			const GPoint &p1 = subm.vert(poly[prev[curr]]);
-			const GPoint &p2 = subm.vert(poly[next[curr]]);
+			const GPoint3 &p0 = subm.vert(poly[prev[prev[curr]]]);
+			const GPoint3 &p1 = subm.vert(poly[prev[curr]]);
+			const GPoint3 &p2 = subm.vert(poly[next[curr]]);
 
 			Sign check = OrientOn2D()(p0, p1, p2, OrPlane_to_int(subm.refPlane()));
 			if (check == orientation)
@@ -1485,9 +1486,9 @@ void Triangulation<Traits>::earcutLinear(const FTriMesh             &subm,
 
 		if (!is_ear[next[curr]] && next[curr] != size - 1)
 		{
-			const GPoint &p0 = subm.vert(poly[prev[curr]]);
-			const GPoint &p1 = subm.vert(poly[next[curr]]);
-			const GPoint &p2 = subm.vert(poly[next[next[curr]]]);
+			const GPoint3 &p0 = subm.vert(poly[prev[curr]]);
+			const GPoint3 &p1 = subm.vert(poly[next[curr]]);
+			const GPoint3 &p2 = subm.vert(poly[next[next[curr]]]);
 
 			Sign check = OrientOn2D()(p0, p1, p2, OrPlane_to_int(subm.refPlane()));
 			if (check == orientation)

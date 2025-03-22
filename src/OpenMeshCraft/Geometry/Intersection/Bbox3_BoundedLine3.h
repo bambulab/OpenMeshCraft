@@ -9,19 +9,19 @@ namespace OMC {
  * @tparam Kernel
  */
 template <typename Kernel>
-class Bbox3_BoundedLine3_Do_Intersect
+class Bbox3_BoundedLine3_DoIntersectK
 {
 public:
-	using K      = Kernel;
-	using NT     = typename K::NT;
-	using GPoint = typename K::GPoint3;
-	using EPoint = typename K::EPoint3;
-	using Bbox   = typename K::BoundingBox3;
+	using K            = Kernel;
+	using NT           = typename K::NT;
+	using GPoint3      = typename K::GPoint3;
+	using EPoint3      = typename K::EPoint3;
+	using BoundingBox3 = typename K::BoundingBox3;
 
 	using OrientOn2D = typename K::OrientOn2D;
 	using LessThan3D = typename K::LessThan3D;
 
-	using Box_Pnt_Do_Inter = Bbox_Point_Do_Intersect<Kernel>;
+	using Box_Pnt_DoInter = Bbox_Point_DoIntersectK<Kernel>;
 
 public:
 	/// @brief The bounded line is given by two end points \p p and \p q.
@@ -30,29 +30,29 @@ public:
 	/// When both sides are bounded, the line is a segment.
 	/// When one side is bounded, the line is a ray.
 	/// When neither side is bounded, the line is an infinite line.
-	bool do_intersect(const Bbox &box, const GPoint &p, bool p_bounded,
-	                  const GPoint &q, bool q_bounded) const
+	bool do_intersect(const BoundingBox3 &box, const GPoint3 &p, bool p_bounded,
+	                  const GPoint3 &q, bool q_bounded) const
 	{
-		if (Box_Pnt_Do_Inter()(box, p) || Box_Pnt_Do_Inter()(box, q))
+		if (Box_Pnt_DoInter()(box, p) || Box_Pnt_DoInter()(box, q))
 			return true;
 
 		Sign ret;
 
-		auto less_x = [](const GPoint &lhs, const GPoint &rhs)
+		auto less_x = [](const GPoint3 &lhs, const GPoint3 &rhs)
 		{ return LessThan3D().on_x(lhs, rhs) == Sign::NEGATIVE; };
-		auto less_y = [](const GPoint &lhs, const GPoint &rhs)
+		auto less_y = [](const GPoint3 &lhs, const GPoint3 &rhs)
 		{ return LessThan3D().on_y(lhs, rhs) == Sign::NEGATIVE; };
-		auto less_z = [](const GPoint &lhs, const GPoint &rhs)
+		auto less_z = [](const GPoint3 &lhs, const GPoint3 &rhs)
 		{ return LessThan3D().on_z(lhs, rhs) == Sign::NEGATIVE; };
-		auto leq_x = [](const GPoint &lhs, const GPoint &rhs)
+		auto leq_x = [](const GPoint3 &lhs, const GPoint3 &rhs)
 		{ return LessThan3D().on_x(lhs, rhs) <= Sign::ZERO; };
-		auto leq_y = [](const GPoint &lhs, const GPoint &rhs)
+		auto leq_y = [](const GPoint3 &lhs, const GPoint3 &rhs)
 		{ return LessThan3D().on_y(lhs, rhs) <= Sign::ZERO; };
-		auto leq_z = [](const GPoint &lhs, const GPoint &rhs)
+		auto leq_z = [](const GPoint3 &lhs, const GPoint3 &rhs)
 		{ return LessThan3D().on_z(lhs, rhs) <= Sign::ZERO; };
 
-		const GPoint &bmin = box.min_bound();
-		const GPoint &bmax = box.max_bound();
+		const GPoint3 &bmin = box.min_bound();
+		const GPoint3 &bmax = box.max_bound();
 
 		// First, we calculate the interval on the line that is inside between box
 		// on each dimension. The interval is represented by two end points on the
@@ -158,7 +158,7 @@ public:
 			//      det = | q.x    q.y   1 |  < 0 ?
 			//            | p.x    p.y   1 |
 			//  => OrientOn2D.on_xy (p, q, (rmaxx, rminy, 1)) > 0 ?
-			ret = OrientOn2D().on_xy(p, q, EPoint(rmaxx, rminy, 1.));
+			ret = OrientOn2D().on_xy(p, q, EPoint3(rmaxx, rminy, 1.));
 			if ((x_reverse == y_reverse && ret == Sign::POSITIVE) ||
 			    (x_reverse != y_reverse && ret == Sign::NEGATIVE))
 				return false;
@@ -171,7 +171,7 @@ public:
 			//      det = | q.x    q.y   1 |  > 0 ?
 			//            | p.x    p.y   1 |
 			//  => OrientOn2D.on_xy (p, q, (rminx, rmaxy, 1)) < 0 ?
-			ret = OrientOn2D().on_xy(p, q, EPoint(rminx, rmaxy, 1.));
+			ret = OrientOn2D().on_xy(p, q, EPoint3(rminx, rmaxy, 1.));
 			if ((x_reverse == y_reverse && ret == Sign::NEGATIVE) ||
 			    (x_reverse != y_reverse && ret == Sign::POSITIVE))
 				return false;
@@ -217,12 +217,12 @@ public:
 
 		if (!y_degenerate || !z_degenerate)
 		{
-			ret = OrientOn2D().on_yz(p, q, EPoint(1., rmaxy, rminz));
+			ret = OrientOn2D().on_yz(p, q, EPoint3(1., rmaxy, rminz));
 			if ((y_reverse == z_reverse && ret == Sign::POSITIVE) ||
 			    (y_reverse != z_reverse && ret == Sign::NEGATIVE))
 				return false;
 
-			ret = OrientOn2D().on_yz(p, q, EPoint(1., rminy, rmaxz));
+			ret = OrientOn2D().on_yz(p, q, EPoint3(1., rminy, rmaxz));
 			if ((y_reverse == z_reverse && ret == Sign::NEGATIVE) ||
 			    (y_reverse != z_reverse && ret == Sign::POSITIVE))
 				return false;
@@ -230,12 +230,12 @@ public:
 
 		if (!x_degenerate || !z_degenerate)
 		{
-			ret = OrientOn2D().on_zx(p, q, EPoint(rmaxx, 1., rminz));
+			ret = OrientOn2D().on_zx(p, q, EPoint3(rmaxx, 1., rminz));
 			if ((x_reverse == z_reverse && ret == Sign::NEGATIVE) ||
 			    (x_reverse != z_reverse && ret == Sign::POSITIVE))
 				return false;
 
-			ret = OrientOn2D().on_zx(p, q, EPoint(rminx, 1., rmaxz));
+			ret = OrientOn2D().on_zx(p, q, EPoint3(rminx, 1., rmaxz));
 			if ((x_reverse == z_reverse && ret == Sign::POSITIVE) ||
 			    (x_reverse != z_reverse && ret == Sign::NEGATIVE))
 				return false;

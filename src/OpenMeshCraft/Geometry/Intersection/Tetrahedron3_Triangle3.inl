@@ -5,18 +5,18 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Tetrahedron3_Triangle3_Do_Intersect<Kernel>::operator()(
-  const TetrahedronT &tet, const TriangleT &tri) const
+bool Tetrahedron3_Triangle3_DoIntersectK<Kernel>::operator()(
+  const Tetrahedron3 &tet, const Triangle3 &tri) const
 {
-	const GPointT &t0 = tet.v0(), &t1 = tet.v1(), &t2 = tet.v2(), &t3 = tet.v3();
-	const GPointT &v0 = tri.v0(), &v1 = tri.v1(), &v2 = tri.v2();
+	const GPoint3 &t0 = tet.v0(), &t1 = tet.v1(), &t2 = tet.v2(), &t3 = tet.v3();
+	const GPoint3 &v0 = tri.v0(), &v1 = tri.v1(), &v2 = tri.v2();
 	return operator()(t0, t1, t2, t3, v0, v1, v2);
 }
 
 template <typename Kernel>
-bool Tetrahedron3_Triangle3_Do_Intersect<Kernel>::operator()(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2, const GPointT &t3,
-  const GPointT &v0, const GPointT &v1, const GPointT &v2) const
+bool Tetrahedron3_Triangle3_DoIntersectK<Kernel>::operator()(
+  const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2, const GPoint3 &t3,
+  const GPoint3 &v0, const GPoint3 &v1, const GPoint3 &v2) const
 {
 	return intersection_type(t0, t1, t2, t3, v0, v1, v2) >=
 	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
@@ -24,19 +24,19 @@ bool Tetrahedron3_Triangle3_Do_Intersect<Kernel>::operator()(
 
 template <typename Kernel>
 SimplexIntersectionType
-Tetrahedron3_Triangle3_Do_Intersect<Kernel>::intersection_type(
-  const TetrahedronT &tet, const TriangleT &tri) const
+Tetrahedron3_Triangle3_DoIntersectK<Kernel>::intersection_type(
+  const Tetrahedron3 &tet, const Triangle3 &tri) const
 {
-	const GPointT &t0 = tet.v0(), &t1 = tet.v1(), &t2 = tet.v2(), &t3 = tet.v3();
-	const GPointT &v0 = tri.v0(), &v1 = tri.v1(), &v2 = tri.v2();
+	const GPoint3 &t0 = tet.v0(), &t1 = tet.v1(), &t2 = tet.v2(), &t3 = tet.v3();
+	const GPoint3 &v0 = tri.v0(), &v1 = tri.v1(), &v2 = tri.v2();
 	return intersection_type(t0, t1, t2, t3, v0, v1, v2);
 }
 
 template <typename Kernel>
 SimplexIntersectionType
-Tetrahedron3_Triangle3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2, const GPointT &t3,
-  const GPointT &v0, const GPointT &v1, const GPointT &v2) const
+Tetrahedron3_Triangle3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2, const GPoint3 &t3,
+  const GPoint3 &v0, const GPoint3 &v1, const GPoint3 &v2) const
 {
 	// the tetrahedron is abbreviated as tet, and the triangle as tri.
 	// the vertices of tet is called ti, and the vertices of tri is called vi.

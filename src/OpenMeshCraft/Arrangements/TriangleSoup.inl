@@ -56,28 +56,28 @@ struct TriangleSoup<Traits>::EdgeComparator
 	{
 		return operator()(ts.vert(lhs), ts.vert(rhs));
 	}
-	bool operator()(index_t lhs, const GPoint &rhs) const
+	bool operator()(index_t lhs, const GPoint3 &rhs) const
 	{
 		return operator()(ts.vert(lhs), rhs);
 	}
-	bool operator()(const GPoint &lhs, index_t rhs) const
+	bool operator()(const GPoint3 &lhs, index_t rhs) const
 	{
 		return operator()(lhs, ts.vert(rhs));
 	}
-	bool operator()(const GPoint &lhs, const GPoint &rhs) const
+	bool operator()(const GPoint3 &lhs, const GPoint3 &rhs) const
 	{
 		if (!lhs.is_explicit() && lhs.point_type() == rhs.point_type())
 		{ // lhs and rhs are both implicit points, compare topology first.
 			if (lhs.is_SSI())
 			{
-				const IPoint_SSI &_lhs = lhs.SSI(), &_rhs = rhs.SSI();
+				const IPoint3T_SSI &_lhs = lhs.SSI(), &_rhs = rhs.SSI();
 				if (&_lhs.A() == &_rhs.A() && &_lhs.B() == &_rhs.B() &&
 				    &_lhs.P() == &_rhs.P() && &_lhs.Q() == &_rhs.Q())
 					return false;
 			}
 			else if (lhs.is_LPI())
 			{
-				const IPoint_LPI &_lhs = lhs.LPI(), &_rhs = rhs.LPI();
+				const IPoint3T_LPI &_lhs = lhs.LPI(), &_rhs = rhs.LPI();
 				if (&_lhs.P() == &_rhs.P() && &_lhs.Q() == &_rhs.Q() &&
 				    &_lhs.R() == &_rhs.R() && &_lhs.S() == &_rhs.S() &&
 				    &_lhs.T() == &_rhs.T())
@@ -124,17 +124,17 @@ struct TriangleSoup<Traits>::SegComparator
 	{
 		return operator()(ts->vert(lhs), ts->vert(rhs));
 	}
-	bool operator()(index_t lhs, const GPoint &rhs) const
+	bool operator()(index_t lhs, const GPoint3 &rhs) const
 	{
 		return operator()(ts->vert(lhs), rhs);
 	}
-	bool operator()(const GPoint &lhs, index_t rhs) const
+	bool operator()(const GPoint3 &lhs, index_t rhs) const
 	{
 		return operator()(lhs, ts->vert(rhs));
 	}
-	bool operator()(const GPoint &lhs, const GPoint &rhs) const
+	bool operator()(const GPoint3 &lhs, const GPoint3 &rhs) const
 	{
-		const IPoint_TPI &_lhs = lhs.TPI(), &_rhs = rhs.TPI();
+		const IPoint3T_TPI &_lhs = lhs.TPI(), &_rhs = rhs.TPI();
 		if (&_lhs.V1() == &_rhs.V1() && &_lhs.V2() == &_rhs.V2() &&
 		    &_lhs.V3() == &_rhs.V3() && &_lhs.U1() == &_rhs.U1() &&
 		    &_lhs.U2() == &_rhs.U2() && &_lhs.U3() == &_rhs.U3() &&
@@ -180,7 +180,7 @@ void TriangleSoup<Traits>::initialize()
 }
 
 template <typename Traits>
-auto TriangleSoup<Traits>::vert(index_t v_id) const -> const GPoint &
+auto TriangleSoup<Traits>::vert(index_t v_id) const -> const GPoint3 &
 {
 	OMC_EXPENSIVE_ASSERT(v_id < numVerts(), "vtx id out of range");
 	return *vertices[v_id];
@@ -195,7 +195,7 @@ auto TriangleSoup<Traits>::vertPtr(index_t v_id) const -> const NT *
 }
 
 template <typename Traits>
-index_t TriangleSoup<Traits>::addImplVert(GPoint *pp)
+index_t TriangleSoup<Traits>::addImplVert(GPoint3 *pp)
 {
 	std::lock_guard<tbb::spin_mutex> lock(new_vertex_mutex);
 	vertices.push_back(pp);
@@ -287,16 +287,16 @@ index_t TriangleSoup<Traits>::getOrAddEdge(index_t v0_id, index_t v1_id)
 }
 
 template <typename Traits>
-auto TriangleSoup<Traits>::edgeVert(index_t e_id,
-                                    index_t off) const -> const GPoint &
+auto TriangleSoup<Traits>::edgeVert(index_t e_id, index_t off) const
+  -> const GPoint3 &
 {
 	OMC_EXPENSIVE_ASSERT(e_id < numEdges(), "e_id out of range");
 	return *vertices[*(&edges[e_id].first + off)];
 }
 
 template <typename Traits>
-auto TriangleSoup<Traits>::edgeVertPtr(index_t e_id,
-                                       index_t off) const -> const NT *
+auto TriangleSoup<Traits>::edgeVertPtr(index_t e_id, index_t off) const
+  -> const NT *
 {
 	OMC_EXPENSIVE_ASSERT(e_id < numEdges(), "e_id out of range");
 	return vertices[*(&edges[e_id].first + off)]->data();
@@ -317,16 +317,16 @@ index_t TriangleSoup<Traits>::triVertID(index_t t_id, index_t off) const
 }
 
 template <typename Traits>
-auto TriangleSoup<Traits>::triVert(index_t t_id,
-                                   index_t off) const -> const GPoint &
+auto TriangleSoup<Traits>::triVert(index_t t_id, index_t off) const
+  -> const GPoint3 &
 {
 	OMC_EXPENSIVE_ASSERT(t_id < numTris(), "t_id out of range");
 	return vert(triangles[3 * t_id + off]);
 }
 
 template <typename Traits>
-auto TriangleSoup<Traits>::triVertPtr(index_t t_id,
-                                      index_t off) const -> const NT *
+auto TriangleSoup<Traits>::triVertPtr(index_t t_id, index_t off) const
+  -> const NT *
 {
 	OMC_EXPENSIVE_ASSERT(t_id < numTris(), "t_id out of range");
 	return vertPtr(triangles[3 * t_id + off]);
@@ -399,8 +399,8 @@ tbb::spin_mutex &TriangleSoup<Traits>::getE2PMutex(index_t e_id)
  * @note Before calling this func, lock the edge by edge2pts_mutex.
  */
 template <typename Traits>
-index_t TriangleSoup<Traits>::findVertexInEdge(index_t       e_id,
-                                               const GPoint &pnt) const
+index_t TriangleSoup<Traits>::findVertexInEdge(index_t        e_id,
+                                               const GPoint3 &pnt) const
 {
 	OMC_EXPENSIVE_ASSERT(e_id < edge2pts.size(), "out of range");
 	const Edge2PntsSet &points = edge2pts[e_id];
@@ -457,12 +457,12 @@ void TriangleSoup<Traits>::fixVertexInEdge(index_t e_id, index_t old_vid,
 }
 
 template <typename Traits>
-index_t TriangleSoup<Traits>::getOrAddSegment(const Segment &seg, index_t e_id)
+index_t TriangleSoup<Traits>::getOrAddSegment(const Segment3 &seg, index_t e_id)
 {
 	OMC_EXPENSIVE_ASSERT(is_unique(seg), "segment is not unique");
 	index_t outer_map = (seg.first + seg.second) % seg_map.size();
 
-	phmap::flat_hash_map<Segment, index_t, hash<Segment>> &sm =
+	phmap::flat_hash_map<Segment3, index_t, hash<Segment3>> &sm =
 	  seg_map[outer_map];
 
 	// lock until finding and/or adding operation end.
@@ -502,18 +502,18 @@ index_t TriangleSoup<Traits>::getOrAddSegment(const Segment &seg, index_t e_id)
 }
 
 template <typename Traits>
-auto TriangleSoup<Traits>::segment(index_t seg_id) const -> Segment
+auto TriangleSoup<Traits>::segment(index_t seg_id) const -> Segment3
 {
 	OMC_EXPENSIVE_ASSERT(seg_id < segments.size(), "out of range");
 	return segments[seg_id];
 }
 
 template <typename Traits>
-index_t TriangleSoup<Traits>::segmentID(const Segment &seg) const
+index_t TriangleSoup<Traits>::segmentID(const Segment3 &seg) const
 {
 	OMC_EXPENSIVE_ASSERT(is_unique(seg), "segment is not unique");
 	index_t outer_map = (seg.first + seg.second) % seg_map.size();
-	const phmap::flat_hash_map<Segment, index_t, hash<Segment>> &sm =
+	const phmap::flat_hash_map<Segment3, index_t, hash<Segment3>> &sm =
 	  seg_map[outer_map];
 
 	// we do not lock bacause it is not neccessary now.
@@ -603,8 +603,8 @@ tbb::spin_mutex &TriangleSoup<Traits>::getS2PMutex(index_t seg_id)
 
 /// @brief similar to findVertexInEdge
 template <typename Traits>
-index_t TriangleSoup<Traits>::findVertexInSeg(index_t       seg_id,
-                                              const GPoint &pnt) const
+index_t TriangleSoup<Traits>::findVertexInSeg(index_t        seg_id,
+                                              const GPoint3 &pnt) const
 {
 	OMC_EXPENSIVE_ASSERT(seg_id < seg2pts.size(), "out of range");
 
@@ -625,9 +625,9 @@ void TriangleSoup<Traits>::addVertexInSeg(index_t seg_id, index_t v_id)
 #ifndef OMC_ARR_GLOBAL_POINT_SET
 	if (points.empty())
 	{ // initialize a comparator for current seg2pts
-		const Segment &seg = segments[seg_id];
-		const GPoint  &s0  = vert(seg.first);
-		const GPoint  &s1  = vert(seg.second);
+		const Segment3 &seg = segments[seg_id];
+		const GPoint3  &s0  = vert(seg.first);
+		const GPoint3  &s1  = vert(seg.second);
 
 		int longest_axis = LongestAxis()(s0, s1);
 		points           = Seg2PntsSet(SegComparator(this, longest_axis));
@@ -669,7 +669,7 @@ void TriangleSoup<Traits>::fixVertexInSeg(index_t seg_id, index_t old_vid,
 
 #ifdef OMC_ARR_GLOBAL_POINT_SET
 template <typename Traits>
-std::pair<index_t, bool> TriangleSoup<Traits>::addUniquePoint(GPoint &pnt)
+std::pair<index_t, bool> TriangleSoup<Traits>::addUniquePoint(GPoint3 &pnt)
 {
 	std::lock_guard<tbb::spin_mutex> lock(new_uniq_point_mutex);
 
@@ -948,8 +948,8 @@ void TriangleSoup<Traits>::fixAllIndices()
 	{
 		auto fix_segments = [this, &seg_new_id, &any_seg_fixed](index_t seg_id)
 		{
-			const Segment &old_seg = segments[seg_id];
-			Segment        new_seg =
+			const Segment3 &old_seg = segments[seg_id];
+			Segment3        new_seg =
 			  unique_pair(indices[old_seg.first].load(std::memory_order_relaxed),
 			              indices[old_seg.second].load(std::memory_order_relaxed));
 			if (new_seg == old_seg)
@@ -1089,7 +1089,8 @@ void TriangleSoup<Traits>::addEndPointsToE2P()
 		e2p.push_back(ev1);
 		remove_duplicates(e2p);
 		std::sort(e2p.begin(), e2p.end(),
-		          [this](index_t lhs, index_t rhs) {
+		          [this](index_t lhs, index_t rhs)
+		          {
 			          return LessThan3D()(*vertices[lhs], *vertices[rhs]) ==
 			                 Sign::NEGATIVE;
 		          });

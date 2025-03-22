@@ -18,12 +18,12 @@ public:
 	using K = Kernel;
 
 	using NT           = typename K::NT;
-	using VecT         = typename K::Vec3;
-	using GPointT      = typename K::GPoint3;
-	using EPointT      = typename K::EPoint3;
-	using BoundingBoxT = typename K::BoundingBox3;
-	using SegmentT     = typename K::Segment3;
-	using TriangleT    = typename K::Triangle3;
+	using Vec3         = typename K::Vec3;
+	using GPoint3      = typename K::GPoint3;
+	using EPoint3      = typename K::EPoint3;
+	using BoundingBox3 = typename K::BoundingBox3;
+	using Segment3     = typename K::Segment3;
+	using Triangle3    = typename K::Triangle3;
 
 	using ToEP = typename K::ToEP;
 
@@ -43,18 +43,18 @@ public:
 	{
 	public:
 		/// @brief Initialize the aux triangle with three points from base triangle.
-		AuxTriangle(const EPointT &p1, const EPointT &p2, const EPointT &p3);
+		AuxTriangle(const EPoint3 &p1, const EPoint3 &p2, const EPoint3 &p3);
 
 		/// @brief Update the aux triangle with three points from base triangle.
-		void update_aux_triangle(const EPointT &p1, const EPointT &p2,
-		                         const EPointT &p3);
+		void update_aux_triangle(const EPoint3 &p1, const EPoint3 &p2,
+		                         const EPoint3 &p3);
 
 	private:
 		// used for accelerating projecting a point to this triangle.
-		EPointT ap_v0, ap_v1, ap_v2;
-		VecT    ap_face_normal;
-		VecT    ap_edge_vec01, ap_edge_vec02, ap_edge_vec12;
-		VecT    ap_edge_normal01, ap_edge_normal02, ap_edge_normal12;
+		EPoint3 ap_v0, ap_v1, ap_v2;
+		Vec3    ap_face_normal;
+		Vec3    ap_edge_vec01, ap_edge_vec02, ap_edge_vec12;
+		Vec3    ap_edge_normal01, ap_edge_normal02, ap_edge_normal12;
 		NT      ap_edge_sqrlen01, ap_edge_sqrlen02, ap_edge_sqrlen12;
 		bool    ap_has_obtuse_angle;
 		bool    ap_is_plane_degenerate;
@@ -64,13 +64,13 @@ public:
 
 public:
 	template <typename PrimT>
-	EPointT operator()(const PrimT &prim, const GPointT &point) const;
+	EPoint3 operator()(const PrimT &prim, const GPoint3 &point) const;
 
 private:
 	/* methods for AuxTriangle */
 	template <typename TriT>
-	EPointT project_to_aux_triangle(const TriT    &triangle,
-	                                const GPointT &query) const;
+	EPoint3 project_to_aux_triangle(const TriT    &triangle,
+	                                const GPoint3 &query) const;
 };
 
 } // namespace OMC

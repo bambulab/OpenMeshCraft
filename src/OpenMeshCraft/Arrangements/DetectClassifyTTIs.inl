@@ -7,13 +7,13 @@
 
 #if defined(OMC_ARR_PROFILE) && 0
 	#define COLLECT_INTERSECTING_TRIANGLE                                     \
-		if (Tri3_Tri3_DoInter().intersection_type(                              \
+		if (Triangle3_Triangle3_DoIntersect().intersection_type(                \
 		      ts.triVertPtr(b0.id(), 0), ts.triVertPtr(b0.id(), 1),             \
 		      ts.triVertPtr(b0.id(), 2), ts.triVertPtr(b1.id(), 0),             \
 		      ts.triVertPtr(b1.id(), 1),                                        \
 		      ts.triVertPtr(b1.id(), 2)) >= SimplexIntersectionType::INTERSECT) \
 		{                                                                       \
-			intersecting_triangle_pairs.push_back(unique_pair(b0.id(), b1.id()));  \
+			intersecting_triangle_pairs.push_back(unique_pair(b0.id(), b1.id())); \
 		}
 
 	#define REPORT_INTERSECTING_TRIANGLE                                \
@@ -49,10 +49,10 @@ DetectClassifyTTIs<Traits>::DetectClassifyTTIs(
 	std::vector<index_t> small_nodes, large_nodes;
 	partitionNodes(leaf_nodes, small_nodes, large_nodes);
 
-	GPoint::enable_global_cached_values(tbb::this_task_arena::max_concurrency());
+	GPoint3::enable_global_cached_values(tbb::this_task_arena::max_concurrency());
 	parallelOnSmallNodes(small_nodes);
 	parallelOnLargeNodes(large_nodes);
-	GPoint::disable_global_cached_values();
+	GPoint3::disable_global_cached_values();
 
 	REPORT_INTERSECTING_TRIANGLE;
 	/* Post fix of Triangle-Triangle-Intersection */
@@ -116,7 +116,7 @@ void DetectClassifyTTIs<Traits>::parallelOnSmallNodes(
 		OMC_ARR_PROFILE_INC_TOTAL_CNT(ArrFuncNames::D_BBI_SMALL,
 		                              num_boxes * (num_boxes - 1) / 2);
 
-		GPoint::clear_global_cached_values();
+		GPoint3::clear_global_cached_values();
 		if (config.ignore_same_mesh)
 		{
 			for (index_t bi0 = 0; bi0 < num_boxes; bi0++)
@@ -197,7 +197,7 @@ void DetectClassifyTTIs<Traits>::parallelOnLargeNodes(
 		// check Box-Box-Intersection in current node.
 		auto on_large_node = [&](index_t thread_id)
 		{
-			GPoint::clear_global_cached_values();
+			GPoint3::clear_global_cached_values();
 			if (config.ignore_same_mesh)
 			{
 				for (index_t bi0 = thread_id; bi0 < num_boxes; bi0 += num_threads)

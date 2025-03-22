@@ -23,63 +23,9 @@
 namespace OMC {
 
 template <typename Kernel, typename Traits>
-class ConstrDelTet<Kernel, Traits>::ConstrDelTetTraits
+class ConstrDelTet<Kernel, Traits>::ConstrDelTetTraits : public Kernel
 {
 public:
-	using K = Kernel;
-
-	using NT         = typename K::NT;
-	using Vec2       = typename K::Vec2;
-	using Vec3       = typename K::Vec3;
-	using EPoint     = typename K::EPoint3;
-	using GPoint     = typename K::GPoint3;
-	using IPoint_SSI = typename K::IPoint3T_SSI;
-	using IPoint_LNC = typename K::IPoint3T_LNC;
-	using IPoint_LPI = typename K::IPoint3T_LPI;
-	using IPoint_TPI = typename K::IPoint3T_TPI;
-
-	using AsGP      = typename K::AsGP;
-	using AsEP      = typename K::AsEP;
-	using ToEP      = typename K::ToEP;
-	using CreateSSI = typename K::CreateSSI3;
-	using CreateLNC = typename K::CreateLNC;
-	using CreateLPI = typename K::CreateLPI;
-	using CreateTPI = typename K::CreateTPI;
-
-	using Sphere      = typename K::Sphere3;
-	using Segment     = typename K::Segment3;
-	using Triangle    = typename K::Triangle3;
-	using BoundingBox = typename K::BoundingBox3;
-
-	// predicates
-	using Orient2D           = typename K::Orient2D;
-	using Orient3D           = typename K::Orient3D;
-	using OrientOn2D         = typename K::OrientOn2D;
-	using LessThan3D         = typename K::LessThan3D;
-	using SquaredDistance3D  = typename K::SquaredDistance3D;
-	using LongestAxis        = typename K::LongestAxis;
-	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
-	using InCircle           = typename K::InCircle;
-	using InSphere           = typename K::InSphere;
-	using InPowerSphere      = typename K::InPowerSphere;
-	using DotProduct3D       = typename K::DotProductSign3D;
-	using CollinearPoints3   = typename K::CollinearPoints3;
-	// constructions
-	using CalcBbox           = typename K::CalcBoundingBox3;
-	using ProjectPoint       = typename K::ProjectPoint3;
-
-	// clang-format off
-	using DoIntersect                        = typename K::DoIntersect;
-	using Segment3_Point3_DoIntersect        = typename K::Segment3_Point3_DoIntersect;
-	using Segment3_Segment3_DoIntersect      = typename K::Segment3_Segment3_DoIntersect;
-	using Triangle3_Point3_DoIntersect       = typename K::Triangle3_Point3_DoIntersect;
-	using Triangle3_Segment3_DoIntersect     = typename K::Triangle3_Segment3_DoIntersect;
-	using Triangle3_Triangle3_DoIntersect    = typename K::Triangle3_Triangle3_DoIntersect;
-	using Tetrahedron3_Point3_DoIntersect    = typename K::Tetrahedron3_Point3_DoIntersect;
-	using Tetrahedron3_Segment3_DoIntersect  = typename K::Tetrahedron3_Segment3_DoIntersect;
-	using Tetrahedron3_Triangle3_DoIntersect = typename K::Tetrahedron3_Triangle3_DoIntersect;
-	// clang-format on
-
 	// Tetrahedral mesh settings
 	const static bool WEIGHTED = false;
 };
@@ -90,27 +36,27 @@ class ConstrDelTet_Impl
 {
 public: /* Traits ************************************************************/
 	// primitives
-	using NT         = typename Traits::NT;
-	using Vec2       = typename Traits::Vec2;
-	using Vec3       = typename Traits::Vec3;
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_SSI = typename Traits::IPoint_SSI;
-	using IPoint_LNC = typename Traits::IPoint_LNC;
-	using IPoint_LPI = typename Traits::IPoint_LPI;
-	using IPoint_TPI = typename Traits::IPoint_TPI;
+	using NT           = typename Traits::NT;
+	using Vec2         = typename Traits::Vec2;
+	using Vec3         = typename Traits::Vec3;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+	using IPoint3T_LNC = typename Traits::IPoint3T_LNC;
+	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
 
-	using AsGP      = typename Traits::AsGP;
-	using AsEP      = typename Traits::AsEP;
-	using ToEP      = typename Traits::ToEP;
-	using CreateSSI = typename Traits::CreateSSI;
-	using CreateLNC = typename Traits::CreateLNC;
-	using CreateLPI = typename Traits::CreateLPI;
-	using CreateTPI = typename Traits::CreateTPI;
+	using AsGP       = typename Traits::AsGP;
+	using AsEP       = typename Traits::AsEP;
+	using ToEP       = typename Traits::ToEP;
+	using CreateSSI3 = typename Traits::CreateSSI3;
+	using CreateLNC  = typename Traits::CreateLNC;
+	using CreateLPI  = typename Traits::CreateLPI;
+	using CreateTPI  = typename Traits::CreateTPI;
 
-	using Segment     = typename Traits::Segment;
-	using Triangle    = typename Traits::Triangle;
-	using BoundingBox = typename Traits::BoundingBox;
+	using Segment3     = typename Traits::Segment3;
+	using Triangle3    = typename Traits::Triangle3;
+	using BoundingBox3 = typename Traits::BoundingBox3;
 
 	// predicates
 	using Orient2D           = typename Traits::Orient2D;
@@ -123,7 +69,7 @@ public: /* Traits ************************************************************/
 	using InCircle           = typename Traits::InCircle;
 	using InSphere           = typename Traits::InSphere;
 	// constructions
-	using CalcBbox           = typename Traits::CalcBbox;
+	using CalcBoundingBox3   = typename Traits::CalcBoundingBox3;
 
 	// meshes
 	using TetMesh = TetrahedralMesh<Traits>;
@@ -176,11 +122,11 @@ public:
 
 	/* Output data */
 	/// output vertices (pointers to points in arena)
-	std::vector<GPoint *> cdt_out_verts;
+	std::vector<GPoint3 *> cdt_out_verts;
 	/// output tetrahedra
-	std::vector<index_t>  cdt_out_tets;
+	std::vector<index_t>   cdt_out_tets;
 	/// output labels for triangles
-	ArrLabels             cdt_out_labels;
+	ArrLabels              cdt_out_labels;
 
 	/* Auxiliary data */
 	/// information of removed duplicate triangles (maybe used again)
@@ -194,7 +140,7 @@ public:
 
 private: /* Private middle data *******************************************/
 	/// Explicit points
-	std::vector<EPoint>      exp_pnt;
+	std::vector<EPoint3>     exp_pnt;
 	/// All generated points in algorithm are stored in pnt_arena
 	std::vector<PntArena>    pnt_arenas;
 	/// Tetrahedral mesh
@@ -355,8 +301,8 @@ void ConstrDelTet_Impl<Traits>::computeExplicitResult(iPoints &final_points,
 	                  {
 		                  if (!is_valid_idx(vertex_index[v_id]))
 			                  return;
-		                  const GPoint *gp = cdt_out_verts[v_id];
-		                  EPoint        ep = ToEP()(*gp);
+		                  const GPoint3 *gp = cdt_out_verts[v_id];
+		                  EPoint3        ep = ToEP()(*gp);
 		                  final_points[vertex_index[v_id]] =
 		                    iPoint(ep.x(), ep.y(), ep.z());
 	                  });

@@ -13,12 +13,12 @@ public:
 	using K = Kernel;
 
 	using NT      = typename K::NT;
-	using GPointT = typename K::GPoint2;
+	using GPoint2 = typename K::GPoint2;
 
 	using Orient2D = typename K::Orient2D;
 
 public:
-	bool operator()(const GPointT &p, const GPointT &q, const GPointT &r)
+	bool operator()(const GPoint2 &p, const GPoint2 &q, const GPoint2 &r)
 	{
 		return Orient2D()(p, q, r) == Sign::ZERO;
 	}
@@ -31,14 +31,14 @@ public:
 	using K = Kernel;
 
 	using NT      = typename K::NT;
-	using GPointT = typename K::GPoint3;
+	using GPoint3 = typename K::GPoint3;
 
 	using OrientOn2D = typename K::OrientOn2D;
 
 public:
 	/// @brief Check if three points are collinear. See details in the opposite
 	/// function `misaligned`.
-	bool operator()(const GPointT &p, const GPointT &q, const GPointT &r)
+	bool operator()(const GPoint3 &p, const GPoint3 &q, const GPoint3 &r)
 	{
 		return !misaligned(p, q, r);
 	}
@@ -56,7 +56,7 @@ public:
 	 * @param A_B_C Given in generic points.
 	 * @return true if the points are misaligned (NOT collinear).
 	 */
-	bool misaligned(const GPointT &A, const GPointT &B, const GPointT &C)
+	bool misaligned(const GPoint3 &A, const GPoint3 &B, const GPoint3 &C)
 	{
 		return (is_sign_posneg(OrientOn2D().on_xy(A, B, C)) ||
 		        is_sign_posneg(OrientOn2D().on_yz(A, B, C)) ||
@@ -86,7 +86,7 @@ public:
 	 * @param A_B_C Given in generic points.
 	 * @return true if the points are misaligned (NOT collinear).
 	 */
-	bool misaligned(const GPointT &A, const GPointT &B, const GPointT &C,
+	bool misaligned(const GPoint3 &A, const GPoint3 &B, const GPoint3 &C,
 	                int n_max)
 	{
 		return ((n_max == 2 && is_sign_posneg(OrientOn2D().on_xy(A, B, C))) ||
@@ -102,7 +102,7 @@ public:
 	using K = Kernel;
 
 	using NT      = typename K::NT;
-	using GPointT = typename K::GPoint3;
+	using GPoint3 = typename K::GPoint3;
 
 	using OrientOn2D = typename K::OrientOn2D;
 	using LessThan3D = typename K::LessThan3D;
@@ -112,11 +112,11 @@ public:
 	 * @brief Sort three collinear points along the line.
 	 * @return A tuple contains three references that are ordered.
 	 */
-	std::tuple<const GPointT &, const GPointT &, const GPointT &>
-	operator()(const GPointT &p, const GPointT &q, const GPointT &r)
+	std::tuple<const GPoint3 &, const GPoint3 &, const GPoint3 &>
+	operator()(const GPoint3 &p, const GPoint3 &q, const GPoint3 &r)
 	{
-		using CR = const GPointT &;
-		using CP = const GPointT *;
+		using CR = const GPoint3 &;
+		using CP = const GPoint3 *;
 
 #define SORT_ON_AXIS(axis)                              \
 	if (LessThan3D().on_##axis(*a, *b) == Sign::POSITIVE) \
@@ -161,7 +161,7 @@ public:
 	using K = Kernel;
 
 	using NT      = typename K::NT;
-	using GPointT = typename K::GPoint3;
+	using GPoint3 = typename K::GPoint3;
 
 	using Orient3D = typename K::Orient3D;
 
@@ -170,8 +170,8 @@ public:
 	 * @brief Check if `p` , `q` , `r` and `s` are coplanar.
 	 * @return true if they are coplanar, otherwise false.
 	 */
-	bool operator()(const GPointT &p, const GPointT &q, const GPointT &r,
-	                const GPointT &s)
+	bool operator()(const GPoint3 &p, const GPoint3 &q, const GPoint3 &r,
+	                const GPoint3 &s)
 	{
 		return Orient3D()(p, q, r, s) == Sign::ZERO;
 	}
@@ -190,9 +190,9 @@ public:
 	using K = Kernel;
 
 	using NT        = typename K::NT;
-	using GPointT   = typename K::GPoint3;
-	using SegmentT  = typename K::Segment3;
-	using TriangleT = typename K::Triangle3;
+	using GPoint3   = typename K::GPoint3;
+	using Segment3  = typename K::Segment3;
+	using Triangle3 = typename K::Triangle3;
 
 	using LessThan3D       = typename K::LessThan3D;
 	using CollinearPoints3 = typename K::CollinearPoints3;
@@ -201,7 +201,7 @@ public:
 	struct NoDgn
 	{
 	};
-	using DgnType = std::variant<NoDgn, GPointT, SegmentT>;
+	using DgnType = std::variant<NoDgn, GPoint3, Segment3>;
 
 public:
 	/**
@@ -211,7 +211,7 @@ public:
 	 * primitives whose types are defined in this class \ref CheckDegenerate3K.
 	 * @retval PointT If the segment degenerate to point, return the point.
 	 */
-	DgnType operator()(const SegmentT &segment)
+	DgnType operator()(const Segment3 &segment)
 	{
 		if (LessThan3D().coincident(segment.start(), segment.end()))
 			return DgnType{segment.start()}; // degenerate to point
@@ -225,9 +225,9 @@ public:
 	 * @return std::variant Void if no degeneration, otherwise it contains
 	 * primitives whose types are defined in this class \ref CheckDegenerate3K.
 	 * @retval PointT If the triangle degenerates to point.
-	 * @retval SegmentT If the trianngle degenerates to segment.
+	 * @retval Segment3 If the trianngle degenerates to segment.
 	 */
-	DgnType operator()(const TriangleT &triangle)
+	DgnType operator()(const Triangle3 &triangle)
 	{
 		auto &t = triangle;
 
@@ -239,7 +239,7 @@ public:
 		else if (CollinearPoints3()(t.v0(), t.v1(), t.v2()))
 		{
 			auto [a, b, c] = CollinearSort3()(t.v0(), t.v1(), t.v2());
-			return DgnType{SegmentT(a, c)}; // degenerate to segment
+			return DgnType{Segment3(a, c)}; // degenerate to segment
 		}
 		else
 			return DgnType(); // NoDgn

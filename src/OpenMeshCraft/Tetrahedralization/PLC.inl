@@ -67,7 +67,7 @@ PiecewiseLinearComplex<Traits>::PLCEdge::commonEp(const PLCEdge &rhs) const
  */
 template <typename Traits>
 PiecewiseLinearComplex<Traits>::PiecewiseLinearComplex(
-  const std::vector<GPoint *> &_vertices, const std::vector<index_t> &_edges,
+  const std::vector<GPoint3 *> &_vertices, const std::vector<index_t> &_edges,
   const std::vector<index_t> &_triangles)
   : vertices(_vertices)
   , edges(_edges)
@@ -166,12 +166,12 @@ void PiecewiseLinearComplex<Traits>::buildInitialPLCEdges()
 	for (index_t eid = 0; eid < plc_edges.size(); /*eid is updated in the loop */)
 	{
 		// record the first unique edge
-		PLCEdge             &first_e       = plc_edges[eid];
+		PLCEdge                 &first_e       = plc_edges[eid];
 		InlinedVector4<index_t> &first_inc_tri = edge_inc_tri[first_e.ancestor_id];
 		// find the subsequent duplicate edges
 		while ((++eid) < plc_edges.size() && (first_e == plc_edges[eid]))
 		{
-			PLCEdge             &curr_e       = plc_edges[eid];
+			PLCEdge                 &curr_e       = plc_edges[eid];
 			InlinedVector4<index_t> &curr_inc_tri = edge_inc_tri[curr_e.ancestor_id];
 			// merge the incident triangle to the first edge
 			if (curr_inc_tri.size() == 1)
@@ -323,8 +323,8 @@ void PiecewiseLinearComplex<Traits>::classifyVertEdge()
 	// if one or both of its endpoints are classified as acute vertices.
 	for (index_t vid = 0; vid < input_nv; vid++)
 	{
-		const GPoint &vp            = pnt(vid);
-		size_t        num_inc_edges = vertex_inc_edge_input[vid].size();
+		const GPoint3 &vp            = pnt(vid);
+		size_t         num_inc_edges = vertex_inc_edge_input[vid].size();
 
 		for (index_t i = 0; i < num_inc_edges; i++)
 		{
@@ -336,7 +336,7 @@ void PiecewiseLinearComplex<Traits>::classifyVertEdge()
 				PLCEdge &ej     = edge(vertex_inc_edge_input[vid][j]);
 				index_t  opp_vj = ej.ep0() == vid ? ej.ep1() : ej.ep0();
 
-				if (DotProduct3D()(pnt(opp_vi), vp, pnt(opp_vj)) == Sign::POSITIVE)
+				if (DotProductSign3D()(pnt(opp_vi), vp, pnt(opp_vj)) == Sign::POSITIVE)
 				{
 					setEdgeVertexAsAcute(ei, vid);
 					setEdgeVertexAsAcute(ej, vid);
@@ -1263,8 +1263,8 @@ void PiecewiseLinearComplex<Traits>::removeIsolatedEdges(index_t eid0,
 	}
 	if (e0.isSplit())
 	{
-		edge(e0.child_id).parent_id     = eid0;
-		edge(e0.child_id + 1).parent_id = eid0;
+		edge(e0.child_id).parent_id         = eid0;
+		edge(e0.child_id + 1).parent_id     = eid0;
 		edgeWrtSteiner(steinerOfEdge(eid0)) = eid0;
 	}
 	else
@@ -1275,8 +1275,8 @@ void PiecewiseLinearComplex<Traits>::removeIsolatedEdges(index_t eid0,
 	}
 	if (e1.isSplit())
 	{
-		edge(e1.child_id).parent_id     = eid1;
-		edge(e1.child_id + 1).parent_id = eid1;
+		edge(e1.child_id).parent_id         = eid1;
+		edge(e1.child_id + 1).parent_id     = eid1;
 		edgeWrtSteiner(steinerOfEdge(eid1)) = eid1;
 	}
 	else

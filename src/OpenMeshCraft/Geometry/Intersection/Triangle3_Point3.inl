@@ -7,18 +7,18 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Triangle3_Point3_Do_Intersect<Kernel>::operator()(const TriangleT &tri,
-                                                       const GPointT &pnt) const
+bool Triangle3_Point3_DoIntersectK<Kernel>::operator()(const Triangle3 &tri,
+                                                       const GPoint3 &pnt) const
 {
-	const GPointT &t0 = tri.v0(), &t1 = tri.v1(), &t2 = tri.v2();
+	const GPoint3 &t0 = tri.v0(), &t1 = tri.v1(), &t2 = tri.v2();
 	return operator()(t0, t1, t2, pnt);
 }
 
 template <typename Kernel>
-bool Triangle3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &t0,
-                                                       const GPointT &t1,
-                                                       const GPointT &t2,
-                                                       const GPointT &pnt) const
+bool Triangle3_Point3_DoIntersectK<Kernel>::operator()(const GPoint3 &t0,
+                                                       const GPoint3 &t1,
+                                                       const GPoint3 &t2,
+                                                       const GPoint3 &pnt) const
 {
 	// I copy intersection_type here, just ignore checking point in segment.
 
@@ -67,16 +67,16 @@ bool Triangle3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &t0,
 
 template <typename Kernel>
 PointInType
-Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(const TriangleT &tri,
-                                                   const GPointT   &pnt) const
+Triangle3_Point3_DoIntersectK<Kernel>::in_triangle(const Triangle3 &tri,
+                                                   const GPoint3   &pnt) const
 {
 	return in_triangle(tri.v0(), tri.v1(), tri.v2(), pnt);
 }
 
 template <typename Kernel>
-PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2,
-  const GPointT &p) const
+PointInType Triangle3_Point3_DoIntersectK<Kernel>::in_triangle(
+  const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2,
+  const GPoint3 &p) const
 {
 	OMC_EXPENSIVE_ASSERT(Orient3D()(t0, t1, t2, p) == Sign::ZERO,
 	                     "point is not on triangle.");
@@ -112,7 +112,7 @@ PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
 }
 
 template <typename Kernel>
-PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
+PointInType Triangle3_Point3_DoIntersectK<Kernel>::in_triangle(
   const NT *t0, const NT *t1, const NT *t2, const NT *p) const
 {
 	OMC_EXPENSIVE_ASSERT(Orient3D()(t0, t1, t2, p) == Sign::ZERO,
@@ -148,8 +148,8 @@ PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
 }
 
 template <typename Kernel>
-PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
-  const TriangleT &tri, const GPointT &pnt) const
+PointInSimplexType Triangle3_Point3_DoIntersectK<Kernel>::intersection_type(
+  const Triangle3 &tri, const GPoint3 &pnt) const
 {
 	return intersection_type(tri.v0(), tri.v1(), tri.v2(), pnt);
 }
@@ -166,13 +166,13 @@ PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
 	    (o1 <= Sign::ZERO && o2 <= Sign::ZERO && o3 <= Sign::ZERO))                \
 		return PointInSimplexType::STRICTLY_INSIDE;                                  \
 	else                                                                           \
-		return PointInSimplexType::STRICTLY_OUTSIDE;                                 \
-// clang-format on
+		return PointInSimplexType::STRICTLY_OUTSIDE; \
+	// clang-format on
 
 template <typename Kernel>
-PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2,
-  const GPointT &p) const
+PointInSimplexType Triangle3_Point3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2,
+  const GPoint3 &p) const
 {
 	OMC_EXPENSIVE_ASSERT(Orient3D()(t0, t1, t2, p) == Sign::ZERO,
 	                     "point is not on triangle.");
@@ -197,7 +197,6 @@ PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
 		CLASSIFY_O123(o1, o2, o3);
 	}
 
-
 	o1 = OrientOn2D().on_xy(t0, t1, p);
 	o2 = OrientOn2D().on_xy(t1, t2, p);
 	o3 = OrientOn2D().on_xy(t2, t0, p);
@@ -212,7 +211,7 @@ PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
 }
 
 template <typename Kernel>
-PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
+PointInSimplexType Triangle3_Point3_DoIntersectK<Kernel>::intersection_type(
   const NT *t0, const NT *t1, const NT *t2, const NT *p) const
 {
 	OMC_EXPENSIVE_ASSERT(Orient3D()(t0, t1, t2, p) == Sign::ZERO,
@@ -252,12 +251,12 @@ PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
 }
 
 template <typename Kernel>
-bool Triangle3_Point3_Do_Intersect<Kernel>::operator()(const TriangleT &tri,
-                                                       const GPointT   &pnt,
+bool Triangle3_Point3_DoIntersectK<Kernel>::operator()(const Triangle3 &tri,
+                                                       const GPoint3   &pnt,
                                                        int n_max) const
 {
 	// I copy intersection_type here, just ignore checking point in segment.
-	const GPointT &t0 = tri.v0(), &t1 = tri.v1(), &t2 = tri.v2();
+	const GPoint3 &t0 = tri.v0(), &t1 = tri.v1(), &t2 = tri.v2();
 	OMC_EXPENSIVE_ASSERT(Orient3D()(t0, t1, t2, pnt) == Sign::ZERO,
 	                     "point is not on triangle.");
 
@@ -273,15 +272,15 @@ bool Triangle3_Point3_Do_Intersect<Kernel>::operator()(const TriangleT &tri,
 }
 
 template <typename Kernel>
-PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
-  const TriangleT &tri, const GPointT &pnt, int n_max) const
+PointInType Triangle3_Point3_DoIntersectK<Kernel>::in_triangle(
+  const Triangle3 &tri, const GPoint3 &pnt, int n_max) const
 {
 	return in_triangle(tri.v0(), tri.v1(), tri.v2(), pnt, n_max);
 }
 
 template <typename Kernel>
-PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2, const GPointT &p,
+PointInType Triangle3_Point3_DoIntersectK<Kernel>::in_triangle(
+  const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2, const GPoint3 &p,
   int n_max) const
 {
 	OMC_EXPENSIVE_ASSERT(Orient3D()(t0, t1, t2, p) == Sign::ZERO,
@@ -295,7 +294,7 @@ PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
 }
 
 template <typename Kernel>
-PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
+PointInType Triangle3_Point3_DoIntersectK<Kernel>::in_triangle(
   const NT *t0, const NT *t1, const NT *t2, const NT *p, int n_max) const
 {
 	OMC_EXPENSIVE_ASSERT(Orient3D()(t0, t1, t2, p) == Sign::ZERO,
@@ -309,7 +308,7 @@ PointInType Triangle3_Point3_Do_Intersect<Kernel>::in_triangle(
 }
 
 template <typename Kernel>
-PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
+PointInSimplexType Triangle3_Point3_DoIntersectK<Kernel>::intersection_type(
   const NT *t0, const NT *t1, const NT *t2, const NT *p, int n_max) const
 {
 	OMC_EXPENSIVE_ASSERT(Orient3D()(t0, t1, t2, p) == Sign::ZERO,
@@ -329,7 +328,7 @@ PointInSimplexType Triangle3_Point3_Do_Intersect<Kernel>::intersection_type(
 }
 
 template <typename Kernel>
-PointInType Triangle3_Point3_Do_Intersect<Kernel>::check_inout(Sign o1, Sign o2,
+PointInType Triangle3_Point3_DoIntersectK<Kernel>::check_inout(Sign o1, Sign o2,
                                                                Sign o3) const
 {
 	if ((o1 > Sign::ZERO && o2 > Sign::ZERO && o3 > Sign::ZERO) ||

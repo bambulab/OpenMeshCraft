@@ -15,7 +15,7 @@ namespace OMC {
  * @tparam Kernel.
  */
 template <typename Kernel>
-class Bbox_Point_Do_Intersect
+class Bbox_Point_DoIntersectK
 {
 public:
 	using K = Kernel;

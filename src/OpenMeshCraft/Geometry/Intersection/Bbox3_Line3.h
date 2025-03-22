@@ -8,35 +8,35 @@ namespace OMC {
  * @brief Check if BoundingBox3 and Line3 intersect.
  */
 template <typename Kernel>
-class Bbox3_Line3_Do_Intersect
+class Bbox3_Line3_DoIntersectK
 {
 public:
-	using K      = Kernel;
-	using NT     = typename K::NT;
-	using Vec    = typename K::Vec3;
-	using GPoint = typename K::GPoint3;
-	using EPoint = typename K::EPoint3;
-	using Line   = typename K::Line3;
-	using Bbox   = typename K::BoundingBox3;
+	using K            = Kernel;
+	using NT           = typename K::NT;
+	using Vec3         = typename K::Vec3;
+	using GPoint3      = typename K::GPoint3;
+	using EPoint3      = typename K::EPoint3;
+	using Line3        = typename K::Line3;
+	using BoundingBox3 = typename K::BoundingBox3;
 
 	using DotProductSignOn2D = typename K::DotProductSignOn2D;
 
-	using Box_Pnt_Do_Inter = Bbox_Point_Do_Intersect<Kernel>;
+	using Box_Pnt_DoInter = Bbox_Point_DoIntersectK<Kernel>;
 
 public:
-	bool operator()(const Bbox &box, const Line &line) const
+	bool operator()(const BoundingBox3 &box, const Line3 &line) const
 	{
-		const EPoint &start = line.start();
-		const Vec    &dir   = line.direction();
+		const EPoint3 &start = line.start();
+		const Vec3    &dir   = line.direction();
 
-		if (Box_Pnt_Do_Inter()(box, start))
+		if (Box_Pnt_DoInter()(box, start))
 			return true;
 
 		DotProductSignOn2D dot_sign;
 		Sign               ret;
 
-		const EPoint &bmin = box.min_bound();
-		const EPoint &bmax = box.max_bound();
+		const EPoint3 &bmin = box.min_bound();
+		const EPoint3 &bmax = box.max_bound();
 
 		// First, we calculate the interval on the line that is inside between box
 		// on each dimension. The interval is represented by two end points on the
@@ -108,9 +108,9 @@ public:
 			//     (Reverse sign if x_reverse and y_reverse are not same)
 			//  => DotProductSignOn2D.on_xy
 			//     ((rmaxx, rminy, 0.), (dir.y, dir.x, 0.), start, (0.,0.,0.)) < 0 ?
-			ret = dot_sign.on_xy(EPoint(rmaxx, rminy, NT(0.)),
-			                     EPoint(dir.y(), -dir.x(), NT(0.)), start,
-			                     EPoint(NT(0.), NT(0.), NT(0.)));
+			ret = dot_sign.on_xy(EPoint3(rmaxx, rminy, NT(0.)),
+			                     EPoint3(dir.y(), -dir.x(), NT(0.)), start,
+			                     EPoint3(NT(0.), NT(0.), NT(0.)));
 			if ((x_reverse == y_reverse && ret == Sign::NEGATIVE) ||
 			    (x_reverse != y_reverse && ret == Sign::POSITIVE))
 				return false;
@@ -121,9 +121,9 @@ public:
 			//     (Reverse sign if x_reverse and y_reverse are not same)
 			//  => DotProductSignOn2D.on_xy
 			//     ((rminx, rmaxy, 0.), (dir.y, dir.x, 0.), start, (0.,0.,0.)) > 0 ?
-			ret = dot_sign.on_xy(EPoint(rminx, rmaxy, NT(0.)),
-			                     EPoint(dir.y(), -dir.x(), NT(0.)), start,
-			                     EPoint(NT(0.), NT(0.), NT(0.)));
+			ret = dot_sign.on_xy(EPoint3(rminx, rmaxy, NT(0.)),
+			                     EPoint3(dir.y(), -dir.x(), NT(0.)), start,
+			                     EPoint3(NT(0.), NT(0.), NT(0.)));
 			if ((x_reverse == y_reverse && ret == Sign::POSITIVE) ||
 			    (x_reverse != y_reverse && ret == Sign::NEGATIVE))
 				return false;
@@ -154,16 +154,16 @@ public:
 
 		if (!y_degenerate || !z_degenerate)
 		{
-			ret = dot_sign.on_yz(EPoint(NT(0.), rmaxy, rminz),
-			                     EPoint(NT(0.), dir.z(), -dir.y()), start,
-			                     EPoint(NT(0.), NT(0.), NT(0.)));
+			ret = dot_sign.on_yz(EPoint3(NT(0.), rmaxy, rminz),
+			                     EPoint3(NT(0.), dir.z(), -dir.y()), start,
+			                     EPoint3(NT(0.), NT(0.), NT(0.)));
 			if ((y_reverse == z_reverse && ret == Sign::NEGATIVE) ||
 			    (y_reverse != z_reverse && ret == Sign::POSITIVE))
 				return false;
 
-			ret = dot_sign.on_yz(EPoint(NT(0.), rminy, rmaxz),
-			                     EPoint(NT(0.), dir.z(), -dir.y()), start,
-			                     EPoint(NT(0.), NT(0.), NT(0.)));
+			ret = dot_sign.on_yz(EPoint3(NT(0.), rminy, rmaxz),
+			                     EPoint3(NT(0.), dir.z(), -dir.y()), start,
+			                     EPoint3(NT(0.), NT(0.), NT(0.)));
 			if ((y_reverse == z_reverse && ret == Sign::POSITIVE) ||
 			    (y_reverse != z_reverse && ret == Sign::NEGATIVE))
 				return false;
@@ -171,16 +171,16 @@ public:
 
 		if (!z_degenerate || !x_degenerate)
 		{
-			ret = dot_sign.on_zx(EPoint(rmaxx, NT(0.), rminz),
-			                     EPoint(dir.z(), NT(0.), -dir.x()), start,
-			                     EPoint(NT(0.), NT(0.), NT(0.)));
+			ret = dot_sign.on_zx(EPoint3(rmaxx, NT(0.), rminz),
+			                     EPoint3(dir.z(), NT(0.), -dir.x()), start,
+			                     EPoint3(NT(0.), NT(0.), NT(0.)));
 			if ((z_reverse == x_reverse && ret == Sign::NEGATIVE) ||
 			    (z_reverse != x_reverse && ret == Sign::POSITIVE))
 				return false;
 
-			ret = dot_sign.on_zx(EPoint(rminx, NT(0.), rmaxz),
-			                     EPoint(dir.z(), NT(0.), -dir.x()), start,
-			                     EPoint(NT(0.), NT(0.), NT(0.)));
+			ret = dot_sign.on_zx(EPoint3(rminx, NT(0.), rmaxz),
+			                     EPoint3(dir.z(), NT(0.), -dir.x()), start,
+			                     EPoint3(NT(0.), NT(0.), NT(0.)));
 			if ((z_reverse == x_reverse && ret == Sign::POSITIVE) ||
 			    (z_reverse != x_reverse && ret == Sign::NEGATIVE))
 				return false;

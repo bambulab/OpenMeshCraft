@@ -23,11 +23,11 @@ class FaceRecover
 public: /* Traits **********************************************************/
 	using Self = DelaunayTet<Traits>;
 
-	using NT     = typename Traits::NT;
-	using Vec2   = typename Traits::Vec2;
-	using Vec3   = typename Traits::Vec3;
-	using EPoint = typename Traits::EPoint;
-	using GPoint = typename Traits::GPoint;
+	using NT      = typename Traits::NT;
+	using Vec2    = typename Traits::Vec2;
+	using Vec3    = typename Traits::Vec3;
+	using EPoint3 = typename Traits::EPoint3;
+	using GPoint3 = typename Traits::GPoint3;
 
 	using AsGP = typename Traits::AsGP;
 	using AsEP = typename Traits::AsEP;
@@ -52,7 +52,7 @@ public: /* Traits **********************************************************/
 
 public: /* Constructor & Destructor ****************************************/
 	FaceRecover() = delete;
-	FaceRecover(std::vector<GPoint *> &_verts, TetMesh &_tet_mesh, PLC &_plc,
+	FaceRecover(std::vector<GPoint3 *> &_verts, TetMesh &_tet_mesh, PLC &_plc,
 	            ConstrDelTet_Config _config,
 	            ConstrDelTet_Stats *_stats = nullptr);
 
@@ -93,12 +93,12 @@ public: /* Algorithms ******************************************************/
 
 	/* Geometric & Topologic Operations on both TetMesh & PLC */
 
-	GPoint       &gpnt(index_t vid) { return *verts[vid]; }
-	const GPoint &gpnt(index_t vid) const { return *verts[vid]; }
+	GPoint3       &gpnt(index_t vid) { return *verts[vid]; }
+	const GPoint3 &gpnt(index_t vid) const { return *verts[vid]; }
 
 public: /* Data ************************************************************/
 	/// vertices (stored by both `tet_mesh` and `plc`)
-	const std::vector<GPoint *> &verts;
+	const std::vector<GPoint3 *> &verts;
 
 	/// Tetrahedral mesh
 	TetMesh &tet_mesh;

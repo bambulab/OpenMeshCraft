@@ -5,25 +5,25 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Bbox3_Triangle3_Do_Intersect<Kernel>::operator()(
-  const BboxT &box, const TriangleT &triangle) const
+bool Bbox3_Triangle3_DoIntersectK<Kernel>::operator()(
+  const Bbox3 &box, const Triangle3 &triangle) const
 {
-	const EPointT &p0 = triangle.v0(), &p1 = triangle.v1(), &p2 = triangle.v2();
+	const EPoint3 &p0 = triangle.v0(), &p1 = triangle.v1(), &p2 = triangle.v2();
 
 	// test three points
-	EPointT min_p = p0;
+	EPoint3 min_p = p0;
 	min_p.minimize(p1);
 	min_p.minimize(p2);
-	EPointT max_p = p0;
+	EPoint3 max_p = p0;
 	max_p.maximize(p1);
 	max_p.maximize(p2);
 	if (!(min_p <= box.max_bound()) || !(max_p >= box.min_bound()))
 		return false;
 
 	// test plane
-	VecT    tri_n = (p1 - p0).cross(p2 - p0);
+	Vec3    tri_n = (p1 - p0).cross(p2 - p0);
 	NT      dist  = -1.0 * tri_n.dot(p0.as_vec());
-	EPointT P_min, P_max;
+	EPoint3 P_min, P_max;
 	for (int i = 0; i < 3; ++i)
 	{
 		if (tri_n[i] > NT(0))
@@ -45,16 +45,16 @@ bool Bbox3_Triangle3_Do_Intersect<Kernel>::operator()(
 	                    (box.max_coord(1) - box.min_coord(1)) * 0.5,
 	                    (box.max_coord(2) - box.min_coord(2)) * 0.5};
 
-	const EPointT center =
+	const EPoint3 center =
 	  box.min_bound() + (box.max_bound() - box.min_bound()) * 0.5;
 
-	EPointT points[3] = {EPointT(p0 - center), EPointT(p1 - center),
-	                     EPointT(p2 - center)};
+	EPoint3 points[3] = {EPoint3(p0 - center), EPoint3(p1 - center),
+	                     EPoint3(p2 - center)};
 
-	const EPointT *u[3];
+	const EPoint3 *u[3];
 
 	// Edge e0
-	const VecT e0 = points[1] - points[0];
+	const Vec3 e0 = points[1] - points[0];
 	u[0]          = &points[0];
 	u[1]          = &points[1];
 	u[2]          = &points[2];
@@ -62,7 +62,7 @@ bool Bbox3_Triangle3_Do_Intersect<Kernel>::operator()(
 		return false;
 
 	// Edge e1
-	const VecT e1 = points[2] - points[1];
+	const Vec3 e1 = points[2] - points[1];
 	u[0]          = &points[1];
 	u[1]          = &points[2];
 	u[2]          = &points[0];
@@ -70,7 +70,7 @@ bool Bbox3_Triangle3_Do_Intersect<Kernel>::operator()(
 		return false;
 
 	// Edge e2
-	const VecT e2 = points[2] - points[0];
+	const Vec3 e2 = points[2] - points[0];
 	u[0]          = &points[2];
 	u[1]          = &points[0];
 	u[2]          = &points[1];
@@ -82,8 +82,8 @@ bool Bbox3_Triangle3_Do_Intersect<Kernel>::operator()(
 
 #define Absolute(a) ((a) >= NT(0) ? (a) : -(a))
 template <typename Kernel>
-bool Bbox3_Triangle3_Do_Intersect<Kernel>::TestAxisEdges(
-  const EPointT *v[], const VecT &e, const NT *box_length) const
+bool Bbox3_Triangle3_DoIntersectK<Kernel>::TestAxisEdges(
+  const EPoint3 *v[], const Vec3 &e, const NT *box_length) const
 {
 	NT fex = Absolute(e[0]);
 	NT fey = Absolute(e[1]);

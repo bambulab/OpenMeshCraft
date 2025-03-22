@@ -7,16 +7,16 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Sphere3_Point3_Do_Intersect<Kernel>::operator()(const SphereT &sphere,
-                                                     const GPointT &pnt) const
+bool Sphere3_Point3_DoIntersectK<Kernel>::operator()(const Sphere3 &sphere,
+                                                     const GPoint3 &pnt) const
 {
-  return operator()(sphere.center(), sphere.squared_radius(), pnt);
+	return operator()(sphere.center(), sphere.squared_radius(), pnt);
 }
 
 template <typename Kernel>
-bool Sphere3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &center,
+bool Sphere3_Point3_DoIntersectK<Kernel>::operator()(const GPoint3 &center,
                                                      NT squared_radius,
-                                                     const GPointT &p) const
+                                                     const GPoint3 &p) const
 {
 	return intersection_type(center, squared_radius, p) !=
 	       PointInType::STRICTLY_OUTSIDE;
@@ -24,17 +24,17 @@ bool Sphere3_Point3_Do_Intersect<Kernel>::operator()(const GPointT &center,
 
 template <typename Kernel>
 PointInType
-Sphere3_Point3_Do_Intersect<Kernel>::intersection_type(const SphereT &sphere,
-                                                       const GPointT &pnt) const
+Sphere3_Point3_DoIntersectK<Kernel>::intersection_type(const Sphere3 &sphere,
+                                                       const GPoint3 &pnt) const
 {
 	return intersection_type(sphere.center(), sphere.squared_radius(), pnt);
 }
 
 template <typename Kernel>
-PointInType Sphere3_Point3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &center, NT squared_radius, const GPointT &p) const
+PointInType Sphere3_Point3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &center, NT squared_radius, const GPoint3 &p) const
 {
-	Sign sign = SquaredDistance()(center, p, squared_radius);
+	Sign sign = SquaredDistance3D()(center, p, squared_radius);
 	return sign == Sign::POSITIVE
 	         ? (PointInType::STRICTLY_OUTSIDE)
 	         : (sign == Sign::ZERO ? PointInType::ON_BOUNDARY

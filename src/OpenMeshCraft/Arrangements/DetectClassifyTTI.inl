@@ -26,7 +26,7 @@ struct DetectClassifyTTI<Traits>::TTIHelper
 	int     t_nmax;
 
 	// vectices from triangle
-	std::array<EPoint, 3>     p;
+	std::array<EPoint3, 3>    p;
 	// pointers to vertices.
 	std::array<const NT *, 3> v;
 
@@ -2128,7 +2128,7 @@ index_t DetectClassifyTTI<Traits>::add_vertex_in_edge(TTIHelper &ha, index_t ea,
 	index_t found_vid = ts.findVertexInEdge(ea_id, ts.vert(vb_id));
 	if (is_valid_idx(found_vid))
 	{
-		if (ts.vert(found_vid).point_type() != GPoint::PointType::Explicit
+		if (ts.vert(found_vid).point_type() != GPoint3::PointType::Explicit
 		    /* || vb_id < found_vid */)
 		{ // note: two explicit point won't be same in arrangements pipeline.
 			// the only case is that a complicate implicit point is replaced by a
@@ -2191,7 +2191,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_coplanar_edge(
 	};
 	index_t jp_idx = find_jolly();
 
-	IPoint_LPI *new_v = pnt_arena.emplace(CreateLPI()(
+	IPoint3T_LPI *new_v = pnt_arena.emplace(CreateLPI()(
 	  ts.vert(ha.v_id[ea]), ts.vert(ha.v_id[(ea + 1) % 3]), ts.vert(hb.v_id[eb]),
 	  ts.vert(hb.v_id[(eb + 1) % 3]), *ts.jolly_points[jp_idx]));
 
@@ -2200,7 +2200,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_coplanar_edge(
 
 	if (!new_vertex_created)
 	{
-		IPoint_LPI::gcv().remove(new_v);
+		IPoint3T_LPI::gcv().remove(new_v);
 		pnt_arena.recycle(new_v);
 	}
 #else
@@ -2226,7 +2226,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_coplanar_edge(
 		max_max_vid = std::max(ha.v_id[ea], ha.v_id[(ea + 1) % 3]);
 	}
 
-	IPoint_SSI *new_v = pnt_arena.emplace(CreateSSI()(
+	IPoint3T_SSI *new_v = pnt_arena.emplace(CreateSSI3()(
 	  ts.vert(min_min_vid), ts.vert(min_max_vid), ts.vert(max_min_vid),
 	  ts.vert(max_max_vid), int_to_OrPlane(hb.t_nmax)));
 
@@ -2235,7 +2235,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_coplanar_edge(
 
 	if (!new_vertex_created)
 	{
-		IPoint_SSI::gcv().remove(new_v);
+		IPoint3T_SSI::gcv().remove(new_v);
 		pnt_arena.recycle(new_v);
 	}
 #endif
@@ -2263,7 +2263,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_noncoplanar_edge(
 	index_t e_min_vid = std::min(ha.v_id[ea], ha.v_id[(ea + 1) % 3]);
 	index_t e_max_vid = std::max(ha.v_id[ea], ha.v_id[(ea + 1) % 3]);
 
-	IPoint_LPI *new_v = pnt_arena.emplace(
+	IPoint3T_LPI *new_v = pnt_arena.emplace(
 	  CreateLPI()(ts.vert(e_min_vid), ts.vert(e_max_vid), ts.vert(hb.v_id[0]),
 	              ts.vert(hb.v_id[1]), ts.vert(hb.v_id[2])));
 
@@ -2273,7 +2273,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_noncoplanar_edge(
 
 	if (!new_vertex_created)
 	{
-		IPoint_LPI::gcv().remove(new_v);
+		IPoint3T_LPI::gcv().remove(new_v);
 		pnt_arena.recycle(new_v);
 	}
 #else
@@ -2322,16 +2322,16 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_noncoplanar_edge(
 		max_max_vid = std::max(ha.v_id[ea], ha.v_id[(ea + 1) % 3]);
 	}
 
-	IPoint_SSI *new_v = pnt_arena.emplace(
-	  CreateSSI()(ts.vert(min_min_vid), ts.vert(min_max_vid),
-	              ts.vert(max_min_vid), ts.vert(max_max_vid), plane));
+	IPoint3T_SSI *new_v = pnt_arena.emplace(
+	  CreateSSI3()(ts.vert(min_min_vid), ts.vert(min_max_vid),
+	               ts.vert(max_min_vid), ts.vert(max_max_vid), plane));
 
 	// try to add the point
 	auto [added_vid, new_vertex_created] = add_SSI(ea_id, eb_id, new_v);
 
 	if (!new_vertex_created)
 	{
-		IPoint_SSI::gcv().remove(new_v);
+		IPoint3T_SSI::gcv().remove(new_v);
 		pnt_arena.recycle(new_v);
 	}
 #endif
@@ -2355,7 +2355,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_tri(TTIHelper &ha, index_t ea,
 	index_t e_min_vid = std::min(ha.v_id[ea], ha.v_id[(ea + 1) % 3]);
 	index_t e_max_vid = std::max(ha.v_id[ea], ha.v_id[(ea + 1) % 3]);
 
-	IPoint_LPI *new_v = pnt_arena.emplace(
+	IPoint3T_LPI *new_v = pnt_arena.emplace(
 	  CreateLPI()(ts.vert(e_min_vid), ts.vert(e_max_vid), ts.vert(hb.v_id[0]),
 	              ts.vert(hb.v_id[1]), ts.vert(hb.v_id[2])));
 
@@ -2365,7 +2365,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_tri(TTIHelper &ha, index_t ea,
 
 	if (!new_vertex_created)
 	{
-		IPoint_LPI::gcv().remove(new_v);
+		IPoint3T_LPI::gcv().remove(new_v);
 		pnt_arena.recycle(new_v);
 	}
 
@@ -2386,7 +2386,7 @@ index_t DetectClassifyTTI<Traits>::add_edge_cross_tri(TTIHelper &ha, index_t ea,
  */
 template <typename Traits>
 std::pair<index_t, bool>
-DetectClassifyTTI<Traits>::add_SSI(index_t ea_id, index_t eb_id, GPoint *new_v)
+DetectClassifyTTI<Traits>::add_SSI(index_t ea_id, index_t eb_id, GPoint3 *new_v)
 {
 #ifndef OMC_ARR_GLOBAL_POINT_SET
 	// get mutexes of edges.
@@ -2502,7 +2502,7 @@ DetectClassifyTTI<Traits>::add_SSI(index_t ea_id, index_t eb_id, GPoint *new_v)
  */
 template <typename Traits>
 std::pair<index_t, bool>
-DetectClassifyTTI<Traits>::add_LPI(index_t e_id, index_t t_id, GPoint *new_v)
+DetectClassifyTTI<Traits>::add_LPI(index_t e_id, index_t t_id, GPoint3 *new_v)
 {
 #ifndef OMC_ARR_GLOBAL_POINT_SET
 	// get mutexes of edges.

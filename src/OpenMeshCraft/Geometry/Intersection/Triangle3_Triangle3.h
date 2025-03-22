@@ -24,30 +24,29 @@ namespace OMC {
  * @tparam Kernel
  */
 template <typename Kernel>
-class Triangle3_Triangle3_Do_Intersect
+class Triangle3_Triangle3_DoIntersectK
 {
 public:
 	using K  = Kernel;
 	using NT = typename K::NT;
 
-	using VecT      = typename K::Vec3;
-	using GPointT   = typename K::GPoint3;
-	using SegmentT  = typename K::Segment3;
-	using TriangleT = typename K::Triangle3;
+	using GPoint3   = typename K::GPoint3;
+	using Segment3  = typename K::Segment3;
+	using Triangle3 = typename K::Triangle3;
 
 	using LessThan3D       = typename K::LessThan3D;
 	using OrientOn2D       = typename K::OrientOn2D;
 	using Orient3D         = typename K::Orient3D;
 	using CollinearPoints3 = typename K::CollinearPoints3;
 
-	using Triangle3_Segment3_DoInter = Triangle3_Segment3_Do_Intersect<Kernel>;
+	using Triangle3_Segment3_DoInter = Triangle3_Segment3_DoIntersectK<Kernel>;
 
 public:
 	/**
 	 * @brief Check if two triangles intersect.
 	 * @note Assume that no triangle is degenerate.
 	 */
-	bool operator()(const TriangleT &tri0, const TriangleT &tri1) const;
+	bool operator()(const Triangle3 &tri0, const Triangle3 &tri1) const;
 
 	/**
 	 * @brief Check if two triangles intersect.
@@ -55,16 +54,16 @@ public:
 	 * @param t10_t11_t12 three vertices of the second triangle.
 	 * @note Assume that no triangle is degenerate.
 	 */
-	bool operator()(const GPointT &t00, const GPointT &t01, const GPointT &t02,
-	                const GPointT &t10, const GPointT &t11,
-	                const GPointT &t12) const;
+	bool operator()(const GPoint3 &t00, const GPoint3 &t01, const GPoint3 &t02,
+	                const GPoint3 &t10, const GPoint3 &t11,
+	                const GPoint3 &t12) const;
 
 	/**
 	 * @brief Get the intersection type between two triangles.
 	 * @note Assume that no triangle is degenerate.
 	 */
-	SimplexIntersectionType intersection_type(const TriangleT &tri0,
-	                                          const TriangleT &tri1) const;
+	SimplexIntersectionType intersection_type(const Triangle3 &tri0,
+	                                          const Triangle3 &tri1) const;
 
 	/**
 	 * @brief Get the intersection type between two triangles.
@@ -73,9 +72,9 @@ public:
 	 * @note Assume that no triangle is degenerate.
 	 */
 	SimplexIntersectionType
-	intersection_type(const GPointT &t00, const GPointT &t01, const GPointT &t02,
-	                  const GPointT &t10, const GPointT &t11,
-	                  const GPointT &t12) const;
+	intersection_type(const GPoint3 &t00, const GPoint3 &t01, const GPoint3 &t02,
+	                  const GPoint3 &t10, const GPoint3 &t11,
+	                  const GPoint3 &t12) const;
 
 	/**
 	 * @brief Get the intersection type between two triangles.

@@ -14,12 +14,12 @@ public:
 	using K = Kernel;
 
 	using NT           = typename K::NT;
-	using VecT         = typename K::Vec3;
-	using EPointT      = typename K::EPoint3;
-	using GPointT      = typename K::GPoint3;
-	using BoundingBoxT = typename K::BoundingBox3;
-	using SegmentT     = typename K::Segment3;
-	using TriangleT    = typename K::Triangle3;
+	using Vec3         = typename K::Vec3;
+	using EPoint3      = typename K::EPoint3;
+	using GPoint3      = typename K::GPoint3;
+	using BoundingBox3 = typename K::BoundingBox3;
+	using Segment3     = typename K::Segment3;
+	using Triangle3    = typename K::Triangle3;
 
 	using ToEP = typename K::ToEP;
 
@@ -34,33 +34,33 @@ public:
 	 * @brief Project a point to segment.
 	 * @return the projected point.
 	 */
-	EPointT operator()(const SegmentT &segment, const GPointT &point) const;
+	EPoint3 operator()(const Segment3 &segment, const GPoint3 &point) const;
 
 	/**
 	 * @brief Project a point to triangle.
 	 * @return the projected point.
 	 */
-	EPointT operator()(const TriangleT &triangle, const GPointT &point) const;
+	EPoint3 operator()(const Triangle3 &triangle, const GPoint3 &point) const;
 
 	/**
 	 * @brief Project a point to box.
 	 * @return the projected point.
 	 */
-	EPointT operator()(const BoundingBoxT &bbox, const GPointT &point) const;
+	EPoint3 operator()(const BoundingBox3 &bbox, const GPoint3 &point) const;
 
 private:
 	/**
 	 * @brief When segment is not degenerate, project point to it.
-	 * @return GPointT the projected point.
+	 * @return GPoint3 the projected point.
 	 */
-	EPointT proj_to_segment(const SegmentT &segment, const GPointT &point) const;
+	EPoint3 proj_to_segment(const Segment3 &segment, const GPoint3 &point) const;
 
 	/**
 	 * @brief When triangle is not degenerate, project point to it.
-	 * @return GPointT the projected point.
+	 * @return GPoint3 the projected point.
 	 */
-	EPointT proj_to_triangle(const TriangleT &triangle,
-	                         const GPointT   &point) const;
+	EPoint3 proj_to_triangle(const Triangle3 &triangle,
+	                         const GPoint3   &point) const;
 };
 
 } // namespace OMC

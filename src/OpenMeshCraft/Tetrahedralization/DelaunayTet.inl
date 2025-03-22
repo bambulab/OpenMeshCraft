@@ -48,23 +48,23 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
 	index_t i = 0, j = 1;
 	k = InvalidIndex, l = InvalidIndex;
 	// Four vertices
-	const GPoint &vi = mesh.gpnt(i), &vj = mesh.gpnt(j);
+	const GPoint3 &vi = mesh.gpnt(i), &vj = mesh.gpnt(j);
 	// Orientation of the four vertices (i.e., the sign of the tetrahedron volume
 	// formed by the four vertices)
-	Sign          ori = Sign::ZERO;
+	Sign           ori = Sign::ZERO;
 
 	// Traversal all vertices
 	for (k = 2; ori == Sign::ZERO && k < n - 1; k++)
 	{
-		const GPoint &vk = mesh.gpnt(k);
+		const GPoint3 &vk = mesh.gpnt(k);
 		// Find the third vertex to form a valid triangle
 		if (CollinearPoints3()(vi, vj, vk))
 			continue;
 		// Find the fourth vertex to form a valid tetrahedron
 		for (l = k + 1; ori == Sign::ZERO && l < n; l++)
 		{
-			const GPoint &vl = mesh.gpnt(l);
-			ori              = Orient3D()(vi, vj, vk, vl);
+			const GPoint3 &vl = mesh.gpnt(l);
+			ori               = Orient3D()(vi, vj, vk, vl);
 		}
 	}
 	// Decrease the indices by 1 to offset the increment from the for loop
@@ -307,8 +307,8 @@ void DelaunayTet<Traits>::cavity(const index_t vid, const index_t tet,
  * @note Filling is the same for both weighted and unweighted versions.
  */
 template <typename Traits>
-void DelaunayTet<Traits>::filling(const index_t               vid,
-                                  const InlinedVector64<index_t> &cavity_corners)
+void DelaunayTet<Traits>::filling(
+  const index_t vid, const InlinedVector64<index_t> &cavity_corners)
 {
 	// ==========================================================================
 	// Step 3: Filling

@@ -9,7 +9,7 @@ namespace OMC {
  * Because current implementation containts inexact construction.
  */
 template <typename Kernel>
-class Bbox_Sphere_Do_Intersect
+class Bbox_Sphere_DoIntersectK
 {
 public:
 	using K = Kernel;

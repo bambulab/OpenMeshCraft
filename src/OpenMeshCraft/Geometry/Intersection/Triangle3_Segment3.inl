@@ -5,42 +5,42 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Triangle3_Segment3_Do_Intersect<Kernel>::operator()(
-  const TriangleT &tri, const SegmentT &seg) const
+bool Triangle3_Segment3_DoIntersectK<Kernel>::operator()(
+  const Triangle3 &tri, const Segment3 &seg) const
 {
 	return intersection_type(tri, seg) >=
 	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 }
 
 template <typename Kernel>
-bool Triangle3_Segment3_Do_Intersect<Kernel>::operator()(
-  const GPointT &v1, const GPointT &v2, const GPointT &v3, const GPointT &s1,
-  const GPointT &s2) const
+bool Triangle3_Segment3_DoIntersectK<Kernel>::operator()(
+  const GPoint3 &v1, const GPoint3 &v2, const GPoint3 &v3, const GPoint3 &s1,
+  const GPoint3 &s2) const
 {
 	return intersection_type(v1, v2, v3, s1, s2) >=
 	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 }
 
 template <typename Kernel>
-bool Triangle3_Segment3_Do_Intersect<Kernel>::cross(const TriangleT &tri,
-                                                    const SegmentT  &seg) const
+bool Triangle3_Segment3_DoIntersectK<Kernel>::cross(const Triangle3 &tri,
+                                                    const Segment3  &seg) const
 {
 	return cross(tri.v0(), tri.v1(), tri.v2(), seg.start(), seg.end());
 }
 
 template <typename Kernel>
-bool Triangle3_Segment3_Do_Intersect<Kernel>::cross_inner(
-  const TriangleT &tri, const SegmentT &seg) const
+bool Triangle3_Segment3_DoIntersectK<Kernel>::cross_inner(
+  const Triangle3 &tri, const Segment3 &seg) const
 {
 	return cross_inner(tri.v0(), tri.v1(), tri.v2(), seg.start(), seg.end());
 }
 
 template <typename Kernel>
-bool Triangle3_Segment3_Do_Intersect<Kernel>::cross(const GPointT &v1,
-                                                    const GPointT &v2,
-                                                    const GPointT &v3,
-                                                    const GPointT &s1,
-                                                    const GPointT &s2) const
+bool Triangle3_Segment3_DoIntersectK<Kernel>::cross(const GPoint3 &v1,
+                                                    const GPoint3 &v2,
+                                                    const GPoint3 &v3,
+                                                    const GPoint3 &s1,
+                                                    const GPoint3 &s2) const
 {
 	Sign o1 = Orient3D()(v1, v2, v3, s1);
 	Sign o2 = Orient3D()(v1, v2, v3, s2);
@@ -70,9 +70,9 @@ bool Triangle3_Segment3_Do_Intersect<Kernel>::cross(const GPointT &v1,
 }
 
 template <typename Kernel>
-bool Triangle3_Segment3_Do_Intersect<Kernel>::cross_inner(
-  const GPointT &v1, const GPointT &v2, const GPointT &v3, const GPointT &s1,
-  const GPointT &s2) const
+bool Triangle3_Segment3_DoIntersectK<Kernel>::cross_inner(
+  const GPoint3 &v1, const GPoint3 &v2, const GPoint3 &v3, const GPoint3 &s1,
+  const GPoint3 &s2) const
 {
 	Sign o1 = Orient3D()(v1, v2, v3, s1);
 	if (o1 == Sign::ZERO)
@@ -101,8 +101,8 @@ bool Triangle3_Segment3_Do_Intersect<Kernel>::cross_inner(
 
 template <typename Kernel>
 SimplexIntersectionType
-Triangle3_Segment3_Do_Intersect<Kernel>::intersection_type(
-  const TriangleT &tri, const SegmentT &seg) const
+Triangle3_Segment3_DoIntersectK<Kernel>::intersection_type(
+  const Triangle3 &tri, const Segment3 &seg) const
 {
 	return intersection_type(tri.v0(), tri.v1(), tri.v2(), seg.start(),
 	                         seg.end());
@@ -110,9 +110,9 @@ Triangle3_Segment3_Do_Intersect<Kernel>::intersection_type(
 
 template <typename Kernel>
 SimplexIntersectionType
-Triangle3_Segment3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2, const GPointT &s0,
-  const GPointT &s1) const
+Triangle3_Segment3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2, const GPoint3 &s0,
+  const GPoint3 &s1) const
 {
 	// the triangle is abbreviated as t, and the segment as s
 
@@ -214,7 +214,7 @@ Triangle3_Segment3_Do_Intersect<Kernel>::intersection_type(
 
 template <typename Kernel>
 SimplexIntersectionType
-Triangle3_Segment3_Do_Intersect<Kernel>::intersection_type(
+Triangle3_Segment3_DoIntersectK<Kernel>::intersection_type(
   const NT *t0, const NT *t1, const NT *t2, const NT *s0, const NT *s1,
   int &n_max, const NT *t_min, const NT *t_perm) const
 {

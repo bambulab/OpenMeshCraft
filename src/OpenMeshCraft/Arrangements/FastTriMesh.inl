@@ -14,8 +14,8 @@ FastTriMesh<Traits>::FastTriMesh()
 }
 
 template <typename Traits>
-FastTriMesh<Traits>::FastTriMesh(const std::vector<GPoint *> &in_verts,
-                                 const std::vector<index_t>  &in_tris)
+FastTriMesh<Traits>::FastTriMesh(const std::vector<GPoint3 *> &in_verts,
+                                 const std::vector<index_t>   &in_tris)
 {
 	OMC_ASSERT(in_tris.size() % 3 == 0, "triangle error");
 
@@ -128,8 +128,8 @@ FastTriMesh<Traits>::~FastTriMesh()
 }
 
 template <typename Traits>
-void FastTriMesh<Traits>::initialize(const GPoint *tv0, const GPoint *tv1,
-                                     const GPoint *tv2, const index_t *tv_id,
+void FastTriMesh<Traits>::initialize(const GPoint3 *tv0, const GPoint3 *tv1,
+                                     const GPoint3 *tv2, const index_t *tv_id,
                                      const OrPlane &ref_p, const Sign &ori)
 {
 	clear();
@@ -404,7 +404,7 @@ index_t FastTriMesh<Traits>::prevVertInTri(index_t t_id,
 }
 
 template <typename Traits>
-index_t FastTriMesh<Traits>::addVert(const GPoint *p, index_t origin_v_id)
+index_t FastTriMesh<Traits>::addVert(const GPoint3 *p, index_t origin_v_id)
 {
 	index_t v_id = static_cast<index_t>(numVerts());
 	vertices.emplace_back(p, origin_v_id);
@@ -567,8 +567,9 @@ void FastTriMesh<Traits>::splitEdge(const index_t e_id, index_t v_id,
 {
 	OMC_EXPENSIVE_ASSERT(e_id < numEdges(), "edge id out of range");
 
-	index_t             ev0_id  = edges[e_id].verts.first;
-	index_t             ev1_id  = edges[e_id].verts.second;
+	index_t ev0_id = edges[e_id].verts.first;
+	index_t ev1_id = edges[e_id].verts.second;
+
 	// for each adjacent triangle
 	InlinedVector4<index_t> tmp_e2t = e2t[e_id];
 	for (index_t t_id : tmp_e2t)
@@ -652,7 +653,7 @@ void FastTriMesh<Traits>::flipTri(index_t t_id)
 }
 
 template <typename Traits>
-auto FastTriMesh<Traits>::vert(index_t v_id) const -> const GPoint &
+auto FastTriMesh<Traits>::vert(index_t v_id) const -> const GPoint3 &
 {
 	OMC_EXPENSIVE_ASSERT(v_id < numVerts(), "vtx id out of range.");
 	return *vertices[v_id].point;
@@ -660,7 +661,7 @@ auto FastTriMesh<Traits>::vert(index_t v_id) const -> const GPoint &
 
 template <typename Traits>
 auto FastTriMesh<Traits>::triVert(index_t t_id, size_t off) const
-  -> const GPoint &
+  -> const GPoint3 &
 {
 	OMC_EXPENSIVE_ASSERT(t_id < numTriangles(), "tri id out of range");
 	return *vertices[triangles[t_id].verts[off]].point;
@@ -771,9 +772,9 @@ template <typename Traits>
 Sign FastTriMesh<Traits>::triOrientation(index_t t_id) const
 {
 	OMC_EXPENSIVE_ASSERT(t_id < numTriangles(), "tri id out of range");
-	Sign          ori = Sign::ZERO;
-	const GPoint &v0 = triVert(t_id, 0), &v1 = triVert(t_id, 1),
-	             &v2 = triVert(t_id, 2);
+	Sign           ori = Sign::ZERO;
+	const GPoint3 &v0 = triVert(t_id, 0), &v1 = triVert(t_id, 1),
+	              &v2 = triVert(t_id, 2);
 	switch (refPlane())
 	{
 	case XY:

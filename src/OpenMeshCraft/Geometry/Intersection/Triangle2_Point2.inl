@@ -7,16 +7,16 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Triangle2_Point2_Do_Intersect<Kernel>::operator()(const TriangleT &tri,
-                                                       const GPointT &pnt) const
+bool Triangle2_Point2_DoIntersectK<Kernel>::operator()(const Triangle2 &tri,
+                                                       const GPoint2 &pnt) const
 {
 	return intersection_type(tri, pnt) >= PointInSimplexType::STRICTLY_OUTSIDE;
 }
 
 template <typename Kernel>
 PointInType
-Triangle2_Point2_Do_Intersect<Kernel>::in_triangle(const TriangleT &tri,
-                                                   const GPointT   &pnt) const
+Triangle2_Point2_DoIntersectK<Kernel>::in_triangle(const Triangle2 &tri,
+                                                   const GPoint2   &pnt) const
 {
 	PointInSimplexType type = intersection_type(tri, pnt);
 	if (type == PointInSimplexType::STRICTLY_INSIDE)
@@ -28,16 +28,16 @@ Triangle2_Point2_Do_Intersect<Kernel>::in_triangle(const TriangleT &tri,
 }
 
 template <typename Kernel>
-PointInSimplexType Triangle2_Point2_Do_Intersect<Kernel>::intersection_type(
-  const TriangleT &tri, const GPointT &pnt) const
+PointInSimplexType Triangle2_Point2_DoIntersectK<Kernel>::intersection_type(
+  const Triangle2 &tri, const GPoint2 &pnt) const
 {
 	return intersection_type(tri.v0(), tri.v1(), tri.v2(), pnt);
 }
 
 template <typename Kernel>
-PointInSimplexType Triangle2_Point2_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &t0, const GPointT &t1, const GPointT &t2,
-  const GPointT &p) const
+PointInSimplexType Triangle2_Point2_DoIntersectK<Kernel>::intersection_type(
+  const GPoint2 &t0, const GPoint2 &t1, const GPoint2 &t2,
+  const GPoint2 &p) const
 {
 	Sign o1 = Orient2D()(t0, t1, p);
 	Sign o2 = Orient2D()(t1, t2, p);
@@ -59,7 +59,7 @@ PointInSimplexType Triangle2_Point2_Do_Intersect<Kernel>::intersection_type(
 }
 
 template <typename Kernel>
-PointInSimplexType Triangle2_Point2_Do_Intersect<Kernel>::intersection_type(
+PointInSimplexType Triangle2_Point2_DoIntersectK<Kernel>::intersection_type(
   const NT *t0, const NT *t1, const NT *t2, const NT *p) const
 {
 	Sign o1 = Orient2D()(t0, t1, p);

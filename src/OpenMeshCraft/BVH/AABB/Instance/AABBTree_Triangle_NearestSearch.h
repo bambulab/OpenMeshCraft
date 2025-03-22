@@ -49,12 +49,12 @@ public:
 		{
 		}
 	};
-	using TriT          = TriT_;
+	using TriT         = TriT_;
 	// Point projection
-	using ProjectPoint3 = typename APAC::FastProjectPoint3;
+	using ProjectPoint = typename APAC::FastProjectPoint3;
 #else
-	using TriT          = typename APAC::Triangle3;
-	using ProjectPoint3 = typename APAC::ProjectPoint3;
+	using TriT         = typename APAC::Triangle3;
+	using ProjectPoint = typename APAC::ProjectPoint3;
 #endif
 	// Attribute type
 	using PrimAttrT = index_t;
@@ -86,11 +86,11 @@ public:
 	using ThisT  = SAABBTree_Triangle_NearestSearch;
 	using Traits = SAABBTraits_Triangle_NearestSearch;
 
-	using NT            = typename Traits::NT;
-	using PointT        = typename Traits::PointT;
-	using TriT          = typename Traits::TriT;
-	using PrimAttrT     = typename Traits::PrimAttrT;
-	using ProjectPoint3 = typename Traits::ProjectPoint3;
+	using NT           = typename Traits::NT;
+	using PointT       = typename Traits::PointT;
+	using TriT         = typename Traits::TriT;
+	using PrimAttrT    = typename Traits::PrimAttrT;
+	using ProjectPoint = typename Traits::ProjectPoint;
 	// Other types will be deduced by AABBTree
 
 public:
@@ -116,7 +116,7 @@ protected:
 		using PointT       = typename Traits::PointT;
 		using PointAttrT   = index_t;
 		using BboxT        = typename Traits::BboxT;
-		using ProjectPoint = typename Traits::ProjectPoint3;
+		using ProjectPoint = typename Traits::ProjectPoint;
 	};
 
 	using KdTraits = KdAutoDeduceTraits<KdSimpleTraits>;

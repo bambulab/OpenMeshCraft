@@ -17,34 +17,33 @@ namespace OMC {
  *  (at most two points).
  *
  * - STRICTLY_OUTSIDE : the segment is strictly outside the sphere.
- * 
+ *
  * The first two types are considered as intersect.
  *
  * @tparam Kernel
  */
 template <typename Kernel>
-class Sphere3_Segment3_Do_Intersect
+class Sphere3_Segment3_DoIntersectK
 {
 public:
 	using K  = Kernel;
 	using NT = typename K::NT;
 
-	using VecT     = typename K::Vec3;
-	using GPointT  = typename K::GPoint3;
-	using SphereT  = typename K::Sphere3;
-	using SegmentT = typename K::Segment3;
+	using GPoint3  = typename K::GPoint3;
+	using Sphere3  = typename K::Sphere3;
+	using Segment3 = typename K::Segment3;
 
 	using DotProductSign  = typename K::DotProductSign3D;
 	using SquaredDistance = typename K::SquaredDistance3D;
 
-	using Sphere3_Point3_DoInter = Sphere3_Point3_Do_Intersect<K>;
+	using Sphere3_Point3_DoInter = Sphere3_Point3_DoIntersectK<K>;
 
 public:
 	/**
 	 * @brief Check if sphere and segment intersect.
 	 * @note Assume no one is degenerate.
 	 */
-	bool operator()(const SphereT &sphere, const SegmentT &seg) const;
+	bool operator()(const Sphere3 &sphere, const Segment3 &seg) const;
 
 	/**
 	 * @brief Check if sphere and segment intersect.
@@ -53,15 +52,15 @@ public:
 	 * @param s0_s1 two vertices of segment
 	 * @note Assume no one is degenerate.
 	 */
-	bool operator()(const GPointT &center, NT squared_radius, const GPointT &s0,
-	                const GPointT &s1) const;
+	bool operator()(const GPoint3 &center, NT squared_radius, const GPoint3 &s0,
+	                const GPoint3 &s1) const;
 
 	/**
 	 * @brief Get the intersection type between segment and segment.
 	 * @note Assume no one is degenerate.
 	 */
-	IntersectionType intersection_type(const SphereT  &sphere,
-	                                   const SegmentT &seg) const;
+	IntersectionType intersection_type(const Sphere3  &sphere,
+	                                   const Segment3 &seg) const;
 
 	/**
 	 * @brief Get the intersection type between segment and segment.
@@ -70,9 +69,9 @@ public:
 	 * @param s0_s1 two vertices of segment
 	 * @note Assume no one is degenerate.
 	 */
-	IntersectionType intersection_type(const GPointT &center, NT squared_radius,
-	                                   const GPointT &s0,
-	                                   const GPointT &s1) const;
+	IntersectionType intersection_type(const GPoint3 &center, NT squared_radius,
+	                                   const GPoint3 &s0,
+	                                   const GPoint3 &s1) const;
 };
 
 } // namespace OMC

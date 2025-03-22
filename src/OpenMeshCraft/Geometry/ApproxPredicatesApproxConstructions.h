@@ -186,28 +186,28 @@ public:
 	/// @name Do Intersect
 	/// @{
 	// clang-format off
-	using Segment2_Segment2_DoIntersect = Segment2_Segment2_Do_Intersect<Kernel>;
-	using Triangle2_Point2_DoIntersect  = Triangle2_Point2_Do_Intersect<Kernel>;
+	using Segment2_Segment2_DoIntersect = Segment2_Segment2_DoIntersectK<Kernel>;
+	using Triangle2_Point2_DoIntersect  = Triangle2_Point2_DoIntersectK<Kernel>;
 
-	using Bbox_Bbox_DoIntersect          = Bbox_Bbox_Do_Intersect<Kernel>;
-	using Bbox_Point_DoIntersect         = Bbox_Point_Do_Intersect<Kernel>;
-	using Bbox_Sphere_DoIntersect        = Bbox_Sphere_Do_Intersect<Kernel>;
-	using Bbox3_Segment3_DoIntersect     = Bbox3_Segment3_Do_Intersect<Kernel>;
-	using Bbox3_BoundedLine3_DoIntersect = Bbox3_BoundedLine3_Do_Intersect<Kernel>;
-	using Bbox3_Line3_DoIntersect        = Bbox3_Line3_Do_Intersect<Kernel>;
-	using Bbox3_Ray3_DoIntersect         = Bbox3_Ray3_Do_Intersect<Kernel>;
-	using Bbox3_Triangle3_DoIntersect    = Bbox3_Triangle3_Do_Intersect<Kernel>;
+	using Bbox_Bbox_DoIntersect          = Bbox_Bbox_DoIntersectK<Kernel>;
+	using Bbox_Point_DoIntersect         = Bbox_Point_DoIntersectK<Kernel>;
+	using Bbox_Sphere_DoIntersect        = Bbox_Sphere_DoIntersectK<Kernel>;
+	using Bbox3_Segment3_DoIntersect     = Bbox3_Segment3_DoIntersectK<Kernel>;
+	using Bbox3_BoundedLine3_DoIntersect = Bbox3_BoundedLine3_DoIntersectK<Kernel>;
+	using Bbox3_Line3_DoIntersect        = Bbox3_Line3_DoIntersectK<Kernel>;
+	using Bbox3_Ray3_DoIntersect         = Bbox3_Ray3_DoIntersectK<Kernel>;
+	using Bbox3_Triangle3_DoIntersect    = Bbox3_Triangle3_DoIntersectK<Kernel>;
 
-	using Segment3_Point3_DoIntersect   = Segment3_Point3_Do_Intersect<Kernel>;
-	using Segment3_Segment3_DoIntersect = Segment3_Segment3_Do_Intersect<Kernel>;
+	using Segment3_Point3_DoIntersect   = Segment3_Point3_DoIntersectK<Kernel>;
+	using Segment3_Segment3_DoIntersect = Segment3_Segment3_DoIntersectK<Kernel>;
 
-	using Triangle3_Point3_DoIntersect    = Triangle3_Point3_Do_Intersect<Kernel>;
-	using Triangle3_Segment3_DoIntersect  = Triangle3_Segment3_Do_Intersect<Kernel>;
-	using Triangle3_Triangle3_DoIntersect = Triangle3_Triangle3_Do_Intersect<Kernel>;
+	using Triangle3_Point3_DoIntersect    = Triangle3_Point3_DoIntersectK<Kernel>;
+	using Triangle3_Segment3_DoIntersect  = Triangle3_Segment3_DoIntersectK<Kernel>;
+	using Triangle3_Triangle3_DoIntersect = Triangle3_Triangle3_DoIntersectK<Kernel>;
 
-	using Tetrahedron3_Point3_DoIntersect    = Tetrahedron3_Point3_Do_Intersect<Kernel>;
-	using Tetrahedron3_Segment3_DoIntersect  = Tetrahedron3_Segment3_Do_Intersect<Kernel>;
-	using Tetrahedron3_Triangle3_DoIntersect = Tetrahedron3_Triangle3_Do_Intersect<Kernel>;
+	using Tetrahedron3_Point3_DoIntersect    = Tetrahedron3_Point3_DoIntersectK<Kernel>;
+	using Tetrahedron3_Segment3_DoIntersect  = Tetrahedron3_Segment3_DoIntersectK<Kernel>;
+	using Tetrahedron3_Triangle3_DoIntersect = Tetrahedron3_Triangle3_DoIntersectK<Kernel>;
 	// clang-format on
 
 	using DoIntersect = DoIntersectK<Kernel>;

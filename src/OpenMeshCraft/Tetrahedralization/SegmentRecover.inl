@@ -17,8 +17,8 @@ namespace OMC {
  * @param _plc the input constrained piecewise linear complex
  */
 template <typename Traits>
-SegmentRecover<Traits>::SegmentRecover(std::vector<GPoint *> &_verts,
-                                       std::vector<PntArena> &_pnt_arenas,
+SegmentRecover<Traits>::SegmentRecover(std::vector<GPoint3 *> &_verts,
+                                       std::vector<PntArena>  &_pnt_arenas,
                                        TetMesh &_tet_mesh, PLC &_plc,
                                        ConstrDelTet_Config _config,
                                        ConstrDelTet_Stats *_stats)
@@ -66,7 +66,7 @@ index_t SegmentRecover<Traits>::newVtx(PointType new_pnt)
 	// Put the new vertex into the point arena
 	auto   *new_pnt_ptr = pnt_arenas[0].emplace(std::move(new_pnt));
 	// Put the new vertex into the vertex list
-	verts.push_back(static_cast<GPoint *>(new_pnt_ptr));
+	verts.push_back(static_cast<GPoint3 *>(new_pnt_ptr));
 
 	// create auxiliary data in TetMesh & PLC
 	tet_mesh.newVtx(new_vid);
@@ -181,8 +181,8 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang(size_t num_loop)
 template <typename Traits>
 index_t SegmentRecover<Traits>::splitMissingSegment(index_t eid)
 {
-	IPoint_LNC new_pnt;
-	index_t    curr_tet = InvalidIndex;
+	IPoint3T_LNC new_pnt;
+	index_t      curr_tet = InvalidIndex;
 
 	const PLCEdge &edge = plc.edge(eid);
 
@@ -271,11 +271,11 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
 	tet_mesh.mark(edge.ep0(), VTX_MARK::ENCROACHED);
 	tet_mesh.mark(edge.ep1(), VTX_MARK::ENCROACHED);
 
-	const GPoint &p0    = gpnt(edge.ep0());
-	const GPoint &p1    = gpnt(edge.ep1());
-	const GPoint *ref_p = nullptr;
-	ref_vid             = InvalidIndex;
-	ref_tidoff          = InvalidIndex;
+	const GPoint3 &p0    = gpnt(edge.ep0());
+	const GPoint3 &p1    = gpnt(edge.ep1());
+	const GPoint3 *ref_p = nullptr;
+	ref_vid              = InvalidIndex;
+	ref_tidoff           = InvalidIndex;
 
 	for (index_t i = 0; i < encroach_tets.size(); i++)
 	{
@@ -289,7 +289,7 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
 			    tet_mesh.isMarked(vid, VTX_MARK::ENCROACHED))
 				continue;
 			tet_mesh.mark(vid, VTX_MARK::TOUCHED);
-			const GPoint &curr_p = gpnt(vid);
+			const GPoint3 &curr_p = gpnt(vid);
 
 			// check if the vertex is encroaching
 			if (inSphere(p0, p1, curr_p))
@@ -373,13 +373,13 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(
 template <typename Traits>
 auto SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
                                                         index_t ref_vid) const
-  -> IPoint_LNC
+  -> IPoint3T_LNC
 {
 	const PLCEdge &edge = plc.edge(eid);
 
-	const GPoint &ep0_pnt = gpnt(edge.ep0());
-	const GPoint &ep1_pnt = gpnt(edge.ep1());
-	const GPoint &ref_pnt = gpnt(ref_vid);
+	const GPoint3 &ep0_pnt = gpnt(edge.ep0());
+	const GPoint3 &ep1_pnt = gpnt(edge.ep1());
+	const GPoint3 &ref_pnt = gpnt(ref_vid);
 
 	if (isLessThanHalfDistance(ep0_pnt, ref_pnt, ep1_pnt))
 	{ // The `ref_pnt` is closer to the endpoint `ep0`, and the distance between
@@ -412,11 +412,11 @@ auto SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
 template <typename Traits>
 auto SegmentRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
                                                          index_t ref_vid) const
-  -> IPoint_LNC
+  -> IPoint3T_LNC
 {
 	const PLCEdge &edge = plc.edge(eid);
 
-	IPoint_LNC new_pnt =
+	IPoint3T_LNC new_pnt =
 	  lineSphereIntersection_oneAc(eid, edge.acute_vid, ref_vid);
 
 	if (isLessThanDistance(new_pnt, gpnt(edge.ep1()), gpnt(ref_vid)))
@@ -436,8 +436,8 @@ auto SegmentRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
  * @return True if the point lies inside or touches the sphere, false otherwise.
  */
 template <typename Traits>
-bool SegmentRecover<Traits>::inSphere(const GPoint &a, const GPoint &b,
-                                      const GPoint &c)
+bool SegmentRecover<Traits>::inSphere(const GPoint3 &a, const GPoint3 &b,
+                                      const GPoint3 &c)
 {
 	// In [Robust CDT 2023], this predicate is implemented in floating-point
 	// numbers, I reimplemnted it in exact predicates.
@@ -445,7 +445,7 @@ bool SegmentRecover<Traits>::inSphere(const GPoint &a, const GPoint &b,
 #ifdef OMC_CDT_EXACT_ENCROACH_TEST
 	return InSphere()(a, b, c) >= Sign::ZERO;
 #else
-	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
+	EPoint3 a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
 	return (c_ep - a_ep).sqrnorm() + (c_ep - b_ep).sqrnorm() <=
 	       (a_ep - b_ep).sqrnorm();
 #endif
@@ -458,8 +458,8 @@ bool SegmentRecover<Traits>::inSphere(const GPoint &a, const GPoint &b,
  * @return true if S(abc) is larger than S(abd), false otherwise.
  */
 template <typename Traits>
-bool SegmentRecover<Traits>::largerSphere(const GPoint &a, const GPoint &b,
-                                          const GPoint &c, const GPoint &d)
+bool SegmentRecover<Traits>::largerSphere(const GPoint3 &a, const GPoint3 &b,
+                                          const GPoint3 &c, const GPoint3 &d)
 {
 	// It is complex to generate a complete point arrangement to calculate an
 	// exact predicate. This predicate tolerate floating-point errors, so I
@@ -469,9 +469,10 @@ bool SegmentRecover<Traits>::largerSphere(const GPoint &a, const GPoint &b,
 	return InSphere().largerSphere(a, b, c, d) == Sign::POSITIVE;
 #else
 	// calculate vectors between points
-	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c), d_ep = ToEP()(d);
-	Vec3   ac = (c_ep - a_ep), bc = (c_ep - b_ep);
-	Vec3   ad = (d_ep - a_ep), bd = (d_ep - b_ep);
+	EPoint3 a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c),
+	        d_ep = ToEP()(d);
+	Vec3 ac = (c_ep - a_ep), bc = (c_ep - b_ep);
+	Vec3 ad = (d_ep - a_ep), bd = (d_ep - b_ep);
 
 	// let the angle between ac and bc be <abc>, and the angle between ad and bd
 	// be <abd>.
@@ -494,9 +495,9 @@ bool SegmentRecover<Traits>::largerSphere(const GPoint &a, const GPoint &b,
  * @return true if less, false otherwise.
  */
 template <typename Traits>
-bool SegmentRecover<Traits>::isLessThanDistance(const GPoint &a,
-                                                const GPoint &b,
-                                                const GPoint &c)
+bool SegmentRecover<Traits>::isLessThanDistance(const GPoint3 &a,
+                                                const GPoint3 &b,
+                                                const GPoint3 &c)
 {
 	// This predicate tolerate floating-point errors, so I directly use the
 	// inexact predicate.
@@ -504,7 +505,7 @@ bool SegmentRecover<Traits>::isLessThanDistance(const GPoint &a,
 #if 0
 	return SquaredDistance3D()(a, b, c) == Sign::NEGATIVE;
 #else
-	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
+	EPoint3 a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
 	return (b_ep - a_ep).sqrnorm() < (c_ep - a_ep).sqrnorm();
 #endif
 }
@@ -515,9 +516,9 @@ bool SegmentRecover<Traits>::isLessThanDistance(const GPoint &a,
  * @return true if less, false otherwise.
  */
 template <typename Traits>
-bool SegmentRecover<Traits>::isLessThanHalfDistance(const GPoint &a,
-                                                    const GPoint &b,
-                                                    const GPoint &c)
+bool SegmentRecover<Traits>::isLessThanHalfDistance(const GPoint3 &a,
+                                                    const GPoint3 &b,
+                                                    const GPoint3 &c)
 {
 	// This predicate tolerate floating-point errors, so I directly use the
 	// inexact predicate.
@@ -526,7 +527,7 @@ bool SegmentRecover<Traits>::isLessThanHalfDistance(const GPoint &a,
 	// scale the squared distance between a and b by 4 to avoid square root.
 	return SquaredDistance3D()(a, b, c, /*ab_scale*/ 4) == Sign::NEGATIVE;
 #else
-	EPoint a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
+	EPoint3 a_ep = ToEP()(a), b_ep = ToEP()(b), c_ep = ToEP()(c);
 	return (b_ep - a_ep).sqrnorm() * 4 < (c_ep - a_ep).sqrnorm();
 #endif
 }
@@ -579,10 +580,10 @@ SegmentRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1, index_t ep0,
 /**
  * @brief Get the middle point of a PLC edge represented by LNC implicit point.
  * @param e The given PLC edge.
- * @return IPoint_LNC The middle point of the edge.
+ * @return IPoint3T_LNC The middle point of the edge.
  */
 template <typename Traits>
-auto SegmentRecover<Traits>::middlePoint(const PLCEdge &e) const -> IPoint_LNC
+auto SegmentRecover<Traits>::middlePoint(const PLCEdge &e) const -> IPoint3T_LNC
 {
 	index_t ep0 = e.ep0(), ep1 = e.ep1();
 
@@ -618,13 +619,13 @@ auto SegmentRecover<Traits>::middlePoint(const PLCEdge &e) const -> IPoint_LNC
  * centers at the endpoint that is closer to the reference encroaching point.
  * @param [in] ref_vid The index of the reference encroaching point.
  * @note `noAc` means no acute vertex.
- * @return IPoint_LNC The intersection point represented in LNC.
+ * @return IPoint3T_LNC The intersection point represented in LNC.
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::lineSphereIntersection_noAc(index_t eid,
                                                          bool    reverse,
                                                          index_t ref_vid) const
-  -> IPoint_LNC
+  -> IPoint3T_LNC
 {
 	const PLCEdge &e = plc.edge(eid);
 
@@ -672,13 +673,13 @@ auto SegmentRecover<Traits>::lineSphereIntersection_noAc(index_t eid,
  * @param [in] acute_vid The index of the acute vertex.
  * @param [in] ref_vid The index of the reference encroaching point.
  * @note `oneAc` means one acute vertex.
- * @return IPoint_LNC The intersection point represented in LNC.
+ * @return IPoint3T_LNC The intersection point represented in LNC.
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
                                                           index_t acute_vid,
                                                           index_t ref_vid) const
-  -> IPoint_LNC
+  -> IPoint3T_LNC
 {
 	const PLCEdge &e = plc.edge(eid);
 
@@ -743,10 +744,10 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		if (e.isConstraint())
 		{
 			// endpoints
-			index_t       ev0 = e.ep0(), ev1 = e.ep1();
-			const GPoint &gp0 = gpnt(ev0), &gp1 = gpnt(ev1);
+			index_t        ev0 = e.ep0(), ev1 = e.ep1();
+			const GPoint3 &gp0 = gpnt(ev0), &gp1 = gpnt(ev1);
 			// segment tree
-			indexed_segments.emplace_back(Segment(AsEP()(gp0), AsEP()(gp1)), eid);
+			indexed_segments.emplace_back(Segment3(AsEP()(gp0), AsEP()(gp1)), eid);
 		}
 	}
 	// segment tree
@@ -804,9 +805,9 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 			return;
 
 		// construct a initial protecting sphere based on the above lengths.
-		Sphere sphere(AsEP()(gpnt(vid)),
-		              std::min(shortest_acute_edge * (1.0 / 4.0),
-		                       shortest_non_acute_edge * (4.0 / 9.0)));
+		Sphere3 sphere(AsEP()(gpnt(vid)),
+		               std::min(shortest_acute_edge * (1.0 / 4.0),
+		                        shortest_non_acute_edge * (4.0 / 9.0)));
 
 		// find segments that intersect the currect sphere
 		InlinedVector64<index_t> intersected_edges;
@@ -819,7 +820,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 			for (index_t eid : possible_intersected_edges)
 			{
 				const PLCEdge &e = plc.edge(eid);
-				Segment        seg(AsEP()(gpnt(e.ep0())), AsEP()(gpnt(e.ep1())));
+				Segment3       seg(AsEP()(gpnt(e.ep0())), AsEP()(gpnt(e.ep1())));
 				if (DoIntersect()(sphere, seg))
 					_intersected_edges.insert(eid);
 			}
@@ -837,7 +838,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		}
 
 		// otherwise, we need to shrink the sphere.
-		InlinedVector64<Segment> intersected_segs;
+		InlinedVector64<Segment3> intersected_segs;
 		for (index_t eid : intersected_edges)
 		{
 			const PLCEdge &e = plc.edge(eid);
@@ -849,11 +850,11 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 		// segments is also called `local feature size` (lfs).
 		// we need to shrink the sphere to be less than the local feature size.
 		double min_proj_dis = DBL_MAX;
-		for (const Segment &seg : intersected_segs)
+		for (const Segment3 &seg : intersected_segs)
 		{
-			EPoint proj_pnt = ProjectPoint()(seg, sphere.center());
-			double proj_dis = (proj_pnt - sphere.center()).sqrnorm();
-			min_proj_dis    = std::min(min_proj_dis, proj_dis);
+			EPoint3 proj_pnt = ProjectPoint3()(seg, sphere.center());
+			double  proj_dis = (proj_pnt - sphere.center()).sqrnorm();
+			min_proj_dis     = std::min(min_proj_dis, proj_dis);
 		}
 
 		// reduce the projection distance to avoid numerical error
@@ -876,8 +877,8 @@ void SegmentRecover<Traits>::buildProtectingSphere()
 }
 
 template <typename Traits>
-void SegmentRecover<Traits>::protectVertex(index_t     eid,
-                                           IPoint_LNC &steiner_point) const
+void SegmentRecover<Traits>::protectVertex(index_t       eid,
+                                           IPoint3T_LNC &steiner_point) const
 {
 	// use a protecting sphere to protect edges around the acute vertex.
 	const PLCEdge &anc_edge = plc.edge(plc.ancestorEdge(eid));
@@ -885,15 +886,15 @@ void SegmentRecover<Traits>::protectVertex(index_t     eid,
 
 	if (protecting_sphere_squared_radius[oep0] > 0.0 &&
 	    DoIntersect()(
-	      Sphere(AsEP()(gpnt(oep0)), protecting_sphere_squared_radius[oep0]),
+	      Sphere3(AsEP()(gpnt(oep0)), protecting_sphere_squared_radius[oep0]),
 	      AsGP()(steiner_point)))
 	{
 		steiner_point = splitSegment_ProtectingSphere(eid, oep0);
 	}
 	else if (protecting_sphere_squared_radius[oep1] > 0.0 &&
-	         DoIntersect()(
-	           Sphere(AsEP()(gpnt(oep1)), protecting_sphere_squared_radius[oep1]),
-	           AsGP()(steiner_point)))
+	         DoIntersect()(Sphere3(AsEP()(gpnt(oep1)),
+	                               protecting_sphere_squared_radius[oep1]),
+	                       AsGP()(steiner_point)))
 	{
 		steiner_point = splitSegment_ProtectingSphere(eid, oep1);
 	}
@@ -908,7 +909,7 @@ void SegmentRecover<Traits>::protectVertex(index_t     eid,
  */
 template <typename Traits>
 auto SegmentRecover<Traits>::splitSegment_ProtectingSphere(
-  index_t eid, index_t center_vid) const -> IPoint_LNC
+  index_t eid, index_t center_vid) const -> IPoint3T_LNC
 {
 	const PLCEdge &e     = plc.edge(eid);
 	const PLCEdge &anc_e = plc.edge(plc.ancestorEdge(eid));

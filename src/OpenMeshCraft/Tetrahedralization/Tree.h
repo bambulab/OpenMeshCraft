@@ -17,8 +17,8 @@ template <typename Traits>
 class GenericSegment3T
 {
 public: /* Traits *************************************************************/
-	using EPoint = typename Traits::EPoint;
-	using GPoint = typename Traits::GPoint;
+	using EPoint3 = typename Traits::EPoint3;
+	using GPoint3 = typename Traits::GPoint3;
 
 	using AsGP = typename Traits::AsGP;
 	using AsEP = typename Traits::AsEP;
@@ -39,7 +39,7 @@ public: /* Constructors *******************************************************/
 	 * @param start start point of segment
 	 * @param end end point of segment
 	 */
-	GenericSegment3T(const GPoint *start, const GPoint *end)
+	GenericSegment3T(const GPoint3 *start, const GPoint3 *end)
 	  : m_start_gp(start)
 	  , m_end_gp(end)
 	  , m_start_ep(ToEP()(*start))
@@ -48,19 +48,19 @@ public: /* Constructors *******************************************************/
 	}
 
 	/// Acess the explicit endpoints for approximate calculation.
-	const EPoint &start() const { return m_start_ep; }
-	const EPoint &end() const { return m_end_ep; }
+	const EPoint3 &start() const { return m_start_ep; }
+	const EPoint3 &end() const { return m_end_ep; }
 
 	/// Acess the generic endpoints for exact calculation.
-	const GPoint &start_gp() const { return *m_start_gp; }
-	const GPoint &end_gp() const { return *m_end_gp; }
+	const GPoint3 &start_gp() const { return *m_start_gp; }
+	const GPoint3 &end_gp() const { return *m_end_gp; }
 
 public: /* Data members *******************************************************/
-	const GPoint *m_start_gp;
-	const GPoint *m_end_gp;
+	const GPoint3 *m_start_gp;
+	const GPoint3 *m_end_gp;
 
-	EPoint m_start_ep;
-	EPoint m_end_ep;
+	EPoint3 m_start_ep;
+	EPoint3 m_end_ep;
 };
 
 template <typename Traits>
@@ -69,11 +69,11 @@ class CalcBbox_CDT
 public: /* Traits *************************************************************/
 	using IT = IntervalNumber<std::true_type>;
 
-	using EPoint = typename Traits::EPoint;
-	using GPoint = typename Traits::GPoint;
+	using EPoint3 = typename Traits::EPoint3;
+	using GPoint3 = typename Traits::GPoint3;
 
-	using BoundingBox = typename Traits::BoundingBox;
-	using CalcBbox    = typename Traits::CalcBbox;
+	using BoundingBox      = typename Traits::BoundingBox;
+	using CalcBoundingBox3 = typename Traits::CalcBoundingBox3;
 
 	using GSegment = GenericSegment3T<Traits>;
 
@@ -85,11 +85,11 @@ public: /* Operators **********************************************************/
 	 */
 	BoundingBox operator()(const GSegment &seg) const
 	{
-		const GPoint &start = seg.start_gp(), &end = seg.end_gp();
+		const GPoint3 &start = seg.start_gp(), &end = seg.end_gp();
 
 		// calculate the bounding box of endpoints
-		BoundingBox start_bound = CalcBbox()(start);
-		BoundingBox end_bound   = CalcBbox()(end);
+		BoundingBox start_bound = CalcBoundingBox3()(start);
+		BoundingBox end_bound   = CalcBoundingBox3()(end);
 
 		// calculate the bounding box of the diametral sphere of the segment.
 		BoundingBox bbox;
@@ -118,25 +118,31 @@ public: /* Operators **********************************************************/
 			IT minz = mz - radius, maxz = mz + radius;
 
 			// bounding box
-			bbox.min_bound() = EPoint(minx.inf(), miny.inf(), minz.inf());
-			bbox.max_bound() = EPoint(maxx.sup(), maxy.sup(), maxz.sup());
+			bbox.min_bound() = EPoint3(minx.inf(), miny.inf(), minz.inf());
+			bbox.max_bound() = EPoint3(maxx.sup(), maxy.sup(), maxz.sup());
 		}
 		return bbox;
 	}
 
-	BoundingBox operator()(const GPoint &gpnt) const { return CalcBbox()(gpnt); }
+	BoundingBox operator()(const GPoint3 &gpnt) const
+	{
+		return CalcBoundingBox3()(gpnt);
+	}
 
-	BoundingBox operator()(const GPoint *gpnt) const { return CalcBbox()(*gpnt); }
+	BoundingBox operator()(const GPoint3 *gpnt) const
+	{
+		return CalcBoundingBox3()(*gpnt);
+	}
 
 	template <
 	  typename WrappedGPointPtr,
 	  std::enable_if_t<
 	    std::is_same_v<
-	      remove_cvref_t<decltype(*std::declval<WrappedGPointPtr>())>, GPoint>,
+	      remove_cvref_t<decltype(*std::declval<WrappedGPointPtr>())>, GPoint3>,
 	    int> = 0>
 	BoundingBox operator()(const WrappedGPointPtr &wrap_gpnt) const
 	{
-		return CalcBbox()(*wrap_gpnt);
+		return CalcBoundingBox3()(*wrap_gpnt);
 	}
 };
 
@@ -146,13 +152,13 @@ using CDT_SegSphereTree = DAABBTree_SegSphere_Intersection<
 
 template <typename Traits>
 using CDT_SegmentTree =
-  SAABBTree_Segment_Intersection<typename Traits::Segment,
-                                 typename Traits::CalcBbox,
+  SAABBTree_Segment_Intersection<typename Traits::Segment3,
+                                 typename Traits::CalcBoundingBox3,
                                  typename Traits::DoIntersect>;
 
 template <typename Traits>
 using CDT_GPointTree =
-  SAABBTree_GPoint_Intersection<const typename Traits::GPoint *,
+  SAABBTree_GPoint_Intersection<const typename Traits::GPoint3 *,
                                 typename Traits::ToEP, CalcBbox_CDT<Traits>,
                                 typename Traits::DoIntersect>;
 

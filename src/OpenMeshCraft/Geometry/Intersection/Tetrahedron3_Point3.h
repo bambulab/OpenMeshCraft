@@ -21,15 +21,14 @@ namespace OMC {
  * @tparam Kernel
  */
 template <typename Kernel>
-class Tetrahedron3_Point3_Do_Intersect
+class Tetrahedron3_Point3_DoIntersectK
 {
 public:
 	using K  = Kernel;
 	using NT = typename K::NT;
 
-	using VecT         = typename K::Vec3;
-	using GPointT      = typename K::GPoint3;
-	using TetrahedronT = typename K::Tetrahedron3;
+	using GPoint3      = typename K::GPoint3;
+	using Tetrahedron3 = typename K::Tetrahedron3;
 
 	using LessThan3D       = typename K::LessThan3D;
 	using OrientOn2D       = typename K::OrientOn2D;
@@ -41,7 +40,7 @@ public:
 	 * @brief Check if tetrahedron and point intersect.
 	 * @note assume that tetrahedron is not degenerate.
 	 */
-	bool operator()(const TetrahedronT &tet, const GPointT &pnt) const;
+	bool operator()(const Tetrahedron3 &tet, const GPoint3 &pnt) const;
 
 	/**
 	 * @brief Check if tetrahedron and point intersect.
@@ -49,15 +48,15 @@ public:
 	 * @param p point
 	 * @note assume that tetrahedron is not degenerate.
 	 */
-	bool operator()(const GPointT &v0, const GPointT &v1, const GPointT &v2,
-	                const GPointT &v3, const GPointT &p) const;
+	bool operator()(const GPoint3 &v0, const GPoint3 &v1, const GPoint3 &v2,
+	                const GPoint3 &v3, const GPoint3 &p) const;
 
 	/**
 	 * @brief Get the intersection type between tetrahedron and point.
 	 * @note assume that tetrahedron is not degenerate.
 	 */
-	PointInSimplexType intersection_type(const TetrahedronT &tet,
-	                                     const GPointT      &pnt) const;
+	PointInSimplexType intersection_type(const Tetrahedron3 &tet,
+	                                     const GPoint3      &pnt) const;
 
 	/**
 	 * @brief Get the intersection type between tetrahedron and point.
@@ -65,9 +64,9 @@ public:
 	 * @param p point
 	 * @note assume that tetrahedron is not degenerate.
 	 */
-	PointInSimplexType intersection_type(const GPointT &v0, const GPointT &v1,
-	                                     const GPointT &v2, const GPointT &v3,
-	                                     const GPointT &p) const;
+	PointInSimplexType intersection_type(const GPoint3 &v0, const GPoint3 &v1,
+	                                     const GPoint3 &v2, const GPoint3 &v3,
+	                                     const GPoint3 &p) const;
 };
 
 } // namespace OMC

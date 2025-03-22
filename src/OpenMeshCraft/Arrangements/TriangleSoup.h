@@ -36,18 +36,18 @@ template <typename Traits>
 class TriangleSoup
 {
 public: /* Types **************************************************************/
-	using NT         = typename Traits::NT;
-	using Bbox       = typename Traits::BoundingBox;
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_SSI = typename Traits::IPoint_SSI;
-	using IPoint_LPI = typename Traits::IPoint_LPI;
-	using IPoint_TPI = typename Traits::IPoint_TPI;
-	using AsGP       = typename Traits::AsGP;
-	using AsEP       = typename Traits::AsEP;
-	using ToEP       = typename Traits::ToEP;
+	using NT           = typename Traits::NT;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
+	using AsGP         = typename Traits::AsGP;
+	using AsEP         = typename Traits::AsEP;
+	using ToEP         = typename Traits::ToEP;
+	using Bbox         = typename Traits::BoundingBox3;
 
-	using CalcBbox           = typename Traits::CalcBbox;
+	using CalcBoundingBox3   = typename Traits::CalcBoundingBox3;
 	using OrientOn2D         = typename Traits::OrientOn2D;
 	using LessThan3D         = typename Traits::LessThan3D;
 	using LongestAxis        = typename Traits::LongestAxis;
@@ -76,13 +76,13 @@ public: /* Types **************************************************************/
 	/* ----- seg2tris related structures ----- */
 
 	/// <smaller vertex index, larger vertex index>
-	using Segment = UIPair;
+	using Segment3 = UIPair;
 	/// map a segment to its related triangles.
 	/// 1. map Seg to (Seg.first+Seg.second) % Seg2Tris.size() to locate the
 	/// flat_hash_map in the outer std::vector.
 	/// 2. map Seg to Tris in the inner flat_hash_map.
 	using SegMap =
-	  std::vector<phmap::flat_hash_map<Segment, index_t, hash<Segment>>>;
+	  std::vector<phmap::flat_hash_map<Segment3, index_t, hash<Segment3>>>;
 	/// mutex for reading and writing Seg2Tris.
 	using SegMapMutexes = std::vector<tbb::spin_mutex>;
 
@@ -122,7 +122,7 @@ public:
 	/***** Below data should be set by user ******/
 
 	/// implement vertices
-	concurrent_vector<GPoint *>                  vertices;
+	concurrent_vector<GPoint3 *>                 vertices;
 	/// implement indices of vertices (used in v_map)
 	tbb::concurrent_vector<std::atomic<index_t>> indices;
 
@@ -162,18 +162,18 @@ public: /* Size queries *******************************************************/
 	size_t numOrigTris() const { return num_orig_tris; }
 
 public: /* Vertices ***********************************************************/
-	const GPoint &vert(index_t v_id) const;
+	const GPoint3 &vert(index_t v_id) const;
 
 	const NT *vertPtr(index_t v_id) const;
 
-	index_t addImplVert(GPoint *pp);
+	index_t addImplVert(GPoint3 *pp);
 
 public: /* Edges **************************************************************/
 	Edge edge(index_t e_id) const;
 
 	index_t getOrAddEdge(index_t v0_id, index_t v1_id);
 
-	const GPoint &edgeVert(index_t e_id, index_t off) const;
+	const GPoint3 &edgeVert(index_t e_id, index_t off) const;
 
 	const NT *edgeVertPtr(index_t e_id, index_t off) const;
 
@@ -182,7 +182,7 @@ public: /* Triangles **********************************************************/
 
 	index_t triVertID(index_t t_id, index_t off) const;
 
-	const GPoint &triVert(index_t t_id, index_t off) const;
+	const GPoint3 &triVert(index_t t_id, index_t off) const;
 
 	const NT *triVertPtr(index_t t_id, index_t off) const;
 
@@ -216,13 +216,13 @@ public:
 	tbb::concurrent_vector<tbb::spin_mutex> edge2pts_mutex;
 
 	// all unique constarined segments
-	concurrent_vector<Segment> segments;
+	concurrent_vector<Segment3> segments;
 	// edges where segment come from (invalid index if inexistant).
-	concurrent_vector<index_t> seg_edge;
+	concurrent_vector<index_t>  seg_edge;
 	// map segments to their ID
-	SegMap                     seg_map;
+	SegMap                      seg_map;
 	// mutexes for seg_map
-	SegMapMutexes              seg_mutexes;
+	SegMapMutexes               seg_mutexes;
 
 	// store contrained segments on triangles
 	std::vector<concurrent_vector<index_t>> tri2segs;
@@ -251,10 +251,10 @@ public:
 #ifdef OMC_ARR_GLOBAL_POINT_SET
 	struct AuxPoint
 	{
-		const GPoint *pnt;
+		const GPoint3 *pnt;
 
 		// clang-format off
-		AuxPoint(const GPoint *_p) : pnt(_p) {}
+		AuxPoint(const GPoint3 *_p) : pnt(_p) {}
 
 		bool operator<(const AuxPoint &rhs) const { return LessThan3D()(*pnt, *rhs.pnt) == Sign::NEGATIVE; }
 		bool operator==(const AuxPoint &rhs) const { return LessThan3D()(*pnt, *rhs.pnt) == Sign::ZERO; }
@@ -278,7 +278,7 @@ public:
 
 #ifdef OMC_ARR_AUX_LPI
 	// jolly points
-	std::vector<GPoint *> jolly_points;
+	std::vector<GPoint3 *> jolly_points;
 #endif
 
 public: /* Add **************************************************************/
@@ -307,7 +307,7 @@ public: /* Add **************************************************************/
 
 	tbb::spin_mutex &getE2PMutex(index_t e_id);
 
-	index_t findVertexInEdge(index_t e_id, const GPoint &pnt) const;
+	index_t findVertexInEdge(index_t e_id, const GPoint3 &pnt) const;
 
 	void addVertexInEdge(index_t e_id, index_t v_id);
 
@@ -315,13 +315,13 @@ public: /* Add **************************************************************/
 
 	/* -- segment in triangle -- */
 
-	index_t getOrAddSegment(const Segment &seg, index_t e_id);
+	index_t getOrAddSegment(const Segment3 &seg, index_t e_id);
 
-	index_t segmentID(const Segment &seg) const;
+	index_t segmentID(const Segment3 &seg) const;
 
 	index_t segmentEdgeID(index_t seg_id) const;
 
-	Segment segment(index_t seg_id) const;
+	Segment3 segment(index_t seg_id) const;
 
 	void addSegmentInTriangle(index_t t_id, index_t seg_id);
 
@@ -331,7 +331,7 @@ public: /* Add **************************************************************/
 
 	tbb::spin_mutex &getS2PMutex(index_t seg_id);
 
-	index_t findVertexInSeg(index_t seg_id, const GPoint &pnt) const;
+	index_t findVertexInSeg(index_t seg_id, const GPoint3 &pnt) const;
 
 	void addVertexInSeg(index_t seg_id, index_t v_id);
 
@@ -343,7 +343,7 @@ public: /* Add **************************************************************/
 	                                index_t pos, bool with_tpi);
 
 #ifdef OMC_ARR_GLOBAL_POINT_SET
-	std::pair<index_t, bool> addUniquePoint(GPoint &pnt);
+	std::pair<index_t, bool> addUniquePoint(GPoint3 &pnt);
 #endif
 
 public: /* Query ***********************************************************/

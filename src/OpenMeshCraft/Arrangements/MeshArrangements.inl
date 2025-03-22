@@ -14,47 +14,9 @@
 namespace OMC {
 
 template <typename Kernel, typename Traits>
-class MeshArrangements<Kernel, Traits>::ArrangementsTraits
+class MeshArrangements<Kernel, Traits>::ArrangementsTraits : public Kernel
 {
-public:
-	using K = Kernel;
-
-	using NT         = typename K::NT;
-	using EPoint     = typename K::EPoint3;
-	using GPoint     = typename K::GPoint3;
-	using IPoint_SSI = typename K::IPoint3T_SSI;
-	using IPoint_LPI = typename K::IPoint3T_LPI;
-	using IPoint_TPI = typename K::IPoint3T_TPI;
-
-	using AsGP      = typename K::AsGP;
-	using AsEP      = typename K::AsEP;
-	using ToEP      = typename K::ToEP;
-	using CreateSSI = typename K::CreateSSI3;
-	using CreateLPI = typename K::CreateLPI;
-	using CreateTPI = typename K::CreateTPI;
-
-	using Segment     = typename K::Segment3;
-	using Triangle    = typename K::Triangle3;
-	using BoundingBox = typename K::BoundingBox3;
-
-	using Orient2D           = typename K::Orient2D;
-	using Orient3D           = typename K::Orient3D;
-	using OrientOn2D         = typename K::OrientOn2D;
-	using LessThan3D         = typename K::LessThan3D;
-	using LongestAxis        = typename K::LongestAxis;
-	using MaxCompInTriNormal = typename K::MaxCompInTriNormal;
-	using CollinearPoints3   = typename K::CollinearPoints3;
-
-	using CalcBbox = typename K::CalcBoundingBox3;
-
-	// clang-format off
-	using DoIntersect = typename K::DoIntersect;
-	using Segment3_Point3_DoIntersect     = typename K::Segment3_Point3_DoIntersect;
-	using Segment3_Segment3_DoIntersect   = typename K::Segment3_Segment3_DoIntersect;
-	using Triangle3_Point3_DoIntersect    = typename K::Triangle3_Point3_DoIntersect;
-	using Triangle3_Segment3_DoIntersect  = typename K::Triangle3_Segment3_DoIntersect;
-	using Triangle3_Triangle3_DoIntersect = typename K::Triangle3_Triangle3_DoIntersect;
-	// clang-format on
+	// Now there is nothing to add.
 };
 
 /// @brief Implement class of MeshArrangments
@@ -63,22 +25,22 @@ class MeshArrangements_Impl
 {
 public: /* Traits ************************************************************/
 	// primitives
-	using NT         = typename Traits::NT;
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_SSI = typename Traits::IPoint_SSI;
-	using IPoint_LPI = typename Traits::IPoint_LPI;
-	using IPoint_TPI = typename Traits::IPoint_TPI;
+	using NT           = typename Traits::NT;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
 
-	using AsGP      = typename Traits::AsGP;
-	using AsEP      = typename Traits::AsEP;
-	using ToEP      = typename Traits::ToEP;
-	using CreateSSI = typename Traits::CreateSSI;
-	using CreateLPI = typename Traits::CreateLPI;
-	using CreateTPI = typename Traits::CreateTPI;
+	using AsGP       = typename Traits::AsGP;
+	using AsEP       = typename Traits::AsEP;
+	using ToEP       = typename Traits::ToEP;
+	using CreateSSI3 = typename Traits::CreateSSI3;
+	using CreateLPI  = typename Traits::CreateLPI;
+	using CreateTPI  = typename Traits::CreateTPI;
 
-	using Segment  = typename Traits::Segment;
-	using Triangle = typename Traits::Triangle;
+	using Segment3  = typename Traits::Segment3;
+	using Triangle3 = typename Traits::Triangle3;
 
 	// predicates
 	using Orient2D           = typename Traits::Orient2D;
@@ -146,11 +108,11 @@ public:
 
 	/* Output data */
 	/// output vertices (pointers to points in arena)
-	std::vector<GPoint *> arr_out_verts;
+	std::vector<GPoint3 *> arr_out_verts;
 	/// output triangles
-	std::vector<index_t>  arr_out_tris;
+	std::vector<index_t>   arr_out_tris;
 	/// output labels for all unique triangles
-	ArrLabels             arr_out_labels;
+	ArrLabels              arr_out_labels;
 
 	/* Auxiliary data */
 	/// tree build on arr_in_tris (NOTE: not on in_tris)
@@ -166,9 +128,9 @@ public:
 
 private: /* Private middle data *******************************************/
 	/// explicit points and jolly points
-	std::vector<EPoint> exp_pnt; // explicit points
+	std::vector<EPoint3> exp_pnt; // explicit points
 #ifdef OMC_ARR_AUX_LPI
-	std::vector<EPoint> jolly_pnt; // jolly points
+	std::vector<EPoint3> jolly_pnt; // jolly points
 #endif
 	/// All generated implicit points in algorithm are stored in pnt_arena
 	std::vector<PntArena> pnt_arenas;
@@ -255,7 +217,7 @@ void MeshArrangements_Impl<Traits>::initBeforeDetectClassify()
 {
 	pnt_arenas = std::vector<PntArena>(tbb::this_task_arena::max_concurrency());
 
-	for (GPoint *v : arr_out_verts)
+	for (GPoint3 *v : arr_out_verts)
 		tri_soup.addImplVert(v);
 	tri_soup.triangles  = arr_in_tris;   // copy, do not move
 	tri_soup.tri_labels = arr_in_labels; // copy, do not move
@@ -432,8 +394,8 @@ void MeshArrangements_Impl<Traits>::computeExplicitResult(
 	                  {
 		                  if (!is_valid_idx(vertex_index[v_id]))
 			                  return;
-		                  const GPoint *gp = arr_out_verts[v_id];
-		                  EPoint        ep = ToEP()(*gp);
+		                  const GPoint3 *gp = arr_out_verts[v_id];
+		                  EPoint3        ep = ToEP()(*gp);
 		                  final_points[vertex_index[v_id]] =
 		                    iPoint(ep.x(), ep.y(), ep.z());
 	                  });

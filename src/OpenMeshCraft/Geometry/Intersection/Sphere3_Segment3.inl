@@ -5,35 +5,35 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Sphere3_Segment3_Do_Intersect<Kernel>::operator()(
-  const SphereT &sphere, const SegmentT &seg) const
+bool Sphere3_Segment3_DoIntersectK<Kernel>::operator()(
+  const Sphere3 &sphere, const Segment3 &seg) const
 {
 	return operator()(sphere.center(), sphere.squared_radius(), seg.start(),
 	                  seg.end());
 }
 
 template <typename Kernel>
-bool Sphere3_Segment3_Do_Intersect<Kernel>::operator()(const GPointT &center,
+bool Sphere3_Segment3_DoIntersectK<Kernel>::operator()(const GPoint3 &center,
                                                        NT squared_radius,
-                                                       const GPointT &s0,
-                                                       const GPointT &s1) const
+                                                       const GPoint3 &s0,
+                                                       const GPoint3 &s1) const
 {
 	return intersection_type(center, squared_radius, s0, s1) !=
 	       IntersectionType::DO_NOT_INTERSECT;
 }
 
 template <typename Kernel>
-IntersectionType Sphere3_Segment3_Do_Intersect<Kernel>::intersection_type(
-  const SphereT &sphere, const SegmentT &seg) const
+IntersectionType Sphere3_Segment3_DoIntersectK<Kernel>::intersection_type(
+  const Sphere3 &sphere, const Segment3 &seg) const
 {
 	return intersection_type(sphere.center(), sphere.squared_radius(),
 	                         seg.start(), seg.end());
 }
 
 template <typename Kernel>
-IntersectionType Sphere3_Segment3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &center, NT squared_radius, const GPointT &s0,
-  const GPointT &s1) const
+IntersectionType Sphere3_Segment3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &center, NT squared_radius, const GPoint3 &s0,
+  const GPoint3 &s1) const
 {
 	if (Sphere3_Point3_DoInter()(center, squared_radius, s0) ||
 	    Sphere3_Point3_DoInter()(center, squared_radius, s1))

@@ -8,18 +8,18 @@ template <typename Traits>
 class DetectClassifyTTIs
 {
 public:
-	using NT         = typename Traits::NT;
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_SSI = typename Traits::IPoint_SSI;
-	using IPoint_LPI = typename Traits::IPoint_LPI;
-	using IPoint_TPI = typename Traits::IPoint_TPI;
-	using AsGP       = typename Traits::AsGP;
-	using AsEP       = typename Traits::AsEP;
-	using ToEP       = typename Traits::ToEP;
-	using CreateSSI  = typename Traits::CreateSSI;
-	using CreateLPI  = typename Traits::CreateLPI;
-	using CreateTPI  = typename Traits::CreateTPI;
+	using NT           = typename Traits::NT;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
+	using AsGP         = typename Traits::AsGP;
+	using AsEP         = typename Traits::AsEP;
+	using ToEP         = typename Traits::ToEP;
+	using CreateSSI3   = typename Traits::CreateSSI3;
+	using CreateLPI    = typename Traits::CreateLPI;
+	using CreateTPI    = typename Traits::CreateTPI;
 
 	using DoIntersect        = typename Traits::DoIntersect;
 	using Orient3D           = typename Traits::Orient3D;
@@ -28,7 +28,8 @@ public:
 	using LessThan3D         = typename Traits::LessThan3D;
 	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
 
-	using Tri3_Tri3_DoInter = typename Traits::Triangle3_Triangle3_DoIntersect;
+	using Triangle3_Triangle3_DoIntersect =
+	  typename Traits::Triangle3_Triangle3_DoIntersect;
 
 	using PntArena = ArrPointArena<Traits>;
 	using TriSoup  = TriangleSoup<Traits>;

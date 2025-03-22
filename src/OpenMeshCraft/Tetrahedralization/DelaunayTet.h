@@ -26,9 +26,9 @@ class DelaunayTet
 public: /* Traits **********************************************************/
 	using Self = DelaunayTet<Traits>;
 
-	using NT     = typename Traits::NT;
-	using EPoint = typename Traits::EPoint;
-	using GPoint = typename Traits::GPoint;
+	using NT      = typename Traits::NT;
+	using EPoint3 = typename Traits::EPoint3;
+	using GPoint3 = typename Traits::GPoint3;
 
 	using AsGP = typename Traits::AsGP;
 	using AsEP = typename Traits::AsEP;
@@ -73,7 +73,8 @@ public: /* Algorithm *******************************************************/
 	            InlinedVector64<index_t> &cavity_tets,
 	            InlinedVector64<index_t> &cavity_corners);
 
-	void filling(const index_t vid, const InlinedVector64<index_t> &cavity_corners);
+	void filling(const index_t                   vid,
+	             const InlinedVector64<index_t> &cavity_corners);
 
 public: /* Checks **********************************************************/
 	/* Verify the correctness of the Delaunay tetrahedralization */

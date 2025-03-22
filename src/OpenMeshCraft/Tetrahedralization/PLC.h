@@ -14,16 +14,16 @@ class PiecewiseLinearComplex
 public: /* Traits **********************************************************/
 	using Self = PiecewiseLinearComplex<Traits>;
 
-	using NT     = typename Traits::NT;
-	using EPoint = typename Traits::EPoint;
-	using GPoint = typename Traits::GPoint;
+	using NT      = typename Traits::NT;
+	using EPoint3 = typename Traits::EPoint3;
+	using GPoint3 = typename Traits::GPoint3;
 
 	using AsGP = typename Traits::AsGP;
 	using AsEP = typename Traits::AsEP;
 	using ToEP = typename Traits::ToEP;
 
 	using Orient3D         = typename Traits::Orient3D;
-	using DotProduct3D     = typename Traits::DotProduct3D;
+	using DotProductSign3D = typename Traits::DotProductSign3D;
 	using InSphere         = typename Traits::InSphere;
 	using CollinearPoints3 = typename Traits::CollinearPoints3;
 
@@ -169,9 +169,9 @@ public: /* Auxiliary data structures ****************************************/
 
 public: /* Constructor & Destructor ****************************************/
 	PiecewiseLinearComplex() = delete;
-	PiecewiseLinearComplex(const std::vector<GPoint *> &_vertices,
-	                       const std::vector<index_t>  &_edges,
-	                       const std::vector<index_t>  &_triangles);
+	PiecewiseLinearComplex(const std::vector<GPoint3 *> &_vertices,
+	                       const std::vector<index_t>   &_edges,
+	                       const std::vector<index_t>   &_triangles);
 
 public: /* Interfaces ******************************************************/
 	/* Initialize PLC edges and faces ****************************************/
@@ -215,9 +215,9 @@ public: /* Interfaces ******************************************************/
 
 	/* Operations on PLC vertex */
 
-	size_t        numVertices() const { return vertices.size(); }
-	GPoint       &pnt(index_t vid) { return *vertices[vid]; }
-	const GPoint &pnt(index_t vid) const { return *vertices[vid]; }
+	size_t         numVertices() const { return vertices.size(); }
+	GPoint3       &pnt(index_t vid) { return *vertices[vid]; }
+	const GPoint3 &pnt(index_t vid) const { return *vertices[vid]; }
 
 	void newVtx(index_t new_vid);
 
@@ -281,11 +281,11 @@ public: /* Data ************************************************************/
 	/* Input data for PLC */
 
 	/// The input vertices.
-	const std::vector<GPoint *> &vertices;
+	const std::vector<GPoint3 *> &vertices;
 	/// The input isolated edges (storing indices to vertices).
-	const std::vector<index_t>  &edges;
+	const std::vector<index_t>   &edges;
 	/// The input triangles (storing indices to vertices).
-	const std::vector<index_t>  &triangles;
+	const std::vector<index_t>   &triangles;
 
 	const size_t input_nv; ///< number of input vertices
 	const size_t input_ne; ///< number of input edges

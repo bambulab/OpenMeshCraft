@@ -8,8 +8,8 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Segment2_Segment2_Do_Intersect<Kernel>::operator()(
-  const SegmentT &seg0, const SegmentT &seg1) const
+bool Segment2_Segment2_DoIntersectK<Kernel>::operator()(
+  const Segment2 &seg0, const Segment2 &seg1) const
 {
 	return intersection_type(seg0, seg1) >=
 	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
@@ -17,17 +17,17 @@ bool Segment2_Segment2_Do_Intersect<Kernel>::operator()(
 
 template <typename Kernel>
 SimplexIntersectionType
-Segment2_Segment2_Do_Intersect<Kernel>::intersection_type(
-  const SegmentT &seg0, const SegmentT &seg1) const
+Segment2_Segment2_DoIntersectK<Kernel>::intersection_type(
+  const Segment2 &seg0, const Segment2 &seg1) const
 {
 	return intersection_type(seg0.start(), seg0.end(), seg1.start(), seg1.end());
 }
 
 template <typename Kernel>
 SimplexIntersectionType
-Segment2_Segment2_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &s00, const GPointT &s01, const GPointT &s10,
-  const GPointT &s11) const
+Segment2_Segment2_DoIntersectK<Kernel>::intersection_type(
+  const GPoint2 &s00, const GPoint2 &s01, const GPoint2 &s10,
+  const GPoint2 &s11) const
 {
 	Sign s00_wrt_s1 = Orient2D()(s10, s11, s00);
 	Sign s01_wrt_s1 = Orient2D()(s10, s11, s01);
@@ -124,7 +124,7 @@ Segment2_Segment2_Do_Intersect<Kernel>::intersection_type(
 
 template <typename Kernel>
 SimplexIntersectionType
-Segment2_Segment2_Do_Intersect<Kernel>::intersection_type(const NT *s00,
+Segment2_Segment2_DoIntersectK<Kernel>::intersection_type(const NT *s00,
                                                           const NT *s01,
                                                           const NT *s10,
                                                           const NT *s11) const

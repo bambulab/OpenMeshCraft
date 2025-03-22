@@ -12,18 +12,18 @@ template <typename Traits>
 class DetectClassifyTTI
 {
 public:
-	using NT         = typename Traits::NT;
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_SSI = typename Traits::IPoint_SSI;
-	using IPoint_LPI = typename Traits::IPoint_LPI;
-	using IPoint_TPI = typename Traits::IPoint_TPI;
-	using AsGP       = typename Traits::AsGP;
-	using AsEP       = typename Traits::AsEP;
-	using ToEP       = typename Traits::ToEP;
-	using CreateSSI  = typename Traits::CreateSSI;
-	using CreateLPI  = typename Traits::CreateLPI;
-	using CreateTPI  = typename Traits::CreateTPI;
+	using NT           = typename Traits::NT;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
+	using AsGP         = typename Traits::AsGP;
+	using AsEP         = typename Traits::AsEP;
+	using ToEP         = typename Traits::ToEP;
+	using CreateSSI3   = typename Traits::CreateSSI3;
+	using CreateLPI    = typename Traits::CreateLPI;
+	using CreateTPI    = typename Traits::CreateTPI;
 
 	using Orient3D           = typename Traits::Orient3D;
 	using OrientOn2D         = typename Traits::OrientOn2D;
@@ -126,10 +126,10 @@ protected:
 	index_t add_edge_cross_tri(TTIHelper &ha, index_t ea, TTIHelper &hb);
 
 	OMC_NODISCARD std::pair<index_t, bool> add_SSI(index_t ea_id, index_t eb_id,
-	                                               GPoint *new_v);
+	                                               GPoint3 *new_v);
 
 	OMC_NODISCARD std::pair<index_t, bool> add_LPI(index_t e_id, index_t t_id,
-	                                               GPoint *new_v);
+	                                               GPoint3 *new_v);
 };
 
 } // namespace OMC

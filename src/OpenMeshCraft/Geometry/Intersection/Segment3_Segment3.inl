@@ -5,8 +5,8 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Segment3_Segment3_Do_Intersect<Kernel>::operator()(
-  const SegmentT &seg0, const SegmentT &seg1) const
+bool Segment3_Segment3_DoIntersectK<Kernel>::operator()(
+  const Segment3 &seg0, const Segment3 &seg1) const
 {
 	if (Orient3D()(seg0.start(), seg0.end(), seg1.start(), seg1.end()) !=
 	    Sign::ZERO)
@@ -16,10 +16,10 @@ bool Segment3_Segment3_Do_Intersect<Kernel>::operator()(
 }
 
 template <typename Kernel>
-bool Segment3_Segment3_Do_Intersect<Kernel>::operator()(const GPointT &A,
-                                                        const GPointT &B,
-                                                        const GPointT &P,
-                                                        const GPointT &Q) const
+bool Segment3_Segment3_DoIntersectK<Kernel>::operator()(const GPoint3 &A,
+                                                        const GPoint3 &B,
+                                                        const GPoint3 &P,
+                                                        const GPoint3 &Q) const
 {
 	if (Orient3D()(A, B, P, Q) != Sign::ZERO)
 		return false;
@@ -28,24 +28,24 @@ bool Segment3_Segment3_Do_Intersect<Kernel>::operator()(const GPointT &A,
 }
 
 template <typename Kernel>
-bool Segment3_Segment3_Do_Intersect<Kernel>::cross(const SegmentT &seg0,
-                                                   const SegmentT &seg1) const
+bool Segment3_Segment3_DoIntersectK<Kernel>::cross(const Segment3 &seg0,
+                                                   const Segment3 &seg1) const
 {
 	return cross(seg0.start(), seg0.end(), seg1.start(), seg1.end());
 }
 
 template <typename Kernel>
-bool Segment3_Segment3_Do_Intersect<Kernel>::cross_inner(
-  const SegmentT &seg0, const SegmentT &seg1) const
+bool Segment3_Segment3_DoIntersectK<Kernel>::cross_inner(
+  const Segment3 &seg0, const Segment3 &seg1) const
 {
 	return cross_inner(seg0.start(), seg0.end(), seg1.start(), seg1.end());
 }
 
 template <typename Kernel>
-bool Segment3_Segment3_Do_Intersect<Kernel>::cross(const GPointT &A,
-                                                   const GPointT &B,
-                                                   const GPointT &P,
-                                                   const GPointT &Q) const
+bool Segment3_Segment3_DoIntersectK<Kernel>::cross(const GPoint3 &A,
+                                                   const GPoint3 &B,
+                                                   const GPoint3 &P,
+                                                   const GPoint3 &Q) const
 {
 	Sign o11, o12, o21, o22;
 
@@ -83,10 +83,10 @@ bool Segment3_Segment3_Do_Intersect<Kernel>::cross(const GPointT &A,
 }
 
 template <typename Kernel>
-bool Segment3_Segment3_Do_Intersect<Kernel>::cross_inner(const GPointT &A,
-                                                         const GPointT &B,
-                                                         const GPointT &P,
-                                                         const GPointT &Q) const
+bool Segment3_Segment3_DoIntersectK<Kernel>::cross_inner(const GPoint3 &A,
+                                                         const GPoint3 &B,
+                                                         const GPoint3 &P,
+                                                         const GPoint3 &Q) const
 {
 	Sign o11, o12, o21, o22;
 
@@ -118,10 +118,10 @@ bool Segment3_Segment3_Do_Intersect<Kernel>::cross_inner(const GPointT &A,
 }
 
 template <typename Kernel>
-bool Segment3_Segment3_Do_Intersect<Kernel>::cross(const GPointT &A,
-                                                   const GPointT &B,
-                                                   const GPointT &P,
-                                                   const GPointT &Q,
+bool Segment3_Segment3_DoIntersectK<Kernel>::cross(const GPoint3 &A,
+                                                   const GPoint3 &B,
+                                                   const GPoint3 &P,
+                                                   const GPoint3 &Q,
                                                    int            n_max) const
 {
 	Sign o11, o12, o21, o22;
@@ -155,10 +155,10 @@ bool Segment3_Segment3_Do_Intersect<Kernel>::cross(const GPointT &A,
 }
 
 template <typename Kernel>
-bool Segment3_Segment3_Do_Intersect<Kernel>::cross_inner(const GPointT &A,
-                                                         const GPointT &B,
-                                                         const GPointT &P,
-                                                         const GPointT &Q,
+bool Segment3_Segment3_DoIntersectK<Kernel>::cross_inner(const GPoint3 &A,
+                                                         const GPoint3 &B,
+                                                         const GPoint3 &P,
+                                                         const GPoint3 &Q,
                                                          int n_max) const
 {
 	Sign o11, o12, o21, o22;
@@ -192,17 +192,17 @@ bool Segment3_Segment3_Do_Intersect<Kernel>::cross_inner(const GPointT &A,
 
 template <typename Kernel>
 SimplexIntersectionType
-Segment3_Segment3_Do_Intersect<Kernel>::intersection_type(
-  const SegmentT &seg0, const SegmentT &seg1) const
+Segment3_Segment3_DoIntersectK<Kernel>::intersection_type(
+  const Segment3 &seg0, const Segment3 &seg1) const
 {
 	return intersection_type(seg0.start(), seg0.end(), seg1.start(), seg0.end());
 }
 
 template <typename Kernel>
 SimplexIntersectionType
-Segment3_Segment3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &s00, const GPointT &s01, const GPointT &s10,
-  const GPointT &s11) const
+Segment3_Segment3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &s00, const GPoint3 &s01, const GPoint3 &s10,
+  const GPoint3 &s11) const
 {
 	bool s00_s10_same = LessThan3D().coincident(s00, s10);
 	bool s00_s11_same = LessThan3D().coincident(s00, s11);
@@ -261,7 +261,7 @@ Segment3_Segment3_Do_Intersect<Kernel>::intersection_type(
 
 template <typename Kernel>
 SimplexIntersectionType
-Segment3_Segment3_Do_Intersect<Kernel>::intersection_type(const NT *s00,
+Segment3_Segment3_DoIntersectK<Kernel>::intersection_type(const NT *s00,
                                                           const NT *s01,
                                                           const NT *s10,
                                                           const NT *s11) const
@@ -332,7 +332,7 @@ Segment3_Segment3_Do_Intersect<Kernel>::intersection_type(const NT *s00,
 
 template <typename Kernel>
 SimplexIntersectionType
-Segment3_Segment3_Do_Intersect<Kernel>::intersection_type(
+Segment3_Segment3_DoIntersectK<Kernel>::intersection_type(
   const NT *s00, const NT *s01, const NT *s10, const NT *s11, int n1_max) const
 {
 	bool s00_s10_same = vec_equals_3d(s00, s10);
@@ -382,14 +382,14 @@ Segment3_Segment3_Do_Intersect<Kernel>::intersection_type(
 
 template <typename Kernel>
 SimplexIntersectionType
-Segment3_Segment3_Do_Intersect<Kernel>::intersection_type_on2d(
-  const GPointT &s00, const GPointT &s01, const GPointT &s10,
-  const GPointT &s11, int on2d) const
+Segment3_Segment3_DoIntersectK<Kernel>::intersection_type_on2d(
+  const GPoint3 &s00, const GPoint3 &s01, const GPoint3 &s10,
+  const GPoint3 &s11, int on2d) const
 {
 #define Same_On(p, q, dim) (LessThan3D().on_##dim(p, q) == Sign::ZERO)
 #define Less_On(p, q, dim) (LessThan3D().on_##dim(p, q) == Sign::NEGATIVE)
 
-	// Almostly same as Segment2_Segment2_Do_Intersect.
+	// Almostly same as Segment2_Segment2_DoIntersectK.
 	// So I just copy it here and modify it to macro to test intersection on
 	// different 2d planes.
 #define On_Plane(xy, x, y)                                                     \

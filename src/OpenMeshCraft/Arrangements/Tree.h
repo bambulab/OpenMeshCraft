@@ -159,12 +159,12 @@ public:
 	static constexpr size_t MaxDepth  = 16;
 
 	using NT    = typename AppTraits::NT;
-	using BboxT = typename AppTraits::BoundingBox;
+	using BboxT = typename AppTraits::BoundingBox3;
 
 	using SplitPred       = Arr_TreeSplitPred;
 	using ShapeRefinePred = Arr_TreeShapeRefinePred;
 	using DoIntersect     = typename AppTraits::DoIntersect;
-	using CalcBbox        = typename AppTraits::CalcBbox;
+	using CalcBbox        = typename AppTraits::CalcBoundingBox3;
 };
 
 template <typename AppTraits>
@@ -175,7 +175,7 @@ template <typename AppTraits>
 class Arr_Tree_Intersection : public AdapOcTree<Arr_TreeTraits<AppTraits>>
 {
 public:
-	using GPoint     = typename AppTraits::GPoint;
+	using GPoint     = typename AppTraits::GPoint3;
 	using AsEP       = typename AppTraits::AsEP;
 	using LessThan3D = typename AppTraits::LessThan3D;
 

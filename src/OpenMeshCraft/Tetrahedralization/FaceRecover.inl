@@ -15,7 +15,7 @@ namespace OMC {
  * @param _plc the input constrained piecewise linear complex
  */
 template <typename Traits>
-FaceRecover<Traits>::FaceRecover(std::vector<GPoint *> &_verts,
+FaceRecover<Traits>::FaceRecover(std::vector<GPoint3 *> &_verts,
                                  TetMesh &_tet_mesh, PLC &_plc,
                                  ConstrDelTet_Config _config,
                                  ConstrDelTet_Stats *_stats)
@@ -249,8 +249,8 @@ void FaceRecover<Traits>::getTetsIntersectingFace(index_t               fid,
 			if (!isVtxBounding(copl_vid)) // this point is not a bounding vertex,
 				continue;                   // so it is outside, skip it.
 
-			const GPoint &tri_p0 = gpnt(tri_v[0]), &tri_p1 = gpnt(tri_v[1]),
-			             &tri_p2 = gpnt(tri_v[2]), &copl_p = gpnt(copl_vid);
+			const GPoint3 &tri_p0 = gpnt(tri_v[0]), &tri_p1 = gpnt(tri_v[1]),
+			              &tri_p2 = gpnt(tri_v[2]), &copl_p = gpnt(copl_vid);
 
 			if (n_max == -1)
 			{
@@ -571,7 +571,7 @@ void FaceRecover<Traits>::recoverFace_cavityExpanding(
 
 	// Vertices of the top and bottom half cavity, used for Delaunay
 	// tetrahedralization
-	std::vector<GPoint *> top_vps, bottom_vps;
+	std::vector<GPoint3 *> top_vps, bottom_vps;
 	top_vps.reserve(2 * top_vertices.size());
 	bottom_vps.reserve(2 * bottom_vertices.size());
 
@@ -699,14 +699,14 @@ void FaceRecover<Traits>::recoverFace_cavityExpanding(
 		fout.open("./data/test_output/top_cavity.obj", std::ios::out);
 		for (index_t vid : top_vertices)
 		{
-			EPoint p = ToEP()(gpnt(vid));
+			EPoint3 p = ToEP()(gpnt(vid));
 			fout << "v " << p[0] << " " << p[1] << " " << p[2] << std::endl;
 		}
 		fout.close();
 		fout.open("./data/test_output/bottom_cavity.obj", std::ios::out);
 		for (index_t vid : bottom_vertices)
 		{
-			EPoint p = ToEP()(gpnt(vid));
+			EPoint3 p = ToEP()(gpnt(vid));
 			fout << "v " << p[0] << " " << p[1] << " " << p[2] << std::endl;
 		}
 		fout.close();
@@ -1169,12 +1169,13 @@ template <typename Traits>
 bool FaceRecover<Traits>::segCrossesFace(index_t s0, index_t s1,
                                          const PLCFace &face) const
 {
-	const GPoint &p0 = gpnt(s0), &p1 = gpnt(s1);
+	const GPoint3 &p0 = gpnt(s0), &p1 = gpnt(s1);
 
 	for (index_t tid : face.triangles)
 	{
-		const GPoint &v0 = gpnt(plc.triVtx(tid, 0)), &v1 = gpnt(plc.triVtx(tid, 1)),
-		             &v2 = gpnt(plc.triVtx(tid, 2));
+		const GPoint3 &v0 = gpnt(plc.triVtx(tid, 0)),
+		              &v1 = gpnt(plc.triVtx(tid, 1)),
+		              &v2 = gpnt(plc.triVtx(tid, 2));
 		// We have known that the segment crosses the support plane,
 		// so, we skip checking orientation of p0, p1 w.r.t the plane.
 

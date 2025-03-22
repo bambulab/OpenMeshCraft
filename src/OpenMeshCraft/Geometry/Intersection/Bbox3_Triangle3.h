@@ -10,21 +10,21 @@ namespace OMC {
  * Because current implementation containts inexact construction.
  */
 template <typename Kernel>
-class Bbox3_Triangle3_Do_Intersect
+class Bbox3_Triangle3_DoIntersectK
 {
 public:
 	using K  = Kernel;
 	using NT = typename K::NT;
 
-	using EPointT   = typename K::EPoint3;
-	using VecT      = typename K::Vec3;
-	using BboxT     = typename K::BoundingBox3;
-	using TriangleT = typename K::Triangle3;
+	using EPoint3   = typename K::EPoint3;
+	using Vec3      = typename K::Vec3;
+	using Bbox3     = typename K::BoundingBox3;
+	using Triangle3 = typename K::Triangle3;
 
 public:
-	bool operator()(const BboxT &box, const TriangleT &triangle) const;
+	bool operator()(const Bbox3 &box, const Triangle3 &triangle) const;
 
-	bool TestAxisEdges(const EPointT *v[], const VecT &e,
+	bool TestAxisEdges(const EPoint3 *v[], const Vec3 &e,
 	                   const NT *box_length) const;
 };
 

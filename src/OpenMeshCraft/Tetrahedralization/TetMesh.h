@@ -15,9 +15,9 @@ class TetrahedralMesh
 public:
 	using Self = TetrahedralMesh<Traits>;
 
-	using NT     = typename Traits::NT;     ///< number type
-	using EPoint = typename Traits::EPoint; ///< explicit point
-	using GPoint = typename Traits::GPoint; ///< generic point
+	using NT      = typename Traits::NT;      ///< number type
+	using EPoint3 = typename Traits::EPoint3; ///< explicit point
+	using GPoint3 = typename Traits::GPoint3; ///< generic point
 
 	using AsGP = typename Traits::AsGP; ///< use as generic point
 	using AsEP = typename Traits::AsEP; ///< use as explicit point
@@ -62,8 +62,8 @@ public:
 	/* Constructors and Destructors */
 	TetrahedralMesh() = delete;
 
-	TetrahedralMesh(const std::vector<GPoint *> &_vertices,
-	                const std::vector<NT>       *_weights = nullptr);
+	TetrahedralMesh(const std::vector<GPoint3 *> &_vertices,
+	                const std::vector<NT>        *_weights = nullptr);
 
 	void initialize();
 
@@ -71,9 +71,9 @@ public:
 	/* Connectivity operations on tetrahedra mesh */
 
 	/// Get the point of the vertex
-	const GPoint &gpnt(index_t vid) const { return *vertices[vid]; }
+	const GPoint3 &gpnt(index_t vid) const { return *vertices[vid]; }
 	/// Get the weight of the vertex
-	NT            weight(index_t vid) const { return (*weights)[vid]; }
+	NT             weight(index_t vid) const { return (*weights)[vid]; }
 
 	/// Get the index (NOT the idoff) to the incident tetrahedron of a vertex
 	index_t       &incTet(index_t vid) { return inc_tet[vid]; }
@@ -271,7 +271,7 @@ public: /* Data ************************************************************/
 	/// Vertices (pointers to points in arena)
 	///
 	/// We assume that no coincident vertices exist.
-	const std::vector<GPoint *> &vertices;
+	const std::vector<GPoint3 *> &vertices;
 
 	/// Weights for each vertex (optional, set if `WEIGHTED` is true)
 	///

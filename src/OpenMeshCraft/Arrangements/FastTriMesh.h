@@ -22,7 +22,7 @@ class FastTriMesh
 public:
 	using Self = FastTriMesh<Traits>;
 
-	using GPoint = typename Traits::GPoint;
+	using GPoint3 = typename Traits::GPoint3;
 
 	using Orient3D   = typename Traits::Orient3D;
 	using OrientOn2D = typename Traits::OrientOn2D;
@@ -31,16 +31,16 @@ public:
 	struct iVertex
 	{
 		iVertex() = delete;
-		explicit iVertex(const GPoint *p, index_t id = 0, bool f = false) noexcept
+		explicit iVertex(const GPoint3 *p, index_t id = 0, bool f = false) noexcept
 		  : point(p)
 		  , info(id)
 		  , flag(f)
 		{
 		}
 
-		const GPoint *point;
-		index_t       info;
-		bool          flag;
+		const GPoint3 *point;
+		index_t        info;
+		bool           flag;
 	};
 
 	struct iEdge
@@ -80,8 +80,8 @@ public:
 public: /* Constructors, Copy and Move ***************************************/
 	FastTriMesh();
 
-	FastTriMesh(const std::vector<GPoint *> &in_verts,
-	            const std::vector<index_t>  &in_tris);
+	FastTriMesh(const std::vector<GPoint3 *> &in_verts,
+	            const std::vector<index_t>   &in_tris);
 
 	FastTriMesh(const Self &rhs) noexcept { operator=(rhs); }
 
@@ -93,7 +93,7 @@ public: /* Constructors, Copy and Move ***************************************/
 
 	~FastTriMesh();
 
-	void initialize(const GPoint *tv0, const GPoint *tv1, const GPoint *tv2,
+	void initialize(const GPoint3 *tv0, const GPoint3 *tv1, const GPoint3 *tv2,
 	                const index_t *tv_id, const OrPlane &ref_p, const Sign &ori);
 
 	void preAllocateSpace(size_t estimated_num_verts);
@@ -151,7 +151,7 @@ public: /* Ajdacencies *******************************************************/
 	index_t prevVertInTri(index_t t_id, index_t curr_v_id) const;
 
 public: /* Add / Remove ******************************************************/
-	index_t addVert(const GPoint *p, index_t orig_v_id);
+	index_t addVert(const GPoint3 *p, index_t orig_v_id);
 
 	index_t addEdge(index_t ev0_id, index_t ev1_id);
 
@@ -176,9 +176,9 @@ public: /* Split **************************************************************/
 	void flipTri(index_t t_id);
 
 public: /* Primitive queries *************************************************/
-	const GPoint &vert(index_t v_id) const;
+	const GPoint3 &vert(index_t v_id) const;
 
-	const GPoint &triVert(index_t t_id, size_t off) const;
+	const GPoint3 &triVert(index_t t_id, size_t off) const;
 
 	index_t triVertOffset(index_t t_id, index_t v_id) const;
 

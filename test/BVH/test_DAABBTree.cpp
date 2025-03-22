@@ -11,9 +11,9 @@ protected:
 	using index_t = OMC::index_t;
 	using APAC    = OMC::APAC;
 
-	using Tree    = OMC::DAABBTree<OMC::DAABBTraits_SegSphere_Intersection<
-	     APAC::Segment3, APAC::CalcBoundingBox3>>;
-	using Segment = APAC::Segment3;
+	using Tree     = OMC::DAABBTree<OMC::DAABBTraits_SegSphere_Intersection<
+	      APAC::Segment3, APAC::CalcBoundingBox3>>;
+	using Segment3 = APAC::Segment3;
 
 protected:
 	TriPoints points;
@@ -40,15 +40,15 @@ TEST_F(test_DynamicAABBTree, Construct)
 	Tree tree;
 
 	// construct an initial tree.
-	std::vector<Segment> segments;
-	std::vector<index_t> indices;
-	index_t              idx = 0;
-	size_t               n   = faces.size();
+	std::vector<Segment3> segments;
+	std::vector<index_t>  indices;
+	index_t               idx = 0;
+	size_t                n   = faces.size();
 
 	for (size_t i = 0; i < n / 2; i++)
 	{
 		const auto &f = faces[i];
-		segments.push_back(Segment(points[f[0]], points[f[1]]));
+		segments.push_back(Segment3(points[f[0]], points[f[1]]));
 		indices.push_back(idx++);
 	}
 
@@ -59,7 +59,7 @@ TEST_F(test_DynamicAABBTree, Construct)
 	for (size_t i = n / 2; i < n; i++)
 	{
 		const auto &f = faces[i];
-		tree.insert(Segment(points[f[0]], points[f[1]]), idx++);
+		tree.insert(Segment3(points[f[0]], points[f[1]]), idx++);
 	}
 	tree.build();
 
@@ -75,8 +75,8 @@ TEST_F(test_DynamicAABBTree, Construct)
 	{
 		const auto &f         = faces[i];
 		const auto  mid_point = (points[f[0]] + points[f[1]]) * 0.5;
-		const auto  seg0      = Segment(points[f[0]], mid_point);
-		const auto  seg1      = Segment(mid_point, points[f[1]]);
+		const auto  seg0      = Segment3(points[f[0]], mid_point);
+		const auto  seg1      = Segment3(mid_point, points[f[1]]);
 
 		tree.split(i, idx, seg0, idx + 1, seg1);
 		idx += 2;

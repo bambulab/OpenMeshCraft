@@ -78,25 +78,25 @@ template <typename Traits>
 struct ArrPointArena
 {
 public:
-	using EPoint     = typename Traits::EPoint;
-	using GPoint     = typename Traits::GPoint;
-	using IPoint_SSI = typename Traits::IPoint_SSI;
-	using IPoint_LPI = typename Traits::IPoint_LPI;
-	using IPoint_TPI = typename Traits::IPoint_TPI;
+	using EPoint3      = typename Traits::EPoint3;
+	using GPoint3      = typename Traits::GPoint3;
+	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
 
 public:
-	std::deque<IPoint_SSI> ssi;  // SSI points
-	std::deque<IPoint_LPI> lpi;  // LPI points
-	std::deque<IPoint_TPI> tpi;  // TPI points
+	std::deque<IPoint3T_SSI> ssi; // SSI points
+	std::deque<IPoint3T_LPI> lpi; // LPI points
+	std::deque<IPoint3T_TPI> tpi; // TPI points
 
 public:
-	void recycle(IPoint_SSI *ssi_ptr) { recycled_ssi.push(ssi_ptr); }
-	void recycle(IPoint_LPI *lpi_ptr) { recycled_lpi.push(lpi_ptr); }
-	void recycle(IPoint_TPI *tpi_ptr) { recycled_tpi.push(tpi_ptr); }
+	void recycle(IPoint3T_SSI *ssi_ptr) { recycled_ssi.push(ssi_ptr); }
+	void recycle(IPoint3T_LPI *lpi_ptr) { recycled_lpi.push(lpi_ptr); }
+	void recycle(IPoint3T_TPI *tpi_ptr) { recycled_tpi.push(tpi_ptr); }
 
-	IPoint_SSI *emplace(IPoint_SSI &&p)
+	IPoint3T_SSI *emplace(IPoint3T_SSI &&p)
 	{
-		IPoint_SSI *ssi_ptr = nullptr;
+		IPoint3T_SSI *ssi_ptr = nullptr;
 		if (recycled_ssi.empty())
 		{
 			ssi.emplace_back(std::move(p));
@@ -111,9 +111,9 @@ public:
 		return ssi_ptr;
 	}
 
-	IPoint_LPI *emplace(IPoint_LPI &&p)
+	IPoint3T_LPI *emplace(IPoint3T_LPI &&p)
 	{
-		IPoint_LPI *lpi_ptr = nullptr;
+		IPoint3T_LPI *lpi_ptr = nullptr;
 		if (recycled_lpi.empty())
 		{
 			lpi.emplace_back(std::move(p));
@@ -128,9 +128,9 @@ public:
 		return lpi_ptr;
 	}
 
-	IPoint_TPI *emplace(IPoint_TPI &&p)
+	IPoint3T_TPI *emplace(IPoint3T_TPI &&p)
 	{
-		IPoint_TPI *tpi_ptr = nullptr;
+		IPoint3T_TPI *tpi_ptr = nullptr;
 		if (recycled_tpi.empty())
 		{
 			tpi.emplace_back(std::move(p));
@@ -164,9 +164,9 @@ public:
 	}
 
 private:
-	std::queue<IPoint_SSI *> recycled_ssi;
-	std::queue<IPoint_LPI *> recycled_lpi;
-	std::queue<IPoint_TPI *> recycled_tpi;
+	std::queue<IPoint3T_SSI *> recycled_ssi;
+	std::queue<IPoint3T_LPI *> recycled_lpi;
+	std::queue<IPoint3T_TPI *> recycled_tpi;
 };
 
 struct ArrDuplTriInfo

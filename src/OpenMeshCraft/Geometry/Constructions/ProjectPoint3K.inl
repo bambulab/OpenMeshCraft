@@ -6,8 +6,8 @@
 namespace OMC {
 
 template <typename Kernel>
-auto ProjectPoint3K<Kernel>::operator()(const SegmentT &segment,
-                                        const GPointT  &point) const -> EPointT
+auto ProjectPoint3K<Kernel>::operator()(const Segment3 &segment,
+                                        const GPoint3  &point) const -> EPoint3
 {
 #if 0 // when needed, figure out a better way to handle this
 	typename CheckDegenerate3::DgnType degeneration = CheckDegenerate3()(segment);
@@ -16,10 +16,10 @@ auto ProjectPoint3K<Kernel>::operator()(const SegmentT &segment,
 	{
 		return proj_to_segment(segment, point);
 	}
-	else if (std::holds_alternative<GPointT>(degeneration))
+	else if (std::holds_alternative<GPoint3>(degeneration))
 	{
 		// segment is degenerate to point, point is projected to point.
-		return ToEP()(std::get<GPointT>(std::move(degeneration)));
+		return ToEP()(std::get<GPoint3>(std::move(degeneration)));
 	}
 #endif
 
@@ -27,8 +27,8 @@ auto ProjectPoint3K<Kernel>::operator()(const SegmentT &segment,
 }
 
 template <typename Kernel>
-auto ProjectPoint3K<Kernel>::operator()(const TriangleT &triangle,
-                                        const GPointT   &point) const -> EPointT
+auto ProjectPoint3K<Kernel>::operator()(const Triangle3 &triangle,
+                                        const GPoint3   &point) const -> EPoint3
 {
 #if 0 // when needed, figure out a better way to handle this
 	typename CheckDegenerate3::DgnType degeneration =
@@ -38,15 +38,15 @@ auto ProjectPoint3K<Kernel>::operator()(const TriangleT &triangle,
 	{
 		return proj_to_triangle(triangle, point);
 	}
-	else if (std::holds_alternative<SegmentT>(degeneration))
+	else if (std::holds_alternative<Segment3>(degeneration))
 	{
 		// segment is degenerate to point, point is projected to point.
-		return proj_to_segment(std::get<SegmentT>(degeneration), point);
+		return proj_to_segment(std::get<Segment3>(degeneration), point);
 	}
-	else if (std::holds_alternative<GPointT>(degeneration))
+	else if (std::holds_alternative<GPoint3>(degeneration))
 	{
 		// segment is degenerate to point, point is projected to point.
-		return ToEP()(std::get<GPointT>(std::move(degeneration)));
+		return ToEP()(std::get<GPoint3>(std::move(degeneration)));
 	}
 #endif
 
@@ -54,10 +54,10 @@ auto ProjectPoint3K<Kernel>::operator()(const TriangleT &triangle,
 }
 
 template <typename Kernel>
-auto ProjectPoint3K<Kernel>::operator()(const BoundingBoxT &bbox,
-                                        const GPointT &point) const -> EPointT
+auto ProjectPoint3K<Kernel>::operator()(const BoundingBox3 &bbox,
+                                        const GPoint3 &point) const -> EPoint3
 {
-	EPointT result = ToEP()(point);
+	EPoint3 result = ToEP()(point);
 #define COMPARE_AXIS(axis)                                                \
 	if (LessThan3D().on_##axis(point, bbox.min_bound()) <= Sign::ZERO)      \
 		result.axis() = bbox.min_bound().axis();                              \
@@ -72,12 +72,12 @@ auto ProjectPoint3K<Kernel>::operator()(const BoundingBoxT &bbox,
 }
 
 template <typename Kernel>
-auto ProjectPoint3K<Kernel>::proj_to_segment(const SegmentT &segment,
-                                             const GPointT  &point) const
-  -> EPointT
+auto ProjectPoint3K<Kernel>::proj_to_segment(const Segment3 &segment,
+                                             const GPoint3  &point) const
+  -> EPoint3
 {
 	// No degeneration, project point to the segment.
-	VecT segment_vec = segment.end() - segment.start();
+	Vec3 segment_vec = segment.end() - segment.start();
 	NT   numerator   = segment_vec.dot(point - segment.start());
 
 	if (numerator /*segment_to_vector.dot(query - *segment.first)*/ <= NT(0.0))
@@ -96,18 +96,18 @@ auto ProjectPoint3K<Kernel>::proj_to_segment(const SegmentT &segment,
 }
 
 template <typename Kernel>
-auto ProjectPoint3K<Kernel>::proj_to_triangle(const TriangleT &triangle,
-                                              const GPointT   &point) const
-  -> EPointT
+auto ProjectPoint3K<Kernel>::proj_to_triangle(const Triangle3 &triangle,
+                                              const GPoint3   &point) const
+  -> EPoint3
 {
-	const EPointT &a = triangle.v0(), &b = triangle.v1(), &c = triangle.v2();
-	EPointT        ep = ToEP()(point);
+	const EPoint3 &a = triangle.v0(), &b = triangle.v1(), &c = triangle.v2();
+	EPoint3        ep = ToEP()(point);
 
 	// 1. Project point to the support plane of the triangle.
-	VecT    normal      = ConstructNormal3()(triangle);
+	Vec3    normal      = ConstructNormal3()(triangle);
 	NT      numerator   = (ep - a).dot(normal);
 	NT      denominator = normal.sqrnorm();
-	EPointT proj_point  = ep - (numerator / denominator) * normal;
+	EPoint3 proj_point  = ep - (numerator / denominator) * normal;
 	// proj_point is the project point on the support plane.
 
 	// 2. Check if the projected point is inside the triangle.
@@ -120,15 +120,15 @@ auto ProjectPoint3K<Kernel>::proj_to_triangle(const TriangleT &triangle,
 	// more than three edges.
 
 	bool    outside = false;
-	EPointT result;
+	EPoint3 result;
 
 	auto check_seg = [&ep, &normal, &proj_point, &outside,
-	                  &result](const EPointT &start,
-	                           const EPointT &end) -> bool // found result
+	                  &result](const EPoint3 &start,
+	                           const EPoint3 &end) -> bool // found result
 	{
 		// Offset points of triangle by the normal of triangle to construct a plane
 		// which is orthogonal to the triangle.
-		EPointT offset_start = start + normal;
+		EPoint3 offset_start = start + normal;
 
 		// The orientation of point with respect to orthogonal plane defined on ij,
 		// where ij means vertex vi and vj.
@@ -141,9 +141,9 @@ auto ProjectPoint3K<Kernel>::proj_to_triangle(const TriangleT &triangle,
 
 			// 3. The proj_point is outside the triangle.
 			// Project proj_point to Line, check if it is on the Segment.
-			VecT seg_vec        = end - start;
-			VecT start_to_point = proj_point - start;
-			VecT end_to_point   = proj_point - end;
+			Vec3 seg_vec        = end - start;
+			Vec3 start_to_point = proj_point - start;
+			Vec3 end_to_point   = proj_point - end;
 
 			NT ori_start_to_end = start_to_point.dot(seg_vec);
 			NT ori_end_to_start = end_to_point.dot(seg_vec);

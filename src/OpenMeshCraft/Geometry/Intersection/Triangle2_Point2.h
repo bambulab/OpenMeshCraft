@@ -17,19 +17,18 @@ namespace OMC {
  * - INTERSECT : the point is on the edge or inside the triangle.
  *
  * The last two types are considered as intersect.
- * 
+ *
  * @tparam Kernel
  */
 template <typename Kernel>
-class Triangle2_Point2_Do_Intersect
+class Triangle2_Point2_DoIntersectK
 {
 public:
 	using K  = Kernel;
 	using NT = typename K::NT;
 
-	using VecT      = typename K::Vec2;
-	using GPointT   = typename K::GPoint2;
-	using TriangleT = typename K::Triangle2;
+	using GPoint2   = typename K::GPoint2;
+	using Triangle2 = typename K::Triangle2;
 
 	using LessThan2D = typename K::LessThan2D;
 	using Orient2D   = typename K::Orient2D;
@@ -39,20 +38,20 @@ public:
 	 * @brief Check if triangle and point intersect.
 	 * @note Assume that triangle is not degenerate.
 	 */
-	bool operator()(const TriangleT &tri, const GPointT &pnt) const;
+	bool operator()(const Triangle2 &tri, const GPoint2 &pnt) const;
 
 	/**
 	 * @brief Get the relative position of point to triangle.
 	 * @return Sign indicating relative position of point to triangle.
 	 * @note Assume that triangle is not degenerate.
 	 */
-	PointInType in_triangle(const TriangleT &tri, const GPointT &pnt) const;
+	PointInType in_triangle(const Triangle2 &tri, const GPoint2 &pnt) const;
 
 	/**
 	 * @brief Get the intersection type between triangle and point.
 	 */
-	PointInSimplexType intersection_type(const TriangleT &tri,
-	                                     const GPointT   &pnt) const;
+	PointInSimplexType intersection_type(const Triangle2 &tri,
+	                                     const GPoint2   &pnt) const;
 
 	/**
 	 * @brief Get the intersection type between triangle and point.
@@ -60,9 +59,9 @@ public:
 	 * @param p point
 	 * @note Assume that triangle is not degenerate.
 	 */
-	PointInSimplexType intersection_type(const GPointT &t0, const GPointT &t1,
-	                                     const GPointT &t2,
-	                                     const GPointT &p) const;
+	PointInSimplexType intersection_type(const GPoint2 &t0, const GPoint2 &t1,
+	                                     const GPoint2 &t2,
+	                                     const GPoint2 &p) const;
 
 	/**
 	 * @brief Get the intersection type between triangle and point.

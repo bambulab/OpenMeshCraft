@@ -7,17 +7,17 @@
 namespace OMC {
 
 template <typename Kernel>
-bool Triangle3_Triangle3_Do_Intersect<Kernel>::operator()(
-  const TriangleT &tri0, const TriangleT &tri1) const
+bool Triangle3_Triangle3_DoIntersectK<Kernel>::operator()(
+  const Triangle3 &tri0, const Triangle3 &tri1) const
 {
 	return intersection_type(tri0, tri1) >=
 	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 }
 
 template <typename Kernel>
-bool Triangle3_Triangle3_Do_Intersect<Kernel>::operator()(
-  const GPointT &t00, const GPointT &t01, const GPointT &t02,
-  const GPointT &t10, const GPointT &t11, const GPointT &t12) const
+bool Triangle3_Triangle3_DoIntersectK<Kernel>::operator()(
+  const GPoint3 &t00, const GPoint3 &t01, const GPoint3 &t02,
+  const GPoint3 &t10, const GPoint3 &t11, const GPoint3 &t12) const
 {
 	return intersection_type(t00, t01, t02, t10, t11, t12) >=
 	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
@@ -25,8 +25,8 @@ bool Triangle3_Triangle3_Do_Intersect<Kernel>::operator()(
 
 template <typename Kernel>
 SimplexIntersectionType
-Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
-  const TriangleT &tri0, const TriangleT &tri1) const
+Triangle3_Triangle3_DoIntersectK<Kernel>::intersection_type(
+  const Triangle3 &tri0, const Triangle3 &tri1) const
 {
 	return intersection_type(tri0.v0(), tri0.v1(), tri0.v2(), tri1.v0(),
 	                         tri1.v1(), tri1.v2());
@@ -34,9 +34,9 @@ Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
 
 template <typename Kernel>
 SimplexIntersectionType
-Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
-  const GPointT &t00, const GPointT &t01, const GPointT &t02,
-  const GPointT &t10, const GPointT &t11, const GPointT &t12) const
+Triangle3_Triangle3_DoIntersectK<Kernel>::intersection_type(
+  const GPoint3 &t00, const GPoint3 &t01, const GPoint3 &t02,
+  const GPoint3 &t10, const GPoint3 &t11, const GPoint3 &t12) const
 {
 	// triangle_is_degenerate_3d
 	OMC_EXPENSIVE_ASSERT(CollinearPoints3().misaligned(t00, t01, t02) &&
@@ -87,8 +87,8 @@ Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
 				opp1 = i;
 		}
 
-		const GPointT *t0[3] = {&t00, &t01, &t02};
-		const GPointT *t1[3] = {&t10, &t11, &t12};
+		const GPoint3 *t0[3] = {&t00, &t01, &t02};
+		const GPoint3 *t1[3] = {&t10, &t11, &t12};
 		Sign           opp0_wrt_e, opp1_wrt_e;
 
 		// if they are not coplanar, then they form a valid complex
@@ -132,10 +132,10 @@ Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
 				v1 = i;
 		}
 
-		const GPointT *t0[3]   = {&t00, &t01, &t02};
-		const GPointT *t1[3]   = {&t10, &t11, &t12};
-		const GPointT *opp0[2] = {t0[(v0 + 1) % 3], t0[(v0 + 2) % 3]};
-		const GPointT *opp1[2] = {t1[(v1 + 1) % 3], t1[(v1 + 2) % 3]};
+		const GPoint3 *t0[3]   = {&t00, &t01, &t02};
+		const GPoint3 *t1[3]   = {&t10, &t11, &t12};
+		const GPoint3 *opp0[2] = {t0[(v0 + 1) % 3], t0[(v0 + 2) % 3]};
+		const GPoint3 *opp1[2] = {t1[(v1 + 1) % 3], t1[(v1 + 2) % 3]};
 
 		// clang-format off
 		if (Triangle3_Segment3_DoInter().intersection_type(t10, t11, t12, *opp0[0], *opp0[1]) >= SimplexIntersectionType::INTERSECT ||
@@ -167,7 +167,7 @@ Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
 
 template <typename Kernel>
 SimplexIntersectionType
-Triangle3_Triangle3_Do_Intersect<Kernel>::intersection_type(
+Triangle3_Triangle3_DoIntersectK<Kernel>::intersection_type(
   const NT *t00, const NT *t01, const NT *t02, const NT *t10, const NT *t11,
   const NT *t12, const NT *t0_min, const NT *t0_perm, const NT *t1_min,
   const NT *t1_perm) const
