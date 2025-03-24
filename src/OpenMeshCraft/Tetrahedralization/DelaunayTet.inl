@@ -2,6 +2,8 @@
 
 #include "DelaunayTet.h"
 
+#include <array>
+
 namespace OMC {
 
 template <typename Traits>

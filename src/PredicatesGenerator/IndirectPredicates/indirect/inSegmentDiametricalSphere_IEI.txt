@@ -10,32 +10,12 @@ errorDefinition(TPI,T,3:lx;7;256;3.073097332162437e-13;144.0000000000005;ly;7;25
 // check if pc is inside the smallest (diametral) sphere of the segment.
 
 // it is equivalent to check if the triangle formed by pa, pb and pc is an obutuse triangle.
-// sign = (pb - pa).squaredNorm() - ((pc - pa).squaredNorm() + (pc - pb).squaredNorm())
-//      = dc^2 * (da * pb - la).squaredNorm() - ((da * lc - dc * la).squaredNorm() + da^2 * (lc - dc * pb).squaredNorm())
+// sign = (pc - pa) dot (pb - pc)
+//      = (da * lc - dc * la) dot (dc * pb - lc)
+// (we ensure that da and dc are positive)
 // -- sign > 0 : inside
 // -- sign = 0 : on
 // -- sign < 0 : outside
-
-// -- da * pb
-dapbx = da * pbx
-dapby = da * pby
-dapbz = da * pbz
-
-// -- da * pb - la
-abx = dapbx - lax
-aby = dapby - lay
-abz = dapbz - laz
-
-// -- (da * pb - la).squaredNorm
-abx2 = abx * abx
-aby2 = aby * aby
-abz2 = abz * abz
-t0 = abx2 + aby2
-absqr = t0 + abz2
-
-// -- dc^2 * (da * pc - la).squaredNorm
-dc2 = dc * dc
-dc2absqr = dc2 * absqr
 
 // -- da * lc
 dalcx = da * lcx
@@ -52,34 +32,20 @@ acx = dalcx - dclax
 acy = dalcy - dclay
 acz = dalcz - dclaz
 
-// -- (da * lc - dc * la).squaredNorm
-acx2 = acx * acx
-acy2 = acy * acy
-acz2 = acz * acz
-t1 = acx2 + acy2
-acsqr = t1 + acz2
-
 // -- dc * pb
 dcpbx = dc * pbx
 dcpby = dc * pby
 dcpbz = dc * pbz
 
-// -- lc - dc * pb
-bcx = lcx - dcpbx
-bcy = lcy - dcpby
-bcz = lcz - dcpbz
-
-// -- (lc - dc * pb).squaredNorm
-bcx2 = bcx * bcx
-bcy2 = bcy * bcy
-bcz2 = bcz * bcz
-t2 = bcx2 + bcy2
-bcsqr = t2 + bcz2
-
-// -- da^2 * (lc - dc * pb).squaredNorm
-da2 = da * da
-da2bcsqr = da2 * bcsqr
+// -- dc * pb - lc
+cbx = dcpbx - lcx
+cby = dcpby - lcy
+cbz = dcpbz - lcz
 
 // -- sign
-ac_bc = acsqr + da2bcsqr
-d = dc2absqr - ac_bc
+ac_cb_x = acx * cbx
+ac_cb_y = acy * cby
+ac_cb_z = acz * cbz
+
+sign_xy = ac_cb_x + ac_cb_y
+sign = sign_xy + ac_cb_z

@@ -22,7 +22,7 @@ template <typename Traits>
 class SegmentRecover
 {
 public: /* Traits **********************************************************/
-	using Self = DelaunayTet<Traits>;
+	using Self = SegmentRecover<Traits>;
 
 	using NT           = typename Traits::NT;
 	using Vec2         = typename Traits::Vec2;

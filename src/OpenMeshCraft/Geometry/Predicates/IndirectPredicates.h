@@ -20,25 +20,25 @@ TEMPLATE_DECL
 class DotProductSign2D_Indirect
 {
 public:
-	using VecT   = Vec2T<FT>;
-	using PointT = GenericPoint2T<IT, ET>;
+  using VecT   = Vec2T<FT>;
+  using PointT = GenericPoint2T<IT, ET>;
 
 public:
-	/**
-	 * @brief Dot product between 2D vectors formed by three points `p`, `r`, `q`.
-	 * Two vectors have a common point `q`.
-	 * @return sign of (p-q).dot(r-q)
-	 */
-	Sign operator()(const PointT &p, const PointT &r, const PointT &q);
+  /**
+   * @brief Dot product between 2D vectors formed by three points `p`, `r`, `q`.
+   * Two vectors have a common point `q`.
+   * @return sign of (p-q).dot(r-q)
+   */
+  Sign operator()(const PointT &p, const PointT &r, const PointT &q);
 
-	/**
-	 * @brief Dot product between 2D vectors formed by four points. Each vector is
-	 * formed by two points. One starts from `p` and ends at `q`, the other starts
-	 * from `r` and ends at `s`.
-	 * @return sign of (p-q).dot(r-s)
-	 */
-	Sign operator()(const PointT &p, const PointT &r, const PointT &q,
-	                const PointT &s);
+  /**
+   * @brief Dot product between 2D vectors formed by four points. Each vector is
+   * formed by two points. One starts from `p` and ends at `q`, the other starts
+   * from `r` and ends at `s`.
+   * @return sign of (p-q).dot(r-s)
+   */
+  Sign operator()(const PointT &p, const PointT &r, const PointT &q,
+                  const PointT &s);
 };
 
 /**
@@ -48,25 +48,25 @@ TEMPLATE_DECL
 class DotProductSign3D_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
 public:
-	/**
-	 * @brief Dot product between 3D vectors formed by three points `p`, `r`, `q`.
-	 * Two vectors have a common point `q`.
-	 * @return sign of (p-q).dot(r-q)
-	 */
-	Sign operator()(const PointT &p, const PointT &r, const PointT &q);
+  /**
+   * @brief Dot product between 3D vectors formed by three points `p`, `r`, `q`.
+   * Two vectors have a common point `q`.
+   * @return sign of (p-q).dot(r-q)
+   */
+  Sign operator()(const PointT &p, const PointT &r, const PointT &q);
 
-	/**
-	 * @brief Dot product between 2D vectors formed by four points. Each vector is
-	 * formed by two points. One starts from `p` and ends at `q`, the other starts
-	 * from `r` and ends at `s`.
-	 * @return sign of (p-q).dot(r-s)
-	 */
-	Sign operator()(const PointT &p, const PointT &r, const PointT &q,
-	                const PointT &s);
+  /**
+   * @brief Dot product between 2D vectors formed by four points. Each vector is
+   * formed by two points. One starts from `p` and ends at `q`, the other starts
+   * from `r` and ends at `s`.
+   * @return sign of (p-q).dot(r-s)
+   */
+  Sign operator()(const PointT &p, const PointT &r, const PointT &q,
+                  const PointT &s);
 };
 
 /**
@@ -77,36 +77,36 @@ TEMPLATE_DECL
 class DotProductSignOn2D_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
 public:
-	/// @brief Dot product between 3D vectors on xy.
-	/// @return sign of (p-q).dot(r-q)
-	Sign on_xy(const PointT &p, const PointT &r, const PointT &q);
+  /// @brief Dot product between 3D vectors on xy.
+  /// @return sign of (p-q).dot(r-q)
+  Sign on_xy(const PointT &p, const PointT &r, const PointT &q);
 
-	/// @brief Dot product between 3D vectors on xy.
-	/// @return sign of (p-q).dot(r-s)
-	Sign on_xy(const PointT &p, const PointT &r, const PointT &q,
-	           const PointT &s);
+  /// @brief Dot product between 3D vectors on xy.
+  /// @return sign of (p-q).dot(r-s)
+  Sign on_xy(const PointT &p, const PointT &r, const PointT &q,
+             const PointT &s);
 
-	/// @brief Dot product between 3D vectors on yz.
-	/// @return sign of (p-q).dot(r-q)
-	Sign on_yz(const PointT &p, const PointT &r, const PointT &q);
+  /// @brief Dot product between 3D vectors on yz.
+  /// @return sign of (p-q).dot(r-q)
+  Sign on_yz(const PointT &p, const PointT &r, const PointT &q);
 
-	/// @brief Dot product between 3D vectors on yz.
-	/// @return sign of (p-q).dot(r-s)
-	Sign on_yz(const PointT &p, const PointT &r, const PointT &q,
-	           const PointT &s);
+  /// @brief Dot product between 3D vectors on yz.
+  /// @return sign of (p-q).dot(r-s)
+  Sign on_yz(const PointT &p, const PointT &r, const PointT &q,
+             const PointT &s);
 
-	/// @brief Dot product between 3D vectors on zx.
-	/// @return sign of (p-q).dot(r-q)
-	Sign on_zx(const PointT &p, const PointT &r, const PointT &q);
+  /// @brief Dot product between 3D vectors on zx.
+  /// @return sign of (p-q).dot(r-q)
+  Sign on_zx(const PointT &p, const PointT &r, const PointT &q);
 
-	/// @brief Dot product between 3D vectors on zx.
-	/// @return sign of (p-q).dot(r-s)
-	Sign on_zx(const PointT &p, const PointT &r, const PointT &q,
-	           const PointT &s);
+  /// @brief Dot product between 3D vectors on zx.
+  /// @return sign of (p-q).dot(r-s)
+  Sign on_zx(const PointT &p, const PointT &r, const PointT &q,
+             const PointT &s);
 };
 
 /******************************************************************************/
@@ -120,18 +120,18 @@ TEMPLATE_DECL
 class SquaredDistance2D_Indirect
 {
 public:
-	using VecT   = Vec2T<FT>;
-	using PointT = GenericPoint2T<IT, ET>;
+  using VecT   = Vec2T<FT>;
+  using PointT = GenericPoint2T<IT, ET>;
 
 public:
-	/**
-	 * @brief Calculate the squared distance between `p` and `q`, then compare
-	 * with `sqr_dis`.
-	 * @retval NEGATIVE, calculated squared distance is less than `sqr_dis`.
-	 * @retval ZERO, calculated squared distance is equal to `sqr_dis`.
-	 * @retval POSITIVE, calculated squared distance is larger than `sqr_dis`.
-	 */
-	Sign operator()(const PointT &p, const PointT &q, FT sqr_dis);
+  /**
+   * @brief Calculate the squared distance between `p` and `q`, then compare
+   * with `sqr_dis`.
+   * @retval NEGATIVE, calculated squared distance is less than `sqr_dis`.
+   * @retval ZERO, calculated squared distance is equal to `sqr_dis`.
+   * @retval POSITIVE, calculated squared distance is larger than `sqr_dis`.
+   */
+  Sign operator()(const PointT &p, const PointT &q, FT sqr_dis);
 };
 
 /**
@@ -141,40 +141,40 @@ TEMPLATE_DECL
 class SquaredDistance3D_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
 public:
-	/**
-	 * @brief Calculate the squared distance between `p` and `q`, then compare
-	 * with `sqr_dis`.
-	 * @retval NEGATIVE, calculated squared distance is less than `sqr_dis`.
-	 * @retval ZERO, calculated squared distance is equal to `sqr_dis`.
-	 * @retval POSITIVE, calculated squared distance is larger than `sqr_dis`.
-	 */
-	Sign operator()(const PointT &p, const PointT &q, FT sqr_dis);
+  /**
+   * @brief Calculate the squared distance between `p` and `q`, then compare
+   * with `sqr_dis`.
+   * @retval NEGATIVE, calculated squared distance is less than `sqr_dis`.
+   * @retval ZERO, calculated squared distance is equal to `sqr_dis`.
+   * @retval POSITIVE, calculated squared distance is larger than `sqr_dis`.
+   */
+  Sign operator()(const PointT &p, const PointT &q, FT sqr_dis);
 
-	/**
-	 * @brief Calculate the squared distance `ab` between `a` and `b`, and `ac`
-	 * between `a` and `c`. Then comprare `ab` with `ac`. If ab_scale is given,
-	 * `ab` is scaled by `ab_scale`.
-	 * @param ab_scale A power of 2, used to scale the squared distance of `ab`.
-	 * @retval NEGATIVE, `ab` * ab_scale < `ac`.
-	 * @retval ZERO, `ab` * ab_scale == `ac`.
-	 * @retval POSITIVE, `ab` * ab_scale > `ac`.
-	 */
-	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
-	                int ab_scale = 1);
+  /**
+   * @brief Calculate the squared distance `ab` between `a` and `b`, and `ac`
+   * between `a` and `c`. Then comprare `ab` with `ac`. If ab_scale is given,
+   * `ab` is scaled by `ab_scale`.
+   * @param ab_scale A power of 2, used to scale the squared distance of `ab`.
+   * @retval NEGATIVE, `ab` * ab_scale < `ac`.
+   * @retval ZERO, `ab` * ab_scale == `ac`.
+   * @retval POSITIVE, `ab` * ab_scale > `ac`.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+                  int ab_scale = 1);
 
-	/**
-	 * @brief `a` and `b` define a line. Calculate the projecting distance from
-	 * `c` to the line `ab`, and then compare it with `sqr_dis`.
-	 * @retval NEGATIVE, the projecting distance is less than `sqr_dis`.
-	 * @retval ZERO, the projecting distance is equal to `sqr_dis`.
-	 * @retval POSITIVE, the projecting distance is greater than `sqr_dis`.
-	 */
-	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
-	                FT sqr_dis);
+  /**
+   * @brief `a` and `b` define a line. Calculate the projecting distance from
+   * `c` to the line `ab`, and then compare it with `sqr_dis`.
+   * @retval NEGATIVE, the projecting distance is less than `sqr_dis`.
+   * @retval ZERO, the projecting distance is equal to `sqr_dis`.
+   * @retval POSITIVE, the projecting distance is greater than `sqr_dis`.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+                  FT sqr_dis);
 };
 
 /******************************************************************************/
@@ -204,27 +204,27 @@ TEMPLATE_DECL
 class Orient2D_Indirect
 {
 public:
-	using VecT   = Vec2T<FT>;
-	using PointT = GenericPoint2T<IT, ET>;
+  using VecT   = Vec2T<FT>;
+  using PointT = GenericPoint2T<IT, ET>;
 
 public:
-	/**
-	 * @brief test orientation of query with respect to 2D line pq.
-	 * It calculates the cross product of two vectors (q-p) and (query-p):
-	 * (q-p) cross (query - p).
-	 * @param p_q_query Given in generic points.
-	 * @return POSITIVE->left, ZERO->on, NEGATIVE->right.
-	 */
-	Sign operator()(const PointT &p, const PointT &q, const PointT &query);
+  /**
+   * @brief test orientation of query with respect to 2D line pq.
+   * It calculates the cross product of two vectors (q-p) and (query-p):
+   * (q-p) cross (query - p).
+   * @param p_q_query Given in generic points.
+   * @return POSITIVE->left, ZERO->on, NEGATIVE->right.
+   */
+  Sign operator()(const PointT &p, const PointT &q, const PointT &query);
 
-	/**
-	 * @brief test orientation of query with respect to 2D line pq.
-	 * It calculates the cross product of two vectors (q-p) and (query-p):
-	 * (q-p) cross (query - p).
-	 * @param p_q_query Given in number pointers.
-	 * @return POSITIVE->left, ZERO->on, NEGATIVE->right.
-	 */
-	Sign operator()(const FT *p, const FT *q, const FT *query);
+  /**
+   * @brief test orientation of query with respect to 2D line pq.
+   * It calculates the cross product of two vectors (q-p) and (query-p):
+   * (q-p) cross (query - p).
+   * @param p_q_query Given in number pointers.
+   * @return POSITIVE->left, ZERO->on, NEGATIVE->right.
+   */
+  Sign operator()(const FT *p, const FT *q, const FT *query);
 };
 
 /**
@@ -259,63 +259,63 @@ TEMPLATE_DECL
 class Orient3D_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
 public:
-	/**
-	 * @brief Given four points a, b, c, d, let ab = b-a, ac = c-a, ad = d-a.
-	 * Calculate the determinant: det = dot(cross(ab,ac), ad).
-	 * @param points Given in generic points.
-	 * @return
-	 * ZERO->coplanar, POSITIVE->positive volume, NEGATIVE->negtive volume.
-	 */
-	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
-	                const PointT &d);
+  /**
+   * @brief Given four points a, b, c, d, let ab = b-a, ac = c-a, ad = d-a.
+   * Calculate the determinant: det = dot(cross(ab,ac), ad).
+   * @param points Given in generic points.
+   * @return
+   * ZERO->coplanar, POSITIVE->positive volume, NEGATIVE->negtive volume.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+                  const PointT &d);
 
-	/**
-	 * @brief Given four points a, b, c, d, let ab = b-a, ac = c-a, ad = d-a.
-	 * Calculate the determinant: det = dot(cross(ab,ac), ad).
-	 * @param points Given in number pointers.
-	 * @return
-	 * ZERO->coplanar, POSITIVE->positive volume, NEGATIVE->negtive volume.
-	 */
-	Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d);
+  /**
+   * @brief Given four points a, b, c, d, let ab = b-a, ac = c-a, ad = d-a.
+   * Calculate the determinant: det = dot(cross(ab,ac), ad).
+   * @param points Given in number pointers.
+   * @return
+   * ZERO->coplanar, POSITIVE->positive volume, NEGATIVE->negtive volume.
+   */
+  Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d);
 
-	/**
-	 * @brief Given four points a, b, c, d, let ab = b-a, ac = c-a, ad = d-a.
-	 * Calculate the determinant: det = dot(cross(ab,ac), ad).
-	 * @param a_b_c Given in number pointers.
-	 * @param d Given in generic point.
-	 * @return
-	 * ZERO->coplanar, POSITIVE->positive volume, NEGATIVE->negtive volume.
-	 */
-	Sign operator()(const FT *a, const FT *b, const FT *c, const PointT &d);
+  /**
+   * @brief Given four points a, b, c, d, let ab = b-a, ac = c-a, ad = d-a.
+   * Calculate the determinant: det = dot(cross(ab,ac), ad).
+   * @param a_b_c Given in number pointers.
+   * @param d Given in generic point.
+   * @return
+   * ZERO->coplanar, POSITIVE->positive volume, NEGATIVE->negtive volume.
+   */
+  Sign operator()(const FT *a, const FT *b, const FT *c, const PointT &d);
 
 public: /* Cached version of orient3d ***************************************/
-	/**
-	 * @brief Calculate cached data for three points pa, pb and pc (which
-	 * generally come from three points of a triangle)
-	 */
-	static void get_minors(const FT *pa, const FT *pb, const FT *pc, FT *minor,
-	                       FT *perm);
+  /**
+   * @brief Calculate cached data for three points pa, pb and pc (which
+   * generally come from three points of a triangle)
+   */
+  static void get_minors(const FT *pa, const FT *pb, const FT *pc, FT *minor,
+                         FT *perm);
 
-	/**
-	 * @brief Calculate orient3d with cached data. Be careful to put points
-	 * in right order!
-	 * Cached data are calculated for pa, pb and pc. The query point is pd.
-	 */
-	static Sign with_cached_minors(const FT *pa, const FT *pb, const FT *pc,
-	                               const FT *pd, const FT *minor, const FT *perm);
+  /**
+   * @brief Calculate orient3d with cached data. Be careful to put points
+   * in right order!
+   * Cached data are calculated for pa, pb and pc. The query point is pd.
+   */
+  static Sign with_cached_minors(const FT *pa, const FT *pb, const FT *pc,
+                                 const FT *pd, const FT *minor, const FT *perm);
 
 public: /* Separated stages of adaptive precision strategy ******************/
-	/**
-	 * @brief Calculates the floating-point filter stage of adaptive precision
-	 * strategy.
-	 * @return UNCERTAIN->need further exact test,
-	 * CERTAIN POSITIVE->positive volume, CERTAIN NEGATIVE->negtive volume.
-	 */
-	Sign filter(const FT *a, const FT *b, const FT *c, const FT *d);
+  /**
+   * @brief Calculates the floating-point filter stage of adaptive precision
+   * strategy.
+   * @return UNCERTAIN->need further exact test,
+   * CERTAIN POSITIVE->positive volume, CERTAIN NEGATIVE->negtive volume.
+   */
+  Sign filter(const FT *a, const FT *b, const FT *c, const FT *d);
 };
 
 /**
@@ -327,36 +327,36 @@ TEMPLATE_DECL
 class OrientOn2D_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
-	using OrientOn2D = OrientOn2D_Indirect<FT, IT, ET>;
+  using OrientOn2D = OrientOn2D_Indirect<FT, IT, ET>;
 
 public:
-	/**
-	 * @brief Calculate the orientation of points on orthogonal plane indicated by
-	 * `n_max`.
-	 * @param n_max the dominant normal component of the triangle/plane (see
-	 * maxComponentInTriangleNormal).
-	 * @return Sign Same to Orient2D.
-	 */
-	Sign operator()(const PointT &a, const PointT &b, const PointT &c, int n_max);
+  /**
+   * @brief Calculate the orientation of points on orthogonal plane indicated by
+   * `n_max`.
+   * @param n_max the dominant normal component of the triangle/plane (see
+   * maxComponentInTriangleNormal).
+   * @return Sign Same to Orient2D.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c, int n_max);
 
-	/*  Orient2D on xy/yz/zx plane. */
+  /*  Orient2D on xy/yz/zx plane. */
 
-	Sign on_xy(const PointT &a, const PointT &b, const PointT &c);
-	Sign on_yz(const PointT &a, const PointT &b, const PointT &c);
-	Sign on_zx(const PointT &a, const PointT &b, const PointT &c);
+  Sign on_xy(const PointT &a, const PointT &b, const PointT &c);
+  Sign on_yz(const PointT &a, const PointT &b, const PointT &c);
+  Sign on_zx(const PointT &a, const PointT &b, const PointT &c);
 
-	/* Same functions with only different parameter types */
+  /* Same functions with only different parameter types */
 
-	Sign operator()(const FT *a, const FT *b, const FT *c, int n_max);
+  Sign operator()(const FT *a, const FT *b, const FT *c, int n_max);
 
-	Sign operator()(const FT *a, const FT *b, const PointT &c, int n_max);
+  Sign operator()(const FT *a, const FT *b, const PointT &c, int n_max);
 
-	Sign on_xy(const FT *a, const FT *b, const FT *c);
-	Sign on_yz(const FT *a, const FT *b, const FT *c);
-	Sign on_zx(const FT *a, const FT *b, const FT *c);
+  Sign on_xy(const FT *a, const FT *b, const FT *c);
+  Sign on_yz(const FT *a, const FT *b, const FT *c);
+  Sign on_zx(const FT *a, const FT *b, const FT *c);
 };
 
 /******************************************************************************/
@@ -371,94 +371,94 @@ TEMPLATE_DECL
 class LessThan2D_Indirect
 {
 public:
-	using VecT   = Vec2T<FT>;
-	using PointT = GenericPoint2T<IT, ET>;
+  using VecT   = Vec2T<FT>;
+  using PointT = GenericPoint2T<IT, ET>;
 
 public:
-	/**
-	 * @brief Compare x/y-coordinate of two 2D points `a` and `b`.
-	 * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a > b.
-	 */
-	Sign on_x(const PointT &a, const PointT &b);
-	Sign on_y(const PointT &a, const PointT &b);
+  /**
+   * @brief Compare x/y-coordinate of two 2D points `a` and `b`.
+   * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a > b.
+   */
+  Sign on_x(const PointT &a, const PointT &b);
+  Sign on_y(const PointT &a, const PointT &b);
 
-	/**
-	 * @brief Lexicographically compare x/y-coordinate of two 2D points `a` and
-	 * `b`.
-	 * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a > b.
-	 */
-	Sign operator()(const PointT &a, const PointT &b);
+  /**
+   * @brief Lexicographically compare x/y-coordinate of two 2D points `a` and
+   * `b`.
+   * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a > b.
+   */
+  Sign operator()(const PointT &a, const PointT &b);
 
-	/**
-	 * @brief Check if the two points are coincident by lexicographically
-	 * comparing their coordinates.
-	 */
-	bool coincident(const PointT &a, const PointT &b)
-	{
-		return operator()(a, b) == Sign::ZERO;
-	}
+  /**
+   * @brief Check if the two points are coincident by lexicographically
+   * comparing their coordinates.
+   */
+  bool coincident(const PointT &a, const PointT &b)
+  {
+    return operator()(a, b) == Sign::ZERO;
+  }
 };
 
 TEMPLATE_DECL
 class LessThan3D_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
 public:
-	/**
-	 * @brief Compare x/y-coordinate of two 2D points `a` and `b`.
-	 * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a>b.
-	 */
-	Sign on_x(const PointT &a, const PointT &b);
-	Sign on_y(const PointT &a, const PointT &b);
-	Sign on_z(const PointT &a, const PointT &b);
+  /**
+   * @brief Compare x/y-coordinate of two 2D points `a` and `b`.
+   * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a>b.
+   */
+  Sign on_x(const PointT &a, const PointT &b);
+  Sign on_y(const PointT &a, const PointT &b);
+  Sign on_z(const PointT &a, const PointT &b);
 
-	/**
-	 * @brief Compare `axis`-coordinate of two 2D points `a` and `b`.
-	 * @param axis 0/1/2 indicates the axis x/y/z.
-	 * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a>b.
-	 */
-	Sign on(const PointT &a, const PointT &b, size_t axis);
+  /**
+   * @brief Compare `axis`-coordinate of two 2D points `a` and `b`.
+   * @param axis 0/1/2 indicates the axis x/y/z.
+   * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a>b.
+   */
+  Sign on(const PointT &a, const PointT &b, size_t axis);
 
-	/**
-	 * @brief Compare coordinate of two 2D points `a` and `b` on all three axes.
-	 * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a>b.
-	 */
-	std::array<Sign, 3> on_all(const PointT &a, const PointT &b);
+  /**
+   * @brief Compare coordinate of two 2D points `a` and `b` on all three axes.
+   * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a>b.
+   */
+  std::array<Sign, 3> on_all(const PointT &a, const PointT &b);
 
-	/**
-	 * @brief Lexicographically compare x/y-coordinate of two 2D points `a` and
-	 * `b`.
-	 * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a > b.
-	 */
-	Sign operator()(const PointT &a, const PointT &b);
+  /**
+   * @brief Lexicographically compare x/y-coordinate of two 2D points `a` and
+   * `b`.
+   * @return NEGATIVE -> a<b, ZERO -> a==b, POSITIVE -> a > b.
+   */
+  Sign operator()(const PointT &a, const PointT &b);
 
-	/**
-	 * @brief Check if the two points are coincident by lexicographically
-	 * comparing their coordinates.
-	 */
-	bool coincident(const PointT &a, const PointT &b)
-	{
-		return operator()(a, b) == Sign::ZERO;
-	}
+  /**
+   * @brief Check if the two points are coincident by lexicographically
+   * comparing their coordinates.
+   */
+  bool coincident(const PointT &a, const PointT &b)
+  {
+    return operator()(a, b) == Sign::ZERO;
+  }
 
-	/* Same functions with only different parameter types */
+  /* Same functions with only different parameter types */
 
-	Sign on_x(const PointT &a, const FT *b);
-	Sign on_y(const PointT &a, const FT *b);
-	Sign on_z(const PointT &a, const FT *b);
+  Sign on_x(const PointT &a, const FT *b);
+  Sign on_y(const PointT &a, const FT *b);
+  Sign on_z(const PointT &a, const FT *b);
 
-	Sign on(const PointT &a, const FT *b, size_t axis);
+  Sign on(const PointT &a, const FT *b, size_t axis);
 
-	std::array<Sign, 3> on_all(const PointT &a, const FT *b);
+  std::array<Sign, 3> on_all(const PointT &a, const FT *b);
 
-	Sign on_x(const PointT &a, const FT b);
-	Sign on_y(const PointT &a, const FT b);
-	Sign on_z(const PointT &a, const FT b);
+  Sign on_x(const PointT &a, const FT b);
+  Sign on_y(const PointT &a, const FT b);
+  Sign on_z(const PointT &a, const FT b);
 
-	Sign on(const PointT &a, const FT b, size_t axis);
+  Sign on(const PointT &a, const FT b, size_t axis);
 };
 
 /******************************************************************************/
@@ -484,31 +484,31 @@ TEMPLATE_DECL
 class MaxComponentInTriangleNormal
 {
 public:
-	/**
-	 * @brief Given the vertices of a triangle <v1, v2, v3>, this function
-	 * computes the normal vector (x, y, z) of the triangle.
-	 * It then determines the largest component (in absolute value) of this
-	 * normal vector.
-	 * @return The function returns:
-	 * 0 - if the largest component is |x|
-	 * 1 - if the largest component is |y|
-	 * 2 - if the largest component is |z|
-	 *
-	 * @note: This function assumes that the triangle is not degenerate. It may
-	 * produce incorrect results or crash otherwise.
-	 */
-	int operator()(FT v1x, FT v1y, FT v1z, FT v2x, FT v2y, FT v2z, FT v3x, FT v3y,
-	               FT v3z);
+  /**
+   * @brief Given the vertices of a triangle <v1, v2, v3>, this function
+   * computes the normal vector (x, y, z) of the triangle.
+   * It then determines the largest component (in absolute value) of this
+   * normal vector.
+   * @return The function returns:
+   * 0 - if the largest component is |x|
+   * 1 - if the largest component is |y|
+   * 2 - if the largest component is |z|
+   *
+   * @note: This function assumes that the triangle is not degenerate. It may
+   * produce incorrect results or crash otherwise.
+   */
+  int operator()(FT v1x, FT v1y, FT v1z, FT v2x, FT v2y, FT v2z, FT v3x, FT v3y,
+                 FT v3z);
 
-	/**
-	 * @brief Same as the previous function, but takes the coordinates of the
-	 * vertices as arrays.
-	 */
-	int operator()(const FT *v1, const FT *v2, const FT *v3)
-	{
-		return operator()(v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], v3[0], v3[1],
-		                  v3[2]);
-	}
+  /**
+   * @brief Same as the previous function, but takes the coordinates of the
+   * vertices as arrays.
+   */
+  int operator()(const FT *v1, const FT *v2, const FT *v3)
+  {
+    return operator()(v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], v3[0], v3[1],
+                      v3[2]);
+  }
 };
 
 /**
@@ -526,23 +526,23 @@ TEMPLATE_DECL
 class LongestAxis_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
 public:
-	/**
-	 * @brief Given the endpoints of a segment <a, b>, this function computes the
-	 * projected length of the segment on each axis (x, y, z). It then determines
-	 * the axis with the longest projected length.
-	 * @return The function returns:
-	 * 0 - if the longest projected length is along the x-axis
-	 * 1 - if the longest projected length is along the y-axis
-	 * 2 - if the longest projected length is along the z-axis
-	 *
-	 * @note: This function assumes that the segment is not degenerate. It may
-	 * produce incorrect results or crash otherwise.
-	 */
-	int operator()(const PointT &a, const PointT &b);
+  /**
+   * @brief Given the endpoints of a segment <a, b>, this function computes the
+   * projected length of the segment on each axis (x, y, z). It then determines
+   * the axis with the longest projected length.
+   * @return The function returns:
+   * 0 - if the longest projected length is along the x-axis
+   * 1 - if the longest projected length is along the y-axis
+   * 2 - if the longest projected length is along the z-axis
+   *
+   * @note: This function assumes that the segment is not degenerate. It may
+   * produce incorrect results or crash otherwise.
+   */
+  int operator()(const PointT &a, const PointT &b);
 };
 
 /******************************************************************************/
@@ -556,30 +556,30 @@ TEMPLATE_DECL
 class InCircle_Indirect
 {
 public:
-	using VecT   = Vec2T<FT>;
-	using PointT = GenericPoint2T<IT, ET>;
+  using VecT   = Vec2T<FT>;
+  using PointT = GenericPoint2T<IT, ET>;
 
 public:
-	/**
-	 * @brief In 2D, test a point `d` is inside the circumcircle of three
-	 * points `a`, `b`, and `c`. `a`, `b` and `c` are given in couter-clock-wise
-	 * order (positive orientation defined by orient2D(a, b, c)), otherwise the
-	 * sign will be reversed.
-	 * @param points Given in generic points.
-	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
-	 */
-	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
-	                const PointT &d);
+  /**
+   * @brief In 2D, test a point `d` is inside the circumcircle of three
+   * points `a`, `b`, and `c`. `a`, `b` and `c` are given in couter-clock-wise
+   * order (positive orientation defined by orient2D(a, b, c)), otherwise the
+   * sign will be reversed.
+   * @param points Given in generic points.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+                  const PointT &d);
 
-	/**
-	 * @brief In 2D, test a point `d` is inside the circumcircle of three
-	 * points `a`, `b`, and `c`. `a`, `b` and `c` are given in couter-clock-wise
-	 * order (positive orientation defined by orient2D(a, b, c)), otherwise the
-	 * sign will be reversed.
-	 * @param points Given in number pointers.
-	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
-	 */
-	Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d);
+  /**
+   * @brief In 2D, test a point `d` is inside the circumcircle of three
+   * points `a`, `b`, and `c`. `a`, `b` and `c` are given in couter-clock-wise
+   * order (positive orientation defined by orient2D(a, b, c)), otherwise the
+   * sign will be reversed.
+   * @param points Given in number pointers.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d);
 };
 
 /**
@@ -589,100 +589,127 @@ TEMPLATE_DECL
 class InSphere_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
 public:
-	/**
-	 * @brief In 3D, test a point `e` is inside the circumsphere of four
-	 * points `a`, `b`, `c`, and `d`.
-	 *
-	 * The first four points are must be ordered so that they have a positive
-	 * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
-	 * reversed.
-	 * @param points Given in generic points.
-	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
-	 */
-	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
-	                const PointT &d, const PointT &e);
+  /**
+   * @brief In 3D, test a point `e` is inside the circumsphere of four
+   * points `a`, `b`, `c`, and `d`.
+   *
+   * The first four points are must be ordered so that they have a positive
+   * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
+   * reversed.
+   * @param points Given in generic points.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+                  const PointT &d, const PointT &e);
 
-	/**
-	 * @brief In 3D, test a point `e` is inside the circumsphere of four
-	 * points `a`, `b`, `c`, and `d`.
-	 *
-	 * The first four points are must be ordered so that they have a positive
-	 * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
-	 * reversed.
-	 * @param points Given in number pointers.
-	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
-	 */
-	Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d,
-	                const FT *e);
+  /**
+   * @brief In 3D, test a point `e` is inside the circumsphere of four
+   * points `a`, `b`, `c`, and `d`.
+   *
+   * The first four points are must be ordered so that they have a positive
+   * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
+   * reversed.
+   * @param points Given in number pointers.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d,
+                  const FT *e);
 
-	/**
-	 * @brief In 3D, test a point `c` is inside the smallest (diametral)
-	 * sphere of two points `a` and `b`.
-	 * @param points Given in generic points.
-	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
-	 */
-	Sign operator()(const PointT &a, const PointT &b, const PointT &c);
+  /**
+   * @brief In 3D, test a point `d` is inside the circumsphere of three
+   * points `a`, `b`, and `c`.
+   *
+   * @param points Given in generic points.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+                  const PointT &d);
 
-	/**
-	 * @brief Points `a`, `b` and `c` form a smallest sphere S(abc), and points
-	 * `a`, `b` and `d` form another smallest sphere S(abd). We want to know if
-	 * S(abc) is larger than S(abd).
-	 * REFACTOR perhaps better to put into a separate class.
-	 * @param points Given in generic points.
-	 * @retval POSITIVE-> S(abc) is larger.
-	 * @retval ZERO-> S(abc) and S(abd) are same large.
-	 * @retval NEGATIVE-> S(abc) is smaller.
-	 */
-	Sign largerSphere(const PointT &a, const PointT &b, const PointT &c,
-	                  const PointT &d);
+  /**
+   * @brief In 3D, test a point `d` is inside the circumsphere of three
+   * points `a`, `b`, and `c`.
+   *
+   * @param points Given in number pointers.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d);
+
+  /**
+   * @brief In 3D, test a point `c` is inside the smallest (diametral)
+   * sphere of two points `a` and `b`.
+   * @param points Given in generic points.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c);
+
+  /**
+   * @brief In 3D, test a point `c` is inside the smallest (diametral)
+   * sphere of two points `a` and `b`.
+   * @param points Given in number pointers.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const FT *a, const FT *b, const FT *c);
+
+  /**
+   * @brief Points `a`, `b` and `c` form a smallest sphere S(abc), and points
+   * `a`, `b` and `d` form another smallest sphere S(abd). We want to know if
+   * S(abc) is larger than S(abd).
+   * REFACTOR perhaps better to put into a separate class.
+   * @param points Given in generic points.
+   * @retval POSITIVE-> S(abc) is larger.
+   * @retval ZERO-> S(abc) and S(abd) are same large.
+   * @retval NEGATIVE-> S(abc) is smaller.
+   */
+  Sign largerSphere(const PointT &a, const PointT &b, const PointT &c,
+                    const PointT &d);
 };
 
 TEMPLATE_DECL
 class InPowerSphere_Indirect
 {
 public:
-	using VecT   = Vec3T<FT>;
-	using PointT = GenericPoint3T<IT, ET>;
+  using VecT   = Vec3T<FT>;
+  using PointT = GenericPoint3T<IT, ET>;
 
 public:
-	/**
-	 * @brief In 3D, test a weighted point `e` is inside the power circumsphere of
-	 * four weighted points `a`, `b`, `c`, and `d` with their weights `wa`, `wb`,
-	 * `wc` and `wd`.
-	 *
-	 * The first four points are must be ordered so that they have a positive
-	 * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
-	 * reversed.
-	 * @param points Given in generic points.
-	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
-	 */
-	Sign operator()(const PointT &a, FT wa, const PointT &b, FT wb,
-	                const PointT &c, FT wc, const PointT &d, FT wd,
-	                const PointT &e, FT we);
+  /**
+   * @brief In 3D, test a weighted point `e` is inside the power circumsphere of
+   * four weighted points `a`, `b`, `c`, and `d` with their weights `wa`, `wb`,
+   * `wc` and `wd`.
+   *
+   * The first four points are must be ordered so that they have a positive
+   * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
+   * reversed.
+   * @param points Given in generic points.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const PointT &a, FT wa, const PointT &b, FT wb,
+                  const PointT &c, FT wc, const PointT &d, FT wd,
+                  const PointT &e, FT we);
 
-	/**
-	 * @brief In 3D, test a weighted point `e` is inside the circumsphere of four
-	 * weighted points `a`, `b`, `c`, and `d`. Their weights are given in the
-	 * third number in the number vector.
-	 *
-	 * The first four points are must be ordered so that they have a positive
-	 * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
-	 * reversed.
-	 * @param points Given in number pointers.
-	 * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
-	 */
-	Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d,
-	                const FT *e);
+  /**
+   * @brief In 3D, test a weighted point `e` is inside the circumsphere of four
+   * weighted points `a`, `b`, `c`, and `d`. Their weights are given in the
+   * third number in the number vector.
+   *
+   * The first four points are must be ordered so that they have a positive
+   * orientation (as defined by orient3D(a,b,c,d)), otherwise the sign will be
+   * reversed.
+   * @param points Given in number pointers.
+   * @return POSITIVE->inside, ZERO->on, NEGATIVE->outside.
+   */
+  Sign operator()(const FT *a, const FT *b, const FT *c, const FT *d,
+                  const FT *e);
 
-	/**
-	 * @brief Same as above, but the weights are given separately.
-	 */
-	Sign operator()(const FT *a, FT wa, const FT *b, FT wb, const FT *c, FT wc,
-	                const FT *d, FT wd, const FT *e, FT we);
+  /**
+   * @brief Same as above, but the weights are given separately.
+   */
+  Sign operator()(const FT *a, FT wa, const FT *b, FT wb, const FT *c, FT wc,
+                  const FT *d, FT wd, const FT *e, FT we);
 };
 
 #undef TEMPLATE_DECL
@@ -690,5 +717,5 @@ public:
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "IndirectPredicates.inl"
+  #include "IndirectPredicates.inl"
 #endif

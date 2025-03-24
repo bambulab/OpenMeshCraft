@@ -6,47 +6,25 @@ explicitPoint3D(pc:pcx,pcy,pcz)
 // check if pc is inside the smallest (diametral) sphere of the segment.
 
 // it is equivalent to check if the triangle formed by pa, pb and pc is an obutuse triangle.
-// sign = (pb - pa).squaredNorm() - ((pc - pa).squaredNorm() + (pc - pb).squaredNorm())
+// sign = (pc - pa) dot (pb - pc)
 // -- sign > 0 : inside
 // -- sign = 0 : on
 // -- sign < 0 : outside
-
-// -- b - a
-abx = pbx - pax
-aby = pby - pay
-abz = pbz - paz
-
-// -- (b - a).squaredNorm
-abx2 = abx * abx
-aby2 = aby * aby
-abz2 = abz * abz
-t0 = abx2 + aby2
-absqr = t0 + abz2
 
 // -- c - a
 acx = pcx - pax
 acy = pcy - pay
 acz = pcz - paz
 
-// -- (c - a).squaredNorm
-acx2 = acx * acx
-acy2 = acy * acy
-acz2 = acz * acz
-t1 = acx2 + acy2
-acsqr = t1 + acz2
+// -- b - c
+cbx = pbx - pcx
+cby = pby - pcy
+cbz = pbz - pcz
 
-// -- c - b
-bcx = pcx - pbx
-bcy = pcy - pby
-bcz = pcz - pbz
+// -- sign = (pc - pa) dot (pb - pc)
+ac_cb_x = acx * cbx
+ac_cb_y = acy * cby
+ac_cb_z = acz * cbz
 
-// -- (c - b).squaredNorm
-bcx2 = bcx * bcx
-bcy2 = bcy * bcy
-bcz2 = bcz * bcz
-t2 = bcx2 + bcy2
-bcsqr = t2 + bcz2
-
-// -- sign = (b - a).squaredNorm - ((c - a).squaredNorm + (c - b).squaredNorm)
-ac_bc = acsqr + bcsqr
-d = absqr - ac_bc
+sign_xy = ac_cb_x + ac_cb_y
+sign = sign_xy + ac_cb_z

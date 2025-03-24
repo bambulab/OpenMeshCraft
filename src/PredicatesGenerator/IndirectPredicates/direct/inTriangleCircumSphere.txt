@@ -1,0 +1,126 @@
+explicitPoint3D(pa:pax,pay,paz)
+explicitPoint3D(pb:pbx,pby,pbz)
+explicitPoint3D(pc:pcx,pcy,pcz)
+explicitPoint3D(pd:pdx,pdy,pdz)
+
+// pa, pb and pc are the three points of the triangle.
+// check if pd is inside the circumsphere of the triangle.
+
+// First, translate the points so that pc is at the origin.
+// Then, calculate the circumcenter of the triangle by solving a linear system.
+// Finally, check if the distance from the circumcenter to pd is less than the radius of the circumsphere.
+// -- sign > 0 : inside
+// -- sign = 0 : on
+// -- sign < 0 : outside
+
+// The linear system is composed by three planes:
+// two are the bisectors of the segments pa-pc and pb-pc, and the third is the support plane of the triangle. 
+
+// -- translate points
+acx = pax - pcx
+acy = pay - pcy
+acz = paz - pcz
+
+bcx = pbx - pcx
+bcy = pby - pcy
+bcz = pbz - pcz
+
+dcx = pdx - pcx
+dcy = pdy - pcy
+dcz = pdz - pcz
+
+// -- construct the planes
+// ---- bisector of segment pa-pc: 2x dot ac = ac^2
+acx2 = acx * acx
+acy2 = acy * acy
+acz2 = acz * acz
+ac2xy = acx2 + acy2
+ac2 = ac2xy + acz2
+
+// ---- bisector of segment pb-pc: 2x dot bc = bc^2
+bcx2 = bcx * bcx
+bcy2 = bcy * bcy
+bcz2 = bcz * bcz
+bc2xy = bcx2 + bcy2
+bc2 = bc2xy + bcz2
+
+// -- calculate the normal of the support plane of the triangle
+//    support plane: x dot nx = 0
+acy_bcz = acy * bcz
+acz_bcy = acz * bcy
+nx = acy_bcz - acz_bcy
+
+acz_bcx = acz * bcx
+acx_bcz = acx * bcz
+ny = acz_bcx - acx_bcz
+
+acx_bcy = acx * bcy
+acy_bcx = acy * bcx
+nz = acx_bcy - acy_bcx
+
+// -- Solve the linear system
+// ---- numx = ac2 * det([bcy bcz; ny nz]) - bc2 * det([acy acz; ny nz])
+bcy_nz = bcy * nz
+bcz_ny = bcz * ny
+det1 = bcy_nz - bcz_ny
+numx1 = ac2 * det1
+
+acy_nz = acy * nz
+acz_ny = acz * ny
+det2 = acy_nz - acz_ny
+numx2 = bc2 * det2
+
+numx = numx1 - numx2
+
+// ---- numy = ac2 * det([bcx bcz; nx nz]) - bc2 * det([acx acz; nx nz])
+bcx_nz = bcx * nz
+bcz_nx = bcz * nx
+det3 = bcx_nz - bcz_nx
+numy1 = ac2 * det3
+
+acx_nz = acx * nz
+acz_nx = acz * nx
+det4 = acx_nz - acz_nx
+numy2 = bc2 * det4
+
+numy = numy1 - numy2
+
+// ---- numz = ac2 * det([bcx bcy; nx ny]) - bc2 * det([acx acy; nx ny])
+bcx_ny = bcx * ny
+bcy_nx = bcy * nx
+det5 = bcx_ny - bcy_nx
+numz1 = ac2 * det5
+
+acx_ny = acx * ny
+acy_nx = acy * nx
+det6 = acx_ny - acy_nx
+numz2 = bc2 * det6
+
+numz = numz1 - numz2
+
+// ---- den = 2 * det([acx acy acz; bcx bcy bcz; nx ny nz])
+tmp1 = acx * det1
+tmp2 = acy * det3
+tmp3 = acz * det5
+tmp4 = tmp1 - tmp2
+tmp5 = tmp4 + tmp3
+den = 2 * tmp5
+
+// -- compare the distance
+dcx2 = dcx * dcx
+dcy2 = dcy * dcy
+dcz2 = dcz * dcz
+dc2xy = dcx2 + dcy2
+dc2 = dc2xy + dcz2
+
+den2 = den * den
+
+dc2_den2 = dc2 * den2
+
+numx_sqr = numx * numx
+numy_sqr = numy * numy
+numz_sqr = numz * numz
+numxy_sqr = numx_sqr + numy_sqr
+num_sqr = numxy_sqr + numz_sqr
+
+sign = num_sqr - dc2_den2

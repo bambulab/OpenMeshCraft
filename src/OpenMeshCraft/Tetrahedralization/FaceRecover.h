@@ -21,7 +21,7 @@ template <typename Traits>
 class FaceRecover
 {
 public: /* Traits **********************************************************/
-	using Self = DelaunayTet<Traits>;
+	using Self = FaceRecover<Traits>;
 
 	using NT      = typename Traits::NT;
 	using Vec2    = typename Traits::Vec2;
