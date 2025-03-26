@@ -575,6 +575,17 @@ void TetrahedralMesh<Traits>::faceCorners(index_t vid0, index_t vid1,
 }
 
 /**
+ * @brief Get the mirror face of the given face.
+ * Mirror face is the face of the neighbor tetrahedron opposite to the given face.
+ * @return The mirror face.
+ */
+template <typename Traits>
+index_t TetrahedralMesh<Traits>::mirrofFace(index_t face_idoff) const
+{
+  return tet_neigh[face_idoff];
+}
+
+/**
  * @brief Classify tetrahedra to inside and outside.
  * `corner_is_boundary` marks boundary corners.
  * @param [in] corner_is_boundary A vector to mark boundary corners.

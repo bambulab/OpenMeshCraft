@@ -199,7 +199,7 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
   tet_mesh->markInfiniteTetsDeleted();
   tet_mesh->removeDeletedTets();
-  cdt_out_tets = std::move(tet_mesh.tet_node);
+  cdt_out_tets = std::move(tet_mesh->tet_node);
 }
 
 template <typename Traits>

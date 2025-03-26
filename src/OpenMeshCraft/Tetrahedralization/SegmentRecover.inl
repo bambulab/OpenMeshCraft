@@ -72,9 +72,6 @@ index_t SegmentRecover<Traits>::newVtx(PointType new_pnt)
   tet_mesh.newVtx(new_vid);
   plc.newVtx(new_vid);
 
-  vertex_to_check.emplace_back(false);
-  vertex_encroached.emplace_back(false);
-
   return new_vid;
 }
 
@@ -101,11 +98,11 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang(size_t num_loop)
 
   // Once a segment is split, new missing segments may appear near it.
   // So, mark adjacent vertices as `TO_CHECK`, and check them after a loop.
-
-  vertex_to_check.clear();
-  vertex_to_check.resize(tet_mesh.sizeVerts(), false);
-  vertex_encroached.clear();
-  vertex_encroached.resize(tet_mesh.sizeVerts(), false);
+  for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
+  {
+    tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
+    tet_mesh.unmark(vid, VTX_MARK::ENCROACHED);
+  }
 
   size_t orig_vn     = plc.input_nv;
   size_t split_count = 0;
@@ -132,13 +129,13 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang(size_t num_loop)
 
       // Visit the neighbor vertices
       // New missing edges will appear near visited vertices
-      vertex_to_check[ep0]     = true;
-      vertex_to_check[ep1]     = true;
-      vertex_to_check[new_vid] = true;
+      tet_mesh.mark(ep0, VTX_MARK::TO_CHECK);
+      tet_mesh.mark(ep1, VTX_MARK::TO_CHECK);
+      tet_mesh.mark(new_vid, VTX_MARK::TO_CHECK);
       InlinedVector64<index_t> local_vv;
       tet_mesh.VV(new_vid, local_vv);
       for (index_t vid : local_vv)
-        vertex_to_check[vid] = true;
+        tet_mesh.mark(vid, VTX_MARK::TO_CHECK);
 
       // log and output
       split_count++;
@@ -158,7 +155,8 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang(size_t num_loop)
     {
       const PLCEdge &e = plc.edge(eid);
       if (e.isConstraint() &&
-          (vertex_to_check[e.ep0()] || vertex_to_check[e.ep1()]) &&
+          (tet_mesh.isMarked(e.ep0(), VTX_MARK::TO_CHECK) ||
+           tet_mesh.isMarked(e.ep1(), VTX_MARK::TO_CHECK)) &&
           !tet_mesh.edgeExists(e.ep0(), e.ep1()))
       {
         missing_segments.push_back(eid);
@@ -173,7 +171,7 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang(size_t num_loop)
 #endif
     // clear the `TO_CHECK` mark for all vertices
     for (index_t vid = 0; vid < tet_mesh.sizeVerts(); vid++)
-      vertex_to_check[vid] = false;
+      tet_mesh.unmark(vid, VTX_MARK::TO_CHECK);
   }
   if (config.verbose) // output a new line
     std::cout << std::endl;
@@ -267,8 +265,8 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
 
   tet_mesh.mark(edge.ep0(), VTX_MARK::VISITED);
   tet_mesh.mark(edge.ep1(), VTX_MARK::VISITED);
-  vertex_encroached[edge.ep0()] = true;
-  vertex_encroached[edge.ep1()] = true;
+  tet_mesh.mark(edge.ep0(), VTX_MARK::ENCROACHED);
+  tet_mesh.mark(edge.ep1(), VTX_MARK::ENCROACHED);
 
   const GPoint3 &p0    = gpnt(edge.ep0());
   const GPoint3 &p1    = gpnt(edge.ep1());
@@ -284,7 +282,8 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
     for (index_t j = 0; j < 4; j++)
     {
       index_t vid = tet_mesh.tetNode(tet_idoff + j);
-      if (tet_mesh.isMarked(vid, VTX_MARK::VISITED) || vertex_encroached[vid])
+      if (tet_mesh.isMarked(vid, VTX_MARK::VISITED) ||
+          tet_mesh.isMarked(vid, VTX_MARK::ENCROACHED))
         continue;
       tet_mesh.mark(vid, VTX_MARK::VISITED);
       const GPoint3 &curr_p = gpnt(vid);
@@ -292,7 +291,7 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
       // check if the vertex is encroaching
       if (inSphere(p0, p1, curr_p))
       {
-        vertex_encroached[vid] = true;
+        tet_mesh.mark(vid, VTX_MARK::ENCROACHED);
         if (enc_verts) // store the encroaching vertices if required
           enc_verts->push_back(vid);
         // check if it is the reference encroaching point
@@ -307,10 +306,10 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
 
     // clang-format off
     const int is_encroached[] = {
-      vertex_encroached[tet_mesh.tetNode(tet_idoff)],
-      vertex_encroached[tet_mesh.tetNode(tet_idoff + 1)],
-      vertex_encroached[tet_mesh.tetNode(tet_idoff + 2)],
-      vertex_encroached[tet_mesh.tetNode(tet_idoff + 3)],
+      tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff), VTX_MARK::ENCROACHED),
+      tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 1), VTX_MARK::ENCROACHED),
+      tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 2), VTX_MARK::ENCROACHED),
+      tet_mesh.isMarked(tet_mesh.tetNode(tet_idoff + 3), VTX_MARK::ENCROACHED),
     };
     const int total_encroached = is_encroached[0] + is_encroached[1] + is_encroached[2] + is_encroached[3];
     // clang-format on
@@ -346,8 +345,8 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
   // clear all marks
   tet_mesh.unmark(edge.ep0(), VTX_MARK::VISITED);
   tet_mesh.unmark(edge.ep1(), VTX_MARK::VISITED);
-  vertex_encroached[edge.ep0()] = false;
-  vertex_encroached[edge.ep1()] = false;
+  tet_mesh.unmark(edge.ep0(), VTX_MARK::ENCROACHED);
+  tet_mesh.unmark(edge.ep1(), VTX_MARK::ENCROACHED);
   for (index_t idoff : encroach_tets)
   {
     tet_mesh.unmark(idoff, TET_MARK::VISITED);
@@ -355,7 +354,7 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
     {
       index_t vid = tet_mesh.tetNode(idoff + j);
       tet_mesh.unmark(vid, VTX_MARK::VISITED);
-      vertex_encroached[vid] = false;
+      tet_mesh.unmark(vid, VTX_MARK::ENCROACHED);
     }
   }
 }

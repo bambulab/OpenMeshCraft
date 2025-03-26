@@ -147,11 +147,6 @@ public: /* Data **************************************************************/
   /// Constrained piecewise linear complex
   PLC                    &plc;
 
-  /* Marks on vertices and tetrahedra */
-
-  std::vector<uint8_t> vertex_to_check;
-  std::vector<uint8_t> vertex_encroached;
-
   /* Data used by explicit protecting sphere */
 
   bool protecting_sphere_initialized;

@@ -68,8 +68,10 @@ public:
   /// Marks (bit position) for each vertex
   enum class VTX_MARK : uint32_t
   {
-    TO_DELETE = 0, ///< Marked for deletion
-    VISITED   = 1, ///< Marked as visited
+    TO_DELETE  = 0, ///< Marked for deletion
+    VISITED    = 1, ///< Marked as visited
+    TO_CHECK   = 2, ///< Marked for checking (in CDT)
+    ENCROACHED = 3, ///< Marked as encroached (in CDT)
   };
 
   /// Marks (bit position) for each tetrahedron
@@ -85,7 +87,8 @@ public:
   /// Marks (bit position) for each face
   enum class FACE_MARK : uint32_t
   {
-    VISITED = 0, ///< Marked as visited
+    VISITED    = 0, ///< Marked as visited
+    RESTRICTED = 1, ///< Marked as restricted (in RDT)
   };
 
 public:
@@ -242,6 +245,8 @@ public:
 
   void faceCorners(index_t vid0, index_t vid1, index_t vid2, index_t &c0,
                    index_t &c1) const;
+
+  index_t mirrofFace(index_t face_idoff) const;
 
   /* Connectivity operations for the whole tetrahedra mesh */
 
