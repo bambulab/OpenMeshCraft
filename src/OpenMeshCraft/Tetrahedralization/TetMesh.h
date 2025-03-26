@@ -1,8 +1,12 @@
 #pragma once
 
 #include "OpenMeshCraft/NumberTypes/NumberUtils.h"
+#include "OpenMeshCraft/Utils/AtomicTypes.h"
 #include "OpenMeshCraft/Utils/IndexDef.h"
 #include "OpenMeshCraft/Utils/InlinedVector.h"
+#include "OpenMeshCraft/Utils/SFINAE.h"
+
+#include "tbb/tbb.h"
 
 #include <cstdint>
 #include <vector>
@@ -13,360 +17,398 @@ template <typename Traits>
 class TetrahedralMesh
 {
 public:
-	using Self = TetrahedralMesh<Traits>;
+  using Self = TetrahedralMesh<Traits>;
 
-	using NT      = typename Traits::NT;      ///< number type
-	using EPoint3 = typename Traits::EPoint3; ///< explicit point
-	using GPoint3 = typename Traits::GPoint3; ///< generic point
+  using NT      = typename Traits::NT;      ///< number type
+  using Vec3    = typename Traits::Vec3;    ///< vector
+  using EPoint3 = typename Traits::EPoint3; ///< explicit point
+  using GPoint3 = typename Traits::GPoint3; ///< generic point
 
-	using AsGP = typename Traits::AsGP; ///< use as generic point
-	using AsEP = typename Traits::AsEP; ///< use as explicit point
-	using ToEP = typename Traits::ToEP; ///< convert to explicit point
+  using AsGP = typename Traits::AsGP; ///< use as generic point
+  using AsEP = typename Traits::AsEP; ///< use as explicit point
+  using ToEP = typename Traits::ToEP; ///< convert to explicit point
 
-	using Orient3D         = typename Traits::Orient3D;
-	using InSphere         = typename Traits::InSphere;
-	using InPowerSphere    = typename Traits::InPowerSphere;
-	using CollinearPoints3 = typename Traits::CollinearPoints3;
+  using Ray3     = typename Traits::Ray3;
+  using Segment3 = typename Traits::Segment3;
 
-	/// Whether the vertex has weight
-	const static bool WEIGHTED = Traits::WEIGHTED;
+  using Orient3D         = typename Traits::Orient3D;
+  using InSphere         = typename Traits::InSphere;
+  using InPowerSphere    = typename Traits::InPowerSphere;
+  using CollinearPoints3 = typename Traits::CollinearPoints3;
 
-	/// Infinite vertex index
-	const static index_t INFINITE_VERTEX = InvalidIndex;
+  using ConstructNormal3       = typename Traits::ConstructNormal3;
+  using ConstructCircumcenter3 = typename Traits::ConstructCircumcenter3;
 
-	/// Marks for each vertex
-	enum class VTX_MARK : uint32_t
-	{
-		NO_MARK    = 0,  ///< No mark
-		TO_DELETE  = 1,  ///< Marked for deletion
-		VISITED    = 2,  ///< Marked as visited (internal use only)
-		TOUCHED    = 4,  ///< Marked as touched (interface use)
-		MODIFIED   = 8,  ///< Marked as modified
-		TO_CHECK   = 16, ///< Marked to be checked
-		ENCROACHED = 32, ///< Marked as encroached
-	};
+  /// Whether the vertex has weight
+  GET_VALUE_OTHERWISE_DEFAULT(Traits, bool, WEIGHTED, false, WEIGHTED);
 
-	/// Marks for each tetrahedron
-	enum class TET_MARK : uint32_t
-	{
-		NO_MARK    = 0,  ///< No mark
-		TO_DELETE  = 1,  ///< Marked for deletion
-		VISITED    = 2,  ///< Marked as visited (internal use only)
-		TOUCHED    = 4,  ///< Marked as touched (interface use)
-		IO_UNKNOWN = 8,  ///< Marked as inside/outside unknown
-		INSIDE     = 16, ///< Marked as inside
-		OUTSIDE    = 32, ///< Marked as outside
-	};
+  /// Whether enable face mark
+  GET_VALUE_OTHERWISE_DEFAULT(Traits, bool, ENABLE_FACE_MARK, false,
+                              ENABLE_FACE_MARK);
+
+  /// Whether support multi-thread environment
+  GET_VALUE_OTHERWISE_DEFAULT(Traits, bool, MULTI_THREAD, false, MULTI_THREAD);
+  GET_VALUE_OTHERWISE_DEFAULT(Traits, size_t, MAX_THREAD_NUM, 1,
+                              MAX_THREAD_NUM);
+
+  /// Mark type for vertex, tetrahedron, face marks
+  using MarkType =
+    std::conditional_t<MULTI_THREAD, std::atomic<uint32_t>, uint32_t>;
+
+  /// Touch type for internal `touched` status of vertices and tetrahedra.
+  using TouchType =
+    std::conditional_t<MULTI_THREAD, AtomicBitset<MAX_THREAD_NUM>, uint8_t>;
+
+  template <typename T>
+  using VectorContainer =
+    std::conditional_t<MULTI_THREAD, tbb::concurrent_vector<T>, std::vector<T>>;
+
+  /// Infinite vertex index
+  static constexpr index_t INFINITE_VERTEX = InvalidIndex;
+
+  /// Marks for each vertex
+  enum class VTX_MARK : uint32_t
+  {
+    NO_MARK   = 0, ///< No mark
+    TO_DELETE = 1, ///< Marked for deletion
+    VISITED   = 2, ///< Marked as visited
+  };
+
+  /// Marks for each tetrahedron
+  enum class TET_MARK : uint32_t
+  {
+    NO_MARK    = 0,  ///< No mark
+    TO_DELETE  = 1,  ///< Marked for deletion
+    VISITED    = 2,  ///< Marked as visited
+    IO_UNKNOWN = 4,  ///< Marked as inside/outside unknown
+    INSIDE     = 8,  ///< Marked as inside
+    OUTSIDE    = 16, ///< Marked as outside
+  };
+
+  /// Marks for each face
+  enum class FACE_MARK : uint32_t
+  {
+    NO_MARK = 0, ///< No mark
+    VISITED = 1, ///< Marked as visited
+  };
 
 public:
-	/* Constructors and Destructors */
-	TetrahedralMesh() = delete;
+  /* Constructors and Destructors */
+  TetrahedralMesh() = delete;
 
-	TetrahedralMesh(const std::vector<GPoint3 *> &_vertices,
-	                const std::vector<NT>        *_weights = nullptr);
-
-	void initialize();
+  TetrahedralMesh(const std::vector<GPoint3 *> &_vertices,
+                  const std::vector<NT>        *_weights = nullptr);
 
 public:
-	/* Connectivity operations on tetrahedra mesh */
+  /* Connectivity operations on tetrahedra mesh */
+
+  /// Get the point of the vertex
+  const GPoint3 &gpnt(index_t vid) const { return *vertices[vid]; }
+  /// Get the explicit point of the vertex
+  const EPoint3 &epnt(index_t vid) const { return AsEP()(gpnt(vid)); }
+  /// Get the weight of the vertex
+  NT             weight(index_t vid) const { return (*weights)[vid]; }
+
+  /// Get the index (NOT the idoff) to the incident tetrahedron of a vertex
+  index_t       &incTet(index_t vid) { return inc_tet[vid]; }
+  const index_t &incTet(index_t vid) const { return inc_tet[vid]; }
+
+  /// Get the index to the node/vertex
+  /// @param idoff idoff = tet_id * 4 + offset
+  index_t       &tetNode(index_t idoff) { return tet_node[idoff]; }
+  const index_t &tetNode(index_t idoff) const { return tet_node[idoff]; }
+
+  /// Get the idoff to the neighbor
+  /// @param idoff idoff = tet_id * 4 + offset
+  index_t       &tetNeigh(index_t idoff) { return tet_neigh[idoff]; }
+  const index_t &tetNeigh(index_t idoff) const { return tet_neigh[idoff]; }
+
+  /// Clip the id of an idoff
+  /// @param idoff idoff = tet_id * 4 + offset
+  /// @return tet_id * 4
+  static index_t clipId(index_t idoff) { return idoff & (~3); }
+
+  /// Get the id of an idoff
+  /// @param idoff idoff = tet_id * 4 + offset
+  /// @return tet_id
+  static index_t getId(index_t idoff) { return idoff >> 2; }
+
+  /// Get the idoff from an id
+  /// @param id index to a tetrahedron
+  /// @return idoff = id * 4
+  static index_t toIdOff(index_t id) { return id << 2; }
+
+  /// Clip the offset of an idoff
+  /// @param idoff idoff = tet_id * 4 + offset
+  /// @return offset
+  static index_t clipOff(index_t idoff) { return idoff & 3; }
+
+  /// Get the next `i` node index of the given node index in a tetrahedron.
+  /// tetNi is a sum modulo 3, used to traverse the nodes of a tet.
+  /// @param idoff idoff = tet_id * 4 + offset
+  static index_t tetNi(index_t idoff, index_t i) { return (idoff + i) & 3; }
+
+  /// tetONi - as above, but results in a coherent orientation
+  /// @details
+  /// -------------------
+  /// off | 0 | 1 | 2 | 3
+  /// ----|---|---|---|--
+  /// ON1 | 1 | 2 | 3 | 0
+  /// ON2 | 3 | 3 | 1 | 1
+  /// ON3 | 2 | 0 | 0 | 2
+  /// -------------------
+  static index_t tetON1(index_t idoff) { return (idoff + 1) & 3; }
+  static index_t tetON2(index_t idoff) { return (idoff & 2) ^ 3; }
+  static index_t tetON3(index_t idoff) { return (idoff + 3) & 2; }
 
-	/// Get the point of the vertex
-	const GPoint3 &gpnt(index_t vid) const { return *vertices[vid]; }
-	/// Get the weight of the vertex
-	NT             weight(index_t vid) const { return (*weights)[vid]; }
+  /* Operations about marks */
 
-	/// Get the index (NOT the idoff) to the incident tetrahedron of a vertex
-	index_t       &incTet(index_t vid) { return inc_tet[vid]; }
-	const index_t &incTet(index_t vid) const { return inc_tet[vid]; }
+  /**
+   * @brief mark the element with the given bit
+   * @param id Vertex-id; Tet-idoff; Face-idoff.
+   * @return true if the bit is set successfully, false if already set.
+   * @b atomic
+   */
+  template <typename ELEM_MARK>
+  bool mark(index_t id, ELEM_MARK bit);
 
-	/// Get the index to the node/vertex
-	/// @param idoff idoff = tet_id * 4 + offset
-	index_t       &tetNode(index_t idoff) { return tet_node[idoff]; }
-	const index_t &tetNode(index_t idoff) const { return tet_node[idoff]; }
+  /**
+   * @brief unmark the element with the given bit
+   * @param id Vertex-id; Tet-idoff; Face-idoff.
+   * @return true if the bit is unset successfully, false if already unset.
+   * @b atomic
+   */
+  template <typename ELEM_MARK>
+  bool unmark(index_t id, ELEM_MARK bit);
 
-	/// Get the idoff to the neighbor
-	/// @param idoff idoff = tet_id * 4 + offset
-	index_t       &tetNeigh(index_t idoff) { return tet_neigh[idoff]; }
-	const index_t &tetNeigh(index_t idoff) const { return tet_neigh[idoff]; }
+  /**
+   * @brief check if the element is marked with the given bit
+   * @param id Vertex-id; Tet-idoff; Face-idoff.
+   * @b atomic
+   */
+  template <typename ELEM_MARK>
+  bool isMarked(index_t id, ELEM_MARK bit) const;
 
-	/// Clip the id of an idoff
-	/// @param idoff idoff = tet_id * 4 + offset
-	/// @return tet_id * 4
-	static index_t clipId(index_t idoff) { return idoff & (~3); }
+  /**
+   * @brief clear all marks of the element
+   * @param id Vertex-id; Tet-idoff; Face-idoff.
+   * @b atomic
+   */
+  template <typename ELEM_MARK>
+  void clearMark(index_t id);
 
-	/// Get the id of an idoff
-	/// @param idoff idoff = tet_id * 4 + offset
-	/// @return tet_id
-	static index_t getId(index_t idoff) { return idoff >> 2; }
+  /* Connectivity operations in a single tetrahedron */
 
-	/// Get the idoff from an id
-	/// @param id index to a tetrahedron
-	/// @return idoff = id * 4
-	static index_t toIdOff(index_t id) { return id << 2; }
+  index_t tetCorner(index_t tet_idoff, index_t vid) const;
 
-	/// Clip the offset of an idoff
-	/// @param idoff idoff = tet_id * 4 + offset
-	/// @return offset
-	static index_t clipOff(index_t idoff) { return idoff & 3; }
+  bool tetHasVertex(index_t tet_idoff, index_t vid) const;
 
-	/// Get the next `i` node index of the given node index in a tetrahedron.
-	/// tetNi is a sum modulo 3, used to traverse the nodes of a tet.
-	/// @param idoff idoff = tet_id * 4 + offset
-	static index_t tetNi(index_t idoff, index_t i) { return (idoff + i) & 3; }
+  bool isFiniteTet(index_t idoff) const;
 
-	/// tetONi - as above, but results in a coherent orientation
-	/// @details
-	/// -------------------
-	/// off | 0 | 1 | 2 | 3
-	/// ----|---|---|---|--
-	/// ON1 | 1 | 2 | 3 | 0
-	/// ON2 | 3 | 3 | 1 | 1
-	/// ON3 | 2 | 0 | 0 | 2
-	/// -------------------
-	static index_t tetON1(index_t idoff) { return (idoff + 1) & 3; }
-	static index_t tetON2(index_t idoff) { return (idoff & 2) ^ 3; }
-	static index_t tetON3(index_t idoff) { return (idoff + 3) & 2; }
+  bool edgeExists(index_t vid0, index_t vid1) const;
 
-	/* Connectivity operations in a single tetrahedron */
+  bool faceExists(index_t vid0, index_t vid1, index_t vid2) const;
 
-	index_t tetCorner(index_t tet_idoff, index_t vid) const;
+  void oppoEdge(index_t tet_idoff, index_t vid0, index_t vid1, index_t &vid2,
+                index_t &vid3) const;
 
-	bool tetHasVertex(index_t tet_idoff, index_t vid) const;
+  index_t oppoVertex(index_t tet_idoff, index_t vid0, index_t vid1,
+                     index_t vid2) const;
 
-	bool isFiniteTet(index_t idoff) const;
+  void faceVertices(index_t tet_idoff, index_t &vid0, index_t &vid1,
+                    index_t &vid2) const;
 
-	bool edgeExists(index_t vid0, index_t vid1) const;
+  /* Connectivity operations for adjacent tetrahedrons */
 
-	bool faceExists(index_t vid0, index_t vid1, index_t vid2) const;
+  template <typename ContainerT>
+  void VT(index_t vid, ContainerT &adj_tets) const;
 
-	void oppoEdge(index_t tet_idoff, index_t vid0, index_t vid1, index_t &vid2,
-	              index_t &vid3) const;
+  template <typename ContainerT>
+  void VV(index_t vid, ContainerT &adj_verts) const;
 
-	index_t oppoVertex(index_t tet_idoff, index_t vid0, index_t vid1,
-	                   index_t vid2) const;
+  template <typename ContainerT>
+  void ET(index_t vid0, index_t vid1, ContainerT &adj_tets) const;
 
-	void faceVertices(index_t tet_idoff, index_t &vid0, index_t &vid1,
-	                  index_t &vid2) const;
+  void faceAdjTets(index_t vid0, index_t vid1, index_t vid2, index_t &t0,
+                   index_t &t1) const;
 
-	/* Connectivity operations for adjacent tetrahedrons */
+  void faceCorners(index_t vid0, index_t vid1, index_t vid2, index_t &c0,
+                   index_t &c1) const;
 
-	template <typename ContainerT>
-	void VT(index_t vid, ContainerT &adj_tets) const;
+  /* Connectivity operations for the whole tetrahedra mesh */
 
-	template <typename ContainerT>
-	void VV(index_t vid, ContainerT &adj_verts) const;
+  size_t classifyInOut(std::vector<uint8_t> &corner_is_boundary,
+                       index_t               start_tet_idoff = InvalidIndex);
 
-	template <typename ContainerT>
-	void ET(index_t vid0, index_t vid1, ContainerT &adj_tets) const;
+  /* Operations about creation */
 
-	void faceAdjTets(index_t vid0, index_t vid1, index_t vid2, index_t &t0,
-	                 index_t &t1) const;
+  void newVtx(index_t new_vid);
 
-	void faceCorners(index_t vid0, index_t vid1, index_t vid2, index_t &c0,
-	                 index_t &c1) const;
+  index_t newTet();
+  void    newTets(size_t inc_size, InlinedVector64<index_t> &new_tets);
 
-	/* Connectivity operations for the whole tetrahedra mesh */
+  /* Operations about deletion */
 
-	size_t classifyInOut(std::vector<uint8_t> &corner_is_boundary,
-	                     index_t start_tet_idoff = InvalidIndex) const;
+  bool isTetDeleted(index_t idoff) const;
+  void markTetAsDeleted(index_t idoff);
 
-	/* Operations about marks */
+  void markInfiniteTetsDeleted();
 
-	// clang-format off
+  void removeDeletedTets();
 
-	/// mark the tetrahedron with the given bit
-	void mark(index_t idoff, TET_MARK bit) const { mt_tet_mark[thread_id][getId(idoff)] |= (uint32_t)bit; }
+  void clear();
+  void clearVerts();
+  void clearTets();
 
-	/// unmark the tetrahedron with the given bit
-	void unmark(index_t idoff, TET_MARK bit) const { mt_tet_mark[thread_id][getId(idoff)] &= ~((uint32_t)bit); }
+  /* Operations about resizing */
 
-	/// check if the tetrahedron is marked with the given bit
-	bool isMarked(index_t idoff, TET_MARK bit) const { return mt_tet_mark[thread_id][getId(idoff)] & ((uint32_t)bit); }
+  void resizeTets(size_t new_size, bool lock = true);
+  void reserveTets(size_t new_capacity);
+  void reserveNewTets(size_t inc_size);
 
-	/// clear all marks of the tetrahedron
-	void clearTetMark(index_t idoff) const { mt_tet_mark[thread_id][getId(idoff)] = (uint32_t)TET_MARK::NO_MARK; }
+  /* Operations about query */
 
-	/// check if the tetrahedron has no mark
-	bool isTetUnmarked(index_t idoff) const { return mt_tet_mark[thread_id][getId(idoff)] == (uint32_t)TET_MARK::NO_MARK; }
+  size_t sizeVerts() const { return vertices.size(); }
+  size_t sizeTets() const { return tet_node.size() >> 2; }
 
-	uint32_t &tetMark(index_t tid) { return mt_tet_mark[thread_id][tid]; }
-	uint32_t  tetMark(index_t tid) const { return mt_tet_mark[thread_id][tid]; }
+  /* Common geometric predicates */
 
-	std::vector<uint32_t> &tetMarks() { return mt_tet_mark[thread_id]; }
-	const std::vector<uint32_t> &tetMarks() const { return mt_tet_mark[thread_id]; }
+  bool vertexInTetSphere(index_t tet_idoff, index_t vid) const;
 
-	/// mark the vertex with the given bit
-	void mark(index_t vid, VTX_MARK bit) const { mt_vtx_mark[thread_id][vid] |= (uint32_t)bit; }
+  bool vertexInTetSphere(const index_t *node, index_t vid) const;
 
-	/// unmark the vertex with the given bit
-	void unmark(index_t vid, VTX_MARK bit) const { mt_vtx_mark[thread_id][vid] &= ~((uint32_t)bit); }
+  Sign inSphereSymbolicPerturbation(index_t *indices) const;
 
-	/// check if the vertex is marked with the given bit
-	bool isMarked(index_t vid, VTX_MARK bit) const { return mt_vtx_mark[thread_id][vid] & ((uint32_t)bit); }
+  /* Operations about dual Voronoi diagram */
 
-	/// clear all marks of the vertex
-	void clearVtxMark(index_t vid) const { mt_vtx_mark[thread_id][vid] = (uint32_t)VTX_MARK::NO_MARK; }
+  EPoint3 tetDualPoint(index_t tet_idoff) const;
 
-	/// check if the vertex has no mark
-	bool isVtxUnmarked(index_t vid) const { return mt_vtx_mark[thread_id][vid] == (uint32_t)VTX_MARK::NO_MARK; }
+  Ray3 faceDualRay(index_t face_idoff) const;
 
-	uint32_t &vtxMark(index_t vid) { return mt_vtx_mark[thread_id][vid]; }
-	uint32_t  vtxMark(index_t vid) const { return mt_vtx_mark[thread_id][vid]; }
+  Segment3 faceDualSegment(index_t face_idoff) const;
 
-	std::vector<uint32_t> &vtxMarks() { return mt_vtx_mark[thread_id]; }
-	const std::vector<uint32_t> &vtxMarks() const { return mt_vtx_mark[thread_id]; }
+  /* Multi-thread helpers */
 
-	// clang-format on
-
-	/* Operations about creation */
-
-	void newVtx(index_t new_vid);
-
-	index_t newTet();
-	void    newTets(size_t inc_size, InlinedVector64<index_t> &new_tets);
-
-	/* Operations about deletion */
-
-	void markInfiniteTetsDeleted();
-
-	void markTetAsDeleted(index_t idoff);
-	void removeDeletedTets();
-
-	void clear();
-	void clearVerts();
-	void clearTets();
-
-	/* Operations about resizing */
-
-	void resizeTets(size_t new_size);
-	void reserveTets(size_t new_capacity);
-	void reserveNewTets(size_t inc_size);
-
-	/* Operations about query */
-
-	size_t sizeVerts() const { return vertices.size(); }
-	size_t sizeTets() const { return tet_node.size() >> 2; }
-
-	/* Common geometric predicates */
-
-	bool vertexInTetSphere(index_t tet_idoff, index_t vid) const;
-
-	bool vertexInTetSphere(const index_t *node, index_t vid) const;
-
-	Sign inSphereSymbolicPerturbation(index_t *indices) const;
-
-	/* Multi-thread helpers */
-
-	static void enableMultiThreadEnv(size_t num_threads_);
-
-	void initMultiThreadVariables();
-
-	static void setTheadId(size_t tid);
-
-	static void disableMultiThreadEnv();
-
-	static bool isMultiThread() { return num_threads > 0; }
+  static void setTheadId(size_t tid);
 
 public: /* Data ************************************************************/
-	/// Vertices (pointers to points in arena)
-	///
-	/// We assume that no coincident vertices exist.
-	const std::vector<GPoint3 *> &vertices;
+  /// Vertices (pointers to points in arena)
+  ///
+  /// We assume that no coincident vertices exist.
+  const std::vector<GPoint3 *> &vertices;
 
-	/// Weights for each vertex (optional, set if `WEIGHTED` is true)
-	///
-	/// Distance:
-	/// The distance between two weighted vertices is:
-	///  sqrt(||v1 - v2||^2 - (w1 + w2))
-	///
-	/// Coincidence:
-	/// Weighted vertices are considered coincident if both their coordinates and
-	/// weights are identical. We assume that no coincident weighted vertices
-	/// exist.
-	///
-	/// Hidden Vertices:
-	/// A unique weighted vertex may be hidden by other weighted vertices if it
-	/// does not appear in the mesh. The hidden vertices still exist in `vertices`
-	/// (and `weights`) but are not used in the mesh.
-	/// We do not support the deletion of vertices in the mesh, so once a vertex
-	/// is hidden, it will not be exposed again.
-	const std::vector<NT> *weights;
+  /// Weights for each vertex (optional, set if `WEIGHTED` is true)
+  ///
+  /// Distance:
+  /// The distance between two weighted vertices is:
+  ///  sqrt(||v1 - v2||^2 - (w1 + w2))
+  ///
+  /// Coincidence:
+  /// Weighted vertices are considered coincident if both their coordinates and
+  /// weights are identical. We assume that no coincident weighted vertices
+  /// exist.
+  ///
+  /// Hidden Vertices:
+  /// A unique weighted vertex may be hidden by other weighted vertices if it
+  /// does not appear in the mesh. The hidden vertices still exist in `vertices`
+  /// (and `weights`) but are not used in the mesh.
+  /// We do not support the deletion of vertices in the mesh, so once a vertex
+  /// is hidden, it will not be exposed again.
+  const std::vector<NT> *weights;
 
-	/// Vertex-(one_of_the)incident-tetrahedron relation.
-	/// Each index is the id of the incident tetrahedron.
-	std::vector<index_t> inc_tet;
+  /// Tetrahedra (indices to vertices)
+  ///
+  /// 1. There are `n` tetrahedra, and each tetrahedron has 4 vertices/nodes,
+  /// resulting in a total of `4n` vertex/node indices stored in `tet_node`.
+  /// 2. The orientation of the tetrahedron vertices/nodes (a, b, c, d) is
+  /// determined by the convention that the cross product of (b - a) and (c - a)
+  /// points toward d (i.e., the tetrahedron has a positive volume when
+  /// calculating orient3d(a, b, c, d)).
+  /// 3. `idoff = tet_id * 4 + offset` points to a node in `tet_node`
+  /// 4. `tet_idoff` is the index to a tetrahedron, and `tet_id = tet_idoff / 4`
+  /// 5. In some certain contexts (e.g. meshing a cavity in DT or CDT), we also
+  /// call a node as a `corner`. A `corner` is pointed by `idoff` and
+  /// corresponds to its opposite face in the same tetrahedron. So, we can use a
+  /// single corner index to represent a face, thus avoiding complex
+  /// representations. For example, the cavity is bounded by boundary faces, and
+  /// each boundary face is represented by its corresponding corner.
+  VectorContainer<index_t> tet_node;
 
-	/// Tetrahedra (indices to vertices)
-	///
-	/// 1. There are `n` tetrahedra, and each tetrahedron has 4 vertices/nodes,
-	/// resulting in a total of `4n` vertex/node indices stored in `tet_node`.
-	/// 2. The orientation of the tetrahedron vertices/nodes (a, b, c, d) is
-	/// determined by the convention that the cross product of (b - a) and (c - a)
-	/// points toward d (i.e., the tetrahedron has a positive volume when
-	/// calculating orient3d(a, b, c, d)).
-	/// 3. `idoff = tet_id * 4 + offset` points to a node in `tet_node`
-	/// 4. `tet_idoff` is the index to a tetrahedron, and `tet_id = tet_idoff / 4`
-	/// 5. In some certain contexts (e.g. meshing a cavity in DT or CDT), we also
-	/// call a node as a `corner`. A `corner` is pointed by `idoff` and
-	/// corresponds to its opposite face in the same tetrahedron. So, we can use a
-	/// single corner index to represent a face, thus avoiding complex
-	/// representations. For example, the cavity is bounded by boundary faces, and
-	/// each boundary face is represented by its corresponding corner.
-	std::vector<index_t> tet_node;
+  /* Auxiliary data */
 
-	/* Auxiliary data */
+  /// Vertex-(one_of_the)incident-tetrahedron relation.
+  /// Each index is the id of the incident tetrahedron.
+  VectorContainer<index_t> inc_tet;
 
-#if 0 // not used, mt_vtx_mark and mt_tet_mark are used instead
-	/// Mark for each vertex (See details for each bit above).
-	mutable std::vector<uint32_t> vtx_mark;
-	/// Mark for each tetrahedron (See details for each bit above).
-	mutable std::vector<uint32_t> tet_mark;
-#endif
+  /// Four neighbors for each tetrahedron
+  ///
+  /// 1. tet_neigh stores 4 neighbors for `n` tetrahedra, resulting in a total
+  /// of `4n` neighbors stored in tet_neigh.
+  /// 2. The value at `idoff = tet_id * 4 + offset` in tet_neigh corresponds to
+  /// the neighbor of the corresponding node in tet_node.
+  /// 3. The neighbor stored at the `idoff` position of tet_neigh is the
+  /// opposite node in the adjacent tetrahedron of the corresponding node.
+  /// 4. The stored value for the neighbor is also its `idoff` in tet_node, not
+  /// its node index.
+  ///
+  /// An illustration in 2D:
+  /// @verbatim
+  ///  idoff of the opposite node in the opposite neighbor...
+  ///        /\          .
+  ///      /___\         .
+  ///      \   /         .
+  ///       \/           .
+  /// ...is stored in tet_neigh.
+  /// @verbatim
+  VectorContainer<index_t> tet_neigh;
 
-	/// Collect all deleted tetrahedra.
-	/// 1. Once a tetrahedron is marked as deleted, it may still "connect" to
-	/// other tetrahedra and be accessed. But undeleted tetrahedra and vertices
-	/// should not have connection with deleted tetrahedra. Here, connection
-	/// means neighbor relation (tet_neigh), vertex-tetrahedron relation
-	/// (inc_tet), etc.
-	/// 2. They may be reused to generate new tetrahedra.
-	std::vector<index_t> tet_deleted;
+  /// Collect all deleted tetrahedra.
+  /// 1. Once a tetrahedron is marked as deleted, it may still "connect" to
+  /// other tetrahedra and be accessed. But undeleted tetrahedra and vertices
+  /// should not have connection with deleted tetrahedra. Here, connection
+  /// means neighbor relation (tet_neigh), vertex-tetrahedron relation
+  /// (inc_tet), etc.
+  /// 2. They may be reused to generate new tetrahedra.
+  VectorContainer<index_t> tet_deleted;
 
-	/// Four neighbors for each tetrahedron
-	///
-	/// 1. tet_neigh stores 4 neighbors for `n` tetrahedra, resulting in a total
-	/// of `4n` neighbors stored in tet_neigh.
-	/// 2. The value at `idoff = tet_id * 4 + offset` in tet_neigh corresponds to
-	/// the neighbor of the corresponding node in tet_node.
-	/// 3. The neighbor stored at the `idoff` position of tet_neigh is the
-	/// opposite node in the adjacent tetrahedron of the corresponding node.
-	/// 4. The stored value for the neighbor is also its `idoff` in tet_node, not
-	/// its node index.
-	///
-	/// An illustration in 2D:
-	/// @verbatim
-	///  idoff of the opposite node in the opposite neighbor...
-	///        /\ 
-	///      /___\ 
-	///      \   /
-	///       \/
-	/// ...is stored in tet_neigh.
-	/// @verbatim
-	std::vector<index_t> tet_neigh;
+  /// Mark for each vertex (See details for each bit above).
+  VectorContainer<MarkType> vtx_mark;
+  /// Mark for each tetrahedron (See details for each bit above).
+  VectorContainer<MarkType> tet_mark;
+  /// Mark for each face (See details for each bit above).
+  VectorContainer<MarkType> face_mark;
 
-	/* Data for TBB multi-threaded environment */
+protected:
+  /* Data for TBB multi-threaded environment */
 
-	static size_t               num_threads;
-	static thread_local index_t thread_id;
+  static thread_local index_t thread_id;
 
-	/// Multi-threaded mark for each vertex.
-	mutable std::vector<std::vector<uint32_t>> mt_vtx_mark;
-	/// Multi-threaded mark for each tetrahedron.
-	mutable std::vector<std::vector<uint32_t>> mt_tet_mark;
+  /// Mutex for creating new tetrahedron in multi-threaded environment
+  tbb::spin_mutex mutex_modify_tet;
+  /// Mutex for creating new vertex in multi-threaded environment
+  tbb::spin_mutex mutex_modify_vtx;
+
+  /* Internal used touched status.
+   * 1. The touched status is used to avoid redundant operations, it will be
+   *    reset after each operation.
+   * 2. In multi-thread environments, each thread has its own touched status.
+   */
+
+  /// Multi-threaded touched status for each vertex (Internal use only).
+  mutable VectorContainer<TouchType> vtx_touched;
+  /// Multi-threaded touched status for each tetrahedron (Internal use only).
+  mutable VectorContainer<TouchType> tet_touched;
+
+  void touchVtx(index_t vid) const;
+  void untouchVtx(index_t vid) const;
+  bool touchedVtx(index_t vid) const;
+  void resetVtxTouched(index_t vid) const;
+
+  void touchTet(index_t tidoff) const;
+  void untouchTet(index_t tidoff) const;
+  bool touchedTet(index_t tidoff) const;
+  void resetTetTouched(index_t tidoff) const;
 };
-
-template <typename Traits>
-size_t TetrahedralMesh<Traits>::num_threads = 0;
 
 template <typename Traits>
 thread_local index_t TetrahedralMesh<Traits>::thread_id = 0;
@@ -374,5 +416,5 @@ thread_local index_t TetrahedralMesh<Traits>::thread_id = 0;
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "TetMesh.inl"
+  #include "TetMesh.inl"
 #endif

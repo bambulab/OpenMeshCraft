@@ -24,78 +24,78 @@ template <typename Traits>
 class DelaunayTet
 {
 public: /* Traits **********************************************************/
-	using Self = DelaunayTet<Traits>;
+  using Self = DelaunayTet<Traits>;
 
-	using NT      = typename Traits::NT;
-	using EPoint3 = typename Traits::EPoint3;
-	using GPoint3 = typename Traits::GPoint3;
+  using NT      = typename Traits::NT;
+  using EPoint3 = typename Traits::EPoint3;
+  using GPoint3 = typename Traits::GPoint3;
 
-	using AsGP = typename Traits::AsGP;
-	using AsEP = typename Traits::AsEP;
-	using ToEP = typename Traits::ToEP;
+  using AsGP = typename Traits::AsGP;
+  using AsEP = typename Traits::AsEP;
+  using ToEP = typename Traits::ToEP;
 
-	using Orient3D         = typename Traits::Orient3D;
-	using LessThan3D       = typename Traits::LessThan3D;
-	using CollinearPoints3 = typename Traits::CollinearPoints3;
+  using Orient3D         = typename Traits::Orient3D;
+  using LessThan3D       = typename Traits::LessThan3D;
+  using CollinearPoints3 = typename Traits::CollinearPoints3;
 
-	using TetMesh  = TetrahedralMesh<Traits>;
-	using TET_MARK = typename TetMesh::TET_MARK;
-	using VTX_MARK = typename TetMesh::VTX_MARK;
+  using TetMesh  = TetrahedralMesh<Traits>;
+  using TET_MARK = typename TetMesh::TET_MARK;
+  using VTX_MARK = typename TetMesh::VTX_MARK;
 
-	const static bool WEIGHTED = TetMesh::WEIGHTED;
+  const static bool WEIGHTED = TetMesh::WEIGHTED;
 
 public: /* Constructor & Destructor ****************************************/
-	DelaunayTet() = delete;
-	DelaunayTet(TetMesh &_mesh)
-	  : mesh(_mesh)
-	{
-	}
+  DelaunayTet() = delete;
+  DelaunayTet(TetMesh &_mesh)
+    : mesh(_mesh)
+  {
+  }
 
 public: /* Algorithm *******************************************************/
-	/* Pipeline of the algorithm
-	 * - Initialize the Delaunay tetrahedralization
-	 * - Insert vertices into the Delaunay tetrahedralization
-	 * - Remove deleted tetrahedra
-	 */
-	void tetrahedralize();
+  /* Pipeline of the algorithm
+   * - Initialize the Delaunay tetrahedralization
+   * - Insert vertices into the Delaunay tetrahedralization
+   * - Remove deleted tetrahedra
+   */
+  void tetrahedralize();
 
-	/* Initialize the Delaunay tetrahedralization */
-	void initialize(index_t &k, index_t &l);
+  /* Initialize the Delaunay tetrahedralization */
+  void initialize(index_t &k, index_t &l);
 
-	/* Insert a vertex into the Delaunay tetrahedralization */
-	void insertVertex(const index_t vid, index_t &tet);
+  /* Insert a vertex into the Delaunay tetrahedralization */
+  void insertVertex(const index_t vid, index_t &tet);
 
-	/* Sub-steps of inserting a vertex */
+  /* Sub-steps of inserting a vertex */
 
-	void walk(const index_t vid, index_t &tet);
+  void walk(const index_t vid, index_t &tet);
 
-	void cavity(const index_t vid, const index_t tet,
-	            InlinedVector64<index_t> &cavity_tets,
-	            InlinedVector64<index_t> &cavity_corners);
+  void cavity(const index_t vid, const index_t tet,
+              InlinedVector64<index_t> &cavity_tets,
+              InlinedVector64<index_t> &cavity_corners);
 
-	void filling(const index_t                   vid,
-	             const InlinedVector64<index_t> &cavity_corners);
+  void filling(const index_t                   vid,
+               const InlinedVector64<index_t> &cavity_corners);
 
 public: /* Checks **********************************************************/
-	/* Verify the correctness of the Delaunay tetrahedralization */
-	bool verify() const;
+  /* Verify the correctness of the Delaunay tetrahedralization */
+  bool verify() const;
 
-	bool localVerify(index_t vid) const;
+  bool localVerify(index_t vid) const;
 
-	bool verifyVolume(index_t tet_idoff) const;
+  bool verifyVolume(index_t tet_idoff) const;
 
-	bool verifyNeighbor(index_t tet_idoff) const;
+  bool verifyNeighbor(index_t tet_idoff) const;
 
-	bool verifyDelaunay(index_t vid) const;
+  bool verifyDelaunay(index_t vid) const;
 
-	bool verifyWalk(index_t vid, index_t tet) const;
+  bool verifyWalk(index_t vid, index_t tet) const;
 
 public: /* Data ************************************************************/
-	TetMesh &mesh;
+  TetMesh &mesh;
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "DelaunayTet.inl"
+  #include "DelaunayTet.inl"
 #endif
