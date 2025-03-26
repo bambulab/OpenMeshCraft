@@ -92,6 +92,9 @@ auto ConstructCircumcenter3K<Kernel, Filtered>::operator()(const EPoint3 &v0,
                                                            NT w2) const
   -> EPoint3
 {
+  if (w0 == NT(0) && w1 == NT(0) && w2 == NT(0))
+    return operator()(v0, v1, v2);
+
   NT numx, numy, numz, den;
 
   determinants_for_weighted_circumcenter<NT>(v0.x(), v0.y(), v0.z(), w0, v1.x(),
@@ -190,6 +193,9 @@ auto ConstructCircumcenter3K<Kernel, Filtered>::operator()(
   const EPoint3 &v0, const EPoint3 &v1, const EPoint3 &v2, const EPoint3 &v3,
   NT w0, NT w1, NT w2, NT w3) const -> EPoint3
 {
+  if (w0 == NT(0) && w1 == NT(0) && w2 == NT(0) && w3 == NT(0))
+    return operator()(v0, v1, v2, v3);
+
   NT numx, numy, numz, den;
 
   determinants_for_weighted_circumcenter<NT>(

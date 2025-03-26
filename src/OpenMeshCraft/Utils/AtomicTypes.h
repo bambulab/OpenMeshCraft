@@ -57,39 +57,69 @@ public: /* Interfaces *******************************************************/
   {
   }
 
-  /**
-   * @brief Set the bit at the specified index.
-   * @param n The index of the bit to set.
-   */
-  void set(index_t n)
+  ~AtomicBitset() = default;
+
+  AtomicBitset &operator=(const AtomicBitset &rhs)
   {
     if constexpr (SINGLE_CHUNK)
     {
-      chunks.fetch_or(1ULL << n, std::memory_order_relaxed);
+      chunks.store(rhs.chunks.load(std::memory_order_relaxed),
+                   std::memory_order_relaxed);
     }
     else
     {
-      index_t idx = n / CHUNK_SIZE;
-      index_t bit = n % CHUNK_SIZE;
-      chunks[idx].fetch_or(1ULL << bit, std::memory_order_relaxed);
+      for (size_t i = 0; i < NUM_CHUNKS; i++)
+        chunks[i].store(rhs.chunks[i].load(std::memory_order_relaxed),
+                        std::memory_order_relaxed);
+    }
+    return *this;
+  }
+
+  AtomicBitset(const AtomicBitset &rhs) { this->operator=(rhs); }
+
+  /**
+   * @brief Set the bit at the specified index.
+   * @param n The index of the bit to set.
+   * @return true if the bit is successfully set, false if already set.
+   */
+  bool set(index_t n)
+  {
+    if constexpr (SINGLE_CHUNK)
+    {
+      uint32_t mask = uint32_t(1) << n;
+      uint32_t prev = chunks.fetch_or(mask, std::memory_order_acq_rel);
+      return !(prev & mask);
+    }
+    else
+    {
+      index_t  idx  = n / CHUNK_SIZE;
+      index_t  bit  = n % CHUNK_SIZE;
+      uint32_t mask = uint32_t(1) << bit;
+      uint32_t prev = chunks[idx].fetch_or(mask, std::memory_order_acq_rel);
+      return !(prev & mask);
     }
   }
 
   /**
    * @brief Reset the bit at the specified index.
    * @param n The index of the bit to reset.
+   * @return true if the bit is successfully unset, false if already unset.
    */
-  void reset(index_t n)
+  bool reset(index_t n)
   {
     if constexpr (SINGLE_CHUNK)
     {
-      chunks.fetch_and(~(1ULL << n), std::memory_order_relaxed);
+      uint32_t mask = uint32_t(1) << n;
+      uint32_t prev = chunks.fetch_and(~mask, std::memory_order_acq_rel);
+      return (prev & mask);
     }
     else
     {
-      index_t idx = n / CHUNK_SIZE;
-      index_t bit = n % CHUNK_SIZE;
-      chunks[idx].fetch_and(~(1ULL << bit), std::memory_order_relaxed);
+      index_t  idx  = n / CHUNK_SIZE;
+      index_t  bit  = n % CHUNK_SIZE;
+      uint32_t mask = uint32_t(1) << bit;
+      uint32_t prev = chunks[idx].fetch_and(~mask, std::memory_order_acq_rel);
+      return (prev & mask);
     }
   }
 
@@ -102,13 +132,13 @@ public: /* Interfaces *******************************************************/
   {
     if constexpr (SINGLE_CHUNK)
     {
-      chunks.load(std::memory_order_relaxed) & (1ULL << n);
+      return chunks.load(std::memory_order_relaxed) & (uint32_t(1) << n);
     }
     else
     {
       index_t idx = n / CHUNK_SIZE;
       index_t bit = n % CHUNK_SIZE;
-      return chunks[idx].load(std::memory_order_relaxed) & (1ULL << bit);
+      return chunks[idx].load(std::memory_order_relaxed) & (uint32_t(1) << bit);
     }
   }
 

@@ -38,7 +38,6 @@
 #include "Constructions/Circumcenter3K.h"
 #include "Constructions/Normal3K.h"
 
-
 // Projection
 #include "Constructions/FastProjectPoint3K.h"
 #include "Constructions/ProjectPoint3K.h"
@@ -194,8 +193,8 @@ public:
   /********* Basic constructions **************/
   /********************************************/
   // clang-format off
-  using ConstructNormal3      = ConstructNormal3K<Kernel>;
-  using ConstructCirumcenter3 = ConstructCircumcenter3K<Kernel, /*Filtered=*/true>;
+  using ConstructNormal3       = ConstructNormal3K<Kernel>;
+  using ConstructCircumcenter3 = ConstructCircumcenter3K<Kernel, /*Filtered=*/true>;
   // clang-format on
 
   /************ Degeneration ********************/

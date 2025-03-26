@@ -52,44 +52,40 @@ public:
                               MAX_THREAD_NUM);
 
   /// Mark type for vertex, tetrahedron, face marks
-  using MarkType =
-    std::conditional_t<MULTI_THREAD, std::atomic<uint32_t>, uint32_t>;
+  using MarkType = std::conditional_t<MULTI_THREAD, AtomicBitset<32>, uint32_t>;
 
   /// Touch type for internal `touched` status of vertices and tetrahedra.
   using TouchType =
     std::conditional_t<MULTI_THREAD, AtomicBitset<MAX_THREAD_NUM>, uint8_t>;
 
   template <typename T>
-  using VectorContainer =
+  using ConcurrentVector =
     std::conditional_t<MULTI_THREAD, tbb::concurrent_vector<T>, std::vector<T>>;
 
   /// Infinite vertex index
   static constexpr index_t INFINITE_VERTEX = InvalidIndex;
 
-  /// Marks for each vertex
+  /// Marks (bit position) for each vertex
   enum class VTX_MARK : uint32_t
   {
-    NO_MARK   = 0, ///< No mark
-    TO_DELETE = 1, ///< Marked for deletion
-    VISITED   = 2, ///< Marked as visited
+    TO_DELETE = 0, ///< Marked for deletion
+    VISITED   = 1, ///< Marked as visited
   };
 
-  /// Marks for each tetrahedron
+  /// Marks (bit position) for each tetrahedron
   enum class TET_MARK : uint32_t
   {
-    NO_MARK    = 0,  ///< No mark
-    TO_DELETE  = 1,  ///< Marked for deletion
-    VISITED    = 2,  ///< Marked as visited
-    IO_UNKNOWN = 4,  ///< Marked as inside/outside unknown
-    INSIDE     = 8,  ///< Marked as inside
-    OUTSIDE    = 16, ///< Marked as outside
+    TO_DELETE  = 0, ///< Marked for deletion
+    VISITED    = 1, ///< Marked as visited
+    IO_UNKNOWN = 2, ///< Marked as inside/outside unknown
+    INSIDE     = 3, ///< Marked as inside
+    OUTSIDE    = 4, ///< Marked as outside
   };
 
-  /// Marks for each face
+  /// Marks (bit position) for each face
   enum class FACE_MARK : uint32_t
   {
-    NO_MARK = 0, ///< No mark
-    VISITED = 1, ///< Marked as visited
+    VISITED = 0, ///< Marked as visited
   };
 
 public:
@@ -196,6 +192,18 @@ public:
    */
   template <typename ELEM_MARK>
   void clearMark(index_t id);
+
+  /**
+   * @brief Get the whole mark of the element.
+   * @param id Vertex-id; Tet-idoff; Face-idoff.
+   */
+  template <typename ELEM_MARK>
+  MarkType &getMark(index_t id);
+  template <typename ELEM_MARK>
+  const MarkType &getMark(index_t id) const;
+
+  /// @brief Copy the mark from the source to the destination.
+  static void copyMark(const MarkType &src, MarkType &dst);
 
   /* Connectivity operations in a single tetrahedron */
 
@@ -332,13 +340,13 @@ public: /* Data ************************************************************/
   /// single corner index to represent a face, thus avoiding complex
   /// representations. For example, the cavity is bounded by boundary faces, and
   /// each boundary face is represented by its corresponding corner.
-  VectorContainer<index_t> tet_node;
+  std::vector<index_t> tet_node;
 
   /* Auxiliary data */
 
   /// Vertex-(one_of_the)incident-tetrahedron relation.
   /// Each index is the id of the incident tetrahedron.
-  VectorContainer<index_t> inc_tet;
+  std::vector<index_t> inc_tet;
 
   /// Four neighbors for each tetrahedron
   ///
@@ -360,7 +368,7 @@ public: /* Data ************************************************************/
   ///       \/           .
   /// ...is stored in tet_neigh.
   /// @verbatim
-  VectorContainer<index_t> tet_neigh;
+  std::vector<index_t> tet_neigh;
 
   /// Collect all deleted tetrahedra.
   /// 1. Once a tetrahedron is marked as deleted, it may still "connect" to
@@ -369,14 +377,14 @@ public: /* Data ************************************************************/
   /// means neighbor relation (tet_neigh), vertex-tetrahedron relation
   /// (inc_tet), etc.
   /// 2. They may be reused to generate new tetrahedra.
-  VectorContainer<index_t> tet_deleted;
+  ConcurrentVector<index_t> tet_deleted;
 
   /// Mark for each vertex (See details for each bit above).
-  VectorContainer<MarkType> vtx_mark;
+  std::vector<MarkType> vtx_mark;
   /// Mark for each tetrahedron (See details for each bit above).
-  VectorContainer<MarkType> tet_mark;
+  std::vector<MarkType> tet_mark;
   /// Mark for each face (See details for each bit above).
-  VectorContainer<MarkType> face_mark;
+  std::vector<MarkType> face_mark;
 
 protected:
   /* Data for TBB multi-threaded environment */
@@ -395,9 +403,9 @@ protected:
    */
 
   /// Multi-threaded touched status for each vertex (Internal use only).
-  mutable VectorContainer<TouchType> vtx_touched;
+  mutable std::vector<TouchType> vtx_touched;
   /// Multi-threaded touched status for each tetrahedron (Internal use only).
-  mutable VectorContainer<TouchType> tet_touched;
+  mutable std::vector<TouchType> tet_touched;
 
   void touchVtx(index_t vid) const;
   void untouchVtx(index_t vid) const;

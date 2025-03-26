@@ -4,6 +4,8 @@
 
 #include "OpenMeshCraft/Utils/IndexDef.h"
 
+#include <memory>
+
 namespace OMC {
 
 template <typename Traits>

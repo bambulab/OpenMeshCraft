@@ -25,34 +25,27 @@ template <typename Traits>
 template <typename ELEM_MARK>
 bool TetrahedralMesh<Traits>::mark(index_t id, ELEM_MARK bit)
 {
-  auto do_mark =
-    [this, &bit](VectorContainer<MarkType> &elem_mark, index_t elem_id)
+  auto do_mark = [this, &bit](std::vector<MarkType> &elem_mark, index_t elem_id)
   {
-    uint32_t prev_mark;
     if constexpr (MULTI_THREAD)
     {
-      prev_mark =
-        elem_mark[elem_id].fetch_or((uint32_t)bit, std::memory_order_relaxed);
+      return elem_mark[elem_id].set((uint32_t)bit);
     }
     else
     {
-      prev_mark = elem_mark[elem_id];
-      elem_mark[elem_id] |= (uint32_t)bit;
+      uint32_t mask      = (uint32_t(1) << (uint32_t)bit);
+      uint32_t prev_mark = elem_mark[elem_id];
+      elem_mark[elem_id] |= mask;
+      return !(prev_mark & mask);
     }
-    return !(prev_mark & ((uint32_t)bit));
   };
 
   if constexpr (std::is_same_v<ELEM_MARK, VTX_MARK>)
     return do_mark(vtx_mark, id);
   else if constexpr (std::is_same_v<ELEM_MARK, TET_MARK>)
     return do_mark(tet_mark, getId(id));
-  else if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
+  else // if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
     return do_mark(face_mark, id);
-  else
-  {
-    OMC_ASSERT(false, "Invalid mark type.");
-    return false; // kill warning
-  }
 }
 
 template <typename Traits>
@@ -60,33 +53,27 @@ template <typename ELEM_MARK>
 bool TetrahedralMesh<Traits>::unmark(index_t id, ELEM_MARK bit)
 {
   auto do_unmark =
-    [this, &bit](VectorContainer<MarkType> &elem_mark, index_t elem_id)
+    [this, &bit](std::vector<MarkType> &elem_mark, index_t elem_id)
   {
-    uint32_t prev_mark;
     if constexpr (MULTI_THREAD)
     {
-      prev_mark = elem_mark[elem_id].fetch_add(~((uint32_t)bit),
-                                               std::memory_order_relaxed);
+      return elem_mark[elem_id].reset((uint32_t)bit);
     }
     else
     {
-      prev_mark = elem_mark[elem_id];
-      elem_mark[elem_id] &= ~((uint32_t)bit);
+      uint32_t mask      = (uint32_t(1) << (uint32_t)bit);
+      uint32_t prev_mark = elem_mark[elem_id];
+      elem_mark[elem_id] &= ~mask;
+      return (prev_mark & mask);
     }
-    return (prev_mark & ((uint32_t)bit));
   };
 
   if constexpr (std::is_same_v<ELEM_MARK, VTX_MARK>)
     return do_unmark(vtx_mark, id);
   else if constexpr (std::is_same_v<ELEM_MARK, TET_MARK>)
     return do_unmark(tet_mark, getId(id));
-  else if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
+  else // if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
     return do_unmark(face_mark, id);
-  else
-  {
-    OMC_ASSERT(false, "Invalid mark type.");
-    return false; // kill warning
-  }
 }
 
 template <typename Traits>
@@ -94,37 +81,30 @@ template <typename ELEM_MARK>
 bool TetrahedralMesh<Traits>::isMarked(index_t id, ELEM_MARK bit) const
 {
   auto check_mark =
-    [this, &bit](const VectorContainer<MarkType> &elem_mark, index_t elem_id)
+    [this, &bit](const std::vector<MarkType> &elem_mark, index_t elem_id)
   {
     if constexpr (MULTI_THREAD)
-      return elem_mark[elem_id].load(std::memory_order_relaxed) &
-             ((uint32_t)bit);
+      return elem_mark[elem_id].test((uint32_t)bit);
     else
-      return elem_mark[elem_id] & ((uint32_t)bit);
+      return elem_mark[elem_id] & (uint32_t(1) << (uint32_t)bit);
   };
 
   if constexpr (std::is_same_v<ELEM_MARK, VTX_MARK>)
     return check_mark(vtx_mark, id);
   else if constexpr (std::is_same_v<ELEM_MARK, TET_MARK>)
     return check_mark(tet_mark, getId(id));
-  else if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
+  else // if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
     return check_mark(face_mark, id);
-  else
-  {
-    OMC_ASSERT(false, "Invalid mark type.");
-    return false; // kill warning
-  }
 }
 
 template <typename Traits>
 template <typename ELEM_MARK>
 void TetrahedralMesh<Traits>::clearMark(index_t id)
 {
-  auto clear_mark =
-    [this](VectorContainer<MarkType> &elem_mark, index_t elem_id)
+  auto clear_mark = [this](std::vector<MarkType> &elem_mark, index_t elem_id)
   {
     if constexpr (MULTI_THREAD)
-      elem_mark[elem_id].store(0, std::memory_order_relaxed);
+      elem_mark[elem_id].resetAll();
     else
       elem_mark[elem_id] = 0;
   };
@@ -133,12 +113,32 @@ void TetrahedralMesh<Traits>::clearMark(index_t id)
     clear_mark(vtx_mark, id);
   else if constexpr (std::is_same_v<ELEM_MARK, TET_MARK>)
     clear_mark(tet_mark, getId(id));
-  else if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
+  else // if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
     clear_mark(face_mark, id);
-  else
-  {
-    OMC_ASSERT(false, "Invalid mark type.");
-  }
+}
+
+template <typename Traits>
+template <typename ELEM_MARK>
+auto TetrahedralMesh<Traits>::getMark(index_t id) -> MarkType &
+{
+  if constexpr (std::is_same_v<ELEM_MARK, VTX_MARK>)
+    return vtx_mark[id];
+  else if constexpr (std::is_same_v<ELEM_MARK, TET_MARK>)
+    return tet_mark[getId(id)];
+  else // if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
+    return face_mark[id];
+}
+
+template <typename Traits>
+template <typename ELEM_MARK>
+auto TetrahedralMesh<Traits>::getMark(index_t id) const -> const MarkType &
+{
+  if constexpr (std::is_same_v<ELEM_MARK, VTX_MARK>)
+    return vtx_mark[id];
+  else if constexpr (std::is_same_v<ELEM_MARK, TET_MARK>)
+    return tet_mark[getId(id)];
+  else // if constexpr (std::is_same_v<ELEM_MARK, FACE_MARK>)
+    return face_mark[id];
 }
 
 /**
@@ -676,7 +676,7 @@ void TetrahedralMesh<Traits>::newVtx(OMC_UNUSED index_t new_vid)
  * tail of the tetrahedra list or at the position of a deleted tetrahedron.
  * @note
  * - node and neighbor of the new tetrahedron are undefined.
- * - mark of the new tetrahedron is NO_MARK.
+ * - mark of the new tetrahedron is empty.
  * @return index_t The idoff of the new tetrahedron.
  * @b atomic by lock
  */
@@ -697,7 +697,7 @@ index_t TetrahedralMesh<Traits>::newTet()
     tet_touched.emplace_back(0);
     // face_mark has the same size with tet_neigh
     if constexpr (ENABLE_FACE_MARK)
-      face_mark.resize(new_tet_idoff + 4);
+      face_mark.resize(new_tet_idoff + 4, 0);
   }
   else // reuse the deleted tetrahedron
   {
@@ -735,7 +735,7 @@ index_t TetrahedralMesh<Traits>::newTet()
  * if necessary.
  * @note
  * - node and neighbor of the new tetrahedron are undefined.
- * - mark of the new tetrahedron is NO_MARK.
+ * - mark of the new tetrahedron is empty.
  * @param inc_size The number of new tetrahedra to allocate.
  * @param new_tets A vector to store the indices of the newly allocated
  * tetrahedra.
@@ -839,6 +839,8 @@ void TetrahedralMesh<Traits>::markInfiniteTetsDeleted()
 template <typename Traits>
 void TetrahedralMesh<Traits>::removeDeletedTets()
 {
+  std::lock_guard<tbb::spin_mutex> lock(mutex_modify_tet);
+
   // If there is no tetrahedra, return.
   if (tet_node.empty())
     return;
@@ -883,11 +885,11 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
         }
       }
       // Update the mark for the tetrahedron and its face.
-      tet_mark[getId(t)] = tet_mark[getId(last)];
+      getMark<TET_MARK>(t) = getMark<TET_MARK>(last);
       if constexpr (ENABLE_FACE_MARK)
       {
         for (index_t i = 0; i < 4; i++)
-          face_mark[t + i] = face_mark[last + i];
+          getMark<FACE_MARK>(t + i) = getMark<FACE_MARK>(last + i);
       }
       // Move to the next "last un-deleted" tetrahedron.
       last -= 4;
@@ -997,12 +999,12 @@ void TetrahedralMesh<Traits>::clearTets()
   std::lock_guard<tbb::spin_mutex> lock(mutex_modify_tet);
 
   // Clear the tetrahedra and related data
-  tet_node    = VectorContainer<index_t>();
-  tet_neigh   = VectorContainer<index_t>();
-  tet_deleted = VectorContainer<index_t>();
-  tet_mark    = VectorContainer<MarkType>();
-  face_mark   = VectorContainer<MarkType>();
-  tet_touched = VectorContainer<TouchType>();
+  tet_node    = std::vector<index_t>();
+  tet_neigh   = std::vector<index_t>();
+  tet_deleted = ConcurrentVector<index_t>();
+  tet_mark    = std::vector<MarkType>();
+  face_mark   = std::vector<MarkType>();
+  tet_touched = std::vector<TouchType>();
 }
 
 template <typename Traits>

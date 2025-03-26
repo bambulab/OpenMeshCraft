@@ -27,7 +27,7 @@ class ConstrDelTet<Kernel, Traits>::ConstrDelTetTraits : public Kernel
 {
 public:
   // Tetrahedral mesh settings
-  const static bool WEIGHTED = false;
+  static constexpr bool WEIGHTED = false;
 };
 
 /// @brief Implement class of ConstrDelTet
@@ -199,7 +199,7 @@ void ConstrDelTet_Impl<Traits>::CDTPipeline()
 
   tet_mesh->markInfiniteTetsDeleted();
   tet_mesh->removeDeletedTets();
-  cdt_out_tets = std::move(tet_mesh->tet_node);
+  cdt_out_tets = std::move(tet_mesh.tet_node);
 }
 
 template <typename Traits>

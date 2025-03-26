@@ -1002,10 +1002,11 @@ void FaceRecover<Traits>::embedMeshedCavity(
       LM.incTet(node) = tid;
     }
     // Update the mark.
-    local_mesh.tet_mark[tid] = local_mesh.tet_mark[last_tid];
+    local_mesh.template getMark<TET_MARK>(idoff) =
+      local_mesh.template getMark<TET_MARK>(last_idoff);
     // Update the reindex map.
-    tet_reindex[last_tid]    = tid;
-    tet_reindex[tid]         = last_tid;
+    tet_reindex[last_tid] = tid;
+    tet_reindex[tid]      = last_tid;
     // move the last tetrahedron.
     last_tid--;
   }
@@ -1035,6 +1036,7 @@ void FaceRecover<Traits>::embedMeshedCavity(
   // attach the local nodes to the global mesh
   tet_mesh.tet_node.insert(tet_mesh.tet_node.end(), local_mesh.tet_node.begin(),
                            local_mesh.tet_node.end());
+
   // update the vertex-tetrahedron incident relation in the global mesh
   for (index_t vid = 0; vid < n_local_verts; vid++)
   {
@@ -1056,10 +1058,11 @@ void FaceRecover<Traits>::embedMeshedCavity(
         neigh += _4n_global_tets;
     }
   }
-  // attach the local neightbor to the global mesh
+  // attach the local neighbor to the global mesh
   tet_mesh.tet_neigh.insert(tet_mesh.tet_neigh.end(),
                             local_mesh.tet_neigh.begin(),
                             local_mesh.tet_neigh.end());
+
   OMC_EXPENSIVE_ASSERT(tet_mesh.tet_neigh.size() == 4 * tet_mesh.sizeTets(),
                        "Wrong tet_neigh size.");
   // connect the neighbors adjacent to the cavity boundary
