@@ -296,6 +296,8 @@ public:
 
   EPoint3 tetDualPoint(index_t tet_idoff) const;
 
+  EPoint3 faceDualPoint(index_t face_idoff) const;
+
   Ray3 faceDualRay(index_t face_idoff) const;
 
   Segment3 faceDualSegment(index_t face_idoff) const;

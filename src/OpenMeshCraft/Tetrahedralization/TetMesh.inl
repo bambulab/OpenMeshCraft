@@ -1204,6 +1204,30 @@ auto TetrahedralMesh<Traits>::tetDualPoint(index_t tet_idoff) const -> EPoint3
 }
 
 template <typename Traits>
+auto TetrahedralMesh<Traits>::faceDualPoint(index_t face_idoff) const -> EPoint3
+{
+  index_t off = clipId(face_idoff);
+
+  OMC_EXPENSIVE_ASSERT(isFiniteTet(face_idoff) || off == 3, "Invalid face.");
+
+  const index_t *tet_nodes = &tetNode(clipId(face_idoff));
+
+  if constexpr (WEIGHTED)
+  {
+    return ConstructCircumcenter3()(
+      epnt(tet_nodes[tetON1(off)]), epnt(tet_nodes[tetON2(off)]),
+      epnt(tet_nodes[tetON3(off)]), weight(tet_nodes[tetON1(off)]),
+      weight(tet_nodes[tetON2(off)]), weight(tet_nodes[tetON3(off)]));
+  }
+  else
+  {
+    return ConstructCircumcenter3()(epnt(tet_nodes[tetON1(off)]),
+                                    epnt(tet_nodes[tetON2(off)]),
+                                    epnt(tet_nodes[tetON3(off)]));
+  }
+}
+
+template <typename Traits>
 auto TetrahedralMesh<Traits>::faceDualRay(index_t face_idoff) const -> Ray3
 {
   EPoint3 dual_pnt = tetDualPoint(face_idoff);
