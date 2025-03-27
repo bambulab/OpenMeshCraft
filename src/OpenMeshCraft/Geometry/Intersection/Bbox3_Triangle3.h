@@ -13,23 +13,23 @@ template <typename Kernel>
 class Bbox3_Triangle3_DoIntersectK
 {
 public:
-	using K  = Kernel;
-	using NT = typename K::NT;
+  using K  = Kernel;
+  using NT = typename K::NT;
 
-	using EPoint3   = typename K::EPoint3;
-	using Vec3      = typename K::Vec3;
-	using Bbox3     = typename K::BoundingBox3;
-	using Triangle3 = typename K::Triangle3;
+  using EPoint3   = typename K::EPoint3;
+  using Vec3      = typename K::Vec3;
+  using Bbox3     = typename K::BoundingBox3;
+  using Triangle3 = typename K::Triangle3;
 
 public:
-	bool operator()(const Bbox3 &box, const Triangle3 &triangle) const;
+  bool operator()(const Bbox3 &box, const Triangle3 &triangle) const;
 
-	bool TestAxisEdges(const EPoint3 *v[], const Vec3 &e,
-	                   const NT *box_length) const;
+  bool TestAxisEdges(const EPoint3 *v[], const Vec3 &e,
+                     const NT *box_length) const;
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "Bbox3_Triangle3.inl"
+  #include "Bbox3_Triangle3.inl"
 #endif

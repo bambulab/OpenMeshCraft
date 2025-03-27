@@ -56,31 +56,31 @@ template <typename Traits>
 class OrthogonalVertex
 {
 public: /* Types *************************************************************/
-	/// Dimension, typically 2 or 3, or higher n
-	static constexpr size_t Dimension = Traits::Dimension;
+  /// Dimension, typically 2 or 3, or higher n
+  static constexpr size_t Dimension = Traits::Dimension;
 
-	/// A node has Degree vertices, a vertex is shared by at most Degree nodes.
-	/// Degree is typically 4 or 8, or higher 2^n.
-	static constexpr size_t Degree = (1ul << Dimension);
+  /// A node has Degree vertices, a vertex is shared by at most Degree nodes.
+  /// Degree is typically 4 or 8, or higher 2^n.
+  static constexpr size_t Degree = (1ul << Dimension);
 
-	using OrBbox  = typename Traits::OrBboxT;
-	using OrPoint = remove_cvref_t<decltype(std::declval<OrBbox>().min_bound())>;
+  using OrBbox  = typename Traits::OrBboxT;
+  using OrPoint = remove_cvref_t<decltype(std::declval<OrBbox>().min_bound())>;
 
-	using VertexAttrT = typename Traits::VertexAttrT;
+  using VertexAttrT = typename Traits::VertexAttrT;
 
 public: /* Constructors and Destructor ***************************************/
-	OrthogonalVertex() = default;
+  OrthogonalVertex() = default;
 
 public: /* Data access *******************************************************/
-	OrPoint       &position() { return m_position; }
-	const OrPoint &position() const { return m_position; }
+  OrPoint       &position() { return m_position; }
+  const OrPoint &position() const { return m_position; }
 
-	VertexAttrT       &attribute() { return m_attribute; }
-	const VertexAttrT &attribute() const { return m_attribute; }
+  VertexAttrT       &attribute() { return m_attribute; }
+  const VertexAttrT &attribute() const { return m_attribute; }
 
 protected:
-	OrPoint     m_position;
-	VertexAttrT m_attribute;
+  OrPoint     m_position;
+  VertexAttrT m_attribute;
 };
 
 } // namespace OMC

@@ -16,7 +16,7 @@ namespace OMC {
 template <typename T>
 struct remove_cvref
 {
-	typedef std::remove_cv_t<std::remove_reference_t<T>> type;
+  typedef std::remove_cv_t<std::remove_reference_t<T>> type;
 };
 
 /**
@@ -49,13 +49,13 @@ template <typename T>
 std::string get_type_name()
 {
 #ifdef _MSC_VER
-	// MSVC'S type_name returns only a friendly name with name() method,
-	// to get a unique name use raw_name() method instead
-	return typeid(T).raw_name();
+  // MSVC'S type_name returns only a friendly name with name() method,
+  // to get a unique name use raw_name() method instead
+  return typeid(T).raw_name();
 #else
-	// GCC and clang curently return mangled name as name(), there is no
-	// raw_name() method
-	return typeid(T).name();
+  // GCC and clang curently return mangled name as name(), there is no
+  // raw_name() method
+  return typeid(T).name();
 #endif
 }
 

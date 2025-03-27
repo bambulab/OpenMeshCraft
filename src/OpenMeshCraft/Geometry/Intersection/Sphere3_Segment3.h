@@ -26,56 +26,56 @@ template <typename Kernel>
 class Sphere3_Segment3_DoIntersectK
 {
 public:
-	using K  = Kernel;
-	using NT = typename K::NT;
+  using K  = Kernel;
+  using NT = typename K::NT;
 
-	using GPoint3  = typename K::GPoint3;
-	using Sphere3  = typename K::Sphere3;
-	using Segment3 = typename K::Segment3;
+  using GPoint3  = typename K::GPoint3;
+  using Sphere3  = typename K::Sphere3;
+  using Segment3 = typename K::Segment3;
 
-	using DotProductSign  = typename K::DotProductSign3D;
-	using SquaredDistance = typename K::SquaredDistance3D;
+  using DotProductSign  = typename K::DotProductSign3D;
+  using SquaredDistance = typename K::SquaredDistance3D;
 
-	using Sphere3_Point3_DoInter = Sphere3_Point3_DoIntersectK<K>;
+  using Sphere3_Point3_DoInter = Sphere3_Point3_DoIntersectK<K>;
 
 public:
-	/**
-	 * @brief Check if sphere and segment intersect.
-	 * @note Assume no one is degenerate.
-	 */
-	bool operator()(const Sphere3 &sphere, const Segment3 &seg) const;
+  /**
+   * @brief Check if sphere and segment intersect.
+   * @note Assume no one is degenerate.
+   */
+  bool operator()(const Sphere3 &sphere, const Segment3 &seg) const;
 
-	/**
-	 * @brief Check if sphere and segment intersect.
-	 * @param center The center of the sphere.
-	 * @param squared_radius The squared radius of the sphere
-	 * @param s0_s1 two vertices of segment
-	 * @note Assume no one is degenerate.
-	 */
-	bool operator()(const GPoint3 &center, NT squared_radius, const GPoint3 &s0,
-	                const GPoint3 &s1) const;
+  /**
+   * @brief Check if sphere and segment intersect.
+   * @param center The center of the sphere.
+   * @param squared_radius The squared radius of the sphere
+   * @param s0_s1 two vertices of segment
+   * @note Assume no one is degenerate.
+   */
+  bool operator()(const GPoint3 &center, NT squared_radius, const GPoint3 &s0,
+                  const GPoint3 &s1) const;
 
-	/**
-	 * @brief Get the intersection type between segment and segment.
-	 * @note Assume no one is degenerate.
-	 */
-	IntersectionType intersection_type(const Sphere3  &sphere,
-	                                   const Segment3 &seg) const;
+  /**
+   * @brief Get the intersection type between segment and segment.
+   * @note Assume no one is degenerate.
+   */
+  IntersectionType intersection_type(const Sphere3  &sphere,
+                                     const Segment3 &seg) const;
 
-	/**
-	 * @brief Get the intersection type between segment and segment.
-	 * @param center The center of the sphere.
-	 * @param squared_radius The squared radius of the sphere
-	 * @param s0_s1 two vertices of segment
-	 * @note Assume no one is degenerate.
-	 */
-	IntersectionType intersection_type(const GPoint3 &center, NT squared_radius,
-	                                   const GPoint3 &s0,
-	                                   const GPoint3 &s1) const;
+  /**
+   * @brief Get the intersection type between segment and segment.
+   * @param center The center of the sphere.
+   * @param squared_radius The squared radius of the sphere
+   * @param s0_s1 two vertices of segment
+   * @note Assume no one is degenerate.
+   */
+  IntersectionType intersection_type(const GPoint3 &center, NT squared_radius,
+                                     const GPoint3 &s0,
+                                     const GPoint3 &s1) const;
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "Sphere3_Segment3.inl"
+  #include "Sphere3_Segment3.inl"
 #endif

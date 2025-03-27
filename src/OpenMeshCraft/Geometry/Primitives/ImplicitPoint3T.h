@@ -6,8 +6,6 @@
 #include "OpenMeshCraft/Geometry/Utils.h"
 #include "OpenMeshCraft/NumberTypes/ExpansionObject.h"
 
-#include <memory>
-
 namespace OMC {
 
 /**

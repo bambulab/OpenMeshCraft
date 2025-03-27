@@ -19,12 +19,12 @@ template <typename GPointPtr, typename ToEP>
 class AABB_GPoint_ReferencePoint
 {
 public:
-	using GPointT = remove_cvref_t<decltype(*std::declval<GPointPtr>())>;
-	using EPointT =
-	  remove_cvref_t<decltype(std::declval<ToEP>()(*std::declval<GPointPtr>()))>;
+  using GPointT = remove_cvref_t<decltype(*std::declval<GPointPtr>())>;
+  using EPointT =
+    remove_cvref_t<decltype(std::declval<ToEP>()(*std::declval<GPointPtr>()))>;
 
 public:
-	EPointT operator()(GPointPtr gp) { return ToEP()(*gp); }
+  EPointT operator()(GPointPtr gp) { return ToEP()(*gp); }
 };
 
 } // namespace OMC

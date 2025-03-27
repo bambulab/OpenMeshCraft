@@ -11,18 +11,18 @@ template <typename NT>
 class DotProductSign2D_GNR
 {
 public:
-	using VecT   = Vec2T<NT>;
-	using PointT = Point2T<NT>;
+  using VecT   = Vec2T<NT>;
+  using PointT = Point2T<NT>;
 
 public:
-	/// @brief Dot product between 2D vectors.
-	/// @return sign of (p-q).dot(r-q)
-	Sign operator()(const PointT &p, const PointT &r, const PointT &q);
+  /// @brief Dot product between 2D vectors.
+  /// @return sign of (p-q).dot(r-q)
+  Sign operator()(const PointT &p, const PointT &r, const PointT &q);
 
-	/// @brief Dot product between 2D vectors.
-	/// @return sign of (p-q).dot(r-s)
-	Sign operator()(const PointT &p, const PointT &r, const PointT &q,
-	                const PointT &s);
+  /// @brief Dot product between 2D vectors.
+  /// @return sign of (p-q).dot(r-s)
+  Sign operator()(const PointT &p, const PointT &r, const PointT &q,
+                  const PointT &s);
 };
 
 /// @brief Dot product 3D
@@ -30,18 +30,18 @@ template <typename NT>
 class DotProductSign3D_GNR
 {
 public:
-	using VecT   = Vec3T<NT>;
-	using PointT = Point3T<NT>;
+  using VecT   = Vec3T<NT>;
+  using PointT = Point3T<NT>;
 
 public:
-	/// @brief Dot product between 3D vectors.
-	/// @return sign of (p-q).dot(r-q)
-	Sign operator()(const PointT &p, const PointT &r, const PointT &q);
+  /// @brief Dot product between 3D vectors.
+  /// @return sign of (p-q).dot(r-q)
+  Sign operator()(const PointT &p, const PointT &r, const PointT &q);
 
-	/// @brief Dot product between 3D vectors.
-	/// @return sign of (p-q).dot(r-s)
-	Sign operator()(const PointT &p, const PointT &r, const PointT &q,
-	                const PointT &s);
+  /// @brief Dot product between 3D vectors.
+  /// @return sign of (p-q).dot(r-s)
+  Sign operator()(const PointT &p, const PointT &r, const PointT &q,
+                  const PointT &s);
 };
 
 /// @brief Dot product of 3D vectors on 2D
@@ -49,36 +49,36 @@ template <typename NT>
 class DotProductSignOn2D_GNR
 {
 public:
-	using VecT   = Vec3T<NT>;
-	using PointT = Point3T<NT>;
+  using VecT   = Vec3T<NT>;
+  using PointT = Point3T<NT>;
 
 public:
-	/// @brief Dot product between 3D vectors on 2D.
-	/// @return sign of (p-q).dot(r-q) on xy plane
-	Sign on_xy(const PointT &p, const PointT &r, const PointT &q);
+  /// @brief Dot product between 3D vectors on 2D.
+  /// @return sign of (p-q).dot(r-q) on xy plane
+  Sign on_xy(const PointT &p, const PointT &r, const PointT &q);
 
-	/// @brief Dot product between 3D vectors on 2D.
-	/// @return sign of (p-q).dot(r-s) on xy plane
-	Sign on_xy(const PointT &p, const PointT &r, const PointT &q,
-	           const PointT &s);
+  /// @brief Dot product between 3D vectors on 2D.
+  /// @return sign of (p-q).dot(r-s) on xy plane
+  Sign on_xy(const PointT &p, const PointT &r, const PointT &q,
+             const PointT &s);
 
-	/// @brief Dot product between 3D vectors on 2D.
-	/// @return sign of (p-q).dot(r-q) on xy plane
-	Sign on_yz(const PointT &p, const PointT &r, const PointT &q);
+  /// @brief Dot product between 3D vectors on 2D.
+  /// @return sign of (p-q).dot(r-q) on xy plane
+  Sign on_yz(const PointT &p, const PointT &r, const PointT &q);
 
-	/// @brief Dot product between 3D vectors on 2D.
-	/// @return sign of (p-q).dot(r-s) on xy plane
-	Sign on_yz(const PointT &p, const PointT &r, const PointT &q,
-	           const PointT &s);
+  /// @brief Dot product between 3D vectors on 2D.
+  /// @return sign of (p-q).dot(r-s) on xy plane
+  Sign on_yz(const PointT &p, const PointT &r, const PointT &q,
+             const PointT &s);
 
-	/// @brief Dot product between 3D vectors on 2D.
-	/// @return sign of (p-q).dot(r-q) on xy plane
-	Sign on_zx(const PointT &p, const PointT &r, const PointT &q);
+  /// @brief Dot product between 3D vectors on 2D.
+  /// @return sign of (p-q).dot(r-q) on xy plane
+  Sign on_zx(const PointT &p, const PointT &r, const PointT &q);
 
-	/// @brief Dot product between 3D vectors on 2D.
-	/// @return sign of (p-q).dot(r-s) on xy plane
-	Sign on_zx(const PointT &p, const PointT &r, const PointT &q,
-	           const PointT &s);
+  /// @brief Dot product between 3D vectors on 2D.
+  /// @return sign of (p-q).dot(r-s) on xy plane
+  Sign on_zx(const PointT &p, const PointT &r, const PointT &q,
+             const PointT &s);
 };
 
 /**
@@ -92,26 +92,26 @@ template <typename NT>
 class Orient2D_GNR
 {
 public:
-	using VecT   = Vec2T<NT>;
-	using PointT = Point2T<NT>;
+  using VecT   = Vec2T<NT>;
+  using PointT = Point2T<NT>;
 
 public:
-	/**
-	 * @brief \p p and \p q define an oriented line whose direction is from \p p
-	 * to \p q . Check the orientation of the query with respect to Line(p,q).
-	 * @return 1: in left halfspace. 0: on the plane. -1: in right halfspace.
-	 */
-	Sign operator()(const PointT &p, const PointT &q, const PointT &query);
+  /**
+   * @brief \p p and \p q define an oriented line whose direction is from \p p
+   * to \p q . Check the orientation of the query with respect to Line(p,q).
+   * @return 1: in left halfspace. 0: on the plane. -1: in right halfspace.
+   */
+  Sign operator()(const PointT &p, const PointT &q, const PointT &query);
 
-	/**
-	 * @brief \p p and \p q define an oriented line whose direction is from \p p
-	 * to \p q . Check the orientation of the query with respect to Line(p,q).
-	 * @return 1: in left halfspace. 0: on the plane. -1: in right halfspace.
-	 */
-	Sign operator()(const NT &px, const NT &py, const NT &qx, const NT &qy,
-	                const NT &query_x, const NT &query_y);
+  /**
+   * @brief \p p and \p q define an oriented line whose direction is from \p p
+   * to \p q . Check the orientation of the query with respect to Line(p,q).
+   * @return 1: in left halfspace. 0: on the plane. -1: in right halfspace.
+   */
+  Sign operator()(const NT &px, const NT &py, const NT &qx, const NT &qy,
+                  const NT &query_x, const NT &query_y);
 
-	// OPT: will it benefit from std::move when number type is exact type?
+  // OPT: will it benefit from std::move when number type is exact type?
 };
 
 /**
@@ -125,22 +125,22 @@ template <typename NT>
 class Orient3D_GNR
 {
 public:
-	using VecT   = Vec3T<NT>;
-	using PointT = Point3T<NT>;
+  using VecT   = Vec3T<NT>;
+  using PointT = Point3T<NT>;
 
 public:
-	/**
-	 * @brief \p p , \p q and \p r define an oriented plane, whose normal is
-	 * (q-p).cross(r-p). Check the orientation of the query with respect to
-	 * Plane(p,q,r).
-	 * @return 1: in positive halfspace. 0: on the plane. -1: in negative
-	 * halfspace.
-	 */
-	Sign operator()(const PointT &p, const PointT &q, const PointT &r,
-	                const PointT &query);
+  /**
+   * @brief \p p , \p q and \p r define an oriented plane, whose normal is
+   * (q-p).cross(r-p). Check the orientation of the query with respect to
+   * Plane(p,q,r).
+   * @return 1: in positive halfspace. 0: on the plane. -1: in negative
+   * halfspace.
+   */
+  Sign operator()(const PointT &p, const PointT &q, const PointT &r,
+                  const PointT &query);
 
-	// OPT: will it benefit from std::move when number type is exact type?
-	// OPT: provide an interface receving px,py,pz...
+  // OPT: will it benefit from std::move when number type is exact type?
+  // OPT: provide an interface receving px,py,pz...
 };
 
 /**
@@ -150,15 +150,15 @@ template <typename NT>
 class OrientOn2D_GNR
 {
 public:
-	using VecT   = Vec3T<NT>;
-	using PointT = Point3T<NT>;
+  using VecT   = Vec3T<NT>;
+  using PointT = Point3T<NT>;
 
-	using Orient2D = Orient2D_GNR<NT>;
+  using Orient2D = Orient2D_GNR<NT>;
 
 public:
-	Sign on_xy(const PointT &a, const PointT &b, const PointT &c);
-	Sign on_yz(const PointT &a, const PointT &b, const PointT &c);
-	Sign on_zx(const PointT &a, const PointT &b, const PointT &c);
+  Sign on_xy(const PointT &a, const PointT &b, const PointT &c);
+  Sign on_yz(const PointT &a, const PointT &b, const PointT &c);
+  Sign on_zx(const PointT &a, const PointT &b, const PointT &c);
 };
 
 /**
@@ -169,37 +169,37 @@ template <typename NT>
 class LessThan2D_GNR
 {
 public:
-	using PointT = Point2T<NT>;
+  using PointT = Point2T<NT>;
 
 public:
-	/**
-	 * @brief Check if all coordinates of a point \p p are less than coordinates
-	 * of another point \p q in lexicographic order.
-	 * @return Sign. -1: p is less than q. 0: p is equal to q. -1: p is larger
-	 * than q.
-	 */
-	Sign operator()(const PointT &p, const PointT &q);
+  /**
+   * @brief Check if all coordinates of a point \p p are less than coordinates
+   * of another point \p q in lexicographic order.
+   * @return Sign. -1: p is less than q. 0: p is equal to q. -1: p is larger
+   * than q.
+   */
+  Sign operator()(const PointT &p, const PointT &q);
 
-	/**
-	 * @brief Check if \p p.x is less than \p q.x.
-	 * @return Sign. -1: p.x < q.x ; 0: p.x==q.x ; -1: p.x > q.x .
-	 */
-	Sign on_x(const PointT &p, const PointT &q);
+  /**
+   * @brief Check if \p p.x is less than \p q.x.
+   * @return Sign. -1: p.x < q.x ; 0: p.x==q.x ; -1: p.x > q.x .
+   */
+  Sign on_x(const PointT &p, const PointT &q);
 
-	/**
-	 * @brief Check if \p p.y is less than \p q.y.
-	 * @return Sign. -1: p.y < q.y ; 0: p.y==q.y ; -1: p.y > q.y .
-	 */
-	Sign on_y(const PointT &p, const PointT &q);
+  /**
+   * @brief Check if \p p.y is less than \p q.y.
+   * @return Sign. -1: p.y < q.y ; 0: p.y==q.y ; -1: p.y > q.y .
+   */
+  Sign on_y(const PointT &p, const PointT &q);
 
-	/**
-	 * @brief Check if \p p and \p q is coincident (same on all coordinates).
-	 * @return true if they are coincident
-	 */
-	bool coincident(const PointT &p, const PointT &q)
-	{
-		return operator()(p, q) == Sign::ZERO;
-	}
+  /**
+   * @brief Check if \p p and \p q is coincident (same on all coordinates).
+   * @return true if they are coincident
+   */
+  bool coincident(const PointT &p, const PointT &q)
+  {
+    return operator()(p, q) == Sign::ZERO;
+  }
 };
 
 /**
@@ -210,184 +210,184 @@ template <typename NT>
 class LessThan3D_GNR
 {
 public:
-	using PointT = Point3T<NT>;
+  using PointT = Point3T<NT>;
 
 public:
-	/**
-	 * @brief Check if all coordinates of a point \p p are less than coordinates
-	 * of another point \p q in lexicographic order.
-	 * @return Sign. -1: p is less than q. 0: p is equal to q. -1: p is larger
-	 * than q.
-	 */
-	Sign operator()(const PointT &p, const PointT &q);
+  /**
+   * @brief Check if all coordinates of a point \p p are less than coordinates
+   * of another point \p q in lexicographic order.
+   * @return Sign. -1: p is less than q. 0: p is equal to q. -1: p is larger
+   * than q.
+   */
+  Sign operator()(const PointT &p, const PointT &q);
 
-	/**
-	 * @brief Check if \p p.x is less than \p q.x.
-	 * @return Sign. -1: p.x < q.x ; 0: p.x==q.x ; -1: p.x > q.x .
-	 */
-	Sign on_x(const PointT &p, const PointT &q);
+  /**
+   * @brief Check if \p p.x is less than \p q.x.
+   * @return Sign. -1: p.x < q.x ; 0: p.x==q.x ; -1: p.x > q.x .
+   */
+  Sign on_x(const PointT &p, const PointT &q);
 
-	/**
-	 * @brief Check if \p p.y is less than \p q.y.
-	 * @return Sign. -1: p.y < q.y ; 0: p.y==q.y ; -1: p.y > q.y .
-	 */
-	Sign on_y(const PointT &p, const PointT &q);
+  /**
+   * @brief Check if \p p.y is less than \p q.y.
+   * @return Sign. -1: p.y < q.y ; 0: p.y==q.y ; -1: p.y > q.y .
+   */
+  Sign on_y(const PointT &p, const PointT &q);
 
-	/**
-	 * @brief Check if \p p.z is less than \p q.z.
-	 * @return Sign. -1: p.z < q.z ; 0: p.z==q.z ; -1: p.z > q.z .
-	 */
-	Sign on_z(const PointT &p, const PointT &q);
+  /**
+   * @brief Check if \p p.z is less than \p q.z.
+   * @return Sign. -1: p.z < q.z ; 0: p.z==q.z ; -1: p.z > q.z .
+   */
+  Sign on_z(const PointT &p, const PointT &q);
 
-	/**
-	 * @brief Check if \p p and \p q is coincident (same on all coordinates).
-	 * @return true if they are coincident
-	 */
-	bool coincident(const PointT &p, const PointT &q)
-	{
-		return operator()(p, q) == Sign::ZERO;
-	}
+  /**
+   * @brief Check if \p p and \p q is coincident (same on all coordinates).
+   * @return true if they are coincident
+   */
+  bool coincident(const PointT &p, const PointT &q)
+  {
+    return operator()(p, q) == Sign::ZERO;
+  }
 };
 
 template <typename NT>
 class InCircle_GNR
 {
 public:
-	using PointT = Point2T<NT>;
+  using PointT = Point2T<NT>;
 
 public:
-	/**
-	 * @brief In 2D, test a \p query point is inside the circumcircle of three
-	 * points \p p, \p q, and \p r. We assume that p, q and r are given in
-	 * couter-clock-wise order when being viewed from +z.
-	 * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
-	 * @note If p, q and r are given in clock-wise order, the result should be
-	 * inversed.
-	 */
-	Sign operator()(const PointT &p, const PointT &q, const PointT &r,
-	                const PointT &query);
+  /**
+   * @brief In 2D, test a \p query point is inside the circumcircle of three
+   * points \p p, \p q, and \p r. We assume that p, q and r are given in
+   * couter-clock-wise order when being viewed from +z.
+   * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
+   * @note If p, q and r are given in clock-wise order, the result should be
+   * inversed.
+   */
+  Sign operator()(const PointT &p, const PointT &q, const PointT &r,
+                  const PointT &query);
 
-	/**
-	 * @brief In 2D, test a \p query point is inside the circumcircle of three
-	 * points \p p, \p q, and \p r. We assume that p, q and r are given in
-	 * couter-clock-wise order when being viewed from +z.
-	 * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
-	 * @note If p, q and r are given in clock-wise order, the result should be
-	 * inversed.
-	 */
-	Sign operator()(const NT &px, const NT &py, const NT &qx, const NT &qy,
-	                const NT &rx, const NT &ry, const NT &queryx,
-	                const NT &queryy);
+  /**
+   * @brief In 2D, test a \p query point is inside the circumcircle of three
+   * points \p p, \p q, and \p r. We assume that p, q and r are given in
+   * couter-clock-wise order when being viewed from +z.
+   * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
+   * @note If p, q and r are given in clock-wise order, the result should be
+   * inversed.
+   */
+  Sign operator()(const NT &px, const NT &py, const NT &qx, const NT &qy,
+                  const NT &rx, const NT &ry, const NT &queryx,
+                  const NT &queryy);
 };
 
 template <typename NT>
 class InSphere_GNR
 {
 public:
-	using PointT = Point3T<NT>;
+  using PointT = Point3T<NT>;
 
 public:
-	/**
-	 * @brief In 3D, test a \p query point is inside the circumcircle of four
-	 * points \p a, \p b, \p c and \p d. We assume that the tetrahedron formed by
-	 * a, b, c and d has a positive volume. In another word, a, b and c form a
-	 * triangle (in CCW order), the vector from a to d must point to the same
-	 * direction of the normal.
-	 * @return 1: inside, 0: exactly on , -1: outside.
-	 */
-	Sign operator()(const PointT &a, const PointT &b, const PointT &c,
-	                const PointT &d, const PointT &query);
+  /**
+   * @brief In 3D, test a \p query point is inside the circumcircle of four
+   * points \p a, \p b, \p c and \p d. We assume that the tetrahedron formed by
+   * a, b, c and d has a positive volume. In another word, a, b and c form a
+   * triangle (in CCW order), the vector from a to d must point to the same
+   * direction of the normal.
+   * @return 1: inside, 0: exactly on , -1: outside.
+   */
+  Sign operator()(const PointT &a, const PointT &b, const PointT &c,
+                  const PointT &d, const PointT &query);
 
-	/**
-	 * @brief In 3D, test a \p query point is inside the circumcircle of four
-	 * points \p a, \p b, \p c and \p d. We assume that the tetrahedron formed by
-	 * a, b, c and d has a positive volume. In another word, a, b and c form a
-	 * triangle (in CCW order), the vector from a to d must point to the same
-	 * direction of the normal.
-	 * @return 1: inside, 0: exactly on , -1: outside.
-	 */
-	Sign operator()(const NT &ax, const NT &ay, const NT &az, const NT &bx,
-	                const NT &by, const NT &bz, const NT &cx, const NT &cy,
-	                const NT &cz, const NT &dx, const NT &dy, const NT &dz,
-	                const NT &queryx, const NT &queryy, const NT &queryz);
+  /**
+   * @brief In 3D, test a \p query point is inside the circumcircle of four
+   * points \p a, \p b, \p c and \p d. We assume that the tetrahedron formed by
+   * a, b, c and d has a positive volume. In another word, a, b and c form a
+   * triangle (in CCW order), the vector from a to d must point to the same
+   * direction of the normal.
+   * @return 1: inside, 0: exactly on , -1: outside.
+   */
+  Sign operator()(const NT &ax, const NT &ay, const NT &az, const NT &bx,
+                  const NT &by, const NT &bz, const NT &cx, const NT &cy,
+                  const NT &cz, const NT &dx, const NT &dy, const NT &dz,
+                  const NT &queryx, const NT &queryy, const NT &queryz);
 };
 
 template <typename NT>
 class InPowerCircle_GNR
 {
 public:
-	using PointT = Point2T<NT>;
+  using PointT = Point2T<NT>;
 
 public:
-	/**
-	 * @brief In 2D, test a weighted \p query point is inside the power
-	 * circumcircle of three weighted points \p p, \p q, and \p r.
-	 *
-	 * We assume that p, q and r are given in couter-clock-wise order when being
-	 * viewed from +z.
-	 * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
-	 * @note If p, q and r are given in clock-wise order, the result should be
-	 * inversed.
-	 */
-	Sign operator()(const PointT &p, const NT &wp, const PointT &q, const NT &wq,
-	                const PointT &r, const NT &wr, const PointT &query,
-	                const NT &wquery);
+  /**
+   * @brief In 2D, test a weighted \p query point is inside the power
+   * circumcircle of three weighted points \p p, \p q, and \p r.
+   *
+   * We assume that p, q and r are given in couter-clock-wise order when being
+   * viewed from +z.
+   * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
+   * @note If p, q and r are given in clock-wise order, the result should be
+   * inversed.
+   */
+  Sign operator()(const PointT &p, const NT &wp, const PointT &q, const NT &wq,
+                  const PointT &r, const NT &wr, const PointT &query,
+                  const NT &wquery);
 
-	/**
-	 * @brief In 2D, test a weighted \p query point is inside the power
-	 * circumcircle of three weighted points \p p, \p q, and \p r.
-	 *
-	 * We assume that p, q and r are given in couter-clock-wise order when being
-	 * viewed from +z.
-	 * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
-	 * @note If p, q and r are given in clock-wise order, the result should be
-	 * inversed.
-	 */
-	Sign operator()(const NT &px, const NT &py, const NT &wp, const NT &qx,
-	                const NT &qy, const NT &wq, const NT &rx, const NT &ry,
-	                const NT &wr, const NT &queryx, const NT &queryy,
-	                const NT &wquery);
+  /**
+   * @brief In 2D, test a weighted \p query point is inside the power
+   * circumcircle of three weighted points \p p, \p q, and \p r.
+   *
+   * We assume that p, q and r are given in couter-clock-wise order when being
+   * viewed from +z.
+   * @return 1: inside, 0: exactly on the circumcircle, -1: outside.
+   * @note If p, q and r are given in clock-wise order, the result should be
+   * inversed.
+   */
+  Sign operator()(const NT &px, const NT &py, const NT &wp, const NT &qx,
+                  const NT &qy, const NT &wq, const NT &rx, const NT &ry,
+                  const NT &wr, const NT &queryx, const NT &queryy,
+                  const NT &wquery);
 };
 
 template <typename NT>
 class InPowerSphere_GNR
 {
 public:
-	using PointT = Point3T<NT>;
+  using PointT = Point3T<NT>;
 
 public:
-	/**
-	 * @brief In 3D, test a weighted \p query point is inside the power
-	 * circumcircle of four weighted points \p a, \p b, \p c and \p d.
-	 *
-	 * We assume that the tetrahedron formed by a, b, c and d has a positive
-	 * volume. In another word, a, b and c form a triangle (in CCW order), the
-	 * vector from a to d must point to the same direction of the normal.
-	 * @return 1: inside, 0: exactly on , -1: outside.
-	 */
-	Sign operator()(const PointT &a, const NT &wa, const PointT &b, const NT &wb,
-	                const PointT &c, const NT &wc, const PointT &d, const NT &wd,
-	                const PointT &query, const NT &wquery);
+  /**
+   * @brief In 3D, test a weighted \p query point is inside the power
+   * circumcircle of four weighted points \p a, \p b, \p c and \p d.
+   *
+   * We assume that the tetrahedron formed by a, b, c and d has a positive
+   * volume. In another word, a, b and c form a triangle (in CCW order), the
+   * vector from a to d must point to the same direction of the normal.
+   * @return 1: inside, 0: exactly on , -1: outside.
+   */
+  Sign operator()(const PointT &a, const NT &wa, const PointT &b, const NT &wb,
+                  const PointT &c, const NT &wc, const PointT &d, const NT &wd,
+                  const PointT &query, const NT &wquery);
 
-	/**
-	 * @brief In 3D, test a weighted \p query point is inside the power
-	 * circumcircle of four weighted points \p a, \p b, \p c and \p d.
-	 *
-	 * We assume that the tetrahedron formed by a, b, c and d has a positive
-	 * volume. In another word, a, b and c form a triangle (in CCW order), the
-	 * vector from a to d must point to the same direction of the normal.
-	 * @return 1: inside, 0: exactly on , -1: outside.
-	 */
-	Sign operator()(const NT &ax, const NT &ay, const NT &az, const NT &aw,
-	                const NT &bx, const NT &by, const NT &bz, const NT &bw,
-	                const NT &cx, const NT &cy, const NT &cz, const NT &cw,
-	                const NT &dx, const NT &dy, const NT &dz, const NT &dw,
-	                const NT &queryx, const NT &queryy, const NT &queryz,
-	                const NT &queryw);
+  /**
+   * @brief In 3D, test a weighted \p query point is inside the power
+   * circumcircle of four weighted points \p a, \p b, \p c and \p d.
+   *
+   * We assume that the tetrahedron formed by a, b, c and d has a positive
+   * volume. In another word, a, b and c form a triangle (in CCW order), the
+   * vector from a to d must point to the same direction of the normal.
+   * @return 1: inside, 0: exactly on , -1: outside.
+   */
+  Sign operator()(const NT &ax, const NT &ay, const NT &az, const NT &aw,
+                  const NT &bx, const NT &by, const NT &bz, const NT &bw,
+                  const NT &cx, const NT &cy, const NT &cz, const NT &cw,
+                  const NT &dx, const NT &dy, const NT &dz, const NT &dw,
+                  const NT &queryx, const NT &queryy, const NT &queryz,
+                  const NT &queryw);
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "GeneralPredicates.inl"
+  #include "GeneralPredicates.inl"
 #endif

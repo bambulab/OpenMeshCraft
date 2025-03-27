@@ -24,57 +24,57 @@ template <typename Kernel>
 class Triangle2_Point2_DoIntersectK
 {
 public:
-	using K  = Kernel;
-	using NT = typename K::NT;
+  using K  = Kernel;
+  using NT = typename K::NT;
 
-	using GPoint2   = typename K::GPoint2;
-	using Triangle2 = typename K::Triangle2;
+  using GPoint2   = typename K::GPoint2;
+  using Triangle2 = typename K::Triangle2;
 
-	using LessThan2D = typename K::LessThan2D;
-	using Orient2D   = typename K::Orient2D;
+  using LessThan2D = typename K::LessThan2D;
+  using Orient2D   = typename K::Orient2D;
 
 public:
-	/**
-	 * @brief Check if triangle and point intersect.
-	 * @note Assume that triangle is not degenerate.
-	 */
-	bool operator()(const Triangle2 &tri, const GPoint2 &pnt) const;
+  /**
+   * @brief Check if triangle and point intersect.
+   * @note Assume that triangle is not degenerate.
+   */
+  bool operator()(const Triangle2 &tri, const GPoint2 &pnt) const;
 
-	/**
-	 * @brief Get the relative position of point to triangle.
-	 * @return Sign indicating relative position of point to triangle.
-	 * @note Assume that triangle is not degenerate.
-	 */
-	PointInType in_triangle(const Triangle2 &tri, const GPoint2 &pnt) const;
+  /**
+   * @brief Get the relative position of point to triangle.
+   * @return Sign indicating relative position of point to triangle.
+   * @note Assume that triangle is not degenerate.
+   */
+  PointInType in_triangle(const Triangle2 &tri, const GPoint2 &pnt) const;
 
-	/**
-	 * @brief Get the intersection type between triangle and point.
-	 */
-	PointInSimplexType intersection_type(const Triangle2 &tri,
-	                                     const GPoint2   &pnt) const;
+  /**
+   * @brief Get the intersection type between triangle and point.
+   */
+  PointInSimplexType intersection_type(const Triangle2 &tri,
+                                       const GPoint2   &pnt) const;
 
-	/**
-	 * @brief Get the intersection type between triangle and point.
-	 * @param t0_t1_t2 three vertices of the triangle
-	 * @param p point
-	 * @note Assume that triangle is not degenerate.
-	 */
-	PointInSimplexType intersection_type(const GPoint2 &t0, const GPoint2 &t1,
-	                                     const GPoint2 &t2,
-	                                     const GPoint2 &p) const;
+  /**
+   * @brief Get the intersection type between triangle and point.
+   * @param t0_t1_t2 three vertices of the triangle
+   * @param p point
+   * @note Assume that triangle is not degenerate.
+   */
+  PointInSimplexType intersection_type(const GPoint2 &t0, const GPoint2 &t1,
+                                       const GPoint2 &t2,
+                                       const GPoint2 &p) const;
 
-	/**
-	 * @brief Get the intersection type between triangle and point.
-	 * @param t0_t1_t2 three vertices of the triangle.
-	 * @param p point.
-	 * @note Assume that triangle is not degenerate.
-	 */
-	PointInSimplexType intersection_type(const NT *t0, const NT *t1, const NT *t2,
-	                                     const NT *p) const;
+  /**
+   * @brief Get the intersection type between triangle and point.
+   * @param t0_t1_t2 three vertices of the triangle.
+   * @param p point.
+   * @note Assume that triangle is not degenerate.
+   */
+  PointInSimplexType intersection_type(const NT *t0, const NT *t1, const NT *t2,
+                                       const NT *p) const;
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "Triangle2_Point2.inl"
+  #include "Triangle2_Point2.inl"
 #endif

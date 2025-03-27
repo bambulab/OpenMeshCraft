@@ -12,34 +12,34 @@ template <typename _Traits>
 class AdapOcTree : public AdapOrthTree<_Traits>
 {
 public:
-	using Traits = _Traits;
+  using Traits = _Traits;
 
-	static constexpr size_t MaxDepth  = Traits::MaxDepth;
-	static constexpr size_t Dimension = Traits::Dimension;
-	static constexpr size_t Degree    = (1u << Dimension);
+  static constexpr size_t MaxDepth  = Traits::MaxDepth;
+  static constexpr size_t Dimension = Traits::Dimension;
+  static constexpr size_t Degree    = (1u << Dimension);
 
-	using NT = typename Traits::NT;
+  using NT = typename Traits::NT;
 
-	using Bbox = typename Traits::BboxT;
+  using Bbox = typename Traits::BboxT;
 
-	using TreeBbox = typename Traits::TreeBboxT;
-	AdapOrthTreeAbbreviate(TreeBbox);
+  using TreeBbox = typename Traits::TreeBboxT;
+  AdapOrthTreeAbbreviate(TreeBbox);
 
-	using OrPoint =
-	  remove_cvref_t<decltype(std::declval<TreeBbox>().min_bound())>;
-	AdapOrthTreeAbbreviate(OrPoint);
+  using OrPoint =
+    remove_cvref_t<decltype(std::declval<TreeBbox>().min_bound())>;
+  AdapOrthTreeAbbreviate(OrPoint);
 
-	using Node = AdapOrthNode<Traits>;
-	AdapOrthTreeAbbreviate(Node);
+  using Node = AdapOrthNode<Traits>;
+  AdapOrthTreeAbbreviate(Node);
 
 protected:
-	virtual void
-	calc_box_for_children(NodeRef nd, OrPointCRef center,
-	                      std::array<Bbox, Degree> &child_boxes) final;
+  virtual void
+  calc_box_for_children(NodeRef nd, OrPointCRef center,
+                        std::array<Bbox, Degree> &child_boxes) final;
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "AdapOcTree.inl"
+  #include "AdapOcTree.inl"
 #endif

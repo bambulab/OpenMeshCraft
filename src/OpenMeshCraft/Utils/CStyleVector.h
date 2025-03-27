@@ -15,130 +15,130 @@ namespace OMC {
 template <typename T>
 class CStyleVector
 {
-	static_assert(std::is_trivially_copyable<T>::value);
+  static_assert(std::is_trivially_copyable<T>::value);
 
 public: /* Constructor and Destructor *****************************************/
-	CStyleVector()
-	  : m_data(nullptr)
-	  , m_size(0)
-	  , m_capacity(0)
-	{
-	}
+  CStyleVector()
+    : m_data(nullptr)
+    , m_size(0)
+    , m_capacity(0)
+  {
+  }
 
-	CStyleVector(const CStyleVector &) = delete;
+  CStyleVector(const CStyleVector &) = delete;
 
-	CStyleVector(CStyleVector &&other)
-	{
-		m_data           = other.m_data;
-		m_size           = other.m_size;
-		m_capacity       = other.m_capacity;
-		other.m_data     = nullptr;
-		other.m_size     = 0;
-		other.m_capacity = 0;
-	}
+  CStyleVector(CStyleVector &&other)
+  {
+    m_data           = other.m_data;
+    m_size           = other.m_size;
+    m_capacity       = other.m_capacity;
+    other.m_data     = nullptr;
+    other.m_size     = 0;
+    other.m_capacity = 0;
+  }
 
-	~CStyleVector()
-	{
-		if (m_data)
-			free(m_data);
-	}
+  ~CStyleVector()
+  {
+    if (m_data)
+      free(m_data);
+  }
 
 public: /* Acess and Modify **************************************************/
-	const T &operator[](size_t idx) const { return m_data[idx]; }
+  const T &operator[](size_t idx) const { return m_data[idx]; }
 
-	T &operator[](size_t idx) { return m_data[idx]; }
+  T &operator[](size_t idx) { return m_data[idx]; }
 
-	T       *data() { return m_data; }
-	const T *data() const { return m_data; }
+  T       *data() { return m_data; }
+  const T *data() const { return m_data; }
 
-	T       &front() { return m_data[0]; }
-	const T &front() const { return m_data[0]; }
+  T       &front() { return m_data[0]; }
+  const T &front() const { return m_data[0]; }
 
-	T       &back() { return m_data[m_size - 1]; }
-	const T &back() const { return m_data[m_size - 1]; }
+  T       &back() { return m_data[m_size - 1]; }
+  const T &back() const { return m_data[m_size - 1]; }
 
-	size_t size() const { return m_size; }
+  size_t size() const { return m_size; }
 
-	size_t capacity() const { return m_capacity; }
+  size_t capacity() const { return m_capacity; }
 
-	bool empty() const { return m_size == 0; }
+  bool empty() const { return m_size == 0; }
 
-	void reserve(size_t new_capacity)
-	{
-		if (new_capacity <= m_capacity)
-			return;
+  void reserve(size_t new_capacity)
+  {
+    if (new_capacity <= m_capacity)
+      return;
 
-		// out of memory exception may be throwed by malloc, just let it throw.
-		T *tmp_data = (T *)malloc(new_capacity * sizeof(T));
-		// it's better to use copy constructor of T.
-		// but we only use this CStyleVector for simple types, just memcpy them.
-		if (m_size != 0) // always keep data
-			memcpy(tmp_data, m_data, sizeof(T) * m_size);
-		// m_data may not be nullptr even if m_size != 0.
-		if (m_data)
-			free(m_data);
-		// set m_data and m_size
-		m_data     = tmp_data;
-		m_capacity = new_capacity;
-		// m_size is unchanged.
-	}
+    // out of memory exception may be throwed by malloc, just let it throw.
+    T *tmp_data = (T *)malloc(new_capacity * sizeof(T));
+    // it's better to use copy constructor of T.
+    // but we only use this CStyleVector for simple types, just memcpy them.
+    if (m_size != 0) // always keep data
+      memcpy(tmp_data, m_data, sizeof(T) * m_size);
+    // m_data may not be nullptr even if m_size != 0.
+    if (m_data)
+      free(m_data);
+    // set m_data and m_size
+    m_data     = tmp_data;
+    m_capacity = new_capacity;
+    // m_size is unchanged.
+  }
 
-	void resize(size_t new_size, bool keep_data = true)
-	{
-		if (new_size == m_size)
-			return;
-		else if (new_size < m_capacity)
-			m_size = new_size;
-		else // insufficient capacity
-		{
-			// out of memory exception may be throwed by malloc, just let it throw.
-			T *tmp_data = (T *)malloc(new_size * sizeof(T));
-			// it's better to use copy constructor of T.
-			// but we only use this CStyleVector for simple types, just memcpy them.
-			if (keep_data && m_size != 0)
-				memcpy(tmp_data, m_data, sizeof(T) * m_size);
-			// m_data may not be nullptr even if m_size == 0.
-			if (m_data)
-				free(m_data);
-			// set m_data and m_size
-			m_data     = tmp_data;
-			m_size     = new_size;
-			m_capacity = new_size;
-		}
-	}
+  void resize(size_t new_size, bool keep_data = true)
+  {
+    if (new_size == m_size)
+      return;
+    else if (new_size < m_capacity)
+      m_size = new_size;
+    else // insufficient capacity
+    {
+      // out of memory exception may be throwed by malloc, just let it throw.
+      T *tmp_data = (T *)malloc(new_size * sizeof(T));
+      // it's better to use copy constructor of T.
+      // but we only use this CStyleVector for simple types, just memcpy them.
+      if (keep_data && m_size != 0)
+        memcpy(tmp_data, m_data, sizeof(T) * m_size);
+      // m_data may not be nullptr even if m_size == 0.
+      if (m_data)
+        free(m_data);
+      // set m_data and m_size
+      m_data     = tmp_data;
+      m_size     = new_size;
+      m_capacity = new_size;
+    }
+  }
 
-	void clear() { m_size = 0; }
+  void clear() { m_size = 0; }
 
-	void shrink_to_fit()
-	{
-		if (m_size == m_capacity)
-			return;
-		if (m_size != 0)
-		{ // shrink capacity to fit size while keeping original data.
-			// out of memory exception may be throwed by malloc, just let it throw.
-			T *tmp_data = (T *)malloc(m_size * sizeof(T));
-			// it's better to use copy constructor of T.
-			// but we only use this CStyleVector for simple types, just memcpy them.
-			memcpy(tmp_data, m_data, sizeof(T) * m_size);
-			// free original memory
-			free(m_data);
-			// set m_data and m_size
-			m_data     = tmp_data;
-			m_capacity = m_size;
-		}
-		else // m_size == 0
-		{
-			// m_data may not be nullptr even if m_size == 0.
-			if (m_data)
-				free(m_data);
-			m_data     = nullptr;
-			m_capacity = 0;
-		}
-	}
+  void shrink_to_fit()
+  {
+    if (m_size == m_capacity)
+      return;
+    if (m_size != 0)
+    { // shrink capacity to fit size while keeping original data.
+      // out of memory exception may be throwed by malloc, just let it throw.
+      T *tmp_data = (T *)malloc(m_size * sizeof(T));
+      // it's better to use copy constructor of T.
+      // but we only use this CStyleVector for simple types, just memcpy them.
+      memcpy(tmp_data, m_data, sizeof(T) * m_size);
+      // free original memory
+      free(m_data);
+      // set m_data and m_size
+      m_data     = tmp_data;
+      m_capacity = m_size;
+    }
+    else // m_size == 0
+    {
+      // m_data may not be nullptr even if m_size == 0.
+      if (m_data)
+        free(m_data);
+      m_data     = nullptr;
+      m_capacity = 0;
+    }
+  }
 
 public: /* Iterator **********************************************************/
-	      // These iterators are very simple and unsafe, use them carefully.
-	      // clang-format off
+        // These iterators are very simple and unsafe, use them carefully.
+        // clang-format off
 	class iterator
 	{
 	public:
@@ -214,10 +214,10 @@ public: /* Iterator **********************************************************/
 	const_iterator cend() const {return const_iterator(m_data + m_size);}
 	const_iterator begin() const {return const_iterator(m_data);}
 	const_iterator end() const {return const_iterator(m_data + m_size);}
-	      // clang-format on
+        // clang-format on
 protected:
-	T     *m_data;
-	size_t m_size;
-	size_t m_capacity;
+  T     *m_data;
+  size_t m_size;
+  size_t m_capacity;
 };
 } // namespace OMC

@@ -14,18 +14,18 @@ struct hash;
 template <typename T, size_t N>
 struct hash<std::array<T, N>>
 {
-	std::hash<T> hasher; // Hash function for the element type T.
+  std::hash<T> hasher; // Hash function for the element type T.
 
-	// This operator overload calculates the hash for a given std::array.
-	inline size_t operator()(const std::array<T, N> &p) const
-	{
-		size_t seed = 0; // Initialize the seed for the hash.
-		for (size_t i = 0; i < N; i++)
-			// Combine the hash of each element with the seed using a custom
-			// algorithm.
-			seed ^= hasher(p[i]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		return seed; // Return the final computed hash.
-	}
+  // This operator overload calculates the hash for a given std::array.
+  inline size_t operator()(const std::array<T, N> &p) const
+  {
+    size_t seed = 0; // Initialize the seed for the hash.
+    for (size_t i = 0; i < N; i++)
+      // Combine the hash of each element with the seed using a custom
+      // algorithm.
+      seed ^= hasher(p[i]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed; // Return the final computed hash.
+  }
 };
 
 // This struct defines a hash function for std::pair types.
@@ -33,18 +33,18 @@ struct hash<std::array<T, N>>
 template <typename T>
 struct hash<std::pair<T, T>>
 {
-	std::hash<T> hasher; // Hash function for the element type T.
+  std::hash<T> hasher; // Hash function for the element type T.
 
-	// This operator overload calculates the hash for a given std::pair.
-	inline size_t operator()(const std::pair<T, T> &p) const
-	{
-		size_t seed = 0; // Initialize the seed for the hash.
-		// Combine the hash of the first element with the seed.
-		seed ^= hasher(p.first) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		// Combine the hash of the second element with the seed.
-		seed ^= hasher(p.second) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		return seed; // Return the final computed hash.
-	}
+  // This operator overload calculates the hash for a given std::pair.
+  inline size_t operator()(const std::pair<T, T> &p) const
+  {
+    size_t seed = 0; // Initialize the seed for the hash.
+    // Combine the hash of the first element with the seed.
+    seed ^= hasher(p.first) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    // Combine the hash of the second element with the seed.
+    seed ^= hasher(p.second) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed; // Return the final computed hash.
+  }
 };
 
 // This struct defines a hash function for std::vector types.
@@ -52,18 +52,18 @@ struct hash<std::pair<T, T>>
 template <typename T>
 struct hash<std::vector<T>>
 {
-	std::hash<T> hasher; // Hash function for the element type T.
+  std::hash<T> hasher; // Hash function for the element type T.
 
-	// This operator overload calculates the hash for a given std::vector.
-	inline size_t operator()(const std::vector<T> &p) const
-	{
-		size_t seed = 0; // Initialize the seed for the hash.
-		for (size_t i = 0; i < p.size(); i++)
-			// Combine the hash of each element with the seed using a custom
-			// algorithm.
-			seed ^= hasher(p[i]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		return seed; // Return the final computed hash.
-	}
+  // This operator overload calculates the hash for a given std::vector.
+  inline size_t operator()(const std::vector<T> &p) const
+  {
+    size_t seed = 0; // Initialize the seed for the hash.
+    for (size_t i = 0; i < p.size(); i++)
+      // Combine the hash of each element with the seed using a custom
+      // algorithm.
+      seed ^= hasher(p[i]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed; // Return the final computed hash.
+  }
 };
 
 } // namespace OMC

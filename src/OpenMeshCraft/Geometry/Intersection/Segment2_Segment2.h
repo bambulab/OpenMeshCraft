@@ -26,52 +26,52 @@ template <typename Kernel>
 class Segment2_Segment2_DoIntersectK
 {
 public:
-	using K  = Kernel;
-	using NT = typename K::NT;
+  using K  = Kernel;
+  using NT = typename K::NT;
 
-	using GPoint2  = typename K::GPoint2;
-	using Segment2 = typename K::Segment2;
+  using GPoint2  = typename K::GPoint2;
+  using Segment2 = typename K::Segment2;
 
-	using LessThan2D = typename K::LessThan2D;
-	using Orient2D   = typename K::Orient2D;
+  using LessThan2D = typename K::LessThan2D;
+  using Orient2D   = typename K::Orient2D;
 
 public:
-	/**
-	 * @brief Check if segment and segment intersect.
-	 * @note assume thant no segment is degenerate.
-	 */
-	bool operator()(const Segment2 &seg0, const Segment2 &seg1) const;
+  /**
+   * @brief Check if segment and segment intersect.
+   * @note assume thant no segment is degenerate.
+   */
+  bool operator()(const Segment2 &seg0, const Segment2 &seg1) const;
 
-	/**
-	 * @brief Get the intersection type between segment and segment.
-	 * @note assume thant no segment is degenerate.
-	 */
-	SimplexIntersectionType intersection_type(const Segment2 &seg0,
-	                                          const Segment2 &seg1) const;
+  /**
+   * @brief Get the intersection type between segment and segment.
+   * @note assume thant no segment is degenerate.
+   */
+  SimplexIntersectionType intersection_type(const Segment2 &seg0,
+                                            const Segment2 &seg1) const;
 
-	/**
-	 * @brief Get the intersection type between segment and segment.
-	 * @param s00_s01 two vertices of the segment
-	 * @param s10_s11 two vertices of the segment
-	 * @note assume thant no segment is degenerate.
-	 */
-	SimplexIntersectionType intersection_type(const GPoint2 &s00,
-	                                          const GPoint2 &s01,
-	                                          const GPoint2 &s10,
-	                                          const GPoint2 &s11) const;
+  /**
+   * @brief Get the intersection type between segment and segment.
+   * @param s00_s01 two vertices of the segment
+   * @param s10_s11 two vertices of the segment
+   * @note assume thant no segment is degenerate.
+   */
+  SimplexIntersectionType intersection_type(const GPoint2 &s00,
+                                            const GPoint2 &s01,
+                                            const GPoint2 &s10,
+                                            const GPoint2 &s11) const;
 
-	/**
-	 * @brief Get the intersection type between segment and segment.
-	 * @param s00_s01 two vertices of the segment
-	 * @param s10_s11 two vertices of the segment
-	 * @note assume thant no segment is degenerate.
-	 */
-	SimplexIntersectionType intersection_type(const NT *s00, const NT *s01,
-	                                          const NT *s10, const NT *s11) const;
+  /**
+   * @brief Get the intersection type between segment and segment.
+   * @param s00_s01 two vertices of the segment
+   * @param s10_s11 two vertices of the segment
+   * @note assume thant no segment is degenerate.
+   */
+  SimplexIntersectionType intersection_type(const NT *s00, const NT *s01,
+                                            const NT *s10, const NT *s11) const;
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "Segment2_Segment2.inl"
+  #include "Segment2_Segment2.inl"
 #endif

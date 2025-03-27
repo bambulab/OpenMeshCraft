@@ -76,7 +76,6 @@ public:
   // using ET = LazyNumber</*HasApprox*/ std::false_type, /*Protected*/
   // std::true_type, /*ThreadSafe*/ std::true_type>;
   using ET = BoostRational;
-  // using ET = bigfloat;
   /// @}
 
   struct ToET

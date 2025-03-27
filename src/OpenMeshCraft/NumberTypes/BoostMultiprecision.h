@@ -11,7 +11,7 @@
   // in the future.
   // In addtion, such problem does not occur when compiling on windows with MSVC
   // or on linux-OS with gcc. Strange, right?
-	#define BOOST_CSTDFLOAT_NO_LIBQUADMATH_SUPPORT
+  #define BOOST_CSTDFLOAT_NO_LIBQUADMATH_SUPPORT
 #endif
 #include "boost/multiprecision/gmp.hpp"
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
@@ -29,44 +29,44 @@ template <>
 class UnaryOperators<BoostRational>
 {
 public:
-	using NT = BoostRational;
+  using NT = BoostRational;
 
 public:
-	static Sign sign(const NT &x)
-	{
-		if (x > 0)
-			return Sign::POSITIVE;
-		else if (x < 0)
-			return Sign::NEGATIVE;
-		else
-			return Sign::ZERO;
-	}
+  static Sign sign(const NT &x)
+  {
+    if (x > 0)
+      return Sign::POSITIVE;
+    else if (x < 0)
+      return Sign::NEGATIVE;
+    else
+      return Sign::ZERO;
+  }
 
-	static NT abs(const NT &x) { return boost::multiprecision::abs(x); }
+  static NT abs(const NT &x) { return boost::multiprecision::abs(x); }
 
-	static NT negate(const NT &x) { return -x; }
+  static NT negate(const NT &x) { return -x; }
 };
 
 template <>
 class UnaryOperators<BoostFloat>
 {
 public:
-	using NT = BoostFloat;
+  using NT = BoostFloat;
 
 public:
-	static Sign sign(const NT &x)
-	{
-		if (x > 0)
-			return Sign::POSITIVE;
-		else if (x < 0)
-			return Sign::NEGATIVE;
-		else
-			return Sign::ZERO;
-	}
+  static Sign sign(const NT &x)
+  {
+    if (x > 0)
+      return Sign::POSITIVE;
+    else if (x < 0)
+      return Sign::NEGATIVE;
+    else
+      return Sign::ZERO;
+  }
 
-	static NT abs(const NT &x) { return boost::multiprecision::abs(x); }
+  static NT abs(const NT &x) { return boost::multiprecision::abs(x); }
 
-	static NT negate(const NT &x) { return -x; }
+  static NT negate(const NT &x) { return -x; }
 };
 
 /***** Convertors for Boost numbers *****/
@@ -74,49 +74,49 @@ public:
 class BoostMpToInterval
 {
 public:
-	std::pair<double, double> operator()(const BoostRational &x);
+  std::pair<double, double> operator()(const BoostRational &x);
 
-	std::pair<double, double> operator()(const BoostFloat &x);
+  std::pair<double, double> operator()(const BoostFloat &x);
 
-	std::pair<double, double> operator()(const BoostMpzInt &x);
+  std::pair<double, double> operator()(const BoostMpzInt &x);
 };
 
 class BoostMpToDouble
 {
 public:
-	double operator()(const BoostRational &x) { return x.convert_to<double>(); }
+  double operator()(const BoostRational &x) { return x.convert_to<double>(); }
 
-	double operator()(const BoostFloat &x) { return x.convert_to<double>(); }
+  double operator()(const BoostFloat &x) { return x.convert_to<double>(); }
 };
 
 template <>
 inline double to_double(const BoostRational &n)
 {
-	return BoostMpToDouble()(n);
+  return BoostMpToDouble()(n);
 }
 
 template <>
 inline double to_double(const BoostFloat &n)
 {
-	return BoostMpToDouble()(n);
+  return BoostMpToDouble()(n);
 }
 
 template <>
 inline std::pair<double, double> to_interval(const BoostRational &n)
 {
-	return BoostMpToInterval()(n);
+  return BoostMpToInterval()(n);
 }
 
 template <>
 inline std::pair<double, double> to_interval(const BoostFloat &n)
 {
-	return BoostMpToInterval()(n);
+  return BoostMpToInterval()(n);
 }
 
 template <>
 inline std::pair<double, double> to_interval(const BoostMpzInt &n)
 {
-	return BoostMpToInterval()(n);
+  return BoostMpToInterval()(n);
 }
 
 } // namespace OMC

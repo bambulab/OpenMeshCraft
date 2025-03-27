@@ -576,7 +576,8 @@ void TetrahedralMesh<Traits>::faceCorners(index_t vid0, index_t vid1,
 
 /**
  * @brief Get the mirror face of the given face.
- * Mirror face is the face of the neighbor tetrahedron opposite to the given face.
+ * Mirror face is the face of the neighbor tetrahedron opposite to the given
+ * face.
  * @return The mirror face.
  */
 template <typename Traits>
@@ -866,7 +867,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
 
   if (last == 0)
   { // If all tetrahedra are marked to be deleted...
-    resizeTets(0);
+    resizeTets(0, /*lock*/ false);
     tet_deleted.clear();
     return;
   }
@@ -909,7 +910,7 @@ void TetrahedralMesh<Traits>::removeDeletedTets()
     }
   }
 
-  resizeTets((last + 4) >> 2);
+  resizeTets((last + 4) >> 2, /*lock*/ false);
   tet_deleted.clear();
 }
 

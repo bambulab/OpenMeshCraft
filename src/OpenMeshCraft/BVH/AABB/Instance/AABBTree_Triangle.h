@@ -13,8 +13,8 @@ namespace OMC {
  */
 enum class AABB_Tri_ReferencePointType
 {
-	First,   /// The first point `v0` of the triangle.
-	Centroid /// The centroid of the triangle.
+  First,   /// The first point `v0` of the triangle.
+  Centroid /// The centroid of the triangle.
 };
 
 /**
@@ -29,21 +29,21 @@ template <typename TriT, AABB_Tri_ReferencePointType RefPntType>
 class AABB_Tri_ReferencePoint
 {
 public:
-	using NT     = typename TriT::NT;
-	using PointT = remove_cvref_t<decltype(std::declval<TriT>().v0())>;
+  using NT     = typename TriT::NT;
+  using PointT = remove_cvref_t<decltype(std::declval<TriT>().v0())>;
 
 public:
-	PointT operator()(const TriT &tri)
-	{
-		if constexpr (RefPntType == AABB_Tri_ReferencePointType::First)
-		{
-			return tri.v0();
-		}
-		else if constexpr (RefPntType == AABB_Tri_ReferencePointType::Centroid)
-		{
-			return (tri.v0() + tri.v1() + tri.v2()) / NT(3.);
-		}
-	}
+  PointT operator()(const TriT &tri)
+  {
+    if constexpr (RefPntType == AABB_Tri_ReferencePointType::First)
+    {
+      return tri.v0();
+    }
+    else if constexpr (RefPntType == AABB_Tri_ReferencePointType::Centroid)
+    {
+      return (tri.v0() + tri.v1() + tri.v2()) / NT(3.);
+    }
+  }
 };
 
 } // namespace OMC

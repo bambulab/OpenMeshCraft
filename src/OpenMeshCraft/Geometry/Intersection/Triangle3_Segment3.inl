@@ -8,8 +8,8 @@ template <typename Kernel>
 bool Triangle3_Segment3_DoIntersectK<Kernel>::operator()(
   const Triangle3 &tri, const Segment3 &seg) const
 {
-	return intersection_type(tri, seg) >=
-	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
+  return intersection_type(tri, seg) >=
+         SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 }
 
 template <typename Kernel>
@@ -17,22 +17,22 @@ bool Triangle3_Segment3_DoIntersectK<Kernel>::operator()(
   const GPoint3 &v1, const GPoint3 &v2, const GPoint3 &v3, const GPoint3 &s1,
   const GPoint3 &s2) const
 {
-	return intersection_type(v1, v2, v3, s1, s2) >=
-	       SimplexIntersectionType::SIMPLICIAL_COMPLEX;
+  return intersection_type(v1, v2, v3, s1, s2) >=
+         SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 }
 
 template <typename Kernel>
 bool Triangle3_Segment3_DoIntersectK<Kernel>::cross(const Triangle3 &tri,
                                                     const Segment3  &seg) const
 {
-	return cross(tri.v0(), tri.v1(), tri.v2(), seg.start(), seg.end());
+  return cross(tri.v0(), tri.v1(), tri.v2(), seg.start(), seg.end());
 }
 
 template <typename Kernel>
 bool Triangle3_Segment3_DoIntersectK<Kernel>::cross_inner(
   const Triangle3 &tri, const Segment3 &seg) const
 {
-	return cross_inner(tri.v0(), tri.v1(), tri.v2(), seg.start(), seg.end());
+  return cross_inner(tri.v0(), tri.v1(), tri.v2(), seg.start(), seg.end());
 }
 
 template <typename Kernel>
@@ -42,31 +42,31 @@ bool Triangle3_Segment3_DoIntersectK<Kernel>::cross(const GPoint3 &v1,
                                                     const GPoint3 &s1,
                                                     const GPoint3 &s2) const
 {
-	Sign o1 = Orient3D()(v1, v2, v3, s1);
-	Sign o2 = Orient3D()(v1, v2, v3, s2);
+  Sign o1 = Orient3D()(v1, v2, v3, s1);
+  Sign o2 = Orient3D()(v1, v2, v3, s2);
 
-	if (o1 == Sign::ZERO && o2 == Sign::ZERO) // coplanar
-		return false;
-	if ((o1 > Sign::ZERO && o2 > Sign::ZERO) ||
-	    (o1 < Sign::ZERO && o2 < Sign::ZERO)) // above or below
-		return false;
+  if (o1 == Sign::ZERO && o2 == Sign::ZERO) // coplanar
+    return false;
+  if ((o1 > Sign::ZERO && o2 > Sign::ZERO) ||
+      (o1 < Sign::ZERO && o2 < Sign::ZERO)) // above or below
+    return false;
 
-	// s intersects t (borders included), if the signs of the three tetrahedra
-	// obtained combining s with the three edges of t are all equal
-	o1 = Orient3D()(s1, s2, v1, v2);
-	o2 = Orient3D()(s1, s2, v2, v3);
-	if ((o1 > Sign::ZERO && o2 < Sign::ZERO) ||
-	    (o1 < Sign::ZERO && o2 > Sign::ZERO))
-		return false;
-	Sign o3 = Orient3D()(s1, s2, v3, v1);
-	if ((o1 > Sign::ZERO && o3 < Sign::ZERO) ||
-	    (o1 < Sign::ZERO && o3 > Sign::ZERO))
-		return false;
-	if ((o2 > Sign::ZERO && o3 < Sign::ZERO) ||
-	    (o2 < Sign::ZERO && o3 > Sign::ZERO))
-		return false;
+  // s intersects t (borders included), if the signs of the three tetrahedra
+  // obtained combining s with the three edges of t are all equal
+  o1 = Orient3D()(s1, s2, v1, v2);
+  o2 = Orient3D()(s1, s2, v2, v3);
+  if ((o1 > Sign::ZERO && o2 < Sign::ZERO) ||
+      (o1 < Sign::ZERO && o2 > Sign::ZERO))
+    return false;
+  Sign o3 = Orient3D()(s1, s2, v3, v1);
+  if ((o1 > Sign::ZERO && o3 < Sign::ZERO) ||
+      (o1 < Sign::ZERO && o3 > Sign::ZERO))
+    return false;
+  if ((o2 > Sign::ZERO && o3 < Sign::ZERO) ||
+      (o2 < Sign::ZERO && o3 > Sign::ZERO))
+    return false;
 
-	return true;
+  return true;
 }
 
 template <typename Kernel>
@@ -74,29 +74,29 @@ bool Triangle3_Segment3_DoIntersectK<Kernel>::cross_inner(
   const GPoint3 &v1, const GPoint3 &v2, const GPoint3 &v3, const GPoint3 &s1,
   const GPoint3 &s2) const
 {
-	Sign o1 = Orient3D()(v1, v2, v3, s1);
-	if (o1 == Sign::ZERO)
-		return false;
-	Sign o2 = Orient3D()(v1, v2, v3, s2);
-	if (o2 == Sign::ZERO)
-		return false;
+  Sign o1 = Orient3D()(v1, v2, v3, s1);
+  if (o1 == Sign::ZERO)
+    return false;
+  Sign o2 = Orient3D()(v1, v2, v3, s2);
+  if (o2 == Sign::ZERO)
+    return false;
 
-	if ((o1 > Sign::ZERO && o2 > Sign::ZERO) ||
-	    (o1 < Sign::ZERO && o2 < Sign::ZERO))
-		return false;
-	o1 = Orient3D()(s1, s2, v1, v2);
-	o2 = Orient3D()(s1, s2, v2, v3);
-	if ((o1 >= Sign::ZERO && o2 <= Sign::ZERO) ||
-	    (o1 <= Sign::ZERO && o2 >= Sign::ZERO))
-		return false;
-	Sign o3 = Orient3D()(s1, s2, v3, v1);
-	if ((o1 >= Sign::ZERO && o3 <= Sign::ZERO) ||
-	    (o1 <= Sign::ZERO && o3 >= Sign::ZERO))
-		return false;
-	if ((o2 >= Sign::ZERO && o3 <= Sign::ZERO) ||
-	    (o2 <= Sign::ZERO && o3 >= Sign::ZERO))
-		return false;
-	return true;
+  if ((o1 > Sign::ZERO && o2 > Sign::ZERO) ||
+      (o1 < Sign::ZERO && o2 < Sign::ZERO))
+    return false;
+  o1 = Orient3D()(s1, s2, v1, v2);
+  o2 = Orient3D()(s1, s2, v2, v3);
+  if ((o1 >= Sign::ZERO && o2 <= Sign::ZERO) ||
+      (o1 <= Sign::ZERO && o2 >= Sign::ZERO))
+    return false;
+  Sign o3 = Orient3D()(s1, s2, v3, v1);
+  if ((o1 >= Sign::ZERO && o3 <= Sign::ZERO) ||
+      (o1 <= Sign::ZERO && o3 >= Sign::ZERO))
+    return false;
+  if ((o2 >= Sign::ZERO && o3 <= Sign::ZERO) ||
+      (o2 <= Sign::ZERO && o3 >= Sign::ZERO))
+    return false;
+  return true;
 }
 
 template <typename Kernel>
@@ -104,8 +104,8 @@ SimplexIntersectionType
 Triangle3_Segment3_DoIntersectK<Kernel>::intersection_type(
   const Triangle3 &tri, const Segment3 &seg) const
 {
-	return intersection_type(tri.v0(), tri.v1(), tri.v2(), seg.start(),
-	                         seg.end());
+  return intersection_type(tri.v0(), tri.v1(), tri.v2(), seg.start(),
+                           seg.end());
 }
 
 template <typename Kernel>
@@ -114,102 +114,102 @@ Triangle3_Segment3_DoIntersectK<Kernel>::intersection_type(
   const GPoint3 &t0, const GPoint3 &t1, const GPoint3 &t2, const GPoint3 &s0,
   const GPoint3 &s1) const
 {
-	// the triangle is abbreviated as t, and the segment as s
+  // the triangle is abbreviated as t, and the segment as s
 
-	bool s0_in_vertices =
-	  (LessThan3D().coincident(s0, t0) || LessThan3D().coincident(s0, t1) ||
-	   LessThan3D().coincident(s0, t2));
-	bool s1_in_vertices =
-	  (LessThan3D().coincident(s1, t0) || LessThan3D().coincident(s1, t1) ||
-	   LessThan3D().coincident(s1, t2));
-	if (s0_in_vertices && s1_in_vertices) // s is an edge of t
-		return SimplexIntersectionType::SIMPLICIAL_COMPLEX;
+  bool s0_in_vertices =
+    (LessThan3D().coincident(s0, t0) || LessThan3D().coincident(s0, t1) ||
+     LessThan3D().coincident(s0, t2));
+  bool s1_in_vertices =
+    (LessThan3D().coincident(s1, t0) || LessThan3D().coincident(s1, t1) ||
+     LessThan3D().coincident(s1, t2));
+  if (s0_in_vertices && s1_in_vertices) // s is an edge of t
+    return SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 
-	Sign vol_s0_t, vol_s1_t;
-	vol_s0_t = Orient3D()(t0, t1, t2, s0);
-	vol_s1_t = Orient3D()(t0, t1, t2, s1);
+  Sign vol_s0_t, vol_s1_t;
+  vol_s0_t = Orient3D()(t0, t1, t2, s0);
+  vol_s1_t = Orient3D()(t0, t1, t2, s1);
 
-	if (vol_s0_t > Sign::ZERO && vol_s1_t > Sign::ZERO) // s is above t
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
-	if (vol_s0_t < Sign::ZERO && vol_s1_t < Sign::ZERO) // s is below t
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
+  if (vol_s0_t > Sign::ZERO && vol_s1_t > Sign::ZERO) // s is above t
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
+  if (vol_s0_t < Sign::ZERO && vol_s1_t < Sign::ZERO) // s is below t
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
 
-	if (vol_s0_t == Sign::ZERO && vol_s1_t == Sign::ZERO) // s and t are coplanar
-	{
-		// Check s and t intersect, similar to 2D version
-		if (Triangle3_Point3_DoInter().intersection_type(t0, t1, t2, s0) !=
-		      PointInSimplexType::STRICTLY_OUTSIDE ||
-		    Triangle3_Point3_DoInter().intersection_type(t0, t1, t2, s1) !=
-		      PointInSimplexType::STRICTLY_OUTSIDE)
-			return SimplexIntersectionType::INTERSECT;
+  if (vol_s0_t == Sign::ZERO && vol_s1_t == Sign::ZERO) // s and t are coplanar
+  {
+    // Check s and t intersect, similar to 2D version
+    if (Triangle3_Point3_DoInter().intersection_type(t0, t1, t2, s0) !=
+          PointInSimplexType::STRICTLY_OUTSIDE ||
+        Triangle3_Point3_DoInter().intersection_type(t0, t1, t2, s1) !=
+          PointInSimplexType::STRICTLY_OUTSIDE)
+      return SimplexIntersectionType::INTERSECT;
 
-		switch (Segment3_Segment3_DoInter().intersection_type(s0, s1, t0, t1))
-		{
-		case SimplexIntersectionType::INTERSECT:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::OVERLAP:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
-			OMC_ASSERT(false, "Impossible case.");
-		case SimplexIntersectionType::DO_NOT_INTERSECT:
-			break; // continue checking
-		}
+    switch (Segment3_Segment3_DoInter().intersection_type(s0, s1, t0, t1))
+    {
+    case SimplexIntersectionType::INTERSECT:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::OVERLAP:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
+      OMC_ASSERT(false, "Impossible case.");
+    case SimplexIntersectionType::DO_NOT_INTERSECT:
+      break; // continue checking
+    }
 
-		switch (Segment3_Segment3_DoInter().intersection_type(s0, s1, t1, t2))
-		{
-		case SimplexIntersectionType::INTERSECT:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::OVERLAP:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
-			OMC_ASSERT(false, "Impossible case.");
-		case SimplexIntersectionType::DO_NOT_INTERSECT:
-			break; // continue checking
-		}
+    switch (Segment3_Segment3_DoInter().intersection_type(s0, s1, t1, t2))
+    {
+    case SimplexIntersectionType::INTERSECT:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::OVERLAP:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
+      OMC_ASSERT(false, "Impossible case.");
+    case SimplexIntersectionType::DO_NOT_INTERSECT:
+      break; // continue checking
+    }
 
-		switch (Segment3_Segment3_DoInter().intersection_type(s0, s1, t2, t0))
-		{
-		case SimplexIntersectionType::INTERSECT:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::OVERLAP:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
-			OMC_ASSERT(false, "Impossible case.");
-		case SimplexIntersectionType::DO_NOT_INTERSECT:
-			break;
-		}
+    switch (Segment3_Segment3_DoInter().intersection_type(s0, s1, t2, t0))
+    {
+    case SimplexIntersectionType::INTERSECT:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::OVERLAP:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
+      OMC_ASSERT(false, "Impossible case.");
+    case SimplexIntersectionType::DO_NOT_INTERSECT:
+      break;
+    }
 
-		// segment does not cross the triangle, they do not intersect
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
-	}
+    // segment does not cross the triangle, they do not intersect
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
+  }
 
-	// s crosses the plane of t or touches the plane of t by an endpoint.
-	// If the signs of the three tetrahedra obtained combining s with the three
-	// edges of t are all equal, s intersects t (borders included).
+  // s crosses the plane of t or touches the plane of t by an endpoint.
+  // If the signs of the three tetrahedra obtained combining s with the three
+  // edges of t are all equal, s intersects t (borders included).
 
-	// if one point is coplanar and coincides with a triangle vertex, then they
-	// form a valid complex
-	if (s0_in_vertices || s1_in_vertices)
-		return SimplexIntersectionType::SIMPLICIAL_COMPLEX;
+  // if one point is coplanar and coincides with a triangle vertex, then they
+  // form a valid complex
+  if (s0_in_vertices || s1_in_vertices)
+    return SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 
-	Sign vol_s_t01, vol_s_t12;
-	vol_s_t01 = Orient3D()(s0, s1, t0, t1);
-	vol_s_t12 = Orient3D()(s0, s1, t1, t2);
+  Sign vol_s_t01, vol_s_t12;
+  vol_s_t01 = Orient3D()(s0, s1, t0, t1);
+  vol_s_t12 = Orient3D()(s0, s1, t1, t2);
 
-	if ((vol_s_t01 > Sign::ZERO && vol_s_t12 < Sign::ZERO) ||
-	    (vol_s_t01 < Sign::ZERO && vol_s_t12 > Sign::ZERO))
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
+  if ((vol_s_t01 > Sign::ZERO && vol_s_t12 < Sign::ZERO) ||
+      (vol_s_t01 < Sign::ZERO && vol_s_t12 > Sign::ZERO))
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
 
-	Sign vol_s_t20 = Orient3D()(s0, s1, t2, t0);
+  Sign vol_s_t20 = Orient3D()(s0, s1, t2, t0);
 
-	if ((vol_s_t12 > Sign::ZERO && vol_s_t20 < Sign::ZERO) ||
-	    (vol_s_t12 < Sign::ZERO && vol_s_t20 > Sign::ZERO))
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
-	if ((vol_s_t20 > Sign::ZERO && vol_s_t01 < Sign::ZERO) ||
-	    (vol_s_t20 < Sign::ZERO && vol_s_t01 > Sign::ZERO))
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
+  if ((vol_s_t12 > Sign::ZERO && vol_s_t20 < Sign::ZERO) ||
+      (vol_s_t12 < Sign::ZERO && vol_s_t20 > Sign::ZERO))
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
+  if ((vol_s_t20 > Sign::ZERO && vol_s_t01 < Sign::ZERO) ||
+      (vol_s_t20 < Sign::ZERO && vol_s_t01 > Sign::ZERO))
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
 
-	return SimplexIntersectionType::INTERSECT;
+  return SimplexIntersectionType::INTERSECT;
 }
 
 template <typename Kernel>
@@ -218,136 +218,136 @@ Triangle3_Segment3_DoIntersectK<Kernel>::intersection_type(
   const NT *t0, const NT *t1, const NT *t2, const NT *s0, const NT *s1,
   int &n_max, const NT *t_min, const NT *t_perm) const
 {
-	// the triangle is abbreviated as t, and the segment as s
-	OMC_INTER_PROFILE_INC_TOTAL(IntersectionNames::T3S3);
+  // the triangle is abbreviated as t, and the segment as s
+  OMC_INTER_PROFILE_INC_TOTAL(IntersectionNames::T3S3);
 
-	bool s0_in_vertices =
-	  (vec_equals_3d(s0, t0) || vec_equals_3d(s0, t1) || vec_equals_3d(s0, t2));
-	bool s1_in_vertices =
-	  (vec_equals_3d(s1, t0) || vec_equals_3d(s1, t1) || vec_equals_3d(s1, t2));
-	if (s0_in_vertices && s1_in_vertices) // s is an edge of t
-		return SimplexIntersectionType::SIMPLICIAL_COMPLEX;
+  bool s0_in_vertices =
+    (vec_equals_3d(s0, t0) || vec_equals_3d(s0, t1) || vec_equals_3d(s0, t2));
+  bool s1_in_vertices =
+    (vec_equals_3d(s1, t0) || vec_equals_3d(s1, t1) || vec_equals_3d(s1, t2));
+  if (s0_in_vertices && s1_in_vertices) // s is an edge of t
+    return SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 
-	Sign vol_s0_t, vol_s1_t;
-	if (t_min != nullptr)
-	{
-		vol_s0_t = Orient3D().with_cached_minors(t0, t1, t2, s0, t_min, t_perm);
-		vol_s1_t = Orient3D().with_cached_minors(t0, t1, t2, s1, t_min, t_perm);
-	}
-	else
-	{
-		vol_s0_t = Orient3D()(t0, t1, t2, s0);
-		vol_s1_t = Orient3D()(t0, t1, t2, s1);
-	}
+  Sign vol_s0_t, vol_s1_t;
+  if (t_min != nullptr)
+  {
+    vol_s0_t = Orient3D().with_cached_minors(t0, t1, t2, s0, t_min, t_perm);
+    vol_s1_t = Orient3D().with_cached_minors(t0, t1, t2, s1, t_min, t_perm);
+  }
+  else
+  {
+    vol_s0_t = Orient3D()(t0, t1, t2, s0);
+    vol_s1_t = Orient3D()(t0, t1, t2, s1);
+  }
 
-	if (vol_s0_t > Sign::ZERO && vol_s1_t > Sign::ZERO) // s is above t
-	{
-		OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 0);
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
-	}
-	if (vol_s0_t < Sign::ZERO && vol_s1_t < Sign::ZERO) // s is below t
-	{
-		OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 1);
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
-	}
+  if (vol_s0_t > Sign::ZERO && vol_s1_t > Sign::ZERO) // s is above t
+  {
+    OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 0);
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
+  }
+  if (vol_s0_t < Sign::ZERO && vol_s1_t < Sign::ZERO) // s is below t
+  {
+    OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 1);
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
+  }
 
-	if (vol_s0_t == Sign::ZERO && vol_s1_t == Sign::ZERO) // s and t are coplanar
-	{
-		// Check s and t intersect, similar to 2D version
-		if (n_max == -1)
-			n_max = MaxCompInTriNormal()(t0, t1, t2);
+  if (vol_s0_t == Sign::ZERO && vol_s1_t == Sign::ZERO) // s and t are coplanar
+  {
+    // Check s and t intersect, similar to 2D version
+    if (n_max == -1)
+      n_max = MaxCompInTriNormal()(t0, t1, t2);
 
-		OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 2);
+    OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 2);
 
-		if ((Triangle3_Point3_DoInter().in_triangle(t0, t1, t2, s0, n_max) !=
-		       PointInType::STRICTLY_OUTSIDE ||
-		     Triangle3_Point3_DoInter().in_triangle(t0, t1, t2, s1, n_max) !=
-		       PointInType::STRICTLY_OUTSIDE))
-			return SimplexIntersectionType::INTERSECT;
+    if ((Triangle3_Point3_DoInter().in_triangle(t0, t1, t2, s0, n_max) !=
+           PointInType::STRICTLY_OUTSIDE ||
+         Triangle3_Point3_DoInter().in_triangle(t0, t1, t2, s1, n_max) !=
+           PointInType::STRICTLY_OUTSIDE))
+      return SimplexIntersectionType::INTERSECT;
 
-		OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 3);
+    OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 3);
 
-		switch (
-		  Segment3_Segment3_DoInter().intersection_type(s0, s1, t0, t1, n_max))
-		{
-		case SimplexIntersectionType::INTERSECT:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::OVERLAP:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
-			OMC_ASSERT(false, "Impossible case.");
-		case SimplexIntersectionType::DO_NOT_INTERSECT:
-			break;
-		}
+    switch (
+      Segment3_Segment3_DoInter().intersection_type(s0, s1, t0, t1, n_max))
+    {
+    case SimplexIntersectionType::INTERSECT:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::OVERLAP:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
+      OMC_ASSERT(false, "Impossible case.");
+    case SimplexIntersectionType::DO_NOT_INTERSECT:
+      break;
+    }
 
-		OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 4);
+    OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 4);
 
-		switch (
-		  Segment3_Segment3_DoInter().intersection_type(s0, s1, t1, t2, n_max))
-		{
-		case SimplexIntersectionType::INTERSECT:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::OVERLAP:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
-			OMC_ASSERT(false, "Impossible case.");
-		case SimplexIntersectionType::DO_NOT_INTERSECT:
-			break;
-		}
+    switch (
+      Segment3_Segment3_DoInter().intersection_type(s0, s1, t1, t2, n_max))
+    {
+    case SimplexIntersectionType::INTERSECT:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::OVERLAP:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
+      OMC_ASSERT(false, "Impossible case.");
+    case SimplexIntersectionType::DO_NOT_INTERSECT:
+      break;
+    }
 
-		OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 5);
+    OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 5);
 
-		switch (
-		  Segment3_Segment3_DoInter().intersection_type(s0, s1, t2, t0, n_max))
-		{
-		case SimplexIntersectionType::INTERSECT:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::OVERLAP:
-			return SimplexIntersectionType::INTERSECT;
-		case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
-			OMC_ASSERT(false, "Impossible case.");
-		case SimplexIntersectionType::DO_NOT_INTERSECT:
-			break;
-		}
+    switch (
+      Segment3_Segment3_DoInter().intersection_type(s0, s1, t2, t0, n_max))
+    {
+    case SimplexIntersectionType::INTERSECT:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::OVERLAP:
+      return SimplexIntersectionType::INTERSECT;
+    case SimplexIntersectionType::SIMPLICIAL_COMPLEX:
+      OMC_ASSERT(false, "Impossible case.");
+    case SimplexIntersectionType::DO_NOT_INTERSECT:
+      break;
+    }
 
-		OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 6);
+    OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 6);
 
-		// segment does not cross the triangle, they do not intersect
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
-	}
+    // segment does not cross the triangle, they do not intersect
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
+  }
 
-	OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 7);
+  OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 7);
 
-	// s crosses the plane of t or touches the plane of t by an endpoint.
-	// If the signs of the three tetrahedra obtained combining s with the three
-	// edges of t are all equal, s intersects t (borders included).
+  // s crosses the plane of t or touches the plane of t by an endpoint.
+  // If the signs of the three tetrahedra obtained combining s with the three
+  // edges of t are all equal, s intersects t (borders included).
 
-	// if one point is coplanar and coincides with a triangle vertex, then they
-	// form a valid complex
-	if (s0_in_vertices || s1_in_vertices)
-		return SimplexIntersectionType::SIMPLICIAL_COMPLEX;
+  // if one point is coplanar and coincides with a triangle vertex, then they
+  // form a valid complex
+  if (s0_in_vertices || s1_in_vertices)
+    return SimplexIntersectionType::SIMPLICIAL_COMPLEX;
 
-	Sign vol_s_t01 = Orient3D()(s0, s1, t0, t1);
-	Sign vol_s_t12 = Orient3D()(s0, s1, t1, t2);
+  Sign vol_s_t01 = Orient3D()(s0, s1, t0, t1);
+  Sign vol_s_t12 = Orient3D()(s0, s1, t1, t2);
 
-	if ((vol_s_t01 > Sign::ZERO && vol_s_t12 < Sign::ZERO) ||
-	    (vol_s_t01 < Sign::ZERO && vol_s_t12 > Sign::ZERO))
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
+  if ((vol_s_t01 > Sign::ZERO && vol_s_t12 < Sign::ZERO) ||
+      (vol_s_t01 < Sign::ZERO && vol_s_t12 > Sign::ZERO))
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
 
-	OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 8);
+  OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 8);
 
-	Sign vol_s_t20 = Orient3D()(s0, s1, t2, t0);
+  Sign vol_s_t20 = Orient3D()(s0, s1, t2, t0);
 
-	if ((vol_s_t12 > Sign::ZERO && vol_s_t20 < Sign::ZERO) ||
-	    (vol_s_t12 < Sign::ZERO && vol_s_t20 > Sign::ZERO))
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
-	if ((vol_s_t20 > Sign::ZERO && vol_s_t01 < Sign::ZERO) ||
-	    (vol_s_t20 < Sign::ZERO && vol_s_t01 > Sign::ZERO))
-		return SimplexIntersectionType::DO_NOT_INTERSECT;
+  if ((vol_s_t12 > Sign::ZERO && vol_s_t20 < Sign::ZERO) ||
+      (vol_s_t12 < Sign::ZERO && vol_s_t20 > Sign::ZERO))
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
+  if ((vol_s_t20 > Sign::ZERO && vol_s_t01 < Sign::ZERO) ||
+      (vol_s_t20 < Sign::ZERO && vol_s_t01 > Sign::ZERO))
+    return SimplexIntersectionType::DO_NOT_INTERSECT;
 
-	OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 9);
+  OMC_INTER_PROFILE_INC_REACH(IntersectionNames::T3S3, 9);
 
-	return SimplexIntersectionType::INTERSECT;
+  return SimplexIntersectionType::INTERSECT;
 }
 
 } // namespace OMC

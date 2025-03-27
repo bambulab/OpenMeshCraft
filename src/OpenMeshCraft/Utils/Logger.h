@@ -16,28 +16,28 @@ namespace OMC {
 class Logger
 {
 public:
-	enum class Level
-	{
-		TRACE = 1,
-		DEBUG = 2,
-		INFO  = 3,
-		WARN  = 4,
-		FATAL = 5
-	};
+  enum class Level
+  {
+    TRACE = 1,
+    DEBUG = 2,
+    INFO  = 3,
+    WARN  = 4,
+    FATAL = 5
+  };
 
 public:
-	static void trace(const std::string& msg);
-	static void debug(const std::string& msg);
-	static void info(const std::string& msg);
-	static void warn(const std::string& msg);
-	static void fatal(const std::string& msg);
+  static void trace(const std::string &msg);
+  static void debug(const std::string &msg);
+  static void info(const std::string &msg);
+  static void warn(const std::string &msg);
+  static void fatal(const std::string &msg);
 
-	/// @brief return the current time point.
-	OMC_NODISCARD static std::chrono::steady_clock::time_point elapse_reset();
+  /// @brief return the current time point.
+  OMC_NODISCARD static std::chrono::steady_clock::time_point elapse_reset();
 
-	/// @brief return the eplased time between current and last time point.
-	OMC_NODISCARD static std::chrono::duration<double>
-	elapsed(const std::chrono::steady_clock::time_point &last);
+  /// @brief return the eplased time between current and last time point.
+  OMC_NODISCARD static std::chrono::duration<double>
+  elapsed(const std::chrono::steady_clock::time_point &last);
 };
 
 /*****************************************************************************/

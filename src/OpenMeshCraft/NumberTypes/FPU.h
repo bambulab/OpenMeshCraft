@@ -27,9 +27,9 @@ inline void FPU_set_round(fpu_round_t round) { fesetround(round); }
 
 inline fpu_round_t FPU_get_then_set_round(fpu_round_t round)
 {
-	fpu_round_t old = FPU_get_round();
-	FPU_set_round(round);
-	return old;
+  fpu_round_t old = FPU_get_round();
+  FPU_set_round(round);
+  return old;
 }
 
 /// @brief A class whose constructor sets the FPU mode to +inf, saves a backup
@@ -43,12 +43,12 @@ template <>
 class FPU_RoundingProtector<std::true_type>
 {
 public:
-	FPU_RoundingProtector()
-	{
-		OMC_EXPENSIVE_ASSERT(FPU_get_round() == FE_UPWARD,
-		                     "round mode is not protected.");
-	}
-	~FPU_RoundingProtector() {}
+  FPU_RoundingProtector()
+  {
+    OMC_EXPENSIVE_ASSERT(FPU_get_round() == FE_UPWARD,
+                         "round mode is not protected.");
+  }
+  ~FPU_RoundingProtector() {}
 };
 
 /// @brief Rounding mode is not protected, this protector will try to protect.
@@ -56,14 +56,14 @@ template <>
 class FPU_RoundingProtector<std::false_type>
 {
 public:
-	FPU_RoundingProtector()
-	  : backup(FPU_get_then_set_round(FE_UPWARD))
-	{
-	}
-	~FPU_RoundingProtector() { FPU_set_round(backup); }
+  FPU_RoundingProtector()
+    : backup(FPU_get_then_set_round(FE_UPWARD))
+  {
+  }
+  ~FPU_RoundingProtector() { FPU_set_round(backup); }
 
 private:
-	fpu_round_t backup;
+  fpu_round_t backup;
 };
 
 } // namespace OMC

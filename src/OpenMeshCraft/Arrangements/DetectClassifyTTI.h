@@ -12,128 +12,128 @@ template <typename Traits>
 class DetectClassifyTTI
 {
 public:
-	using NT           = typename Traits::NT;
-	using EPoint3      = typename Traits::EPoint3;
-	using GPoint3      = typename Traits::GPoint3;
-	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
-	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
-	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
-	using AsGP         = typename Traits::AsGP;
-	using AsEP         = typename Traits::AsEP;
-	using ToEP         = typename Traits::ToEP;
-	using CreateSSI3   = typename Traits::CreateSSI3;
-	using CreateLPI    = typename Traits::CreateLPI;
-	using CreateTPI    = typename Traits::CreateTPI;
+  using NT           = typename Traits::NT;
+  using EPoint3      = typename Traits::EPoint3;
+  using GPoint3      = typename Traits::GPoint3;
+  using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+  using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+  using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
+  using AsGP         = typename Traits::AsGP;
+  using AsEP         = typename Traits::AsEP;
+  using ToEP         = typename Traits::ToEP;
+  using CreateSSI3   = typename Traits::CreateSSI3;
+  using CreateLPI    = typename Traits::CreateLPI;
+  using CreateTPI    = typename Traits::CreateTPI;
 
-	using Orient3D           = typename Traits::Orient3D;
-	using OrientOn2D         = typename Traits::OrientOn2D;
-	using LessThan3D         = typename Traits::LessThan3D;
-	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
-	using CollinearPoints3   = typename Traits::CollinearPoints3;
+  using Orient3D           = typename Traits::Orient3D;
+  using OrientOn2D         = typename Traits::OrientOn2D;
+  using LessThan3D         = typename Traits::LessThan3D;
+  using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
+  using CollinearPoints3   = typename Traits::CollinearPoints3;
 
-	using PntArena = ArrPointArena<Traits>;
-	using TriSoup  = TriangleSoup<Traits>;
+  using PntArena = ArrPointArena<Traits>;
+  using TriSoup  = TriangleSoup<Traits>;
 
-	DetectClassifyTTI(TriSoup &_ts, PntArena &_pnt_arena);
+  DetectClassifyTTI(TriSoup &_ts, PntArena &_pnt_arena);
 
 public:
-	void check_TTI(index_t ta, index_t tb);
+  void check_TTI(index_t ta, index_t tb);
 
 protected:
-	/* Input data */
-	TriSoup  &ts;
-	PntArena &pnt_arena;
+  /* Input data */
+  TriSoup  &ts;
+  PntArena &pnt_arena;
 
-	struct TTIHelper;
-	struct CoplanarEEI;
+  struct TTIHelper;
+  struct CoplanarEEI;
 
-	using IntersectionPoints = InlinedVector4<index_t>;
-	using IntersectionTypes  = InlinedVector4<PointInSimplexType>;
-	using CoplanarEEIList    = InlinedVector4<CoplanarEEI>;
-
-protected:
-	index_t get_e_id(TTIHelper &ha, index_t ea);
-
-	bool get_v_in_seg(TTIHelper &ha, index_t va, TTIHelper &hb, index_t eb);
-
-	index_t get_v_in_seg(TTIHelper &ha, index_t va, TTIHelper &hb);
-
-	bool get_v_in_tri(TTIHelper &ha, index_t va, TTIHelper &hb);
-
-	Sign get_v_wrt_seg(TTIHelper &ha, index_t va, TTIHelper &hb, index_t eb);
-
-	Sign get_v_wrt_tri(TTIHelper &ha, index_t va, TTIHelper &hb);
-
-	Sign get_seg_wrt_seg(TTIHelper &ha, index_t ea, TTIHelper &hb, index_t eb);
-
-	size_t get_vtx_wrt_sector(TTIHelper &ha, index_t va, TTIHelper &hb,
-	                          index_t eb);
-
-	size_t find_vtx_correspondence(TTIHelper &ha, TTIHelper &hb);
-
-	bool fast_check_on2d_share_vertex(TTIHelper &ha, index_t ea, TTIHelper &hb,
-	                                  index_t eb);
-
-	bool fast_check_on2d_separate(TTIHelper &ha, TTIHelper &hb);
-
-	bool seg_seg_do_intersect(TTIHelper &ha, index_t ea, TTIHelper &hb,
-	                          index_t eb, Sign eb0_wrt_ea, Sign eb1_wrt_ea);
-
-	bool coplanar_seg_tri_do_intersect(TTIHelper &ha, index_t ea, TTIHelper &hb);
-
-	bool noncoplanar_seg_tri_do_intersect(TTIHelper &ha, index_t ea,
-	                                      TTIHelper &hb);
-
-	bool intersection_on_one_edge(const IntersectionTypes &intersection_types,
-	                              index_t                 &edge_id);
+  using IntersectionPoints = InlinedVector4<index_t>;
+  using IntersectionTypes  = InlinedVector4<PointInSimplexType>;
+  using CoplanarEEIList    = InlinedVector4<CoplanarEEI>;
 
 protected:
-	void check_TTI_share_edge(TTIHelper &ha, TTIHelper &hb);
+  index_t get_e_id(TTIHelper &ha, index_t ea);
 
-	void check_TTI_share_vertex(TTIHelper &ha, TTIHelper &hb);
+  bool get_v_in_seg(TTIHelper &ha, index_t va, TTIHelper &hb, index_t eb);
 
-	void check_TTI_separate(TTIHelper &ha, TTIHelper &hb);
+  index_t get_v_in_seg(TTIHelper &ha, index_t va, TTIHelper &hb);
 
-	bool
-	classify_coplanr_vtx_intersections(TTIHelper &ha, index_t va, TTIHelper &hb,
-	                                   IntersectionPoints &intersection_points,
-	                                   IntersectionTypes  &intersection_types);
+  bool get_v_in_tri(TTIHelper &ha, index_t va, TTIHelper &hb);
 
-	bool classify_coplanar_edge_intersections(
-	  TTIHelper &ha, index_t ea, TTIHelper &hb,
-	  CoplanarEEIList *copl_edge_crosses = nullptr);
+  Sign get_v_wrt_seg(TTIHelper &ha, index_t va, TTIHelper &hb, index_t eb);
 
-	bool classify_noncoplanar_edge_intersections(
-	  TTIHelper &ha, index_t ea, TTIHelper &hb,
-	  IntersectionPoints &intersection_points,
-	  IntersectionTypes  &intersection_types);
+  Sign get_v_wrt_tri(TTIHelper &ha, index_t va, TTIHelper &hb);
 
-	void add_symbolic_segment(index_t v0, index_t v1, TTIHelper &ha, index_t ea,
-	                          TTIHelper &hb, index_t eb);
+  Sign get_seg_wrt_seg(TTIHelper &ha, index_t ea, TTIHelper &hb, index_t eb);
 
-	index_t add_vertex_in_tri(TTIHelper &ha, TTIHelper &hb, index_t vb);
+  size_t get_vtx_wrt_sector(TTIHelper &ha, index_t va, TTIHelper &hb,
+                            index_t eb);
 
-	index_t add_vertex_in_edge(TTIHelper &ha, index_t ea, TTIHelper &hb,
-	                           index_t vb);
+  size_t find_vtx_correspondence(TTIHelper &ha, TTIHelper &hb);
 
-	index_t add_edge_cross_coplanar_edge(TTIHelper &ha, index_t ea, TTIHelper &hb,
-	                                     index_t          eb,
-	                                     CoplanarEEIList *copl_edge_crosses);
+  bool fast_check_on2d_share_vertex(TTIHelper &ha, index_t ea, TTIHelper &hb,
+                                    index_t eb);
 
-	index_t add_edge_cross_noncoplanar_edge(TTIHelper &ha, index_t ea,
-	                                        TTIHelper &hb, index_t eb);
+  bool fast_check_on2d_separate(TTIHelper &ha, TTIHelper &hb);
 
-	index_t add_edge_cross_tri(TTIHelper &ha, index_t ea, TTIHelper &hb);
+  bool seg_seg_do_intersect(TTIHelper &ha, index_t ea, TTIHelper &hb,
+                            index_t eb, Sign eb0_wrt_ea, Sign eb1_wrt_ea);
 
-	OMC_NODISCARD std::pair<index_t, bool> add_SSI(index_t ea_id, index_t eb_id,
-	                                               GPoint3 *new_v);
+  bool coplanar_seg_tri_do_intersect(TTIHelper &ha, index_t ea, TTIHelper &hb);
 
-	OMC_NODISCARD std::pair<index_t, bool> add_LPI(index_t e_id, index_t t_id,
-	                                               GPoint3 *new_v);
+  bool noncoplanar_seg_tri_do_intersect(TTIHelper &ha, index_t ea,
+                                        TTIHelper &hb);
+
+  bool intersection_on_one_edge(const IntersectionTypes &intersection_types,
+                                index_t                 &edge_id);
+
+protected:
+  void check_TTI_share_edge(TTIHelper &ha, TTIHelper &hb);
+
+  void check_TTI_share_vertex(TTIHelper &ha, TTIHelper &hb);
+
+  void check_TTI_separate(TTIHelper &ha, TTIHelper &hb);
+
+  bool
+  classify_coplanr_vtx_intersections(TTIHelper &ha, index_t va, TTIHelper &hb,
+                                     IntersectionPoints &intersection_points,
+                                     IntersectionTypes  &intersection_types);
+
+  bool classify_coplanar_edge_intersections(
+    TTIHelper &ha, index_t ea, TTIHelper &hb,
+    CoplanarEEIList *copl_edge_crosses = nullptr);
+
+  bool classify_noncoplanar_edge_intersections(
+    TTIHelper &ha, index_t ea, TTIHelper &hb,
+    IntersectionPoints &intersection_points,
+    IntersectionTypes  &intersection_types);
+
+  void add_symbolic_segment(index_t v0, index_t v1, TTIHelper &ha, index_t ea,
+                            TTIHelper &hb, index_t eb);
+
+  index_t add_vertex_in_tri(TTIHelper &ha, TTIHelper &hb, index_t vb);
+
+  index_t add_vertex_in_edge(TTIHelper &ha, index_t ea, TTIHelper &hb,
+                             index_t vb);
+
+  index_t add_edge_cross_coplanar_edge(TTIHelper &ha, index_t ea, TTIHelper &hb,
+                                       index_t          eb,
+                                       CoplanarEEIList *copl_edge_crosses);
+
+  index_t add_edge_cross_noncoplanar_edge(TTIHelper &ha, index_t ea,
+                                          TTIHelper &hb, index_t eb);
+
+  index_t add_edge_cross_tri(TTIHelper &ha, index_t ea, TTIHelper &hb);
+
+  OMC_NODISCARD std::pair<index_t, bool> add_SSI(index_t ea_id, index_t eb_id,
+                                                 GPoint3 *new_v);
+
+  OMC_NODISCARD std::pair<index_t, bool> add_LPI(index_t e_id, index_t t_id,
+                                                 GPoint3 *new_v);
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "DetectClassifyTTI.inl"
+  #include "DetectClassifyTTI.inl"
 #endif

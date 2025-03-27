@@ -3,7 +3,7 @@
 #include "OpenMeshCraft/Utils/Macros.h"
 
 #if defined(OMC_AVX2)
-	#include "immintrin.h"
+  #include "immintrin.h"
 #endif
 
 #include <cmath>
@@ -383,5 +383,5 @@ inline void two_square_clip(const double &a1, const double &a0, double &x1,
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "Multiprecision.inl"
+  #include "Multiprecision.inl"
 #endif

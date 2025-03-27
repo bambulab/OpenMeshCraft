@@ -8,99 +8,99 @@ template <typename Traits>
 class DetectClassifyTTIs
 {
 public:
-	using NT           = typename Traits::NT;
-	using EPoint3      = typename Traits::EPoint3;
-	using GPoint3      = typename Traits::GPoint3;
-	using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
-	using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
-	using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
-	using AsGP         = typename Traits::AsGP;
-	using AsEP         = typename Traits::AsEP;
-	using ToEP         = typename Traits::ToEP;
-	using CreateSSI3   = typename Traits::CreateSSI3;
-	using CreateLPI    = typename Traits::CreateLPI;
-	using CreateTPI    = typename Traits::CreateTPI;
+  using NT           = typename Traits::NT;
+  using EPoint3      = typename Traits::EPoint3;
+  using GPoint3      = typename Traits::GPoint3;
+  using IPoint3T_SSI = typename Traits::IPoint3T_SSI;
+  using IPoint3T_LPI = typename Traits::IPoint3T_LPI;
+  using IPoint3T_TPI = typename Traits::IPoint3T_TPI;
+  using AsGP         = typename Traits::AsGP;
+  using AsEP         = typename Traits::AsEP;
+  using ToEP         = typename Traits::ToEP;
+  using CreateSSI3   = typename Traits::CreateSSI3;
+  using CreateLPI    = typename Traits::CreateLPI;
+  using CreateTPI    = typename Traits::CreateTPI;
 
-	using DoIntersect        = typename Traits::DoIntersect;
-	using Orient3D           = typename Traits::Orient3D;
-	using CollinearPoints3   = typename Traits::CollinearPoints3;
-	using OrientOn2D         = typename Traits::OrientOn2D;
-	using LessThan3D         = typename Traits::LessThan3D;
-	using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
+  using DoIntersect        = typename Traits::DoIntersect;
+  using Orient3D           = typename Traits::Orient3D;
+  using CollinearPoints3   = typename Traits::CollinearPoints3;
+  using OrientOn2D         = typename Traits::OrientOn2D;
+  using LessThan3D         = typename Traits::LessThan3D;
+  using MaxCompInTriNormal = typename Traits::MaxCompInTriNormal;
 
-	using Triangle3_Triangle3_DoIntersect =
-	  typename Traits::Triangle3_Triangle3_DoIntersect;
+  using Triangle3_Triangle3_DoIntersect =
+    typename Traits::Triangle3_Triangle3_DoIntersect;
 
-	using PntArena = ArrPointArena<Traits>;
-	using TriSoup  = TriangleSoup<Traits>;
+  using PntArena = ArrPointArena<Traits>;
+  using TriSoup  = TriangleSoup<Traits>;
 
-	using Tree = Arr_Tree_Intersection<Traits>;
+  using Tree = Arr_Tree_Intersection<Traits>;
 
-	DetectClassifyTTIs(TriSoup &_ts, const Tree &_tree,
-	                   const MeshArrangements_Config &_config,
-	                   MeshArrangements_Stats        &_stats);
-
-protected:
-	/**
-	 * @brief Leaf nodes of OcTree are divided into two groups.
-	 *
-	 * If number of boxes in a leaf node is less than a specific number (e.g.,
-	 * 1000), the node is assigned to \p small_leaf_nodes, otherwise it is
-	 * assigned to \p large_leaf_nodes.
-	 *
-	 * Then, for \p small_leaf_nodes, we parallelize intersection detection on
-	 * these nodes. For \p large_leaf_nodes, we collect pairs of boxes in one node
-	 * and parallelize detection on these pairs.
-	 *
-	 * Why do we do that?
-	 * We want the scale of parallelism is relatively large, hence there won't be
-	 * significant overhead on parallelism.
-	 * @param [in] leaf_nodes All leaf nodes of OcTree.
-	 * @param [out] small_leaf_nodes	See explanation in brief.
-	 * @param [out] large_leaf_nodes See explanation in brief.
-	 */
-	void partitionNodes(const std::vector<index_t> &leaf_nodes,
-	                    std::vector<index_t>       &small_leaf_nodes,
-	                    std::vector<index_t>       &large_leaf_nodes);
-
-	/**
-	 * @brief Parallelize intersection detection on \p nodes.
-	 * @param leaf_nodes The small_leaf_nodes from partitionNodes.
-	 */
-	void parallelOnSmallNodes(const std::vector<index_t> &nodes);
-
-	/**
-	 * @brief Parallelize intersection detection on pairs of boxes in each node in
-	 * \p nodes.
-	 * @param leaf_nodes The large_leaf_nodes from partitionNodes.
-	 */
-	void parallelOnLargeNodes(const std::vector<index_t> &nodes);
-
-	void cacheBoxesInNode(const typename Tree::Node             &node,
-	                      CStyleVector<typename Tree::TreeBbox> &cached_boxes,
-	                      bool cache_labels, CStyleVector<Label> &cached_labels);
-
-	void propagateCoplanarIntersections();
+  DetectClassifyTTIs(TriSoup &_ts, const Tree &_tree,
+                     const MeshArrangements_Config &_config,
+                     MeshArrangements_Stats        &_stats);
 
 protected:
-	TriSoup               &ts;
-	std::vector<PntArena> &pnt_arenas;
+  /**
+   * @brief Leaf nodes of OcTree are divided into two groups.
+   *
+   * If number of boxes in a leaf node is less than a specific number (e.g.,
+   * 1000), the node is assigned to \p small_leaf_nodes, otherwise it is
+   * assigned to \p large_leaf_nodes.
+   *
+   * Then, for \p small_leaf_nodes, we parallelize intersection detection on
+   * these nodes. For \p large_leaf_nodes, we collect pairs of boxes in one node
+   * and parallelize detection on these pairs.
+   *
+   * Why do we do that?
+   * We want the scale of parallelism is relatively large, hence there won't be
+   * significant overhead on parallelism.
+   * @param [in] leaf_nodes All leaf nodes of OcTree.
+   * @param [out] small_leaf_nodes  See explanation in brief.
+   * @param [out] large_leaf_nodes See explanation in brief.
+   */
+  void partitionNodes(const std::vector<index_t> &leaf_nodes,
+                      std::vector<index_t>       &small_leaf_nodes,
+                      std::vector<index_t>       &large_leaf_nodes);
 
-	const std::vector<Label> &labels;
-	const Tree               &tree;
+  /**
+   * @brief Parallelize intersection detection on \p nodes.
+   * @param leaf_nodes The small_leaf_nodes from partitionNodes.
+   */
+  void parallelOnSmallNodes(const std::vector<index_t> &nodes);
+
+  /**
+   * @brief Parallelize intersection detection on pairs of boxes in each node in
+   * \p nodes.
+   * @param leaf_nodes The large_leaf_nodes from partitionNodes.
+   */
+  void parallelOnLargeNodes(const std::vector<index_t> &nodes);
+
+  void cacheBoxesInNode(const typename Tree::Node             &node,
+                        CStyleVector<typename Tree::TreeBbox> &cached_boxes,
+                        bool cache_labels, CStyleVector<Label> &cached_labels);
+
+  void propagateCoplanarIntersections();
+
+protected:
+  TriSoup               &ts;
+  std::vector<PntArena> &pnt_arenas;
+
+  const std::vector<Label> &labels;
+  const Tree               &tree;
 
 #ifdef OMC_ARR_PROFILE
-	tbb::concurrent_vector<UIPair> intersecting_triangle_pairs;
+  tbb::concurrent_vector<UIPair> intersecting_triangle_pairs;
 #endif
 
-	/* configuration */
-	const MeshArrangements_Config &config;
-	/* statistics */
-	MeshArrangements_Stats        &stats;
+  /* configuration */
+  const MeshArrangements_Config &config;
+  /* statistics */
+  MeshArrangements_Stats        &stats;
 };
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "DetectClassifyTTIs.inl"
+  #include "DetectClassifyTTIs.inl"
 #endif

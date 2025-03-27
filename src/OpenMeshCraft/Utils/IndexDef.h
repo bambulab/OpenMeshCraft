@@ -34,7 +34,7 @@ using UIPair = std::pair<index_t, index_t>;
 
 inline UIPair unique_pair(index_t i, index_t j)
 {
-	return (i < j) ? std::make_pair(i, j) : std::make_pair(j, i);
+  return (i < j) ? std::make_pair(i, j) : std::make_pair(j, i);
 }
 
 /// "<" in case of unique, "==" in case of two invalid indices.
@@ -42,7 +42,7 @@ inline bool is_unique(const UIPair &p) { return p.first <= p.second; }
 
 inline IPair reverse_pair(const IPair &p)
 {
-	return std::make_pair(p.second, p.first);
+  return std::make_pair(p.second, p.first);
 }
 
 } // namespace OMC

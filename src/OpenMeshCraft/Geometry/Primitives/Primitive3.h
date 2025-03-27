@@ -12,9 +12,9 @@ template <typename _NT>
 class Primitive3
 {
 public:
-	using NT = _NT;
+  using NT = _NT;
 
-	static constexpr size_t dim = 3;
+  static constexpr size_t dim = 3;
 };
 
 } // namespace OMC
