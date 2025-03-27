@@ -51,7 +51,7 @@ Triangulation<Traits>::Triangulation(TriSoup                       &_ts,
 	index_t tpi_begin = ts.vertices.size();
 
 	// processing the triangles to split
-	GPoint3::enable_global_cached_values(tbb::this_task_arena::max_concurrency());
+	GPoint3::enable_global_cached_values();
 #ifdef OMC_ARR_TR_PARA
 	std::shuffle(tris_to_split.begin(), tris_to_split.end(),
 	             std::mt19937(std::random_device()()));

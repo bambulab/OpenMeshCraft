@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ImplicitPoints/GlobalCachedValues.h"
-
 #include "ExplicitPoint2T.h"
 #include "GenericPoint2T.h"
 
@@ -21,79 +19,64 @@ template <typename IT_, typename ET_>
 class ImplicitPoint2T_SSI : public GenericPoint2T<IT_, ET_>
 {
 public: /* types *************************************************************/
-	using NT = double; ///< floating point type
-	using IT = IT_;    ///< interval type
-	using ET = ET_;    ///< exact type
+  using NT = double; ///< floating point type
+  using IT = IT_;    ///< interval type
+  using ET = ET_;    ///< exact type
 
-	using EP = ExplicitPoint2T<IT, ET>;
-	using IP = ImplicitPoint2T_SSI<IT, ET>;
-	using GP = GenericPoint2T<IT, ET>;
+  using EP = ExplicitPoint2T<IT, ET>;
+  using IP = ImplicitPoint2T_SSI<IT, ET>;
+  using GP = GenericPoint2T<IT, ET>;
 
-	/// An enum class to indicate the type of the point.
-	using PointType = typename GP::PointType;
-
-	/// A class to store cached values for one point.
-	using GCV = GlobalCachedValues<OnePointCachedValues2<IT, ET>>;
+  /// An enum class to indicate the type of the point.
+  using PointType = typename GP::PointType;
 
 public: /* Constructors ******************************************************/
-	/// @brief default constructor
-	ImplicitPoint2T_SSI() noexcept;
+  /// @brief default constructor
+  ImplicitPoint2T_SSI() noexcept;
 
-	/// @brief init SSI point with segment(a, b) and segment(c, d)
-	ImplicitPoint2T_SSI(const EP &a, const EP &b, const EP &c,
-	                    const EP &d) noexcept;
+  /// @brief init SSI point with segment(a, b) and segment(c, d)
+  ImplicitPoint2T_SSI(const EP &a, const EP &b, const EP &c,
+                      const EP &d) noexcept;
 
-	~ImplicitPoint2T_SSI() noexcept {}
+  ~ImplicitPoint2T_SSI() noexcept {}
 
-	ImplicitPoint2T_SSI(const IP &rhs) noexcept;
-	ImplicitPoint2T_SSI(IP &&rhs) noexcept;
+  ImplicitPoint2T_SSI(const IP &rhs) noexcept;
+  ImplicitPoint2T_SSI(IP &&rhs) noexcept;
 
-	IP &operator=(const IP &rhs);
-	IP &operator=(IP &&rhs);
+  IP &operator=(const IP &rhs);
+  IP &operator=(IP &&rhs);
 
 public: /* Members ***********************************************************/
-	const EP &A() const { return *ia; }
-	const EP &B() const { return *ib; }
-	const EP &P() const { return *ip; }
-	const EP &Q() const { return *iq; }
+  const EP &A() const { return *ia; }
+  const EP &B() const { return *ib; }
+  const EP &P() const { return *ip; }
+  const EP &Q() const { return *iq; }
 
 public: /* Lambdas ***********************************************************/
-	/**
-	 * @brief Get the Lambda values represented by interval numbers.
-	 * @return true if the sign of d is reliable.
-	 */
-	bool getIntervalLambda(IT &lx, IT &ly, IT &d) const;
+  /**
+   * @brief Get the Lambda values represented by interval numbers.
+   * @return true if the sign of d is reliable.
+   */
+  bool getIntervalLambda(IT &lx, IT &ly, IT &d) const;
 
-	/**
-	 * @brief Get the Lambda values represented by exact numbers.
-	 */
-	void getExactLambda(ET &lx, ET &ly, ET &d) const;
+  /**
+   * @brief Get the Lambda values represented by exact numbers.
+   */
+  void getExactLambda(ET &lx, ET &ly, ET &d) const;
 
-	/**
-	 * @brief Get the Lambda values represented by expansion numbers.
-	 */
-	void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **d,
-	                        int &d_len) const;
-
-public: /* Cache *************************************************************/
-	static GCV &gcv() { return global_cached_values; }
+  /**
+   * @brief Get the Lambda values represented by expansion numbers.
+   */
+  void getExpansionLambda(NT **lx, int &lx_len, NT **ly, int &ly_len, NT **d,
+                          int &d_len) const;
 
 private:
-	const EP *ia, *ib; ///< the first segment(a, b)
-	const EP *ip, *iq; ///< the second segment(p, q)
-
-	/// global cached lambda values
-	static GCV global_cached_values;
+  const EP *ia, *ib; ///< the first segment(a, b)
+  const EP *ip, *iq; ///< the second segment(p, q)
 };
-
-/// static member variables
-template <typename IT_, typename ET_>
-typename ImplicitPoint2T_SSI<IT_, ET_>::GCV
-  ImplicitPoint2T_SSI<IT_, ET_>::global_cached_values =
-    ImplicitPoint2T_SSI<IT_, ET_>::GCV();
 
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-	#include "ImplicitPoints/ImplicitPoint2T_SSI.inl"
+  #include "ImplicitPoints/ImplicitPoint2T_SSI.inl"
 #endif

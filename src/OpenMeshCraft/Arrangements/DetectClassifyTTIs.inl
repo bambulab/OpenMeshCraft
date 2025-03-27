@@ -49,7 +49,7 @@ DetectClassifyTTIs<Traits>::DetectClassifyTTIs(
 	std::vector<index_t> small_nodes, large_nodes;
 	partitionNodes(leaf_nodes, small_nodes, large_nodes);
 
-	GPoint3::enable_global_cached_values(tbb::this_task_arena::max_concurrency());
+	GPoint3::enable_global_cached_values();
 	parallelOnSmallNodes(small_nodes);
 	parallelOnLargeNodes(large_nodes);
 	GPoint3::disable_global_cached_values();
