@@ -42,7 +42,7 @@ target_include_directories(
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC # Eigen
-         Eigen3::Eigen
+         Eigen3
          # GMP and MPFR
          GMP
          MPFR
@@ -67,3 +67,25 @@ target_compile_definitions(
 include(OpenMeshCraft_ConfigureMacros)
 
 include(OpenMeshCraft_ConfigureCompiler)
+
+# set variables for parent project
+# ##############################################################################
+
+if(NOT OMC_MASTER_PROJECT)
+
+  set(OPENMESHCRAFT_FOUND
+      TRUE
+      CACHE BOOL "OpenMeshCraft found")
+  set(OPENMESHCRAFT_INCLUDE_DIRS
+      ${CMAKE_CURRENT_SOURCE_DIR}/..
+      CACHE PATH "OpenMeshCraft include directories")
+  set(OPENMESHCRAFT_LIBRARIES
+      ${PROJECT_NAME}
+      CACHE STRING "OpenMeshCraft libraries")
+
+  message(STATUS "[OpenMeshCraft] OpenMeshCraft found")
+  message(STATUS "[OpenMeshCraft] OPENMESHCRAFT_INCLUDE_DIRS: ${OPENMESHCRAFT_INCLUDE_DIRS}")
+  message(STATUS "[OpenMeshCraft] OPENMESHCRAFT_LIBRARIES: ${OPENMESHCRAFT_LIBRARIES}")
+  message(STATUS "[OpenMeshCraft] Link target `OpenMeshCraft` to your project.")
+
+endif() # Set variables for parent project
