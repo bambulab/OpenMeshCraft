@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Criteria.h"
 #include "TetMesh.h"
 
 #include "OpenMeshCraft/Utils/IndexHeap.h"
@@ -22,18 +23,15 @@ namespace OMC {
  * queries such as: (1) whether a point is within the domain, (2) the subdomain
  * of a point, (3) the intersection between subdomain boundaries and a segment,
  * etc.
- * @tparam Criteria Specifies the criteria for refinement, determining whether a
- * face should be refined.
  */
-template <typename _Traits, typename _Domain, typename _Criteria>
+template <typename _Traits, typename _Domain>
 class FaceRefine
 {
 public: /* Traits **********************************************************/
-  using Traits   = _Traits;
-  using Domain   = _Domain;
-  using Criteria = _Criteria;
+  using Traits = _Traits;
+  using Domain = _Domain;
 
-  using Self = FaceRefine<Traits, Domain, Criteria>;
+  using Self = FaceRefine<Traits, Domain>;
 
   using NT      = typename Traits::NT;
   using Vec3    = typename Traits::Vec3;
@@ -46,6 +44,8 @@ public: /* Traits **********************************************************/
   using VTX_MARK  = typename TetMesh::VTX_MARK;
   using TET_MARK  = typename TetMesh::TET_MARK;
   using FACE_MARK = typename TetMesh::FACE_MARK;
+
+  using Criteria = TetMeshCriteria<Traits>;
 
   /* Face in TetMesh ========================================================
    *
@@ -87,6 +87,7 @@ public: /* Traits **********************************************************/
   {
     FaceQuality quality;
     // clang-format off
+    FaceToRefine() = default;
     FaceToRefine(FaceQuality _quality)
       : quality(_quality) {}
     bool operator<(const FaceToRefine &other) const { return quality < other.quality; }

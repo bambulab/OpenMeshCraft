@@ -93,8 +93,8 @@ public: /* Algorithms ******************************************************/
 
   /* Geometric & Topologic Operations on both TetMesh & PLC */
 
-  GPoint3       &gpnt(index_t vid) { return *verts[vid]; }
-  const GPoint3 &gpnt(index_t vid) const { return *verts[vid]; }
+  GPoint3       &point(index_t vid) { return *verts[vid]; }
+  const GPoint3 &point(index_t vid) const { return *verts[vid]; }
 
 public: /* Data ************************************************************/
   /// vertices (stored by both `tet_mesh` and `plc`)

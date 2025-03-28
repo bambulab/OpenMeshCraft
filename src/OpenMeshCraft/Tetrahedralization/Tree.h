@@ -124,14 +124,14 @@ public: /* Operators **********************************************************/
     return bbox;
   }
 
-  BoundingBox operator()(const GPoint3 &gpnt) const
+  BoundingBox operator()(const GPoint3 &point) const
   {
-    return CalcBoundingBox3()(gpnt);
+    return CalcBoundingBox3()(point);
   }
 
-  BoundingBox operator()(const GPoint3 *gpnt) const
+  BoundingBox operator()(const GPoint3 *point) const
   {
-    return CalcBoundingBox3()(*gpnt);
+    return CalcBoundingBox3()(*point);
   }
 
   template <

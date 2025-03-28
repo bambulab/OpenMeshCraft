@@ -4,17 +4,17 @@
 
 namespace OMC {
 
-template <typename T, typename D, typename C>
-FaceRefine<T, D, C>::FaceRefine(const Domain   &_domain,
-                                const Criteria &_criteria, TetMesh &_tet_mesh)
+template <typename T, typename D>
+FaceRefine<T, D>::FaceRefine(const Domain &_domain, const Criteria &_criteria,
+                             TetMesh &_tet_mesh)
   : domain(_domain)
   , criteria(_criteria)
   , tet_mesh(_tet_mesh)
 {
 }
 
-template <typename T, typename D, typename C>
-void FaceRefine<T, D, C>::scanElements()
+template <typename T, typename D>
+void FaceRefine<T, D>::scanElements()
 {
   // TODO scan and refine faces
 }
@@ -29,8 +29,8 @@ void FaceRefine<T, D, C>::scanElements()
  * @note While checking a new face, no modifications should be made to its
  * associated conflict zone to ensure consistency and correctness.
  */
-template <typename T, typename D, typename C>
-void FaceRefine<T, D, C>::checkNewFace(index_t face_idoff)
+template <typename T, typename D>
+void FaceRefine<T, D>::checkNewFace(index_t face_idoff)
 {
   index_t mirror_idoff = tet_mesh.mirrorFace(face_idoff);
 
@@ -85,10 +85,10 @@ void FaceRefine<T, D, C>::checkNewFace(index_t face_idoff)
  * @return true if the face is restricted to a surface patch, otherwise
  * false.
  */
-template <typename T, typename D, typename C>
-bool FaceRefine<T, D, C>::isFaceRestricted(index_t            face_idoff,
-                                           SurfacePatchIndex &surface_patch,
-                                           EPoint3 &intersection) const
+template <typename T, typename D>
+bool FaceRefine<T, D>::isFaceRestricted(index_t            face_idoff,
+                                        SurfacePatchIndex &surface_patch,
+                                        EPoint3           &intersection) const
 {
   // Check if the face is adjacent to two finite tetrahedra
   index_t neigh_idoff = tet_mesh.tetNeigh(face_idoff);
@@ -131,8 +131,8 @@ bool FaceRefine<T, D, C>::isFaceRestricted(index_t            face_idoff,
   return false;
 }
 
-template <typename T, typename D, typename C>
-Sign FaceRefine<T, D, C>::canonicalCompare(const EPoint3 &p1, const EPoint3 &p2)
+template <typename T, typename D>
+Sign FaceRefine<T, D>::canonicalCompare(const EPoint3 &p1, const EPoint3 &p2)
 {
   return p1.x() < p2.x()   ? Sign::NEGATIVE
          : p1.x() > p2.x() ? Sign::POSITIVE

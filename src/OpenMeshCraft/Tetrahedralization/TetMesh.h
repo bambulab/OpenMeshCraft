@@ -39,8 +39,17 @@ public:
   using ConstructNormal3       = typename Traits::ConstructNormal3;
   using ConstructCircumcenter3 = typename Traits::ConstructCircumcenter3;
 
+  /// Whether use generic point
+  GET_VALUE_OTHERWISE_DEFAULT(Traits, bool, USE_GENERIC_POINT, true,
+                              USE_GENERIC_POINT);
+  using Point3 = std::conditional_t<USE_GENERIC_POINT, GPoint3, EPoint3>;
+  using Points = std::conditional_t<USE_GENERIC_POINT, std::vector<GPoint3 *>,
+                                    std::vector<EPoint3>>;
+
   /// Whether the vertex has weight
   GET_VALUE_OTHERWISE_DEFAULT(Traits, bool, WEIGHTED, false, WEIGHTED);
+  using Weight  = NT;
+  using Weights = std::vector<NT>;
 
   /// Whether enable face mark
   GET_VALUE_OTHERWISE_DEFAULT(Traits, bool, ENABLE_FACE_MARK, false,
@@ -95,18 +104,15 @@ public:
   /* Constructors and Destructors */
   TetrahedralMesh() = delete;
 
-  TetrahedralMesh(const std::vector<GPoint3 *> &_vertices,
-                  const std::vector<NT>        *_weights = nullptr);
+  TetrahedralMesh(const Points &_vertices, const Weights *_weights = nullptr);
 
 public:
   /* Connectivity operations on tetrahedra mesh */
 
   /// Get the point of the vertex
-  const GPoint3 &gpnt(index_t vid) const { return *vertices[vid]; }
-  /// Get the explicit point of the vertex
-  const EPoint3 &epnt(index_t vid) const { return AsEP()(gpnt(vid)); }
+  const Point3 &point(index_t vid) const;
   /// Get the weight of the vertex
-  NT             weight(index_t vid) const { return (*weights)[vid]; }
+  NT            weight(index_t vid) const { return (*weights)[vid]; }
 
   /// Get the index (NOT the idoff) to the incident tetrahedron of a vertex
   index_t       &incTet(index_t vid) { return inc_tet[vid]; }
@@ -310,7 +316,7 @@ public: /* Data ************************************************************/
   /// Vertices (pointers to points in arena)
   ///
   /// We assume that no coincident vertices exist.
-  const std::vector<GPoint3 *> &vertices;
+  const Points &vertices;
 
   /// Weights for each vertex (optional, set if `WEIGHTED` is true)
   ///
@@ -329,7 +335,7 @@ public: /* Data ************************************************************/
   /// (and `weights`) but are not used in the mesh.
   /// We do not support the deletion of vertices in the mesh, so once a vertex
   /// is hidden, it will not be exposed again.
-  const std::vector<NT> *weights;
+  const Weights *weights;
 
   /// Tetrahedra (indices to vertices)
   ///

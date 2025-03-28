@@ -268,8 +268,8 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
   tet_mesh.mark(edge.ep0(), VTX_MARK::ENCROACHED);
   tet_mesh.mark(edge.ep1(), VTX_MARK::ENCROACHED);
 
-  const GPoint3 &p0    = gpnt(edge.ep0());
-  const GPoint3 &p1    = gpnt(edge.ep1());
+  const GPoint3 &p0    = point(edge.ep0());
+  const GPoint3 &p1    = point(edge.ep1());
   const GPoint3 *ref_p = nullptr;
   ref_vid              = InvalidIndex;
   ref_tidoff           = InvalidIndex;
@@ -286,7 +286,7 @@ void SegmentRecover<Traits>::findReferenceEncroachingPoint(index_t  eid,
           tet_mesh.isMarked(vid, VTX_MARK::ENCROACHED))
         continue;
       tet_mesh.mark(vid, VTX_MARK::VISITED);
-      const GPoint3 &curr_p = gpnt(vid);
+      const GPoint3 &curr_p = point(vid);
 
       // check if the vertex is encroaching
       if (inSphere(p0, p1, curr_p))
@@ -374,9 +374,9 @@ auto SegmentRecover<Traits>::splitSegment_NoAcuteVertex(index_t eid,
 {
   const PLCEdge &edge = plc.edge(eid);
 
-  const GPoint3 &ep0_pnt = gpnt(edge.ep0());
-  const GPoint3 &ep1_pnt = gpnt(edge.ep1());
-  const GPoint3 &ref_pnt = gpnt(ref_vid);
+  const GPoint3 &ep0_pnt = point(edge.ep0());
+  const GPoint3 &ep1_pnt = point(edge.ep1());
+  const GPoint3 &ref_pnt = point(ref_vid);
 
   if (isLessThanHalfDistance(ep0_pnt, ref_pnt, ep1_pnt))
   { // The `ref_pnt` is closer to the endpoint `ep0`, and the distance between
@@ -416,7 +416,7 @@ auto SegmentRecover<Traits>::splitSegment_OneAcuteVertex(index_t eid,
   IPoint3T_LNC new_pnt =
     lineSphereIntersection_oneAc(eid, edge.acute_vid, ref_vid);
 
-  if (isLessThanDistance(new_pnt, gpnt(edge.ep1()), gpnt(ref_vid)))
+  if (isLessThanDistance(new_pnt, point(edge.ep1()), point(ref_vid)))
   { // The new point is closer to the non-acute endpoint `ep1` than the
     // reference encroaching point, we should switch to another split strategy
     // (described in Section 3.3 in [Robust CDT]), but it is not really
@@ -553,10 +553,10 @@ SegmentRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1, index_t ep0,
     t0 = 0.0;
   else
   {
-    OMC_EXPENSIVE_ASSERT(&(gpnt(ep0).LNC().P()) == &gpnt(oep0) &&
-                           &(gpnt(ep0).LNC().Q()) == &gpnt(oep1),
+    OMC_EXPENSIVE_ASSERT(&(point(ep0).LNC().P()) == &point(oep0) &&
+                           &(point(ep0).LNC().Q()) == &point(oep1),
                          "Wrong orders.");
-    t0 = gpnt(ep0).LNC().T();
+    t0 = point(ep0).LNC().T();
   }
 
   // calculate the interpolation parameter for `ep1`
@@ -564,10 +564,10 @@ SegmentRecover<Traits>::getInterpolateT(index_t oep0, index_t oep1, index_t ep0,
     t1 = 1.0;
   else
   {
-    OMC_EXPENSIVE_ASSERT(&(gpnt(ep1).LNC().P()) == &gpnt(oep0) &&
-                           &(gpnt(ep1).LNC().Q()) == &gpnt(oep1),
+    OMC_EXPENSIVE_ASSERT(&(point(ep1).LNC().P()) == &point(oep0) &&
+                           &(point(ep1).LNC().Q()) == &point(oep1),
                          "Wrong orders.");
-    t1 = gpnt(ep1).LNC().T();
+    t1 = point(ep1).LNC().T();
   }
 
   OMC_EXPENSIVE_ASSERT(t0 < t1, "Wrong orders.");
@@ -592,11 +592,11 @@ auto SegmentRecover<Traits>::middlePoint(const PLCEdge &e) const -> IPoint3T_LNC
     auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
     OMC_EXPENSIVE_ASSERT((t0 + t1) * 0.5 != t0 && (t0 + t1) * 0.5 != t1,
                          "The edge can not be split at midpoint.");
-    return CreateLNC()(gpnt(oep0), gpnt(oep1), (t0 + t1) * 0.5);
+    return CreateLNC()(point(oep0), point(oep1), (t0 + t1) * 0.5);
   }
   else // The edge is not split yet.
   {
-    return CreateLNC()(gpnt(ep0), gpnt(ep1), /*interpolation T*/ 0.5);
+    return CreateLNC()(point(ep0), point(ep1), /*interpolation T*/ 0.5);
   }
 }
 
@@ -631,13 +631,13 @@ auto SegmentRecover<Traits>::lineSphereIntersection_noAc(index_t eid,
   index_t oep0 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep0() : ep0;
   index_t oep1 = e.hasAncestor() ? plc.edge(e.ancestor_id).ep1() : ep1;
 
-  OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
+  OMC_EXPENSIVE_ASSERT(point(oep0).is_explicit() && point(oep1).is_explicit(),
                        "Input points contain implicit points.");
   // Get the vectors of related points.
-  Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
-  Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
-  Vec3 ref_v    = ToEP()(gpnt(ref_vid)).as_vec();
-  Vec3 end_v    = ToEP()(gpnt(reverse ? ep1 : ep0)).as_vec();
+  Vec3 oe0_v    = AsEP()(point(oep0)).as_vec();
+  Vec3 oe1_v    = AsEP()(point(oep1)).as_vec();
+  Vec3 ref_v    = ToEP()(point(ref_vid)).as_vec();
+  Vec3 end_v    = ToEP()(point(reverse ? ep1 : ep0)).as_vec();
   // Get the interpolation parameters
   auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
   // Parameterize the sphere radius to the original segment
@@ -651,7 +651,7 @@ auto SegmentRecover<Traits>::lineSphereIntersection_noAc(index_t eid,
     t = (t0 + t1) * 0.5;
   }
   OMC_EXPENSIVE_ASSERT((t0 < t && t < t1), "The point is outside the edge.");
-  return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
+  return CreateLNC()(point(oep0), point(oep1), t);
 }
 
 /**
@@ -687,13 +687,13 @@ auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
 
   OMC_EXPENSIVE_ASSERT((acute_vid == oep0 || acute_vid == oep1),
                        "Wrong acute vertices.");
-  OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
+  OMC_EXPENSIVE_ASSERT(point(oep0).is_explicit() && point(oep1).is_explicit(),
                        "Input points contain implicit points.");
 
   // Get the vectors of related points.
-  Vec3 oe0_v    = AsEP()(gpnt(oep0)).as_vec();
-  Vec3 oe1_v    = AsEP()(gpnt(oep1)).as_vec();
-  Vec3 ref_v    = ToEP()(gpnt(ref_vid)).as_vec();
+  Vec3 oe0_v    = AsEP()(point(oep0)).as_vec();
+  Vec3 oe1_v    = AsEP()(point(oep1)).as_vec();
+  Vec3 ref_v    = ToEP()(point(ref_vid)).as_vec();
   // Get the interpolation parameters
   auto [t0, t1] = getInterpolateT(oep0, oep1, ep0, ep1);
   // Parameterize the sphere radius to the original segment
@@ -709,7 +709,7 @@ auto SegmentRecover<Traits>::lineSphereIntersection_oneAc(index_t eid,
     t = (t0 + t1) * 0.5;
   }
   OMC_EXPENSIVE_ASSERT((t0 < t && t < t1), "The point is outside the edge.");
-  return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
+  return CreateLNC()(point(oep0), point(oep1), t);
 }
 
 /**
@@ -742,7 +742,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
     {
       // endpoints
       index_t        ev0 = e.ep0(), ev1 = e.ep1();
-      const GPoint3 &gp0 = gpnt(ev0), &gp1 = gpnt(ev1);
+      const GPoint3 &gp0 = point(ev0), &gp1 = point(ev1);
       // segment tree
       indexed_segments.emplace_back(Segment3(AsEP()(gp0), AsEP()(gp1)), eid);
     }
@@ -756,7 +756,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
   protecting_sphere_squared_radius.resize(plc.numVertices(), -1.0);
 
   auto approxEdgeLength = [this](const PLCEdge &e)
-  { return (gpnt(e.ep0()) - gpnt(e.ep1())).sqrnorm(); };
+  { return (point(e.ep0()) - point(e.ep1())).sqrnorm(); };
 
   auto buildSphere = [this, &approxEdgeLength](index_t vid)
   {
@@ -802,7 +802,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
       return;
 
     // construct a initial protecting sphere based on the above lengths.
-    Sphere3 sphere(AsEP()(gpnt(vid)),
+    Sphere3 sphere(AsEP()(point(vid)),
                    std::min(shortest_acute_edge * (1.0 / 4.0),
                             shortest_non_acute_edge * (4.0 / 9.0)));
 
@@ -817,7 +817,7 @@ void SegmentRecover<Traits>::buildProtectingSphere()
       for (index_t eid : possible_intersected_edges)
       {
         const PLCEdge &e = plc.edge(eid);
-        Segment3       seg(AsEP()(gpnt(e.ep0())), AsEP()(gpnt(e.ep1())));
+        Segment3       seg(AsEP()(point(e.ep0())), AsEP()(point(e.ep1())));
         if (DoIntersect()(sphere, seg))
           _intersected_edges.insert(eid);
       }
@@ -839,8 +839,8 @@ void SegmentRecover<Traits>::buildProtectingSphere()
     for (index_t eid : intersected_edges)
     {
       const PLCEdge &e = plc.edge(eid);
-      intersected_segs.emplace_back(AsEP()(gpnt(e.ep0())),
-                                    AsEP()(gpnt(e.ep1())));
+      intersected_segs.emplace_back(AsEP()(point(e.ep0())),
+                                    AsEP()(point(e.ep1())));
     }
 
     // the shortest projection distance from the vertex to the intersected
@@ -883,13 +883,13 @@ void SegmentRecover<Traits>::protectVertex(index_t       eid,
 
   if (protecting_sphere_squared_radius[oep0] > 0.0 &&
       DoIntersect()(
-        Sphere3(AsEP()(gpnt(oep0)), protecting_sphere_squared_radius[oep0]),
+        Sphere3(AsEP()(point(oep0)), protecting_sphere_squared_radius[oep0]),
         AsGP()(steiner_point)))
   {
     steiner_point = splitSegment_ProtectingSphere(eid, oep0);
   }
   else if (protecting_sphere_squared_radius[oep1] > 0.0 &&
-           DoIntersect()(Sphere3(AsEP()(gpnt(oep1)),
+           DoIntersect()(Sphere3(AsEP()(point(oep1)),
                                  protecting_sphere_squared_radius[oep1]),
                          AsGP()(steiner_point)))
   {
@@ -920,12 +920,12 @@ auto SegmentRecover<Traits>::splitSegment_ProtectingSphere(
   OMC_EXPENSIVE_ASSERT(
     center_vid == oep0 || center_vid == oep1,
     "The center vertex is not an endpoint of the original edge.");
-  OMC_EXPENSIVE_ASSERT(gpnt(oep0).is_explicit() && gpnt(oep1).is_explicit(),
+  OMC_EXPENSIVE_ASSERT(point(oep0).is_explicit() && point(oep1).is_explicit(),
                        "Input points contain implicit points.");
 
   // Get the vectors of related points.
-  Vec3 oe0_v = AsEP()(gpnt(oep0)).as_vec();
-  Vec3 oe1_v = AsEP()(gpnt(oep1)).as_vec();
+  Vec3 oe0_v = AsEP()(point(oep0)).as_vec();
+  Vec3 oe1_v = AsEP()(point(oep1)).as_vec();
 
   // Parameterize the sphere radius to the original segment
   double t = std::sqrt(protecting_sphere_squared_radius[center_vid] /
@@ -933,7 +933,7 @@ auto SegmentRecover<Traits>::splitSegment_ProtectingSphere(
   t        = center_vid == oep0 ? t : 1.0 - t;
   // WARN t still has numerical error
   OMC_EXPENSIVE_ASSERT((t0 < t && t < t1), "The point is outside the edge.");
-  return CreateLNC()(gpnt(oep0), gpnt(oep1), t);
+  return CreateLNC()(point(oep0), point(oep1), t);
 }
 
 } // namespace OMC

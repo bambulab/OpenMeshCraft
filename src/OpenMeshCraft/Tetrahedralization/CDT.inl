@@ -27,7 +27,6 @@ class ConstrDelTet<Kernel, Traits>::ConstrDelTetTraits : public Kernel
 {
 public:
   // Tetrahedral mesh settings
-  static constexpr bool WEIGHTED = false;
 };
 
 /// @brief Implement class of ConstrDelTet

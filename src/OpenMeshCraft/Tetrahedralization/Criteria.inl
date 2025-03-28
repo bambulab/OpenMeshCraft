@@ -8,7 +8,7 @@ template <typename T>
 auto TetMeshCriteria<T>::setDomain(const BoundingBox3 &bbox) -> Self &
 {
   domain_bbox        = bbox;
-  domain_diag_length = (bbox.max() - bbox.min()).norm();
+  domain_diag_length = (bbox.max_bound() - bbox.min_bound()).norm();
   return *this;
 }
 

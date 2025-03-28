@@ -249,8 +249,8 @@ void FaceRecover<Traits>::getTetsIntersectingFace(index_t               fid,
       if (!isVtxBounding(copl_vid)) // this point is not a bounding vertex,
         continue;                   // so it is outside, skip it.
 
-      const GPoint3 &tri_p0 = gpnt(tri_v[0]), &tri_p1 = gpnt(tri_v[1]),
-                    &tri_p2 = gpnt(tri_v[2]), &copl_p = gpnt(copl_vid);
+      const GPoint3 &tri_p0 = point(tri_v[0]), &tri_p1 = point(tri_v[1]),
+                    &tri_p2 = point(tri_v[2]), &copl_p = point(copl_vid);
 
       if (n_max == -1)
       {
@@ -593,7 +593,7 @@ void FaceRecover<Traits>::recoverFace_cavityExpanding(
     // load global vertices to local mesh, keep the order of vertices.
     top_vps.clear();
     for (index_t vid : top_vertices)
-      top_vps.push_back(&gpnt(vid));
+      top_vps.push_back(&point(vid));
     // Delaunay tetrahedralize the cavity
     top_mesh = std::make_unique<TetMesh>(top_vps);
     DelTet top_dt(*top_mesh);
@@ -626,7 +626,7 @@ void FaceRecover<Traits>::recoverFace_cavityExpanding(
     // load global vertices to local mesh, keep the order of vertices.
     bottom_vps.clear();
     for (index_t vid : bottom_vertices)
-      bottom_vps.push_back(&gpnt(vid));
+      bottom_vps.push_back(&point(vid));
     // Delaunay tetrahedralize the cavity
     bottom_mesh = std::make_unique<TetMesh>(bottom_vps);
     DelTet bottom_dt(*bottom_mesh);
@@ -699,14 +699,14 @@ void FaceRecover<Traits>::recoverFace_cavityExpanding(
     fout.open("./data/test_output/top_cavity.obj", std::ios::out);
     for (index_t vid : top_vertices)
     {
-      EPoint3 p = ToEP()(gpnt(vid));
+      EPoint3 p = ToEP()(point(vid));
       fout << "v " << p[0] << " " << p[1] << " " << p[2] << std::endl;
     }
     fout.close();
     fout.open("./data/test_output/bottom_cavity.obj", std::ios::out);
     for (index_t vid : bottom_vertices)
     {
-      EPoint3 p = ToEP()(gpnt(vid));
+      EPoint3 p = ToEP()(point(vid));
       fout << "v " << p[0] << " " << p[1] << " " << p[2] << std::endl;
     }
     fout.close();
@@ -1155,7 +1155,7 @@ Sign FaceRecover<Traits>::orient3dCached(index_t v0, index_t v1, index_t v2,
 {
   if (v_orient[v3] != Sign::UNCERTAIN)
     return v_orient[v3];
-  v_orient[v3] = Orient3D()(gpnt(v0), gpnt(v1), gpnt(v2), gpnt(v3));
+  v_orient[v3] = Orient3D()(point(v0), point(v1), point(v2), point(v3));
   v_cached_orient.push_back(v3);
   return v_orient[v3];
 }
@@ -1172,13 +1172,13 @@ template <typename Traits>
 bool FaceRecover<Traits>::segCrossesFace(index_t s0, index_t s1,
                                          const PLCFace &face) const
 {
-  const GPoint3 &p0 = gpnt(s0), &p1 = gpnt(s1);
+  const GPoint3 &p0 = point(s0), &p1 = point(s1);
 
   for (index_t tid : face.triangles)
   {
-    const GPoint3 &v0 = gpnt(plc.triVtx(tid, 0)),
-                  &v1 = gpnt(plc.triVtx(tid, 1)),
-                  &v2 = gpnt(plc.triVtx(tid, 2));
+    const GPoint3 &v0 = point(plc.triVtx(tid, 0)),
+                  &v1 = point(plc.triVtx(tid, 1)),
+                  &v2 = point(plc.triVtx(tid, 2));
     // We have known that the segment crosses the support plane,
     // so, we skip checking orientation of p0, p1 w.r.t the plane.
 

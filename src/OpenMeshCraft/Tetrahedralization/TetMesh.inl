@@ -7,8 +7,8 @@
 namespace OMC {
 
 template <typename Traits>
-TetrahedralMesh<Traits>::TetrahedralMesh(
-  const std::vector<GPoint3 *> &_vertices, const std::vector<NT> *_weights)
+TetrahedralMesh<Traits>::TetrahedralMesh(const Points  &_vertices,
+                                         const Weights *_weights)
   : vertices(_vertices)
   , weights(_weights)
 {
@@ -19,6 +19,15 @@ TetrahedralMesh<Traits>::TetrahedralMesh(
   vtx_touched.resize(sizeVerts(), 0);
 
   thread_id = 0;
+}
+
+template <typename Traits>
+auto TetrahedralMesh<Traits>::point(index_t vid) const -> const Point3 &
+{
+  if constexpr (USE_GENERIC_POINT)
+    return *(vertices[vid]);
+  else
+    return vertices[vid];
 }
 
 template <typename Traits>
@@ -1035,15 +1044,15 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
     // (a) the outer half-space defined by the supporting plane of the boundary
     // face (excluding the supporting plane) and (b) the boundary face itself.
 
-    OMC_EXPENSIVE_ASSERT(!CollinearPoints3()(gpnt(tet_nodes[0]),
-                                             gpnt(tet_nodes[1]),
-                                             gpnt(tet_nodes[2])),
+    OMC_EXPENSIVE_ASSERT(!CollinearPoints3()(point(tet_nodes[0]),
+                                             point(tet_nodes[1]),
+                                             point(tet_nodes[2])),
                          "The boundary face is degenerate.");
 
     // We first check the position of the vertex relative to the supporting
     // plane of the boundary face.
-    Sign ori = Orient3D()(gpnt(tet_nodes[0]), gpnt(tet_nodes[1]),
-                          gpnt(tet_nodes[2]), gpnt(vid));
+    Sign ori = Orient3D()(point(tet_nodes[0]), point(tet_nodes[1]),
+                          point(tet_nodes[2]), point(vid));
     // If the vertex is not on the plane, it must be located either outside or
     // inside, indicating whether it is inside or outside the circumsphere.
     if (ori != Sign::ZERO)
@@ -1057,7 +1066,7 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
                            tetNode(tetNeigh(tet_id + 3))};
 
     OMC_EXPENSIVE_ASSERT(
-      Orient3D()(gpnt(nn[0]), gpnt(nn[1]), gpnt(nn[2]), gpnt(nn[3])) ==
+      Orient3D()(point(nn[0]), point(nn[1]), point(nn[2]), point(nn[3])) ==
         Sign::NEGATIVE,
       "The neighboring tetrahedron is either degenerate or flipped.");
 
@@ -1069,9 +1078,9 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
   {
     // For a finite tetrahedron, check the inSphere predicate.
 
-    OMC_EXPENSIVE_ASSERT(Orient3D()(gpnt(tet_nodes[0]), gpnt(tet_nodes[1]),
-                                    gpnt(tet_nodes[2]),
-                                    gpnt(tet_nodes[3])) == Sign::POSITIVE,
+    OMC_EXPENSIVE_ASSERT(Orient3D()(point(tet_nodes[0]), point(tet_nodes[1]),
+                                    point(tet_nodes[2]),
+                                    point(tet_nodes[3])) == Sign::POSITIVE,
                          "The tetrahedron is either degenerate or flipped.");
 
     return vertexInTetSphere(tet_nodes, vid);
@@ -1089,13 +1098,13 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(const index_t *node,
 {
   Sign ori;
   if constexpr (!WEIGHTED)
-    ori = InSphere()(gpnt(node[0]), gpnt(node[1]), gpnt(node[2]), gpnt(node[3]),
-                     gpnt(vid));
+    ori = InSphere()(point(node[0]), point(node[1]), point(node[2]),
+                     point(node[3]), point(vid));
   else
     ori =
-      InPowerSphere()(gpnt(node[0]), weight(node[0]), gpnt(node[1]),
-                      weight(node[1]), gpnt(node[2]), weight(node[2]),
-                      gpnt(node[3]), weight(node[3]), gpnt(vid), weight(vid));
+      InPowerSphere()(point(node[0]), weight(node[0]), point(node[1]),
+                      weight(node[1]), point(node[2]), weight(node[2]),
+                      point(node[3]), weight(node[3]), point(vid), weight(vid));
   if (ori != Sign::ZERO)
     return ori == Sign::POSITIVE;
 
@@ -1161,14 +1170,14 @@ Sign TetrahedralMesh<Traits>::inSphereSymbolicPerturbation(
   } while (count);
 
   // Orientation test on the last four vertices (excluding the first vertex)
-  Sign ori = Orient3D()(gpnt(indices[1]), gpnt(indices[2]), gpnt(indices[3]),
-                        gpnt(indices[4]));
+  Sign ori = Orient3D()(point(indices[1]), point(indices[2]), point(indices[3]),
+                        point(indices[4]));
   if (ori != Sign::ZERO)
     return (swaps % 2) ? reverse_sign(ori) : ori;
 
   // Orientation test on the vertices except the second vertex
-  ori = Orient3D()(gpnt(indices[0]), gpnt(indices[2]), gpnt(indices[3]),
-                   gpnt(indices[4]));
+  ori = Orient3D()(point(indices[0]), point(indices[2]), point(indices[3]),
+                   point(indices[4]));
   return (swaps % 2) ? ori : reverse_sign(ori);
 }
 
@@ -1191,15 +1200,15 @@ auto TetrahedralMesh<Traits>::tetDualPoint(index_t tet_idoff) const -> EPoint3
 
   if constexpr (WEIGHTED)
   {
-    return ConstructCircumcenter3()(epnt(tet_nodes[0]), epnt(tet_nodes[1]),
-                                    epnt(tet_nodes[2]), epnt(tet_nodes[3]),
+    return ConstructCircumcenter3()(point(tet_nodes[0]), point(tet_nodes[1]),
+                                    point(tet_nodes[2]), point(tet_nodes[3]),
                                     weight(tet_nodes[0]), weight(tet_nodes[1]),
                                     weight(tet_nodes[2]), weight(tet_nodes[3]));
   }
   else
   {
-    return ConstructCircumcenter3()(epnt(tet_nodes[0]), epnt(tet_nodes[1]),
-                                    epnt(tet_nodes[2]), epnt(tet_nodes[3]));
+    return ConstructCircumcenter3()(point(tet_nodes[0]), point(tet_nodes[1]),
+                                    point(tet_nodes[2]), point(tet_nodes[3]));
   }
 }
 
@@ -1215,15 +1224,15 @@ auto TetrahedralMesh<Traits>::faceDualPoint(index_t face_idoff) const -> EPoint3
   if constexpr (WEIGHTED)
   {
     return ConstructCircumcenter3()(
-      epnt(tet_nodes[tetON1(off)]), epnt(tet_nodes[tetON2(off)]),
-      epnt(tet_nodes[tetON3(off)]), weight(tet_nodes[tetON1(off)]),
+      point(tet_nodes[tetON1(off)]), point(tet_nodes[tetON2(off)]),
+      point(tet_nodes[tetON3(off)]), weight(tet_nodes[tetON1(off)]),
       weight(tet_nodes[tetON2(off)]), weight(tet_nodes[tetON3(off)]));
   }
   else
   {
-    return ConstructCircumcenter3()(epnt(tet_nodes[tetON1(off)]),
-                                    epnt(tet_nodes[tetON2(off)]),
-                                    epnt(tet_nodes[tetON3(off)]));
+    return ConstructCircumcenter3()(point(tet_nodes[tetON1(off)]),
+                                    point(tet_nodes[tetON2(off)]),
+                                    point(tet_nodes[tetON3(off)]));
   }
 }
 
@@ -1234,9 +1243,9 @@ auto TetrahedralMesh<Traits>::faceDualRay(index_t face_idoff) const -> Ray3
 
   const index_t *tet_nodes = &tetNode(clipId(face_idoff));
 
-  Vec3 dir = ConstructNormal3()(epnt(tet_nodes[tetON1(face_idoff)]),
-                                epnt(tet_nodes[tetON2(face_idoff)]),
-                                epnt(tet_nodes[tetON3(face_idoff)]));
+  Vec3 dir = ConstructNormal3()(point(tet_nodes[tetON1(face_idoff)]),
+                                point(tet_nodes[tetON2(face_idoff)]),
+                                point(tet_nodes[tetON3(face_idoff)]));
 
   return Ray3(dual_pnt, -dir);
 }

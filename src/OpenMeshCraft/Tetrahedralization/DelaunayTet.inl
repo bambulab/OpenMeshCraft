@@ -50,7 +50,7 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
   index_t i = 0, j = 1;
   k = InvalidIndex, l = InvalidIndex;
   // Four vertices
-  const GPoint3 &vi = mesh.gpnt(i), &vj = mesh.gpnt(j);
+  const GPoint3 &vi = mesh.point(i), &vj = mesh.point(j);
   // Orientation of the four vertices (i.e., the sign of the tetrahedron volume
   // formed by the four vertices)
   Sign           ori = Sign::ZERO;
@@ -58,14 +58,14 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
   // Traversal all vertices
   for (k = 2; ori == Sign::ZERO && k < n - 1; k++)
   {
-    const GPoint3 &vk = mesh.gpnt(k);
+    const GPoint3 &vk = mesh.point(k);
     // Find the third vertex to form a valid triangle
     if (CollinearPoints3()(vi, vj, vk))
       continue;
     // Find the fourth vertex to form a valid tetrahedron
     for (l = k + 1; ori == Sign::ZERO && l < n; l++)
     {
-      const GPoint3 &vl = mesh.gpnt(l);
+      const GPoint3 &vl = mesh.point(l);
       ori               = Orient3D()(vi, vj, vk, vl);
     }
   }
@@ -178,16 +178,16 @@ void DelaunayTet<Traits>::walk(const index_t vid, index_t &tet)
         continue;
       OMC_EXPENSIVE_ASSERT(
         !CollinearPoints3()(
-          mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON1(off))),
-          mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON2(off))),
-          mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON3(off)))),
+          mesh.point(mesh.tetNode(tet + TetMesh::tetON1(off))),
+          mesh.point(mesh.tetNode(tet + TetMesh::tetON2(off))),
+          mesh.point(mesh.tetNode(tet + TetMesh::tetON3(off)))),
         "Current face is degenerate.");
 
       // check the orientation of `vid` with respect to the current face
-      if (Orient3D()(mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON1(off))),
-                     mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON2(off))),
-                     mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON3(off))),
-                     mesh.gpnt(vid)) == Sign::NEGATIVE)
+      if (Orient3D()(mesh.point(mesh.tetNode(tet + TetMesh::tetON1(off))),
+                     mesh.point(mesh.tetNode(tet + TetMesh::tetON2(off))),
+                     mesh.point(mesh.tetNode(tet + TetMesh::tetON3(off))),
+                     mesh.point(vid)) == Sign::NEGATIVE)
       {
         index_t neighbor_idoff = mesh.tetNeigh(tet + off);
         // we are stepping into the neighbor tetrahedron.
@@ -479,10 +479,10 @@ template <typename Traits>
 bool DelaunayTet<Traits>::verifyVolume(index_t tet_idoff) const
 {
   bool positive_volume =
-    Orient3D()(mesh.gpnt(mesh.tetNode(tet_idoff)),
-               mesh.gpnt(mesh.tetNode(tet_idoff + 1)),
-               mesh.gpnt(mesh.tetNode(tet_idoff + 2)),
-               mesh.gpnt(mesh.tetNode(tet_idoff + 3))) == Sign::POSITIVE;
+    Orient3D()(mesh.point(mesh.tetNode(tet_idoff)),
+               mesh.point(mesh.tetNode(tet_idoff + 1)),
+               mesh.point(mesh.tetNode(tet_idoff + 2)),
+               mesh.point(mesh.tetNode(tet_idoff + 3))) == Sign::POSITIVE;
   OMC_ASSERT_RETURN(positive_volume,
                     "The tetrahedron {} has non-positive volume.",
                     tet_idoff / 4);
@@ -595,32 +595,32 @@ bool DelaunayTet<Traits>::verifyWalk(index_t vid, index_t tet) const
   if (mesh.isFiniteTet(tet))
   {
     bool coincide_vertex =
-      !(LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 0))) ||
-        LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 1))) ||
-        LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 2))) ||
-        LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 3))));
+      !(LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 0))) ||
+        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 1))) ||
+        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 2))) ||
+        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 3))));
     OMC_ASSERT_RETURN(coincide_vertex, "The inserted vertex coincides with an existing vertex.");
 
     Sign ori[4];
     for (index_t i = 0; i < 4; i++)
     {
-      ori[i] = Orient3D()(mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON1(i))),
-                          mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON2(i))),
-                          mesh.gpnt(mesh.tetNode(tet + TetMesh::tetON3(i))),
-                          mesh.gpnt(vid));
+      ori[i] = Orient3D()(mesh.point(mesh.tetNode(tet + TetMesh::tetON1(i))),
+                          mesh.point(mesh.tetNode(tet + TetMesh::tetON2(i))),
+                          mesh.point(mesh.tetNode(tet + TetMesh::tetON3(i))),
+                          mesh.point(vid));
       OMC_ASSERT_RETURN(ori[i] >= Sign::ZERO, "The vertex is not inside the target finite tetrahedron.");
     }
   }
   else
   {
     bool coincide_vertex =
-      !(LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 0))) ||
-        LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 1))) ||
-        LessThan3D().coincident(mesh.gpnt(vid), mesh.gpnt(mesh.tetNode(tet + 2))));
+      !(LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 0))) ||
+        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 1))) ||
+        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 2))));
     OMC_ASSERT_RETURN(coincide_vertex, "The inserted vertex coincides with an existing vertex.");
     bool outside_boundary =
-      Orient3D()(mesh.gpnt(mesh.tetNode(tet)), mesh.gpnt(mesh.tetNode(tet + 1)),
-                 mesh.gpnt(mesh.tetNode(tet + 2)), mesh.gpnt(vid)) == Sign::POSITIVE;
+      Orient3D()(mesh.point(mesh.tetNode(tet)), mesh.point(mesh.tetNode(tet + 1)),
+                 mesh.point(mesh.tetNode(tet + 2)), mesh.point(vid)) == Sign::POSITIVE;
     OMC_ASSERT_RETURN(outside_boundary, "The vertex is not inside the target infinite tetrahedron.");
   }
   bool conflict = mesh.vertexInTetSphere(tet, vid);

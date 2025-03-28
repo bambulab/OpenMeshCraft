@@ -102,3 +102,7 @@ public: /* Quality queries *************************************************/
 };
 
 } // namespace OMC
+
+#ifdef OMC_HAS_IMPL
+  #include "Criteria.inl"
+#endif
