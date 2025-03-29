@@ -41,6 +41,7 @@ public: /* Quality definitions *********************************************/
 
     // clang-format off
     FaceQuality() : quality(0) {}
+    FaceQuality(NT _quality) : quality(_quality) {}
 
     explicit operator bool() const { return quality > 0; }
 

@@ -8,7 +8,7 @@ cmake_policy(SET CMP0074 NEW) # use XXX_ROOT variable in find_package
 project(OpenMeshCraft VERSION 1.0.0)
 
 # ##############################################################################
-# build and deploy settings
+# configurations and options
 # ##############################################################################
 
 if(NOT DEFINED OMC_MASTER_PROJECT)
@@ -45,26 +45,30 @@ option(OMC_BUILD_TEST "Build test project of OpenMeshCraft" ${OMC_MASTER_PROJECT
 # build and deploy settings
 # ##############################################################################
 
-macro(set_dir_with_configs _DIR_NAME _DIR_PATH)
+if(OMC_MASTER_PROJECT)
 
-  set(${_DIR_NAME} ${_DIR_PATH})
+  macro(set_dir_with_configs _DIR_NAME _DIR_PATH)
 
-  set(${_DIR_NAME}_RELEASE ${_DIR_PATH}/Release)
-  set(${_DIR_NAME}_DEBUG ${_DIR_PATH}/Debug)
+    set(${_DIR_NAME} ${_DIR_PATH})
 
-endmacro()
+    set(${_DIR_NAME}_RELEASE ${_DIR_PATH}/Release)
+    set(${_DIR_NAME}_DEBUG ${_DIR_PATH}/Debug)
 
-# global directory of static libraries
-set_dir_with_configs(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+  endmacro()
 
-# global directory of shared libararies
-set_dir_with_configs(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+  # global directory of static libraries
+  set_dir_with_configs(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# global directory of executable files
-set_dir_with_configs(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+  # global directory of shared libararies
+  set_dir_with_configs(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# global install prefix
-set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
+  # global directory of executable files
+  set_dir_with_configs(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+  # global install prefix
+  set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
+
+endif()
 
 # global module path.
 #

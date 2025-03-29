@@ -42,7 +42,7 @@ auto TetMeshCriteria<T>::faceQuality(const TetMesh &tet_mesh,
 
   // add more quality metrics below =========================================
 
-  return FaceQuality{quality};
+  return FaceQuality(quality);
 }
 
 } // namespace OMC

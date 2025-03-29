@@ -16,7 +16,12 @@ FaceRefine<T, D>::FaceRefine(const Domain &_domain, const Criteria &_criteria,
 template <typename T, typename D>
 void FaceRefine<T, D>::scanElements()
 {
-  // TODO scan and refine faces
+  size_t num_faces = tet_mesh.sizeFaces();
+
+  for (index_t face_idoff = 0; face_idoff < num_faces; face_idoff++)
+  {
+    checkNewFace(face_idoff);
+  }
 }
 
 /**
@@ -33,6 +38,12 @@ template <typename T, typename D>
 void FaceRefine<T, D>::checkNewFace(index_t face_idoff)
 {
   index_t mirror_idoff = tet_mesh.mirrorFace(face_idoff);
+
+  if (!tet_mesh.isFiniteTet(face_idoff) && !tet_mesh.isFiniteTet(mirror_idoff))
+  {
+    // face and its mirror face are both infinite.
+    return;
+  }
 
   index_t min_idoff = std::min(face_idoff, mirror_idoff);
   index_t max_idoff = std::max(face_idoff, mirror_idoff);
@@ -91,9 +102,13 @@ bool FaceRefine<T, D>::isFaceRestricted(index_t            face_idoff,
                                         EPoint3           &intersection) const
 {
   // Check if the face is adjacent to two finite tetrahedra
-  index_t neigh_idoff = tet_mesh.tetNeigh(face_idoff);
+  index_t mirror_idoff = tet_mesh.mirrorFace(face_idoff);
 
-  if (tet_mesh.isFiniteTet(face_idoff) && tet_mesh.isFiniteTet(neigh_idoff))
+  OMC_EXPENSIVE_ASSERT(tet_mesh.isFiniteTet(face_idoff) ||
+                         tet_mesh.isFiniteTet(mirror_idoff),
+                       "Invalid face idoff.");
+
+  if (tet_mesh.isFiniteTet(face_idoff) && tet_mesh.isFiniteTet(mirror_idoff))
   {
     // Get the dual segment of the face
     Segment3 dual_seg = tet_mesh.faceDualSegment(face_idoff);
@@ -107,23 +122,29 @@ bool FaceRefine<T, D>::isFaceRestricted(index_t            face_idoff,
       dual_seg = Segment3(dual_seg.end(), dual_seg.start());
 
     // Check if the dual segment intersects with the surface patch
-    if (domain.doIntersectSurface(dual_seg))
+    if (domain.doIntersectSurface(dual_seg, surface_patch))
     {
-      domain.surfaceIntersection(dual_seg, surface_patch, intersection);
+      OMC_UNUSED int dimension;
+      domain.surfaceIntersection(dual_seg, surface_patch, intersection,
+                                 dimension);
       return true;
     }
   }
   else
   {
     // Get the dual ray of the face
-    Ray3 dual_ray = tet_mesh.faceDualRay(face_idoff);
+    index_t finite_idoff =
+      tet_mesh.isFiniteTet(face_idoff) ? face_idoff : mirror_idoff;
+    Ray3 dual_ray = tet_mesh.faceDualRay(finite_idoff);
 
     if (dual_ray.start() == dual_ray.start() + dual_ray.direction())
       return false; // degenerate ray
 
-    if (domain.doIntersectSurface(dual_ray))
+    if (domain.doIntersectSurface(dual_ray, surface_patch))
     {
-      domain.surfaceIntersection(dual_ray, surface_patch, intersection);
+      OMC_UNUSED int dimension;
+      domain.surfaceIntersection(dual_ray, surface_patch, intersection,
+                                 dimension);
       return true;
     }
   }

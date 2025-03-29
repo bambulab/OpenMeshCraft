@@ -252,7 +252,7 @@ public:
   void faceCorners(index_t vid0, index_t vid1, index_t vid2, index_t &c0,
                    index_t &c1) const;
 
-  index_t mirrofFace(index_t face_idoff) const;
+  index_t mirrorFace(index_t face_idoff) const;
 
   /* Connectivity operations for the whole tetrahedra mesh */
 
@@ -289,6 +289,7 @@ public:
 
   size_t sizeVerts() const { return vertices.size(); }
   size_t sizeTets() const { return tet_node.size() >> 2; }
+  size_t sizeFaces() const { return tet_node.size(); }
 
   /* Common geometric predicates */
 

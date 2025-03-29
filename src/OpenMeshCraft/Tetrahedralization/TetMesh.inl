@@ -590,7 +590,7 @@ void TetrahedralMesh<Traits>::faceCorners(index_t vid0, index_t vid1,
  * @return The mirror face.
  */
 template <typename Traits>
-index_t TetrahedralMesh<Traits>::mirrofFace(index_t face_idoff) const
+index_t TetrahedralMesh<Traits>::mirrorFace(index_t face_idoff) const
 {
   return tet_neigh[face_idoff];
 }
@@ -1215,7 +1215,7 @@ auto TetrahedralMesh<Traits>::tetDualPoint(index_t tet_idoff) const -> EPoint3
 template <typename Traits>
 auto TetrahedralMesh<Traits>::faceDualPoint(index_t face_idoff) const -> EPoint3
 {
-  index_t off = clipId(face_idoff);
+  index_t off = clipOff(face_idoff);
 
   OMC_EXPENSIVE_ASSERT(isFiniteTet(face_idoff) || off == 3, "Invalid face.");
 

@@ -149,12 +149,13 @@ endif() # OMC_BUILD_TEST
 # add its FindEigen3.cmake to module path. If an installed shared Eigen3 lib is
 # provided, add the lib/cmake to CMAKE_PREFIX_PATH.
 
-
-if (NOT EIGEN3_FOUND)
+if(NOT EIGEN3_FOUND)
 
   # find eigen3
   set(EIGEN3_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/eigen)
-  set(EIGEN3_FOUND TRUE CACHE BOOL "Set Eigen3 as found")
+  set(EIGEN3_FOUND
+      TRUE
+      CACHE BOOL "Set Eigen3 as found")
   # create target
   add_library(Eigen3 INTERFACE IMPORTED GLOBAL)
   set_target_properties(Eigen3 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
@@ -218,31 +219,56 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/shewchuk-predicates
 # ##############################################################################
 # Target tbb can be linked to other targets.
 
-# cmake-format: off
-set(TBB_TEST OFF CACHE BOOL "")
-set(TBBMALLOC_BUILD OFF CACHE BOOL "")
-# cmake-format: on
+if(TBB_FOUND AND TARGET tbb)
+  # do nothing
+elseif(NOT TBB_FOUND AND TARGET tbb)
+  set(TBB_FOUND
+      TRUE
+      CACHE BOOL "Set TBB as found")
+elseif(TBB_FOUND AND NOT TARGET tbb)
 
-if(WIN32 AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  # When compile tbb by gcc (mingw64) on Windows, compiler complains a lot of
-  # warnings. It's ok to compile tbb by MSVC on Windows or by gcc on Unix* OS.
-  set(TBB_WARNING_SUPPRESS -Wno-stringop-overflow -Wno-unused-value
-                           -Wno-array-bounds)
-endif()
+  # TBB already found, create target tbb
+  message(STATUS "[OpenMeshCraft] TBB already found. Create imported target.")
+  message(STATUS "     TBB_INCLUDE_DIR: ${TBB_INCLUDE_DIR}")
+  message(STATUS "     TBB_LIBRARIES: ${TBB_LIBRARIES}")
+  message(STATUS "     TBB_SHARED_LIBRARIES: ${TBB_SHARED_LIBRARIES}")
 
-# always build TBB to shared lib
+  add_library(tbb SHARED IMPORTED GLOBAL)
+  set_target_properties(
+    tbb
+    PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${TBB_INCLUDE_DIR}"
+               IMPORTED_LOCATION "${TBB_SHARED_LIBRARIES}"
+               IMPORTED_IMPLIB "${TBB_LIBRARIES}")
 
-if(NOT BUILD_SHARED_LIBS)
-  set(BUILD_SHARED_LIBS ON)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/oneTBB EXCLUDE_FROM_ALL)
-  set(BUILD_SHARED_LIBS OFF)
-else()
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/oneTBB EXCLUDE_FROM_ALL)
-endif()
+else() # NOT TBB_FOUND AND NOT TARGET tbb
 
-# prevent generating versioned .so files.
-set_property(TARGET tbb PROPERTY VERSION)
-set_property(TARGET tbb PROPERTY SOVERSION)
+  # cmake-format: off
+  set(TBB_TEST OFF CACHE BOOL "")
+  set(TBBMALLOC_BUILD OFF CACHE BOOL "")
+  # cmake-format: on
+
+  if(WIN32 AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # When compile tbb by gcc (mingw64) on Windows, compiler complains a lot of
+    # warnings. It's ok to compile tbb by MSVC on Windows or by gcc on Unix* OS.
+    set(TBB_WARNING_SUPPRESS -Wno-stringop-overflow -Wno-unused-value
+                             -Wno-array-bounds)
+  endif()
+
+  # always build TBB to shared lib
+
+  if(NOT BUILD_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS ON)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/oneTBB EXCLUDE_FROM_ALL)
+    set(BUILD_SHARED_LIBS OFF)
+  else()
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/oneTBB EXCLUDE_FROM_ALL)
+  endif()
+
+  # prevent generating versioned .so files.
+  set_property(TARGET tbb PROPERTY VERSION)
+  set_property(TARGET tbb PROPERTY SOVERSION)
+
+endif() # TBB_FOUND AND TARGET tbb
 
 # Pass variabls to parent scope
 set(CMAKE_PREFIX_PATH
