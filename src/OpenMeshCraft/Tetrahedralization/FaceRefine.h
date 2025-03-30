@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Criteria.h"
+#include "DelaunayTet.h"
 #include "TetMesh.h"
 
 #include "OpenMeshCraft/Utils/IndexHeap.h"
@@ -33,9 +34,8 @@ public: /* Traits **********************************************************/
 
   using Self = FaceRefine<Traits, Domain>;
 
-  using NT      = typename Traits::NT;
-  using Vec3    = typename Traits::Vec3;
-  using EPoint3 = typename Traits::EPoint3;
+  using NT   = typename Traits::NT;
+  using Vec3 = typename Traits::Vec3;
 
   using Ray3     = typename Traits::Ray3;
   using Segment3 = typename Traits::Segment3;
@@ -47,6 +47,13 @@ public: /* Traits **********************************************************/
 
   using Criteria = TetMeshCriteria<Traits>;
 
+  /* Points and weights in TetMesh ==========================================
+   */
+  using Point3  = typename TetMesh::Point3;
+  using Weight  = typename TetMesh::Weight;
+  using Points  = typename TetMesh::Points;
+  using Weights = typename TetMesh::Weights;
+
   /* Face in TetMesh ========================================================
    *
    * A face of a tetrahedron in tetrahedral mesh is represented by idoff (see
@@ -57,6 +64,10 @@ public: /* Traits **********************************************************/
    * So, idoff = tet_id * 4 + offset.
    *
    */
+  // using... face_idoff is of type index_t
+
+  /* Weighted Delaunay tetrahedralization */
+  using DelTet = DelaunayTet<Traits>;
 
   /* Surface patch in Domain ================================================
    *
@@ -97,37 +108,73 @@ public: /* Traits **********************************************************/
 
   using FaceQueue = IndexSparseHeap<FaceToRefine, std::greater<FaceToRefine>>;
 
+  /* Status in refining one face ============================================
+   */
+  enum class ConflictStatus
+  {
+    OK,
+    // the refinement point is coincident with an existing vertex
+    COINCIDENT_VERTEX,
+    // the refinement point is hidden by an existing weighted vertex
+    HIDDEN_POINT,
+    // the refinement point is not conflict with the face to refine
+    FACE_NOT_CONFLICT
+  };
+
 public: /* Constructor and Destructor **************************************/
-  FaceRefine(const Domain &_domain, const Criteria &_criteria,
-             TetMesh &_tet_mesh);
+  FaceRefine(const Domain &_domain, const Criteria &_criteria, Points &_points,
+             Weights &_weights, TetMesh &_tet_mesh);
 
   ~FaceRefine() = default;
 
 public: /* Interfaces ******************************************************/
-  bool processOneElement();
-
+  /**
+   * @brief [Initialization] Scan the tetrahedral mesh and add faces to the
+   * refinement queue.
+   * @pre The tetrahedral mesh is already built.
+   * @post The refinement queue is filled with faces that need to be refined.
+   */
   void scanElements();
 
-  void getNextElement();
+  /**
+   * @brief [Stop condition] Check if the refinement process is done.
+   * @return true if the refinement process is done, false otherwise.
+   */
+  bool isDone();
 
-  void tryToRefineElement();
+  /**
+   * @brief [Step in loop] Process one element in the refinement queue.
+   * @pre The algorithm is not done.
+   * @post The element is processed and removed from the queue. Newly created
+   * elements are checked and may be added to the queue.
+   */
+  ConflictStatus processOneElement();
+
+  /**
+   * @brief [The whole process] Refine the tetrahedral mesh.
+   */
+  void refine();
 
 public: /* Helper functions ************************************************/
   void checkNewFace(index_t face_idoff);
 
   bool isFaceRestricted(index_t face_idoff, SurfacePatchIndex &surface_patch,
-                        EPoint3 &intersection) const;
+                        Point3 &intersection) const;
+
+  index_t newVertex(const Point3 &point, NT weight);
 
 public: /* Data ************************************************************/
   const Domain   &domain;
   const Criteria &criteria;
 
+  Points  &points;
+  Weights &weights;
   TetMesh &tet_mesh;
 
   FaceQueue face_queue;
 
 private:
-  static Sign canonicalCompare(const EPoint3 &p1, const EPoint3 &p2);
+  static Sign canonicalCompare(const Point3 &p1, const Point3 &p2);
 };
 
 } // namespace OMC

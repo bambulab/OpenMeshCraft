@@ -322,6 +322,21 @@ using InlinedVector4 = boost::container::small_vector<T, 4>;
 template <typename T>
 using InlinedVector2 = boost::container::small_vector<T, 2>;
 
+#elif 1
+
+template <typename T>
+using InlinedVector64 = std::vector<T>;
+template <typename T>
+using InlinedVector32 = std::vector<T>;
+template <typename T>
+using InlinedVector16 = std::vector<T>;
+template <typename T>
+using InlinedVector8 = std::vector<T>;
+template <typename T>
+using InlinedVector4 = std::vector<T>;
+template <typename T>
+using InlinedVector2 = std::vector<T>;
+
 #else
 
 template <typename T>

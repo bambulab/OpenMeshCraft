@@ -2,13 +2,18 @@
 
 #include "FaceRefine.h"
 
+#include <iostream>
+
 namespace OMC {
 
 template <typename T, typename D>
 FaceRefine<T, D>::FaceRefine(const Domain &_domain, const Criteria &_criteria,
+                             Points &_points, Weights &_weights,
                              TetMesh &_tet_mesh)
   : domain(_domain)
   , criteria(_criteria)
+  , points(_points)
+  , weights(_weights)
   , tet_mesh(_tet_mesh)
 {
 }
@@ -22,6 +27,152 @@ void FaceRefine<T, D>::scanElements()
   {
     checkNewFace(face_idoff);
   }
+}
+
+template <typename T, typename D>
+bool FaceRefine<T, D>::isDone()
+{
+  // TODO: An external force stop control
+  // TODO: Other internal stop conditions
+  return face_queue.empty();
+}
+
+template <typename T, typename D>
+auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
+{
+  // Get the next face to process from the queue ========================
+
+  auto [face_idoff, face_quality] = face_queue.top();
+  face_queue.pop();
+
+  std::cout << std::format("\rFace quality: {}           ",
+                           face_quality.quality.quality);
+  OMC_EXPENSIVE_ASSERT(!tet_mesh.isTetDeleted(face_idoff),
+                       "The face to process is deleted.");
+
+  index_t mirror_idoff = tet_mesh.mirrorFace(face_idoff);
+  index_t finite_idoff =
+    tet_mesh.isFiniteTet(face_idoff) ? face_idoff : mirror_idoff;
+
+  // Get the refinement point ===========================================
+
+  Point3 dual_point = tet_mesh.faceDualPoint(face_idoff);
+
+  // Locate the refinement point in Delaunay tetrahedralization =========
+
+  DelTet del_tet(tet_mesh);
+
+  index_t tet_id    = TetMesh::clipId(finite_idoff);
+  int     dimension = -1;
+  del_tet.walk(dual_point, tet_id, &dimension);
+
+  if (dimension == 0)
+  {
+    // The dual point is coincident with a vertex of the tetrahedral mesh.
+    return ConflictStatus::COINCIDENT_VERTEX;
+  }
+
+  // Find the conflict zone of the refinement point =====================
+
+  InlinedVector64<index_t> conflict_tets;
+  InlinedVector64<index_t> conflict_corners;
+  del_tet.conflict(dual_point, /*weight*/ 0, tet_id, conflict_tets,
+                   conflict_corners);
+
+  if (conflict_tets.empty())
+  {
+    // The dual point is hidden by an existing weighted vertex.
+    return ConflictStatus::HIDDEN_POINT;
+  }
+
+  // check if the face to refine is conflict with the dual point
+  if (std::find(conflict_tets.begin(), conflict_tets.end(),
+                TetMesh::clipId(face_idoff)) == conflict_tets.end() ||
+      std::find(conflict_tets.begin(), conflict_tets.end(),
+                TetMesh::clipId(mirror_idoff)) == conflict_tets.end())
+  {
+    // clear marks
+    for (index_t tet_idoff : conflict_tets)
+      tet_mesh.unmark(tet_idoff, TET_MARK::CONFLICT);
+    for (index_t corner_idoff : conflict_corners)
+      tet_mesh.unmark(corner_idoff, TET_MARK::VISITED);
+    return ConflictStatus::FACE_NOT_CONFLICT;
+  }
+
+  // Remove faces in conflict zone from the queue ========================
+  for (index_t cf_tet : conflict_tets)
+  {
+    for (index_t i = 0; i < 4; i++)
+    {
+      index_t cf_face        = cf_tet + i;
+      index_t mirror_cf_face = tet_mesh.mirrorFace(cf_face);
+      if (tet_mesh.isMarked(cf_face, FACE_MARK::RESTRICTED))
+      {
+        if (face_queue.exist(cf_face))
+          face_queue.remove(cf_face);
+        if (face_queue.exist(mirror_cf_face))
+          face_queue.remove(mirror_cf_face);
+      }
+    }
+  }
+
+  // Insert the refinement point into the mesh ============================
+  del_tet.removeConflicts(conflict_tets);
+  index_t new_vtx_vid = newVertex(dual_point, /*weight*/ 0);
+  del_tet.filling(new_vtx_vid, conflict_corners);
+
+  // Check new faces in the conflict zone =================================
+
+  for (index_t corner : conflict_corners) // for each corner `c`
+  {
+    tet_mesh.unmark(corner, FACE_MARK::VISITED);
+
+    index_t oppo  = tet_mesh.tetNeigh(corner);
+    index_t idoff = TetMesh::clipId(oppo);
+    for (index_t i = 0; i < 4; i++)
+      checkNewFace(idoff + i);
+  }
+
+  return ConflictStatus::OK;
+}
+
+template <typename T, typename D>
+void FaceRefine<T, D>::refine()
+{
+  scanElements();
+
+  size_t num_inserted_points = 0;
+
+  while (!isDone())
+  {
+    ConflictStatus cs = processOneElement();
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+    switch (cs)
+    {
+    case ConflictStatus::COINCIDENT_VERTEX:
+      std::cerr << "COINCIDENT_VERTEX\n";
+      break;
+    case ConflictStatus::HIDDEN_POINT:
+      std::cerr << "HIDDEN_POINT\n";
+      break;
+    case ConflictStatus::FACE_NOT_CONFLICT:
+      std::cerr << "FACE_NOT_CONFLICT\n";
+      break;
+    case ConflictStatus::OK:
+      num_inserted_points += 1;
+      std::cout << std::format("\rInserted points: {}         ",
+                               num_inserted_points);
+      break;
+    }
+    if (num_inserted_points >= 20000)
+    {
+      return;
+    }
+#endif
+  }
+
+  tet_mesh.removeDeletedTets();
 }
 
 /**
@@ -58,7 +209,7 @@ void FaceRefine<T, D>::checkNewFace(index_t face_idoff)
   }
 
   SurfacePatchIndex surface_patch;
-  EPoint3           intersection;
+  Point3            intersection;
   if (isFaceRestricted(face_idoff, surface_patch, intersection))
   {
     // face is restricted to a surface patch
@@ -71,7 +222,8 @@ void FaceRefine<T, D>::checkNewFace(index_t face_idoff)
     if (face_quality)
     { // face should be refined.
       // we put the min_idoff to the queue to ensure identifier unique.
-      face_queue.push(min_idoff, face_quality);
+      FaceToRefine face_to_refine(face_quality);
+      face_queue.push(min_idoff, face_to_refine);
     }
   }
   else
@@ -99,7 +251,7 @@ void FaceRefine<T, D>::checkNewFace(index_t face_idoff)
 template <typename T, typename D>
 bool FaceRefine<T, D>::isFaceRestricted(index_t            face_idoff,
                                         SurfacePatchIndex &surface_patch,
-                                        EPoint3           &intersection) const
+                                        Point3            &intersection) const
 {
   // Check if the face is adjacent to two finite tetrahedra
   index_t mirror_idoff = tet_mesh.mirrorFace(face_idoff);
@@ -153,7 +305,19 @@ bool FaceRefine<T, D>::isFaceRestricted(index_t            face_idoff,
 }
 
 template <typename T, typename D>
-Sign FaceRefine<T, D>::canonicalCompare(const EPoint3 &p1, const EPoint3 &p2)
+index_t FaceRefine<T, D>::newVertex(const Point3 &point, NT weight)
+{
+  // TODO lock in multi-threaded env.
+
+  index_t new_vtx_id = points.size();
+  points.push_back(point);
+  weights.push_back(weight);
+  tet_mesh.newVtx(points.size() - 1);
+  return new_vtx_id;
+}
+
+template <typename T, typename D>
+Sign FaceRefine<T, D>::canonicalCompare(const Point3 &p1, const Point3 &p2)
 {
   return p1.x() < p2.x()   ? Sign::NEGATIVE
          : p1.x() > p2.x() ? Sign::POSITIVE

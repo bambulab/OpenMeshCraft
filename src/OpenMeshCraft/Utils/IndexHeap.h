@@ -54,7 +54,7 @@ public:
     {
       if (exist(key))
       {
-        update(key, value);
+        update_value(key, value);
         return;
       }
     }
@@ -125,7 +125,7 @@ public:
    * @brief update a value specified by key.
    * @param value the new value.
    */
-  void update(key_type key, const value_type &value)
+  void update_value(key_type key, const value_type &value)
   {
     OMC_EXPENSIVE_ASSERT(exist(key),
                          "Key does not exist in heap, fail to update.");
@@ -140,6 +140,20 @@ public:
       up_move(pos);
     else
       down_move(pos);
+  }
+
+  /**
+   * @brief update a key to a new one.
+   */
+  void update_key(key_type old_key, key_type new_key)
+  {
+    OMC_EXPENSIVE_ASSERT(exist(old_key) && !exist(new_key),
+                         "Key does not exist in heap, fail to update.");
+    // find the pos in heap, only update key, but won't update value
+    index_t pos            = m_pos_in_heap.at(old_key);
+    m_pos_in_heap[new_key] = pos;
+    m_heap[pos].first      = new_key;
+    m_pos_in_heap[old_key] = InvalidIndex;
   }
 
   /**
@@ -297,7 +311,7 @@ public:
     {
       if (exist(key))
       {
-        update(key, value);
+        update_value(key, value);
         return;
       }
     }
@@ -360,7 +374,7 @@ public:
    * @brief update a value specified by key.
    * @param value the new value.
    */
-  void update(key_type key, const value_type &value)
+  void update_value(key_type key, const value_type &value)
   {
     OMC_EXPENSIVE_ASSERT(exist(key),
                          "Key does not exist in heap, fail to update.");
@@ -375,6 +389,20 @@ public:
       up_move(pos);
     else
       down_move(pos);
+  }
+
+  /**
+   * @brief update a key to a new one.
+   */
+  void update_key(key_type old_key, key_type new_key)
+  {
+    OMC_EXPENSIVE_ASSERT(exist(old_key) && !exist(new_key),
+                         "Key does not exist in heap, fail to update.");
+    // find the pos in heap, only update key, but won't update value
+    index_t pos            = m_pos_in_heap.at(old_key);
+    m_pos_in_heap[new_key] = pos;
+    m_heap[pos].first      = new_key;
+    m_pos_in_heap.erase(old_key);
   }
 
   /**

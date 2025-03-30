@@ -16,7 +16,7 @@ template <typename T>
 auto TetMeshCriteria<T>::setRestrictedFaceDistanceThreshold(NT threshold)
   -> Self &
 {
-  restricted_face_distance_threshold = threshold * domain_diag_length;
+  restricted_face_distance_threshold = (threshold * 0.01) * domain_diag_length;
   return *this;
 }
 

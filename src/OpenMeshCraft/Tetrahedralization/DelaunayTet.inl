@@ -50,23 +50,23 @@ void DelaunayTet<Traits>::initialize(index_t &k, index_t &l)
   index_t i = 0, j = 1;
   k = InvalidIndex, l = InvalidIndex;
   // Four vertices
-  const GPoint3 &vi = mesh.point(i), &vj = mesh.point(j);
+  const Point3 &vi = mesh.point(i), &vj = mesh.point(j);
   // Orientation of the four vertices (i.e., the sign of the tetrahedron volume
   // formed by the four vertices)
-  Sign           ori = Sign::ZERO;
+  Sign          ori = Sign::ZERO;
 
   // Traversal all vertices
   for (k = 2; ori == Sign::ZERO && k < n - 1; k++)
   {
-    const GPoint3 &vk = mesh.point(k);
+    const Point3 &vk = mesh.point(k);
     // Find the third vertex to form a valid triangle
     if (CollinearPoints3()(vi, vj, vk))
       continue;
     // Find the fourth vertex to form a valid tetrahedron
     for (l = k + 1; ori == Sign::ZERO && l < n; l++)
     {
-      const GPoint3 &vl = mesh.point(l);
-      ori               = Orient3D()(vi, vj, vk, vl);
+      const Point3 &vl = mesh.point(l);
+      ori              = Orient3D()(vi, vj, vk, vl);
     }
   }
   // Decrease the indices by 1 to offset the increment from the for loop
@@ -128,7 +128,7 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
   InlinedVector64<index_t> cavity_tets;
   InlinedVector64<index_t> cavity_corners;
 
-  walk(vid, tet);
+  walk(mesh.point(vid), tet);
   cavity(vid, tet, cavity_tets, cavity_corners);
   filling(vid, cavity_corners);
 
@@ -141,29 +141,31 @@ void DelaunayTet<Traits>::insertVertex(const index_t vid, index_t &tet)
  *
  * This function traverses the tetrahedral mesh starting from the given
  * tetrahedron index `tet` to locate the tetrahedron that contains the vertex
- * identified by `vid`. The traversal is performed step by step, guided by the
- * orientation of `vid` with respect to the current tetrahedron's faces.
+ * identified by `pnt`. The traversal is performed step by step, guided by the
+ * orientation of `pnt` with respect to the current tetrahedron's faces.
  *
- * @param vid The index of the vertex to locate within the mesh.
+ * @param pnt The point to locate within the mesh.
  * @param tet The idoff of the starting tetrahedron. This parameter is updated
- * to the index of the tetrahedron containing `vid` upon completion.
+ * to the index of the tetrahedron containing `pnt` upon completion.
+ * @param dimension The dimension of the simplex where `pnt` is located.
  * @note Walking is the same for both weighted and unweighted versions.
  */
 template <typename Traits>
-void DelaunayTet<Traits>::walk(const index_t vid, index_t &tet)
+void DelaunayTet<Traits>::walk(const Point3 &pnt, index_t &tet,
+                               int *dimension) const
 {
   // ==========================================================================
   // Step 1: Walking
   // Traverse the tetrahedral mesh from `tet` to the tetrahedron containing
-  // `vid`.
+  // the point `pnt`
 
   // Check if we are in an infinite tet
   if (mesh.tetNode(tet + 3) == TetMesh::INFINITE_VERTEX)
     // then move to the finite neighbor.
     tet = TetMesh::clipId(mesh.tetNeigh(tet + 3));
 
-  // Walk step by step to the target tetrahedron where `vid` is located.
-  // The walking direction is determined by the orientation of `vid` with
+  // Walk step by step to the target tetrahedron where `pnt` is located.
+  // The walking direction is determined by the orientation of `pnt` with
   // respect to the current tetrahedron.
 
   // Entering face at each step (it actually stores the opposite node's
@@ -172,6 +174,8 @@ void DelaunayTet<Traits>::walk(const index_t vid, index_t &tet)
   while (true)
   {
     index_t off = 0;
+    Sign    orientations[4];
+
     for (; off < 4; off++)
     {
       if (off == entering_face) // skip the entering face
@@ -183,11 +187,12 @@ void DelaunayTet<Traits>::walk(const index_t vid, index_t &tet)
           mesh.point(mesh.tetNode(tet + TetMesh::tetON3(off)))),
         "Current face is degenerate.");
 
-      // check the orientation of `vid` with respect to the current face
-      if (Orient3D()(mesh.point(mesh.tetNode(tet + TetMesh::tetON1(off))),
-                     mesh.point(mesh.tetNode(tet + TetMesh::tetON2(off))),
-                     mesh.point(mesh.tetNode(tet + TetMesh::tetON3(off))),
-                     mesh.point(vid)) == Sign::NEGATIVE)
+      // check the orientation of `pnt` with respect to the current face
+      orientations[off] =
+        Orient3D()(mesh.point(mesh.tetNode(tet + TetMesh::tetON1(off))),
+                   mesh.point(mesh.tetNode(tet + TetMesh::tetON2(off))),
+                   mesh.point(mesh.tetNode(tet + TetMesh::tetON3(off))), pnt);
+      if (orientations[off] == Sign::NEGATIVE)
       {
         index_t neighbor_idoff = mesh.tetNeigh(tet + off);
         // we are stepping into the neighbor tetrahedron.
@@ -196,15 +201,25 @@ void DelaunayTet<Traits>::walk(const index_t vid, index_t &tet)
         break; // break the for loop
       }
     }
-    // `vid` is inside the current tet, we have stepped into the target.
+    // `pnt` is inside the current tet, we have stepped into the target.
     if (off == 4)
+    {
+      if (dimension)
+      { // set the dimension
+        (*dimension) = 3 - (int)(orientations[0] == Sign::ZERO) -
+                       (int)(orientations[1] == Sign::ZERO) -
+                       (int)(orientations[2] == Sign::ZERO) -
+                       (int)(orientations[3] == Sign::ZERO);
+        OMC_EXPENSIVE_ASSERT((*dimension) >= 0, "Dimension of simplex error.");
+      }
       break; // break the while loop
+    }
     // if we have stepped into an infinite tetrahedron, it is the target too.
     if (!mesh.isFiniteTet(tet))
       break; // break the while loop
   }
 
-  OMC_EXPENSIVE_ASSERT(verifyWalk(vid, tet), "Walking verification failed.");
+  OMC_EXPENSIVE_ASSERT(verifyWalk(pnt, tet), "Walking verification failed.");
 }
 
 /**
@@ -423,6 +438,99 @@ void DelaunayTet<Traits>::filling(
   }
 }
 
+/**
+ * @brief `conflict` computes the conflict zone of a VIRTUAL vertex in a
+ * Delaunay tetrahedralization, but do not really delete the zone.
+ *
+ * The virtual vertex is not added into the mesh and does not have a valid
+ * index. We assume that the vertex will be added to the last of vertex list, so
+ * it has the largest index, which will be used in symbolic computation.
+ */
+template <typename Traits>
+void DelaunayTet<Traits>::conflict(
+  const Point3 &pnt, const Weight wt, const index_t tet,
+  InlinedVector64<index_t> &conflict_tets,
+  InlinedVector64<index_t> &conflict_corners)
+{
+  if constexpr (WEIGHTED)
+  { // In the weighted version, the inserted vertex may be hidden by the
+    // existing vertices (the current tetrahedron).
+    if (!mesh.vertexInTetSphere(tet, pnt, wt))
+      return;
+  }
+
+  mesh.mark(tet, TET_MARK::CONFLICT);
+  conflict_tets.push_back(TetMesh::clipId(tet));
+
+  // Traverse all newly deleted tetrahedra one by one
+  for (index_t i = 0; i < conflict_tets.size(); i++)
+  {
+    // Traverse a deleted tetrahedron's neighbors
+    for (index_t j = 0; j < 4; j++)
+    {
+      // get the neighbor
+      index_t neigh_idoff = mesh.tetNeigh(conflict_tets[i] + j);
+      bool    is_visited  = mesh.isMarked(neigh_idoff, TET_MARK::VISITED);
+      bool    is_conflict = mesh.isMarked(neigh_idoff, TET_MARK::CONFLICT);
+
+      if (!is_visited && !is_conflict)
+      {
+        // if the neighbor has not been visited...
+        if (mesh.vertexInTetSphere(neigh_idoff, pnt, wt))
+        {
+          // if the vertex is inside the circumsphere of the neighbor,
+          // the neighbor belongs to cavity, so remove it.
+          mesh.mark(neigh_idoff, TET_MARK::CONFLICT);
+          conflict_tets.push_back(TetMesh::clipId(neigh_idoff));
+        }
+        else
+        {
+          // if the vertex is outside the circumsphere of the neighbor,
+          // the shared face is the boundary of the cavity, so we record it.
+          mesh.mark(neigh_idoff, TET_MARK::VISITED);
+          conflict_corners.push_back(neigh_idoff);
+        }
+      }
+      else if (is_visited)
+      {
+        // the neighbor has been visited but is not deleted (i.e. its
+        // circumsphere does not contain the vertex), thus the shared face is
+        // the boundary of the cavity, so we record the node opposite to the
+        // shared face (neigh_idoff) as a cavity corner.
+        conflict_corners.push_back(neigh_idoff);
+      }
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+      else if (is_conflict)
+      {
+        OMC_ASSERT(std::find(conflict_tets.begin(), conflict_tets.end(),
+                             TetMesh::clipId(neigh_idoff)) !=
+                     conflict_tets.end(),
+                   "A conflict tetrahedron is not recorded in conflict zone.");
+      }
+      else
+      {
+        OMC_ASSERT(false, "Impossible case.");
+      }
+#endif
+    }
+  }
+}
+
+/**
+ * @brief Removes the conflict tetrahedra found by `conflict` function.
+ * After removing the conflict tetrahedra, the `filling` function can be called.
+ * @param conflict_tets The conflict tetrahedra to be removed.
+ */
+template <typename Traits>
+void DelaunayTet<Traits>::removeConflicts(
+  InlinedVector64<index_t> &conflict_tets)
+{
+  for (index_t idoff : conflict_tets)
+  {
+    mesh.markTetAsDeleted(idoff);
+  }
+}
+
 template <typename Traits>
 bool DelaunayTet<Traits>::verify() const
 {
@@ -589,16 +697,16 @@ bool DelaunayTet<Traits>::verifyDelaunay(index_t vid) const
 }
 
 template <typename Traits>
-bool DelaunayTet<Traits>::verifyWalk(index_t vid, index_t tet) const
+bool DelaunayTet<Traits>::verifyWalk(const Point3 &pnt, index_t tet) const
 {
   // clang-format off
   if (mesh.isFiniteTet(tet))
   {
     bool coincide_vertex =
-      !(LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 0))) ||
-        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 1))) ||
-        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 2))) ||
-        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 3))));
+      !(LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 0))) ||
+        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 1))) ||
+        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 2))) ||
+        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 3))));
     OMC_ASSERT_RETURN(coincide_vertex, "The inserted vertex coincides with an existing vertex.");
 
     Sign ori[4];
@@ -607,24 +715,22 @@ bool DelaunayTet<Traits>::verifyWalk(index_t vid, index_t tet) const
       ori[i] = Orient3D()(mesh.point(mesh.tetNode(tet + TetMesh::tetON1(i))),
                           mesh.point(mesh.tetNode(tet + TetMesh::tetON2(i))),
                           mesh.point(mesh.tetNode(tet + TetMesh::tetON3(i))),
-                          mesh.point(vid));
+                          pnt);
       OMC_ASSERT_RETURN(ori[i] >= Sign::ZERO, "The vertex is not inside the target finite tetrahedron.");
     }
   }
   else
   {
     bool coincide_vertex =
-      !(LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 0))) ||
-        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 1))) ||
-        LessThan3D().coincident(mesh.point(vid), mesh.point(mesh.tetNode(tet + 2))));
+      !(LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 0))) ||
+        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 1))) ||
+        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 2))));
     OMC_ASSERT_RETURN(coincide_vertex, "The inserted vertex coincides with an existing vertex.");
     bool outside_boundary =
       Orient3D()(mesh.point(mesh.tetNode(tet)), mesh.point(mesh.tetNode(tet + 1)),
-                 mesh.point(mesh.tetNode(tet + 2)), mesh.point(vid)) == Sign::POSITIVE;
+                 mesh.point(mesh.tetNode(tet + 2)), pnt) == Sign::POSITIVE;
     OMC_ASSERT_RETURN(outside_boundary, "The vertex is not inside the target infinite tetrahedron.");
   }
-  bool conflict = mesh.vertexInTetSphere(tet, vid);
-  OMC_ASSERT_RETURN(conflict, "The vertex is not inside the target tetrahedron's circumsphere.");
   // clang-format on
   return true;
 }

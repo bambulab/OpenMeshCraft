@@ -1028,9 +1028,19 @@ void TetrahedralMesh<Traits>::clearTets()
   tet_touched = std::vector<TouchType>();
 }
 
+/**
+ * @brief Compute the relative position of point `pnt` (with weight `wt`) to the
+ * circumsphere of the tetrahedron `tet_idoff`.
+ *
+ * @param tet_idoff tetrahedron idoff = tet_id * 4 + node_offset
+ * @param pnt point in 3D
+ * @param wt weight of the point (default is 0)
+ * @return POSITIVE-inside, NEGATIVE-outside, and ZERO-on.
+ */
 template <typename Traits>
-bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
-                                                index_t vid) const
+Sign TetrahedralMesh<Traits>::pointInTetSphere(index_t       tet_idoff,
+                                               const Point3 &pnt,
+                                               Weight        wt) const
 {
   index_t        tet_id    = clipId(tet_idoff);
   const index_t *tet_nodes = &tetNode(tet_id);
@@ -1052,27 +1062,17 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
     // We first check the position of the vertex relative to the supporting
     // plane of the boundary face.
     Sign ori = Orient3D()(point(tet_nodes[0]), point(tet_nodes[1]),
-                          point(tet_nodes[2]), point(vid));
+                          point(tet_nodes[2]), pnt);
     // If the vertex is not on the plane, it must be located either outside or
     // inside, indicating whether it is inside or outside the circumsphere.
     if (ori != Sign::ZERO)
-      return ori == Sign::POSITIVE;
+      return ori;
 
     // If the vertex is on the plane, we then check if it lies within the disk
     // defined by the circumcircle of the boundary triangle. This check is
     // equivalent to determining if it is within the circumsphere of the finite
     // neighboring tetrahedron.
-    const index_t nn[4] = {tet_nodes[0], tet_nodes[1], tet_nodes[2],
-                           tetNode(tetNeigh(tet_id + 3))};
-
-    OMC_EXPENSIVE_ASSERT(
-      Orient3D()(point(nn[0]), point(nn[1]), point(nn[2]), point(nn[3])) ==
-        Sign::NEGATIVE,
-      "The neighboring tetrahedron is either degenerate or flipped.");
-
-    return !vertexInTetSphere(nn, vid);
-    // reverse the sign, since the order of the first three vertices is not
-    // adjusted.
+    return pointInTetSphere(tetNeigh(tet_id + 3), pnt, wt);
   }
   else
   {
@@ -1083,36 +1083,90 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
                                     point(tet_nodes[3])) == Sign::POSITIVE,
                          "The tetrahedron is either degenerate or flipped.");
 
-    return vertexInTetSphere(tet_nodes, vid);
+    if constexpr (!WEIGHTED)
+      return reverse_sign(InSphere()(point(tet_nodes[0]), point(tet_nodes[1]),
+                                     point(tet_nodes[2]), point(tet_nodes[3]),
+                                     pnt));
+    else
+      return reverse_sign(InPowerSphere()(
+        point(tet_nodes[0]), weight(tet_nodes[0]), point(tet_nodes[1]),
+        weight(tet_nodes[1]), point(tet_nodes[2]), weight(tet_nodes[2]),
+        point(tet_nodes[3]), weight(tet_nodes[3]), pnt, wt));
   }
 }
 
 /**
- * @brief Apply an inSphere predicate with symbolic perturbation to avoid
- * non-general configurations (five points co-spherical).
- * NOTE: The nodes must not contain infinite vertex.
+ * @brief Check if the vertex `vid` is inside the circumsphere of the
+ * tetrahedron `tet_idoff`. The symbolic perturbation will be used to
+ * avoid the case of five points co-spherical.
+ *
+ * @param tet_idoff tetrahedron idoff = tet_id * 4 + node_offset
+ * @param vid vertex id
+ * @return true if the vertex is inside the circumsphere of the tetrahedron.
  */
 template <typename Traits>
-bool TetrahedralMesh<Traits>::vertexInTetSphere(const index_t *node,
-                                                index_t        vid) const
+bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
+                                                index_t vid) const
 {
-  Sign ori;
-  if constexpr (!WEIGHTED)
-    ori = InSphere()(point(node[0]), point(node[1]), point(node[2]),
-                     point(node[3]), point(vid));
+  index_t        tet_id = clipId(tet_idoff);
+  const index_t *node   = &tetNode(tet_id);
+
+  if (node[3] == INFINITE_VERTEX)
+  {
+    // Infinite tetrahedron, containing a boundary face and the opposite
+    // infinite vertex.
+    OMC_EXPENSIVE_ASSERT(
+      !CollinearPoints3()(point(node[0]), point(node[1]), point(node[2])),
+      "The boundary face is degenerate.");
+
+    // The circumsphere of an infinite tetrahedron is defined by the union of:
+    // (a) the outer half-space defined by the supporting plane of the boundary
+    // face (excluding the supporting plane) and (b) the boundary face itself.
+
+    // We first check the position of the vertex relative to the supporting
+    // plane of the boundary face.
+    Sign ori =
+      Orient3D()(point(node[0]), point(node[1]), point(node[2]), point(vid));
+    // If the vertex is not on the plane, it must be located either outside or
+    // inside, indicating whether it is inside or outside the circumsphere.
+    if (ori != Sign::ZERO)
+      return ori == Sign::POSITIVE;
+
+    // If the vertex is on the plane, we then check if it lies within the disk
+    // defined by the circumcircle of the boundary triangle. This check is
+    // equivalent to determining if it is within the circumsphere of the finite
+    // neighboring tetrahedron.
+    return vertexInTetSphere(tetNeigh(tet_id + 3), vid);
+  }
   else
-    ori =
-      InPowerSphere()(point(node[0]), weight(node[0]), point(node[1]),
-                      weight(node[1]), point(node[2]), weight(node[2]),
-                      point(node[3]), weight(node[3]), point(vid), weight(vid));
-  if (ori != Sign::ZERO)
+  {
+    // For a finite tetrahedron, check the inSphere predicate.
+
+    OMC_EXPENSIVE_ASSERT(Orient3D()(point(node[0]), point(node[1]),
+                                    point(node[2]),
+                                    point(node[3])) == Sign::POSITIVE,
+                         "The tetrahedron is either degenerate or flipped.");
+
+    // Apply an inSphere predicate with symbolic perturbation to avoid
+    // non-general configurations (five points co-spherical).
+    Sign ori;
+    if constexpr (!WEIGHTED)
+      ori = InSphere()(point(node[0]), point(node[1]), point(node[2]),
+                       point(node[3]), point(vid));
+    else
+      ori = InPowerSphere()(point(node[0]), weight(node[0]), point(node[1]),
+                            weight(node[1]), point(node[2]), weight(node[2]),
+                            point(node[3]), weight(node[3]), point(vid),
+                            weight(vid));
+    if (ori != Sign::ZERO)
+      return ori == Sign::POSITIVE;
+
+    index_t nn[5] = {node[0], node[1], node[2], node[3], vid};
+    ori           = inSphereSymbolicPerturbation(nn);
+
+    OMC_ASSERT(ori != Sign::ZERO, "symbolic perturbation failed.");
     return ori == Sign::POSITIVE;
-
-  index_t nn[5] = {node[0], node[1], node[2], node[3], vid};
-  ori           = inSphereSymbolicPerturbation(nn);
-
-  OMC_ASSERT(ori != Sign::ZERO, "symbolic perturbation failed.");
-  return ori == Sign::POSITIVE;
+  }
 }
 
 /**
@@ -1178,6 +1232,123 @@ Sign TetrahedralMesh<Traits>::inSphereSymbolicPerturbation(
   // Orientation test on the vertices except the second vertex
   ori = Orient3D()(point(indices[0]), point(indices[2]), point(indices[3]),
                    point(indices[4]));
+  return (swaps % 2) ? ori : reverse_sign(ori);
+}
+
+/**
+ * @brief See details in `vertexInTetSphere(index_t tet_idoff, index_t vid)`.
+ *
+ * This function check if a VIRTUAL (unadded) vertex `pnt` with weight `wt`
+ * is inside the circumsphere of the tetrahedron `tet_idoff`.
+ * We still want to use the symbolic perturbation to avoid the case of five
+ * points co-spherical. So, the virtual vertex is assumed to be the last vertex
+ * with largest index, and it is expected to be the last one if it is finally
+ * added to the mesh.
+ */
+template <typename Traits>
+bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t       tet_idoff,
+                                                const Point3 &pnt,
+                                                Weight        wt) const
+{
+  index_t        tet_id = clipId(tet_idoff);
+  const index_t *node   = &tetNode(tet_id);
+
+  if (node[3] == INFINITE_VERTEX)
+  {
+    // Infinite tetrahedron, containing a boundary face and the opposite
+    // infinite vertex.
+    OMC_EXPENSIVE_ASSERT(
+      !CollinearPoints3()(point(node[0]), point(node[1]), point(node[2])),
+      "The boundary face is degenerate.");
+
+    // The circumsphere of an infinite tetrahedron is defined by the union of:
+    // (a) the outer half-space defined by the supporting plane of the boundary
+    // face (excluding the supporting plane) and (b) the boundary face itself.
+
+    // We first check the position of the vertex relative to the supporting
+    // plane of the boundary face.
+    Sign ori = Orient3D()(point(node[0]), point(node[1]), point(node[2]), pnt);
+    // If the vertex is not on the plane, it must be located either outside or
+    // inside, indicating whether it is inside or outside the circumsphere.
+    if (ori != Sign::ZERO)
+      return ori == Sign::POSITIVE;
+
+    // If the vertex is on the plane, we then check if it lies within the disk
+    // defined by the circumcircle of the boundary triangle. This check is
+    // equivalent to determining if it is within the circumsphere of the finite
+    // neighboring tetrahedron.
+    return vertexInTetSphere(tetNeigh(tet_id + 3), pnt, wt);
+  }
+  else
+  {
+    // For a finite tetrahedron, check the inSphere predicate.
+
+    OMC_EXPENSIVE_ASSERT(Orient3D()(point(node[0]), point(node[1]),
+                                    point(node[2]),
+                                    point(node[3])) == Sign::POSITIVE,
+                         "The tetrahedron is either degenerate or flipped.");
+
+    // Apply an inSphere predicate with symbolic perturbation to avoid
+    // non-general configurations (five points co-spherical).
+    Sign ori;
+    if constexpr (!WEIGHTED)
+      ori = InSphere()(point(node[0]), point(node[1]), point(node[2]),
+                       point(node[3]), pnt);
+    else
+      ori = InPowerSphere()(point(node[0]), weight(node[0]), point(node[1]),
+                            weight(node[1]), point(node[2]), weight(node[2]),
+                            point(node[3]), weight(node[3]), pnt, wt);
+    if (ori != Sign::ZERO)
+      return ori == Sign::POSITIVE;
+
+    index_t nn[4] = {node[0], node[1], node[2], node[3]};
+    ori           = inSphereSymbolicPerturbation(nn, pnt);
+
+    OMC_ASSERT(ori != Sign::ZERO, "symbolic perturbation failed.");
+    return ori == Sign::POSITIVE;
+  }
+}
+
+/**
+ * @brief See details in `inSphereSymbolicPerturbation(index_t* indices)`.
+ *
+ * This function is called by `vertexInTetSphere(tet_idoff, pnt, wt)`.
+ * `indices` only has four already added vertices and the virtual vertex
+ * is given by `pnt` and `wt` with the largest index.
+ */
+template <typename Traits>
+Sign TetrahedralMesh<Traits>::inSphereSymbolicPerturbation(
+  index_t *indices, const Point3 &pnt) const
+{
+  int swaps = 0;
+  int n     = 4;
+  int count;
+  // Bubble sort indices and count the number of swaps
+  // (the fifth index is the largest index, so it must be the last/fifth one)
+  do
+  {
+    count = 0;
+    n--;
+    for (int i = 0; i < n; i++)
+    {
+      if (indices[i] > indices[i + 1])
+      {
+        std::swap(indices[i], indices[i + 1]);
+        count++;
+      }
+    }
+    swaps += count;
+  } while (count);
+
+  // Orientation test on the last four vertices (excluding the first vertex)
+  Sign ori =
+    Orient3D()(point(indices[1]), point(indices[2]), point(indices[3]), pnt);
+  if (ori != Sign::ZERO)
+    return (swaps % 2) ? reverse_sign(ori) : ori;
+
+  // Orientation test on the vertices except the second vertex
+  ori =
+    Orient3D()(point(indices[0]), point(indices[2]), point(indices[3]), pnt);
   return (swaps % 2) ? ori : reverse_sign(ori);
 }
 

@@ -91,6 +91,7 @@ public:
     IO_UNKNOWN = 2, ///< Marked as inside/outside unknown
     INSIDE     = 3, ///< Marked as inside
     OUTSIDE    = 4, ///< Marked as outside
+    CONFLICT   = 5, ///< Marked as conflict (in DT)
   };
 
   /// Marks (bit position) for each face
@@ -293,11 +294,17 @@ public:
 
   /* Common geometric predicates */
 
+  Sign pointInTetSphere(index_t tet_idoff, const Point3 &pnt,
+                        Weight wt = 0.) const;
+
   bool vertexInTetSphere(index_t tet_idoff, index_t vid) const;
 
-  bool vertexInTetSphere(const index_t *node, index_t vid) const;
-
   Sign inSphereSymbolicPerturbation(index_t *indices) const;
+
+  bool vertexInTetSphere(index_t tet_idoff, const Point3 &pnt,
+                         Weight wt = 0.) const;
+
+  Sign inSphereSymbolicPerturbation(index_t *indices, const Point3 &pnt) const;
 
   /* Operations about dual Voronoi diagram */
 

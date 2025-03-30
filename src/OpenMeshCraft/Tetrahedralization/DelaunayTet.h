@@ -26,14 +26,6 @@ class DelaunayTet
 public: /* Traits **********************************************************/
   using Self = DelaunayTet<Traits>;
 
-  using NT      = typename Traits::NT;
-  using EPoint3 = typename Traits::EPoint3;
-  using GPoint3 = typename Traits::GPoint3;
-
-  using AsGP = typename Traits::AsGP;
-  using AsEP = typename Traits::AsEP;
-  using ToEP = typename Traits::ToEP;
-
   using Orient3D         = typename Traits::Orient3D;
   using LessThan3D       = typename Traits::LessThan3D;
   using CollinearPoints3 = typename Traits::CollinearPoints3;
@@ -42,7 +34,10 @@ public: /* Traits **********************************************************/
   using TET_MARK = typename TetMesh::TET_MARK;
   using VTX_MARK = typename TetMesh::VTX_MARK;
 
-  const static bool WEIGHTED = TetMesh::WEIGHTED;
+  using Point3 = typename TetMesh::Point3;
+  using Weight = typename TetMesh::Weight;
+
+  static constexpr bool WEIGHTED = TetMesh::WEIGHTED;
 
 public: /* Constructor & Destructor ****************************************/
   DelaunayTet() = delete;
@@ -67,7 +62,7 @@ public: /* Algorithm *******************************************************/
 
   /* Sub-steps of inserting a vertex */
 
-  void walk(const index_t vid, index_t &tet);
+  void walk(const Point3 &pnt, index_t &tet, int *dimension = nullptr) const;
 
   void cavity(const index_t vid, const index_t tet,
               InlinedVector64<index_t> &cavity_tets,
@@ -75,6 +70,12 @@ public: /* Algorithm *******************************************************/
 
   void filling(const index_t                   vid,
                const InlinedVector64<index_t> &cavity_corners);
+
+  void conflict(const Point3 &pnt, const Weight wt, const index_t tet,
+                InlinedVector64<index_t> &conflict_tets,
+                InlinedVector64<index_t> &conflict_corners);
+
+  void removeConflicts(InlinedVector64<index_t> &conflict_tets);
 
 public: /* Checks **********************************************************/
   /* Verify the correctness of the Delaunay tetrahedralization */
@@ -88,7 +89,7 @@ public: /* Checks **********************************************************/
 
   bool verifyDelaunay(index_t vid) const;
 
-  bool verifyWalk(index_t vid, index_t tet) const;
+  bool verifyWalk(const Point3 &pnt, index_t tet) const;
 
 public: /* Data ************************************************************/
   TetMesh &mesh;
