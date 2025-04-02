@@ -97,10 +97,11 @@ public: /* Traits **********************************************************/
   struct FaceToRefine
   {
     FaceQuality quality;
+    Point3      intersection; // intersection between dual and surface patch
     // clang-format off
     FaceToRefine() = default;
-    FaceToRefine(FaceQuality _quality)
-      : quality(_quality) {}
+    FaceToRefine(const FaceQuality& _quality, const Point3& _intersection)
+      : quality(_quality), intersection(_intersection) {}
     bool operator<(const FaceToRefine &other) const { return quality < other.quality; }
     bool operator>(const FaceToRefine &other) const { return quality > other.quality; }
     // clang-format on

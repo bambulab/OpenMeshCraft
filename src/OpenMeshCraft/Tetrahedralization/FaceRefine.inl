@@ -42,11 +42,9 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
 {
   // Get the next face to process from the queue ========================
 
-  auto [face_idoff, face_quality] = face_queue.top();
+  auto [face_idoff, face_to_refine] = face_queue.top();
   face_queue.pop();
 
-  std::cout << std::format("\rFace quality: {}           ",
-                           face_quality.quality.quality);
   OMC_EXPENSIVE_ASSERT(!tet_mesh.isTetDeleted(face_idoff),
                        "The face to process is deleted.");
 
@@ -56,7 +54,7 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
 
   // Get the refinement point ===========================================
 
-  Point3 dual_point = tet_mesh.faceDualPoint(face_idoff);
+  Point3 refine_point = face_to_refine.intersection;
 
   // Locate the refinement point in Delaunay tetrahedralization =========
 
@@ -64,7 +62,7 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
 
   index_t tet_id    = TetMesh::clipId(finite_idoff);
   int     dimension = -1;
-  del_tet.walk(dual_point, tet_id, &dimension);
+  del_tet.walk(refine_point, tet_id, &dimension);
 
   if (dimension == 0)
   {
@@ -76,7 +74,7 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
 
   InlinedVector64<index_t> conflict_tets;
   InlinedVector64<index_t> conflict_corners;
-  del_tet.conflict(dual_point, /*weight*/ 0, tet_id, conflict_tets,
+  del_tet.conflict(refine_point, /*weight*/ 0, tet_id, conflict_tets,
                    conflict_corners);
 
   if (conflict_tets.empty())
@@ -118,7 +116,7 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
 
   // Insert the refinement point into the mesh ============================
   del_tet.removeConflicts(conflict_tets);
-  index_t new_vtx_vid = newVertex(dual_point, /*weight*/ 0);
+  index_t new_vtx_vid = newVertex(refine_point, /*weight*/ 0);
   del_tet.filling(new_vtx_vid, conflict_corners);
 
   // Check new faces in the conflict zone =================================
@@ -164,10 +162,6 @@ void FaceRefine<T, D>::refine()
       std::cout << std::format("\rInserted points: {}         ",
                                num_inserted_points);
       break;
-    }
-    if (num_inserted_points >= 20000)
-    {
-      return;
     }
 #endif
   }
@@ -222,7 +216,7 @@ void FaceRefine<T, D>::checkNewFace(index_t face_idoff)
     if (face_quality)
     { // face should be refined.
       // we put the min_idoff to the queue to ensure identifier unique.
-      FaceToRefine face_to_refine(face_quality);
+      FaceToRefine face_to_refine(face_quality, intersection);
       face_queue.push(min_idoff, face_to_refine);
     }
   }
