@@ -83,7 +83,7 @@ acz_nx = acz * nx
 det4 = acx_nz - acz_nx
 numy2 = bc2 * det4
 
-numy = numy1 - numy2
+numy = numy2 - numy1
 
 // ---- numz = ac2 * det([bcx bcy; nx ny]) - bc2 * det([acx acy; nx ny])
 bcx_ny = bcx * ny
@@ -103,24 +103,33 @@ tmp1 = acx * det1
 tmp2 = acy * det3
 tmp3 = acz * det5
 tmp4 = tmp1 - tmp2
-tmp5 = tmp4 + tmp3
-den = 2 * tmp5
+// tmp5 = tmp4 + tmp3
+// den = 2 * tmp5
+den = tmp4 + tmp3
 
 // -- compare the distance
-dcx2 = dcx * dcx
-dcy2 = dcy * dcy
-dcz2 = dcz * dcz
-dc2xy = dcx2 + dcy2
-dc2 = dc2xy + dcz2
 
-den2 = den * den
+// ---- dc * den
+dcx_den = dcx * den
+dcy_den = dcy * den
+dcz_den = dcz * den
 
-dc2_den2 = dc2 * den2
+// ---- 2 * num
+// numx_2 = 2 * numx
+// numy_2 = 2 * numy
+// numz_2 = 2 * numz
 
-numx_sqr = numx * numx
-numy_sqr = numy * numy
-numz_sqr = numz * numz
-numxy_sqr = numx_sqr + numy_sqr
-num_sqr = numxy_sqr + numz_sqr
+// ---- 2 * num - dc * den
+// numx_dcx = numx_2 - dcx_den
+// numy_dcy = numy_2 - dcy_den
+// numz_dcz = numz_2 - dcz_den
+numx_dcx = numx - dcx_den
+numy_dcy = numy - dcy_den
+numz_dcz = numz - dcz_den
 
-sign = num_sqr - dc2_den2
+// ---- dc dot (2 * num - dc * den)
+rx = dcx * numx_dcx
+ry = dcy * numy_dcy
+rz = dcz * numz_dcz
+rxy = rx + ry
+sign = rxy + rz

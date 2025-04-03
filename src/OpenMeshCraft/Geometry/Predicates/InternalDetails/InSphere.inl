@@ -607,6 +607,11 @@ Sign inSegmentDiametricalSphere_III(const GenericPoint3T<IT, ET> &pa,
 
 /*===================================================================*/
 
+inline Sign inTriangleCircumSphere_filtered(double pax, double pay, double paz,
+                                            double pbx, double pby, double pbz,
+                                            double pcx, double pcy, double pcz,
+                                            double pdx, double pdy, double pdz);
+
 template <typename IT>
 Sign inTriangleCircumSphere_interval(IT pax, IT pay, IT paz, IT pbx, IT pby,
                                      IT pbz, IT pcx, IT pcy, IT pcz, IT pdx,
@@ -11011,6 +11016,125 @@ Sign inSegmentDiametricalSphere_III(const GenericPoint3T<IT, ET> &pa,
   return inSegmentDiametricalSphere_III_expansion<IT, ET>(pa, pb, pc);
 }
 
+inline Sign inTriangleCircumSphere_filtered(double pax, double pay, double paz,
+                                            double pbx, double pby, double pbz,
+                                            double pcx, double pcy, double pcz,
+                                            double pdx, double pdy, double pdz)
+{
+  double acx     = pax - pcx;
+  double acy     = pay - pcy;
+  double acz     = paz - pcz;
+  double bcx     = pbx - pcx;
+  double bcy     = pby - pcy;
+  double bcz     = pbz - pcz;
+  double dcx     = pdx - pcx;
+  double dcy     = pdy - pcy;
+  double dcz     = pdz - pcz;
+  double acx2    = acx * acx;
+  double acy2    = acy * acy;
+  double acz2    = acz * acz;
+  double ac2xy   = acx2 + acy2;
+  double ac2     = ac2xy + acz2;
+  double bcx2    = bcx * bcx;
+  double bcy2    = bcy * bcy;
+  double bcz2    = bcz * bcz;
+  double bc2xy   = bcx2 + bcy2;
+  double bc2     = bc2xy + bcz2;
+  double acy_bcz = acy * bcz;
+  double acz_bcy = acz * bcy;
+  double nx      = acy_bcz - acz_bcy;
+  double acz_bcx = acz * bcx;
+  double acx_bcz = acx * bcz;
+  double ny      = acz_bcx - acx_bcz;
+  double acx_bcy = acx * bcy;
+  double acy_bcx = acy * bcx;
+  double nz      = acx_bcy - acy_bcx;
+  double bcy_nz  = bcy * nz;
+  double bcz_ny  = bcz * ny;
+  double det1    = bcy_nz - bcz_ny;
+  double numx1   = ac2 * det1;
+  double acy_nz  = acy * nz;
+  double acz_ny  = acz * ny;
+  double det2    = acy_nz - acz_ny;
+  double numx2   = bc2 * det2;
+  double numx    = numx1 - numx2;
+  double bcx_nz  = bcx * nz;
+  double bcz_nx  = bcz * nx;
+  double det3    = bcx_nz - bcz_nx;
+  double numy1   = ac2 * det3;
+  double acx_nz  = acx * nz;
+  double acz_nx  = acz * nx;
+  double det4    = acx_nz - acz_nx;
+  double numy2   = bc2 * det4;
+  double numy    = numy2 - numy1;
+  double bcx_ny  = bcx * ny;
+  double bcy_nx  = bcy * nx;
+  double det5    = bcx_ny - bcy_nx;
+  double numz1   = ac2 * det5;
+  double acx_ny  = acx * ny;
+  double acy_nx  = acy * nx;
+  double det6    = acx_ny - acy_nx;
+  double numz2   = bc2 * det6;
+  double numz    = numz1 - numz2;
+  double tmp1    = acx * det1;
+  double tmp2    = acy * det3;
+  double tmp3    = acz * det5;
+  double tmp4    = tmp1 - tmp2;
+  double den     = tmp4 + tmp3;
+
+  double _tmp_fabs;
+
+  double max_var = 0.0;
+  if ((_tmp_fabs = fabs(acx)) > max_var)
+    max_var = _tmp_fabs;
+  if ((_tmp_fabs = fabs(acy)) > max_var)
+    max_var = _tmp_fabs;
+  if ((_tmp_fabs = fabs(acz)) > max_var)
+    max_var = _tmp_fabs;
+  if ((_tmp_fabs = fabs(bcx)) > max_var)
+    max_var = _tmp_fabs;
+  if ((_tmp_fabs = fabs(bcy)) > max_var)
+    max_var = _tmp_fabs;
+  if ((_tmp_fabs = fabs(bcz)) > max_var)
+    max_var = _tmp_fabs;
+  double epsilon = max_var;
+  epsilon *= epsilon;
+  epsilon *= epsilon;
+  epsilon *= 1.3766765505351944e-14;
+  if (filter_sign(den, epsilon) == Sign::UNCERTAIN)
+    return Sign::UNCERTAIN;
+
+  double dcx_den  = dcx * den;
+  double dcy_den  = dcy * den;
+  double dcz_den  = dcz * den;
+  double numx_dcx = numx - dcx_den;
+  double numy_dcy = numy - dcy_den;
+  double numz_dcz = numz - dcz_den;
+  double rx       = dcx * numx_dcx;
+  double ry       = dcy * numy_dcy;
+  double rz       = dcz * numz_dcz;
+  double rxy      = rx + ry;
+  double sign     = rxy + rz;
+
+  if ((_tmp_fabs = fabs(dcx)) > max_var)
+    max_var = _tmp_fabs;
+  if ((_tmp_fabs = fabs(dcy)) > max_var)
+    max_var = _tmp_fabs;
+  if ((_tmp_fabs = fabs(dcz)) > max_var)
+    max_var = _tmp_fabs;
+  epsilon = max_var;
+  epsilon *= epsilon;
+  epsilon *= epsilon;
+  epsilon *= max_var;
+  epsilon *= max_var;
+  epsilon *= 1.9673151996357787e-13;
+
+  if (filter_sign(sign, epsilon) == Sign::UNCERTAIN)
+    return Sign::UNCERTAIN;
+  return OMC::sign((int)filter_sign(sign, epsilon) *
+                   (int)filter_sign(den, epsilon));
+}
+
 template <typename IT>
 Sign inTriangleCircumSphere_interval(IT pax, IT pay, IT paz, IT pbx, IT pby,
                                      IT pbz, IT pcx, IT pcy, IT pcz, IT pdx,
@@ -11018,83 +11142,83 @@ Sign inTriangleCircumSphere_interval(IT pax, IT pay, IT paz, IT pbx, IT pby,
 {
   typename IT::Protector P;
 
-  IT acx       = pax - pcx;
-  IT acy       = pay - pcy;
-  IT acz       = paz - pcz;
-  IT bcx       = pbx - pcx;
-  IT bcy       = pby - pcy;
-  IT bcz       = pbz - pcz;
-  IT dcx       = pdx - pcx;
-  IT dcy       = pdy - pcy;
-  IT dcz       = pdz - pcz;
-  IT acx2      = acx * acx;
-  IT acy2      = acy * acy;
-  IT acz2      = acz * acz;
-  IT ac2xy     = acx2 + acy2;
-  IT ac2       = ac2xy + acz2;
-  IT bcx2      = bcx * bcx;
-  IT bcy2      = bcy * bcy;
-  IT bcz2      = bcz * bcz;
-  IT bc2xy     = bcx2 + bcy2;
-  IT bc2       = bc2xy + bcz2;
-  IT acy_bcz   = acy * bcz;
-  IT acz_bcy   = acz * bcy;
-  IT nx        = acy_bcz - acz_bcy;
-  IT acz_bcx   = acz * bcx;
-  IT acx_bcz   = acx * bcz;
-  IT ny        = acz_bcx - acx_bcz;
-  IT acx_bcy   = acx * bcy;
-  IT acy_bcx   = acy * bcx;
-  IT nz        = acx_bcy - acy_bcx;
-  IT bcy_nz    = bcy * nz;
-  IT bcz_ny    = bcz * ny;
-  IT det1      = bcy_nz - bcz_ny;
-  IT numx1     = ac2 * det1;
-  IT acy_nz    = acy * nz;
-  IT acz_ny    = acz * ny;
-  IT det2      = acy_nz - acz_ny;
-  IT numx2     = bc2 * det2;
-  IT numx      = numx1 - numx2;
-  IT bcx_nz    = bcx * nz;
-  IT bcz_nx    = bcz * nx;
-  IT det3      = bcx_nz - bcz_nx;
-  IT numy1     = ac2 * det3;
-  IT acx_nz    = acx * nz;
-  IT acz_nx    = acz * nx;
-  IT det4      = acx_nz - acz_nx;
-  IT numy2     = bc2 * det4;
-  IT numy      = numy1 - numy2;
-  IT bcx_ny    = bcx * ny;
-  IT bcy_nx    = bcy * nx;
-  IT det5      = bcx_ny - bcy_nx;
-  IT numz1     = ac2 * det5;
-  IT acx_ny    = acx * ny;
-  IT acy_nx    = acy * nx;
-  IT det6      = acx_ny - acy_nx;
-  IT numz2     = bc2 * det6;
-  IT numz      = numz1 - numz2;
-  IT tmp1      = acx * det1;
-  IT tmp2      = acy * det3;
-  IT tmp3      = acz * det5;
-  IT tmp4      = tmp1 - tmp2;
-  IT tmp5      = tmp4 + tmp3;
-  IT den       = tmp5 * 2;
-  IT dcx2      = dcx * dcx;
-  IT dcy2      = dcy * dcy;
-  IT dcz2      = dcz * dcz;
-  IT dc2xy     = dcx2 + dcy2;
-  IT dc2       = dc2xy + dcz2;
-  IT den2      = den * den;
-  IT dc2_den2  = dc2 * den2;
-  IT numx_sqr  = numx * numx;
-  IT numy_sqr  = numy * numy;
-  IT numz_sqr  = numz * numz;
-  IT numxy_sqr = numx_sqr + numy_sqr;
-  IT num_sqr   = numxy_sqr + numz_sqr;
-  IT sign      = num_sqr - dc2_den2;
+  IT acx     = pax - pcx;
+  IT acy     = pay - pcy;
+  IT acz     = paz - pcz;
+  IT bcx     = pbx - pcx;
+  IT bcy     = pby - pcy;
+  IT bcz     = pbz - pcz;
+  IT dcx     = pdx - pcx;
+  IT dcy     = pdy - pcy;
+  IT dcz     = pdz - pcz;
+  IT acx2    = acx * acx;
+  IT acy2    = acy * acy;
+  IT acz2    = acz * acz;
+  IT ac2xy   = acx2 + acy2;
+  IT ac2     = ac2xy + acz2;
+  IT bcx2    = bcx * bcx;
+  IT bcy2    = bcy * bcy;
+  IT bcz2    = bcz * bcz;
+  IT bc2xy   = bcx2 + bcy2;
+  IT bc2     = bc2xy + bcz2;
+  IT acy_bcz = acy * bcz;
+  IT acz_bcy = acz * bcy;
+  IT nx      = acy_bcz - acz_bcy;
+  IT acz_bcx = acz * bcx;
+  IT acx_bcz = acx * bcz;
+  IT ny      = acz_bcx - acx_bcz;
+  IT acx_bcy = acx * bcy;
+  IT acy_bcx = acy * bcx;
+  IT nz      = acx_bcy - acy_bcx;
+  IT bcy_nz  = bcy * nz;
+  IT bcz_ny  = bcz * ny;
+  IT det1    = bcy_nz - bcz_ny;
+  IT numx1   = ac2 * det1;
+  IT acy_nz  = acy * nz;
+  IT acz_ny  = acz * ny;
+  IT det2    = acy_nz - acz_ny;
+  IT numx2   = bc2 * det2;
+  IT numx    = numx1 - numx2;
+  IT bcx_nz  = bcx * nz;
+  IT bcz_nx  = bcz * nx;
+  IT det3    = bcx_nz - bcz_nx;
+  IT numy1   = ac2 * det3;
+  IT acx_nz  = acx * nz;
+  IT acz_nx  = acz * nx;
+  IT det4    = acx_nz - acz_nx;
+  IT numy2   = bc2 * det4;
+  IT numy    = numy2 - numy1;
+  IT bcx_ny  = bcx * ny;
+  IT bcy_nx  = bcy * nx;
+  IT det5    = bcx_ny - bcy_nx;
+  IT numz1   = ac2 * det5;
+  IT acx_ny  = acx * ny;
+  IT acy_nx  = acy * nx;
+  IT det6    = acx_ny - acy_nx;
+  IT numz2   = bc2 * det6;
+  IT numz    = numz1 - numz2;
+  IT tmp1    = acx * det1;
+  IT tmp2    = acy * det3;
+  IT tmp3    = acz * det5;
+  IT tmp4    = tmp1 - tmp2;
+  IT den     = tmp4 + tmp3;
+  if (!den.is_sign_reliable())
+    return Sign::UNCERTAIN;
+
+  IT dcx_den  = dcx * den;
+  IT dcy_den  = dcy * den;
+  IT dcz_den  = dcz * den;
+  IT numx_dcx = numx - dcx_den;
+  IT numy_dcy = numy - dcy_den;
+  IT numz_dcz = numz - dcz_den;
+  IT rx       = dcx * numx_dcx;
+  IT ry       = dcy * numy_dcy;
+  IT rz       = dcz * numz_dcz;
+  IT rxy      = rx + ry;
+  IT sign     = rxy + rz;
   if (!sign.is_sign_reliable())
     return Sign::UNCERTAIN;
-  return OMC::sign(sign);
+  return OMC::sign((int)OMC::sign(sign) * (int)OMC::sign(den));
 }
 
 template <typename ET>
@@ -11102,81 +11226,78 @@ Sign inTriangleCircumSphere_exact(ET pax, ET pay, ET paz, ET pbx, ET pby,
                                   ET pbz, ET pcx, ET pcy, ET pcz, ET pdx,
                                   ET pdy, ET pdz)
 {
-  ET acx       = pax - pcx;
-  ET acy       = pay - pcy;
-  ET acz       = paz - pcz;
-  ET bcx       = pbx - pcx;
-  ET bcy       = pby - pcy;
-  ET bcz       = pbz - pcz;
-  ET dcx       = pdx - pcx;
-  ET dcy       = pdy - pcy;
-  ET dcz       = pdz - pcz;
-  ET acx2      = acx * acx;
-  ET acy2      = acy * acy;
-  ET acz2      = acz * acz;
-  ET ac2xy     = acx2 + acy2;
-  ET ac2       = ac2xy + acz2;
-  ET bcx2      = bcx * bcx;
-  ET bcy2      = bcy * bcy;
-  ET bcz2      = bcz * bcz;
-  ET bc2xy     = bcx2 + bcy2;
-  ET bc2       = bc2xy + bcz2;
-  ET acy_bcz   = acy * bcz;
-  ET acz_bcy   = acz * bcy;
-  ET nx        = acy_bcz - acz_bcy;
-  ET acz_bcx   = acz * bcx;
-  ET acx_bcz   = acx * bcz;
-  ET ny        = acz_bcx - acx_bcz;
-  ET acx_bcy   = acx * bcy;
-  ET acy_bcx   = acy * bcx;
-  ET nz        = acx_bcy - acy_bcx;
-  ET bcy_nz    = bcy * nz;
-  ET bcz_ny    = bcz * ny;
-  ET det1      = bcy_nz - bcz_ny;
-  ET numx1     = ac2 * det1;
-  ET acy_nz    = acy * nz;
-  ET acz_ny    = acz * ny;
-  ET det2      = acy_nz - acz_ny;
-  ET numx2     = bc2 * det2;
-  ET numx      = numx1 - numx2;
-  ET bcx_nz    = bcx * nz;
-  ET bcz_nx    = bcz * nx;
-  ET det3      = bcx_nz - bcz_nx;
-  ET numy1     = ac2 * det3;
-  ET acx_nz    = acx * nz;
-  ET acz_nx    = acz * nx;
-  ET det4      = acx_nz - acz_nx;
-  ET numy2     = bc2 * det4;
-  ET numy      = numy1 - numy2;
-  ET bcx_ny    = bcx * ny;
-  ET bcy_nx    = bcy * nx;
-  ET det5      = bcx_ny - bcy_nx;
-  ET numz1     = ac2 * det5;
-  ET acx_ny    = acx * ny;
-  ET acy_nx    = acy * nx;
-  ET det6      = acx_ny - acy_nx;
-  ET numz2     = bc2 * det6;
-  ET numz      = numz1 - numz2;
-  ET tmp1      = acx * det1;
-  ET tmp2      = acy * det3;
-  ET tmp3      = acz * det5;
-  ET tmp4      = tmp1 - tmp2;
-  ET tmp5      = tmp4 + tmp3;
-  ET den       = tmp5 * 2;
-  ET dcx2      = dcx * dcx;
-  ET dcy2      = dcy * dcy;
-  ET dcz2      = dcz * dcz;
-  ET dc2xy     = dcx2 + dcy2;
-  ET dc2       = dc2xy + dcz2;
-  ET den2      = den * den;
-  ET dc2_den2  = dc2 * den2;
-  ET numx_sqr  = numx * numx;
-  ET numy_sqr  = numy * numy;
-  ET numz_sqr  = numz * numz;
-  ET numxy_sqr = numx_sqr + numy_sqr;
-  ET num_sqr   = numxy_sqr + numz_sqr;
-  ET sign      = num_sqr - dc2_den2;
-  return OMC::sign(sign);
+  ET acx      = pax - pcx;
+  ET acy      = pay - pcy;
+  ET acz      = paz - pcz;
+  ET bcx      = pbx - pcx;
+  ET bcy      = pby - pcy;
+  ET bcz      = pbz - pcz;
+  ET dcx      = pdx - pcx;
+  ET dcy      = pdy - pcy;
+  ET dcz      = pdz - pcz;
+  ET acx2     = acx * acx;
+  ET acy2     = acy * acy;
+  ET acz2     = acz * acz;
+  ET ac2xy    = acx2 + acy2;
+  ET ac2      = ac2xy + acz2;
+  ET bcx2     = bcx * bcx;
+  ET bcy2     = bcy * bcy;
+  ET bcz2     = bcz * bcz;
+  ET bc2xy    = bcx2 + bcy2;
+  ET bc2      = bc2xy + bcz2;
+  ET acy_bcz  = acy * bcz;
+  ET acz_bcy  = acz * bcy;
+  ET nx       = acy_bcz - acz_bcy;
+  ET acz_bcx  = acz * bcx;
+  ET acx_bcz  = acx * bcz;
+  ET ny       = acz_bcx - acx_bcz;
+  ET acx_bcy  = acx * bcy;
+  ET acy_bcx  = acy * bcx;
+  ET nz       = acx_bcy - acy_bcx;
+  ET bcy_nz   = bcy * nz;
+  ET bcz_ny   = bcz * ny;
+  ET det1     = bcy_nz - bcz_ny;
+  ET numx1    = ac2 * det1;
+  ET acy_nz   = acy * nz;
+  ET acz_ny   = acz * ny;
+  ET det2     = acy_nz - acz_ny;
+  ET numx2    = bc2 * det2;
+  ET numx     = numx1 - numx2;
+  ET bcx_nz   = bcx * nz;
+  ET bcz_nx   = bcz * nx;
+  ET det3     = bcx_nz - bcz_nx;
+  ET numy1    = ac2 * det3;
+  ET acx_nz   = acx * nz;
+  ET acz_nx   = acz * nx;
+  ET det4     = acx_nz - acz_nx;
+  ET numy2    = bc2 * det4;
+  ET numy     = numy2 - numy1;
+  ET bcx_ny   = bcx * ny;
+  ET bcy_nx   = bcy * nx;
+  ET det5     = bcx_ny - bcy_nx;
+  ET numz1    = ac2 * det5;
+  ET acx_ny   = acx * ny;
+  ET acy_nx   = acy * nx;
+  ET det6     = acx_ny - acy_nx;
+  ET numz2    = bc2 * det6;
+  ET numz     = numz1 - numz2;
+  ET tmp1     = acx * det1;
+  ET tmp2     = acy * det3;
+  ET tmp3     = acz * det5;
+  ET tmp4     = tmp1 - tmp2;
+  ET den      = tmp4 + tmp3;
+  ET dcx_den  = dcx * den;
+  ET dcy_den  = dcy * den;
+  ET dcz_den  = dcz * den;
+  ET numx_dcx = numx - dcx_den;
+  ET numy_dcy = numy - dcy_den;
+  ET numz_dcz = numz - dcz_den;
+  ET rx       = dcx * numx_dcx;
+  ET ry       = dcy * numy_dcy;
+  ET rz       = dcz * numz_dcz;
+  ET rxy      = rx + ry;
+  ET sign     = rxy + rz;
+  return OMC::sign((int)OMC::sign(sign) * (int)OMC::sign(den));
 }
 
 Sign inTriangleCircumSphere_expansion(double pax, double pay, double paz,
@@ -11286,7 +11407,7 @@ Sign inTriangleCircumSphere_expansion(double pax, double pay, double paz,
     o.Gen_Product_With_PreAlloc(bc2_len, bc2, det4_len, det4, &numy2, 32);
   double numy_p[32], *numy = numy_p;
   int    numy_len =
-    o.Gen_Diff_With_PreAlloc(numy1_len, numy1, numy2_len, numy2, &numy, 32);
+    o.Gen_Diff_With_PreAlloc(numy2_len, numy2, numy1_len, numy1, &numy, 32);
   double bcx_ny_p[32], *bcx_ny = bcx_ny_p;
   int bcx_ny_len = o.Gen_Product_With_PreAlloc(2, bcx, ny_len, ny, &bcx_ny, 32);
   double bcy_nx_p[32], *bcy_nx = bcy_nx_p;
@@ -11319,67 +11440,67 @@ Sign inTriangleCircumSphere_expansion(double pax, double pay, double paz,
   double tmp4_p[32], *tmp4 = tmp4_p;
   int    tmp4_len =
     o.Gen_Diff_With_PreAlloc(tmp1_len, tmp1, tmp2_len, tmp2, &tmp4, 32);
-  double tmp5_p[32], *tmp5 = tmp5_p;
-  int    tmp5_len =
-    o.Gen_Sum_With_PreAlloc(tmp4_len, tmp4, tmp3_len, tmp3, &tmp5, 32);
   double den_p[32], *den = den_p;
-  int    den_len = o.Double_With_PreAlloc(tmp5_len, tmp5, &den, 32);
-  double dcx2[8];
-  int    dcx2_len = o.Gen_Product(2, dcx, 2, dcx, dcx2);
-  double dcy2[8];
-  int    dcy2_len = o.Gen_Product(2, dcy, 2, dcy, dcy2);
-  double dcz2[8];
-  int    dcz2_len = o.Gen_Product(2, dcz, 2, dcz, dcz2);
-  double dc2xy[16];
-  int    dc2xy_len = o.Gen_Sum(dcx2_len, dcx2, dcy2_len, dcy2, dc2xy);
-  double dc2[24];
-  int    dc2_len = o.Gen_Sum(dc2xy_len, dc2xy, dcz2_len, dcz2, dc2);
-  double den2_p[32], *den2 = den2_p;
-  int    den2_len =
-    o.Gen_Product_With_PreAlloc(den_len, den, den_len, den, &den2, 32);
-  double dc2_den2_p[32], *dc2_den2 = dc2_den2_p;
-  int    dc2_den2_len =
-    o.Gen_Product_With_PreAlloc(dc2_len, dc2, den2_len, den2, &dc2_den2, 32);
-  double numx_sqr_p[32], *numx_sqr = numx_sqr_p;
-  int    numx_sqr_len =
-    o.Gen_Product_With_PreAlloc(numx_len, numx, numx_len, numx, &numx_sqr, 32);
-  double numy_sqr_p[32], *numy_sqr = numy_sqr_p;
-  int    numy_sqr_len =
-    o.Gen_Product_With_PreAlloc(numy_len, numy, numy_len, numy, &numy_sqr, 32);
-  double numz_sqr_p[32], *numz_sqr = numz_sqr_p;
-  int    numz_sqr_len =
-    o.Gen_Product_With_PreAlloc(numz_len, numz, numz_len, numz, &numz_sqr, 32);
-  double numxy_sqr_p[32], *numxy_sqr = numxy_sqr_p;
-  int    numxy_sqr_len = o.Gen_Sum_With_PreAlloc(
-    numx_sqr_len, numx_sqr, numy_sqr_len, numy_sqr, &numxy_sqr, 32);
-  double num_sqr_p[32], *num_sqr = num_sqr_p;
-  int    num_sqr_len = o.Gen_Sum_With_PreAlloc(
-    numxy_sqr_len, numxy_sqr, numz_sqr_len, numz_sqr, &num_sqr, 32);
+  int    den_len =
+    o.Gen_Sum_With_PreAlloc(tmp4_len, tmp4, tmp3_len, tmp3, &den, 32);
+  double dcx_den_p[32], *dcx_den = dcx_den_p;
+  int    dcx_den_len =
+    o.Gen_Product_With_PreAlloc(2, dcx, den_len, den, &dcx_den, 32);
+  double dcy_den_p[32], *dcy_den = dcy_den_p;
+  int    dcy_den_len =
+    o.Gen_Product_With_PreAlloc(2, dcy, den_len, den, &dcy_den, 32);
+  double dcz_den_p[32], *dcz_den = dcz_den_p;
+  int    dcz_den_len =
+    o.Gen_Product_With_PreAlloc(2, dcz, den_len, den, &dcz_den, 32);
+  double numx_dcx_p[32], *numx_dcx = numx_dcx_p;
+  int    numx_dcx_len = o.Gen_Diff_With_PreAlloc(numx_len, numx, dcx_den_len,
+                                                 dcx_den, &numx_dcx, 32);
+  double numy_dcy_p[32], *numy_dcy = numy_dcy_p;
+  int    numy_dcy_len = o.Gen_Diff_With_PreAlloc(numy_len, numy, dcy_den_len,
+                                                 dcy_den, &numy_dcy, 32);
+  double numz_dcz_p[32], *numz_dcz = numz_dcz_p;
+  int    numz_dcz_len = o.Gen_Diff_With_PreAlloc(numz_len, numz, dcz_den_len,
+                                                 dcz_den, &numz_dcz, 32);
+  double rx_p[32], *rx = rx_p;
+  int    rx_len =
+    o.Gen_Product_With_PreAlloc(2, dcx, numx_dcx_len, numx_dcx, &rx, 32);
+  double ry_p[32], *ry = ry_p;
+  int    ry_len =
+    o.Gen_Product_With_PreAlloc(2, dcy, numy_dcy_len, numy_dcy, &ry, 32);
+  double rz_p[32], *rz = rz_p;
+  int    rz_len =
+    o.Gen_Product_With_PreAlloc(2, dcz, numz_dcz_len, numz_dcz, &rz, 32);
+  double rxy_p[32], *rxy = rxy_p;
+  int    rxy_len = o.Gen_Sum_With_PreAlloc(rx_len, rx, ry_len, ry, &rxy, 32);
   double sign_p[32], *sign = sign_p;
-  int    sign_len = o.Gen_Diff_With_PreAlloc(num_sqr_len, num_sqr, dc2_den2_len,
-                                             dc2_den2, &sign, 32);
+  int sign_len = o.Gen_Sum_With_PreAlloc(rxy_len, rxy, rz_len, rz, &sign, 32);
 
-  double return_value = sign[sign_len - 1];
+  double den_return_value = den[den_len - 1];
+  double sign_return_value = sign[sign_len - 1];
   if (sign_p != sign)
     FreeDoubles(sign);
-  if (num_sqr_p != num_sqr)
-    FreeDoubles(num_sqr);
-  if (numxy_sqr_p != numxy_sqr)
-    FreeDoubles(numxy_sqr);
-  if (numz_sqr_p != numz_sqr)
-    FreeDoubles(numz_sqr);
-  if (numy_sqr_p != numy_sqr)
-    FreeDoubles(numy_sqr);
-  if (numx_sqr_p != numx_sqr)
-    FreeDoubles(numx_sqr);
-  if (dc2_den2_p != dc2_den2)
-    FreeDoubles(dc2_den2);
-  if (den2_p != den2)
-    FreeDoubles(den2);
+  if (rxy_p != rxy)
+    FreeDoubles(rxy);
+  if (rz_p != rz)
+    FreeDoubles(rz);
+  if (ry_p != ry)
+    FreeDoubles(ry);
+  if (rx_p != rx)
+    FreeDoubles(rx);
+  if (numz_dcz_p != numz_dcz)
+    FreeDoubles(numz_dcz);
+  if (numy_dcy_p != numy_dcy)
+    FreeDoubles(numy_dcy);
+  if (numx_dcx_p != numx_dcx)
+    FreeDoubles(numx_dcx);
+  if (dcz_den_p != dcz_den)
+    FreeDoubles(dcz_den);
+  if (dcy_den_p != dcy_den)
+    FreeDoubles(dcy_den);
+  if (dcx_den_p != dcx_den)
+    FreeDoubles(dcx_den);
   if (den_p != den)
     FreeDoubles(den);
-  if (tmp5_p != tmp5)
-    FreeDoubles(tmp5);
   if (tmp4_p != tmp4)
     FreeDoubles(tmp4);
   if (tmp3_p != tmp3)
@@ -11443,12 +11564,14 @@ Sign inTriangleCircumSphere_expansion(double pax, double pay, double paz,
   if (bcy_nz_p != bcy_nz)
     FreeDoubles(bcy_nz);
 
-  if (return_value > 0)
-    return Sign::POSITIVE;
-  if (return_value < 0)
-    return Sign::NEGATIVE;
-  if (return_value == 0)
-    return Sign::ZERO;
+  return OMC::sign((int)OMC::sign(sign_return_value) *
+                   (int)OMC::sign(den_return_value));
+  // if (sign_return_value * den_return_value > 0)
+  //   return Sign::POSITIVE;
+  // if (sign_return_value * den_return_value < 0)
+  //   return Sign::NEGATIVE;
+  // if (sign_return_value * den_return_value == 0)
+  //   return Sign::ZERO;
   OMC_EXIT("Should not happen.");
 }
 

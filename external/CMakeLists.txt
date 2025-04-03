@@ -22,9 +22,6 @@ if(NOT GMP_FOUND AND NOT TARGET GMP)
   find_package(GMP REQUIRED NO_MODULE)
 
   if(TARGET GMP) # if found, set GMP_FOUND to TRUE
-    set(GMP_FOUND
-        TRUE
-        CACHE BOOL "Set GMP as found")
     message(STATUS "[OpenMeshCraft] Found GMP and create target GMP.")
   else() # if not found, report error
     message(FATAL_ERROR "[OpenMeshCraft] GMP target not found.")
@@ -71,9 +68,6 @@ if(NOT MPFR_FOUND AND NOT TARGET MPFR)
   find_package(MPFR REQUIRED NO_MODULE)
 
   if(TARGET MPFR) # if found, set MPFR_FOUND to TRUE
-    set(MPFR_FOUND
-        TRUE
-        CACHE BOOL "Set MPFR as found")
     message(STATUS "[OpenMeshCraft] Found MPFR and create target MPFR.")
   else() # if not found, report error
     message(FATAL_ERROR "[OpenMeshCraft] MPFR target not found.")
