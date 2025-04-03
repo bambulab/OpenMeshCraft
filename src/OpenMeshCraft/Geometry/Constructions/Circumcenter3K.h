@@ -8,11 +8,14 @@ namespace OMC {
  * @tparam Kernel
  * @todo Support more geometric primitives.
  */
-template <typename Kernel, bool Filtered = false>
+template <typename Kernel, bool _Filtered = false, bool _ForceExact = false>
 class ConstructCircumcenter3K
 {
 public:
   using K = Kernel;
+
+  static constexpr bool Filtered   = _Filtered;
+  static constexpr bool ForceExact = _ForceExact;
 
   using NT = typename K::NT;
   using ET = typename K::ET;

@@ -2,7 +2,11 @@
 
 #include "FaceRefine.h"
 
-#include <iostream>
+#ifdef OMC_FACE_REFINE_PROFILE
+  #include "OpenMeshCraft/Utils/Logger.h"
+
+  #include <iostream>
+#endif
 
 namespace OMC {
 
@@ -137,34 +141,48 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
 template <typename T, typename D>
 void FaceRefine<T, D>::refine()
 {
-  scanElements();
+#ifdef OMC_FACE_REFINE_PROFILE
+  size_t num_inserted_point    = 0;
+  size_t num_coincident_vertex = 0;
+  size_t num_hidden_point      = 0;
+  size_t num_face_not_conflict = 0;
+#endif
 
-  size_t num_inserted_points = 0;
+  scanElements();
 
   while (!isDone())
   {
     ConflictStatus cs = processOneElement();
 
-#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+#ifdef OMC_FACE_REFINE_PROFILE
     switch (cs)
     {
     case ConflictStatus::COINCIDENT_VERTEX:
-      std::cerr << "COINCIDENT_VERTEX\n";
+      num_coincident_vertex += 1;
       break;
     case ConflictStatus::HIDDEN_POINT:
-      std::cerr << "HIDDEN_POINT\n";
+      num_hidden_point += 1;
       break;
     case ConflictStatus::FACE_NOT_CONFLICT:
-      std::cerr << "FACE_NOT_CONFLICT\n";
+      num_face_not_conflict += 1;
       break;
     case ConflictStatus::OK:
-      num_inserted_points += 1;
-      std::cout << std::format("\rInserted points: {}         ",
-                               num_inserted_points);
+      num_inserted_point += 1;
+      if (num_inserted_point % 100 == 0)
+        std::cout << std::format("\rIntersected points {}         ",
+                                 num_inserted_point);
       break;
     }
 #endif
   }
+
+#ifdef OMC_FACE_REFINE_PROFILE
+  Logger::info("FaceRefine profile:");
+  Logger::info(std::format("  Inserted points: {}", num_inserted_point));
+  Logger::info(std::format("  Coincident vertex: {}", num_coincident_vertex));
+  Logger::info(std::format("  Hidden point: {}", num_hidden_point));
+  Logger::info(std::format("  Face not conflict: {}", num_face_not_conflict));
+#endif
 
   tet_mesh.removeDeletedTets();
 }

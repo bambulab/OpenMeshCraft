@@ -11572,7 +11572,7 @@ Sign inTriangleCircumSphere_expansion(double pax, double pay, double paz,
   //   return Sign::NEGATIVE;
   // if (sign_return_value * den_return_value == 0)
   //   return Sign::ZERO;
-  OMC_EXIT("Should not happen.");
+  // OMC_EXIT("Should not happen.");
 }
 
 template <typename IT, typename ET>

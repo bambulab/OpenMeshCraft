@@ -193,7 +193,8 @@ public:
   /********************************************/
   // clang-format off
   using ConstructNormal3       = ConstructNormal3K<Kernel>;
-  using ConstructCircumcenter3 = ConstructCircumcenter3K<Kernel, /*Filtered=*/true>;
+  template<bool Filtered, bool ForceExact>
+  using ConstructCircumcenter3 = ConstructCircumcenter3K<Kernel, Filtered, ForceExact>;
   // clang-format on
 
   /************ Degeneration ********************/

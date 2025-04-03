@@ -36,8 +36,11 @@ public:
   using InPowerSphere    = typename Traits::InPowerSphere;
   using CollinearPoints3 = typename Traits::CollinearPoints3;
 
-  using ConstructNormal3       = typename Traits::ConstructNormal3;
-  using ConstructCircumcenter3 = typename Traits::ConstructCircumcenter3;
+  using ConstructNormal3 = typename Traits::ConstructNormal3;
+
+  using ConstructCircumcenter3 =
+    typename Traits::template ConstructCircumcenter3</*Filtered*/ true,
+                                                     /*ForceExact*/ false>;
 
   /// Whether use generic point
   GET_VALUE_OTHERWISE_DEFAULT(Traits, bool, USE_GENERIC_POINT, true,

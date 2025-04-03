@@ -8,6 +8,8 @@
 
 namespace OMC {
 
+#define OMC_FACE_REFINE_PROFILE
+
 /**
  * @brief Handles face refinement in the Delaunay refinement process.
  * It incrementally refines the mesh by refining faces that do not satisfy the
