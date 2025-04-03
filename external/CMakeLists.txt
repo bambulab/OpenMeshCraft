@@ -21,7 +21,7 @@ if(NOT GMP_FOUND AND NOT TARGET GMP)
   # find GMP and create target GMP
   find_package(GMP REQUIRED NO_MODULE)
 
-  if(TARGET GMP) # if found, set GMP_FOUND to TRUE
+  if(TARGET GMP)
     message(STATUS "[OpenMeshCraft] Found GMP and create target GMP.")
   else() # if not found, report error
     message(FATAL_ERROR "[OpenMeshCraft] GMP target not found.")
@@ -67,7 +67,7 @@ if(NOT MPFR_FOUND AND NOT TARGET MPFR)
   # find MPFR and create target MPFR
   find_package(MPFR REQUIRED NO_MODULE)
 
-  if(TARGET MPFR) # if found, set MPFR_FOUND to TRUE
+  if(TARGET MPFR)
     message(STATUS "[OpenMeshCraft] Found MPFR and create target MPFR.")
   else() # if not found, report error
     message(FATAL_ERROR "[OpenMeshCraft] MPFR target not found.")
@@ -147,9 +147,6 @@ if(NOT EIGEN3_FOUND)
 
   # find eigen3
   set(EIGEN3_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/eigen)
-  set(EIGEN3_FOUND
-      TRUE
-      CACHE BOOL "Set Eigen3 as found")
   # create target
   add_library(Eigen3 INTERFACE IMPORTED GLOBAL)
   set_target_properties(Eigen3 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
@@ -216,9 +213,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/shewchuk-predicates
 if(TBB_FOUND AND TARGET tbb)
   # do nothing
 elseif(NOT TBB_FOUND AND TARGET tbb)
-  set(TBB_FOUND
-      TRUE
-      CACHE BOOL "Set TBB as found")
+  # do nothing
 elseif(TBB_FOUND AND NOT TARGET tbb)
 
   # TBB already found, create target tbb
