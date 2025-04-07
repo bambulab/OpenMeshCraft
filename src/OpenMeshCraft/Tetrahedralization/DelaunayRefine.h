@@ -8,16 +8,18 @@
 
 namespace OMC {
 
-#define OMC_FACE_REFINE_PROFILE
+#define OMC_DELAUNAY_REFINE_PROFILE
 
 /**
- * @brief Handles face refinement in the Delaunay refinement process.
- * It incrementally refines the mesh by refining faces that do not satisfy the
- * criteria.
+ * @brief The Delaunay refinement process.
+ * It incrementally refines the mesh by refining faces and celss that do not
+ * satisfy the criteria, while protecting vertex and edge features.
  *
- * Basic concepts is referred to the paper "Jean-Daniel Boissonnat, and Steve
- * Oudot. 2005. Provably good sampling and meshing of surfaces. Graphical Models
- * 67, 5."
+ * Basic concepts is referred to the paper
+ * - "Jonathan R. Shewchuk. 1998. Tetrahedral mesh generation by Delaunay
+ *    refinement. In Proc. 14th Annu. ACM Sympos. Comput. Geom., pages 86–95."
+ * - "Jean-Daniel Boissonnat, and Steve Oudot. 2005. Provably good sampling and
+ *   meshing of surfaces. Graphical Models 67, 5."
  *
  * The implementation is referred to CGAL's Mesh_3 package.
  *
@@ -28,13 +30,13 @@ namespace OMC {
  * etc.
  */
 template <typename _Traits, typename _Domain>
-class FaceRefine
+class DelaunayRefine
 {
 public: /* Traits **********************************************************/
   using Traits = _Traits;
   using Domain = _Domain;
 
-  using Self = FaceRefine<Traits, Domain>;
+  using Self = DelaunayRefine<Traits, Domain>;
 
   using NT   = typename Traits::NT;
   using Vec3 = typename Traits::Vec3;
@@ -68,6 +70,14 @@ public: /* Traits **********************************************************/
    */
   // using... face_idoff is of type index_t
 
+  /* Cell in TetMesh ========================================================
+   *
+   * A cell is a tetrahedron in tetrahedral mesh, represented by id or idoff
+   * (see details in TetMesh).
+   *
+   */
+  // using... id or idoff is of type index_t
+
   /* Weighted Delaunay tetrahedralization */
   using DelTet = DelaunayTet<Traits>;
 
@@ -99,7 +109,9 @@ public: /* Traits **********************************************************/
   struct FaceToRefine
   {
     FaceQuality quality;
+    /* append useful information below */
     Point3      intersection; // intersection between dual and surface patch
+
     // clang-format off
     FaceToRefine() = default;
     FaceToRefine(const FaceQuality& _quality, const Point3& _intersection)
@@ -113,7 +125,7 @@ public: /* Traits **********************************************************/
 
   /* Status in refining one face ============================================
    */
-  enum class ConflictStatus
+  enum class FaceConflictStatus
   {
     OK,
     // the refinement point is coincident with an existing vertex
@@ -124,49 +136,124 @@ public: /* Traits **********************************************************/
     FACE_NOT_CONFLICT
   };
 
+  /* Cell quality from Criteria =============================================
+   *
+   * The cell quality is used to determine whether a cell should be refined.
+   *
+   * It should provide:
+   * - operator bool: whether the cell should be refined.
+   * - overloaded comprators: compare the priority for refinement.
+   *   cell with larger value will be refined first.
+   *
+   */
+  using CellQuality = typename Criteria::CellQuality;
+
+  /* Cell queue =============================================================
+   *
+   * The cell queue is used to store the cells that need to be refined.
+   * The priority is cell quality. Worse cell quality has higher priority.
+   */
+  struct CellToRefine
+  {
+    CellQuality quality;
+    /* append useful information below */
+    // clang-format off
+    CellToRefine() = default;
+    CellToRefine(const CellQuality& _quality)
+      : quality(_quality) {}
+    bool operator<(const CellToRefine &other) const { return quality < other.quality; }
+    bool operator>(const CellToRefine &other) const { return quality > other.quality; }
+    // clang-format on
+  };
+
+  using CellQueue = IndexSparseHeap<CellToRefine, std::greater<CellToRefine>>;
+
+  /* Status in refining one cell ============================================
+   */
+  enum class CellConflictStatus
+  {
+    OK,
+    // the refinement point is coincident with an existing vertex
+    COINCIDENT_VERTEX,
+    // the refinement point is hidden by an existing weighted vertex
+    HIDDEN_POINT,
+  };
+
 public: /* Constructor and Destructor **************************************/
-  FaceRefine(const Domain &_domain, const Criteria &_criteria, Points &_points,
-             Weights &_weights, TetMesh &_tet_mesh);
+  DelaunayRefine(const Domain &_domain, const Criteria &_criteria,
+                 Points &_points, Weights &_weights, TetMesh &_tet_mesh);
 
-  ~FaceRefine() = default;
+  ~DelaunayRefine() = default;
 
-public: /* Interfaces ******************************************************/
+public: /* Restricted Face Refinement *************************************/
   /**
    * @brief [Initialization] Scan the tetrahedral mesh and add faces to the
    * refinement queue.
    * @pre The tetrahedral mesh is already built.
    * @post The refinement queue is filled with faces that need to be refined.
    */
-  void scanElements();
+  void scanFaces();
 
   /**
-   * @brief [Stop condition] Check if the refinement process is done.
-   * @return true if the refinement process is done, false otherwise.
+   * @brief [Stop condition] Check if the face refinement process is done.
+   * @return true if the face refinement process is done, false otherwise.
    */
-  bool isDone();
+  bool isFaceRefineDone();
 
   /**
-   * @brief [Step in loop] Process one element in the refinement queue.
+   * @brief [Step in loop] Process one face in the refinement queue.
    * @pre The algorithm is not done.
    * @post The element is processed and removed from the queue. Newly created
    * elements are checked and may be added to the queue.
    */
-  ConflictStatus processOneElement();
+  FaceConflictStatus processOneFace();
 
   /**
    * @brief [The whole process] Refine the tetrahedral mesh.
    */
-  void refine();
+  void refineFaces();
 
-public: /* Helper functions ************************************************/
+public: /* Helper functions for Restricted Face Refinement ********************/
   void checkNewFace(index_t face_idoff);
 
   bool isFaceRestricted(index_t face_idoff, SurfacePatchIndex &surface_patch,
                         Point3 &intersection) const;
 
+public: /* Tetrahedra Refinement **********************************************/
+  /**
+   * @brief [Initialization] Scan the tetrahedral mesh and add cells to the
+   * refinement queue.
+   * @pre The tetrahedral mesh is already built.
+   * @post The refinement queue is filled with cells that need to be refined.
+   */
+  void scanCells();
+
+  /**
+   * @brief [Stop condition] Check if the tet refinement process is done.
+   * @return true if the cell refinement process is done, false otherwise.
+   */
+  bool isCellRefineDone();
+
+  /**
+   * @brief [Step in loop] Process one tetrahedron in the refinement queue.
+   * @pre The algorithm is not done.
+   * @post The element is processed and removed from the queue. Newly created
+   * elements are checked and may be added to the queue.
+   */
+  CellConflictStatus processOneCell();
+
+  /**
+   * @brief [The whole process] Refine the tetrahedral mesh.
+   */
+  void refineCells();
+
+public: /* Helper functions for Tetrahedra Refinement *************************/
+  void checkNewCell(index_t tet_idoff);
+
+public: /* Common functions ***************************************************/
   index_t newVertex(const Point3 &point, NT weight);
 
-public: /* Data ************************************************************/
+public: /* Data ***************************************************************/
   const Domain   &domain;
   const Criteria &criteria;
 
@@ -175,6 +262,7 @@ public: /* Data ************************************************************/
   TetMesh &tet_mesh;
 
   FaceQueue face_queue;
+  CellQueue cell_queue;
 
 private:
   static Sign canonicalCompare(const Point3 &p1, const Point3 &p2);
@@ -183,5 +271,5 @@ private:
 } // namespace OMC
 
 #ifdef OMC_HAS_IMPL
-  #include "FaceRefine.inl"
+  #include "DelaunayRefine.inl"
 #endif

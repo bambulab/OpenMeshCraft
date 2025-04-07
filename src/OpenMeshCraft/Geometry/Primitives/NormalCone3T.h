@@ -2,7 +2,9 @@
 
 #include "Primitive3.h"
 
+#include <numbers>
 #include <type_traits>
+
 
 namespace OMC {
 
@@ -51,8 +53,14 @@ public:
   /// @note apex angle is represented in radian
   const NT &apex_angle() const { return m_apex_angle; }
 
-  void set_apex_angle_degree(NT angle) { m_apex_angle = angle / 180. * M_PI; }
-  NT   apex_angle_degree() const { return m_apex_angle / M_PI * 180.; }
+  void set_apex_angle_degree(NT angle)
+  {
+    m_apex_angle = angle / 180. * std::numbers::pi;
+  }
+  NT apex_angle_degree() const
+  {
+    return m_apex_angle / std::numbers::pi * 180.;
+  }
 
   /**
    * @brief Calculate the maximal angle difference between this cone and a

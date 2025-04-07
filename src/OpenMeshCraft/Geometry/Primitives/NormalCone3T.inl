@@ -12,10 +12,10 @@ auto NormalCone3T<NT, VecT>::max_angle_delta(const VecT &normal) const -> NT
 {
   // angle delta between axis and normal
   NT cos_angle_delta = m_center_axis.dot(normal);
-  NT angle_delta =
-    cos_angle_delta >= 1.0
-      ? 0.0
-      : (cos_angle_delta <= -1.0 ? M_PI : std::acos(cos_angle_delta));
+  NT angle_delta     = cos_angle_delta >= 1.0
+                         ? 0.0
+                         : (cos_angle_delta <= -1.0 ? std::numbers::pi
+                                                    : std::acos(cos_angle_delta));
   return angle_delta + m_apex_angle;
 }
 
@@ -28,7 +28,8 @@ auto NormalCone3T<NT, VecT>::max_angle_delta(const NormalCone3T &cone) const
   NT angle_delta =
     cos_angle_delta >= NT(1.0)
       ? NT(0.0)
-      : (cos_angle_delta <= NT(-1.0) ? NT(M_PI) : std::acos(cos_angle_delta));
+      : (cos_angle_delta <= NT(-1.0) ? NT(std::numbers::pi)
+                                     : std::acos(cos_angle_delta));
   NT side_angle0 = std::max(m_apex_angle - angle_delta, cone.m_apex_angle);
   NT side_angle1 = std::max(cone.m_apex_angle - angle_delta, m_apex_angle);
 
@@ -58,7 +59,7 @@ void NormalCone3T<NT, VecT>::merge(const VecT &normal)
     // axes are almost parallel
     if (cos_angle_delta < 0.0)
       // axes point in opposite directions
-      m_apex_angle = NT(M_PI);
+      m_apex_angle = NT(std::numbers::pi);
   }
 }
 
@@ -88,7 +89,7 @@ void NormalCone3T<NT, VecT>::merge(const NormalCone3T &cone)
       m_apex_angle = std::max(m_apex_angle, cone.m_apex_angle);
     else
       // axes point in opposite directions
-      m_apex_angle = NT(M_PI);
+      m_apex_angle = NT(std::numbers::pi);
   }
 }
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FaceRefine.h"
+#include "DelaunayRefine.h"
 
-#ifdef OMC_FACE_REFINE_PROFILE
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
   #include "OpenMeshCraft/Utils/Logger.h"
 
   #include <iostream>
@@ -11,9 +11,9 @@
 namespace OMC {
 
 template <typename T, typename D>
-FaceRefine<T, D>::FaceRefine(const Domain &_domain, const Criteria &_criteria,
-                             Points &_points, Weights &_weights,
-                             TetMesh &_tet_mesh)
+DelaunayRefine<T, D>::DelaunayRefine(const Domain   &_domain,
+                                     const Criteria &_criteria, Points &_points,
+                                     Weights &_weights, TetMesh &_tet_mesh)
   : domain(_domain)
   , criteria(_criteria)
   , points(_points)
@@ -23,7 +23,7 @@ FaceRefine<T, D>::FaceRefine(const Domain &_domain, const Criteria &_criteria,
 }
 
 template <typename T, typename D>
-void FaceRefine<T, D>::scanElements()
+void DelaunayRefine<T, D>::scanFaces()
 {
   size_t num_faces = tet_mesh.sizeFaces();
 
@@ -34,7 +34,7 @@ void FaceRefine<T, D>::scanElements()
 }
 
 template <typename T, typename D>
-bool FaceRefine<T, D>::isDone()
+bool DelaunayRefine<T, D>::isFaceRefineDone()
 {
   // TODO: An external force stop control
   // TODO: Other internal stop conditions
@@ -42,7 +42,7 @@ bool FaceRefine<T, D>::isDone()
 }
 
 template <typename T, typename D>
-auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
+auto DelaunayRefine<T, D>::processOneFace() -> FaceConflictStatus
 {
   // Get the next face to process from the queue ========================
 
@@ -71,7 +71,7 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
   if (dimension == 0)
   {
     // The dual point is coincident with a vertex of the tetrahedral mesh.
-    return ConflictStatus::COINCIDENT_VERTEX;
+    return FaceConflictStatus::COINCIDENT_VERTEX;
   }
 
   // Find the conflict zone of the refinement point =====================
@@ -84,7 +84,7 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
   if (conflict_tets.empty())
   {
     // The dual point is hidden by an existing weighted vertex.
-    return ConflictStatus::HIDDEN_POINT;
+    return FaceConflictStatus::HIDDEN_POINT;
   }
 
   // check if the face to refine is conflict with the dual point
@@ -98,7 +98,7 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
       tet_mesh.unmark(tet_idoff, TET_MARK::CONFLICT);
     for (index_t corner_idoff : conflict_corners)
       tet_mesh.unmark(corner_idoff, TET_MARK::VISITED);
-    return ConflictStatus::FACE_NOT_CONFLICT;
+    return FaceConflictStatus::FACE_NOT_CONFLICT;
   }
 
   // Remove faces in conflict zone from the queue ========================
@@ -135,38 +135,38 @@ auto FaceRefine<T, D>::processOneElement() -> ConflictStatus
       checkNewFace(idoff + i);
   }
 
-  return ConflictStatus::OK;
+  return FaceConflictStatus::OK;
 }
 
 template <typename T, typename D>
-void FaceRefine<T, D>::refine()
+void DelaunayRefine<T, D>::refineFaces()
 {
-#ifdef OMC_FACE_REFINE_PROFILE
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
   size_t num_inserted_point    = 0;
   size_t num_coincident_vertex = 0;
   size_t num_hidden_point      = 0;
   size_t num_face_not_conflict = 0;
 #endif
 
-  scanElements();
+  scanFaces();
 
-  while (!isDone())
+  while (!isFaceRefineDone())
   {
-    ConflictStatus cs = processOneElement();
+    FaceConflictStatus cs = processOneFace();
 
-#ifdef OMC_FACE_REFINE_PROFILE
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
     switch (cs)
     {
-    case ConflictStatus::COINCIDENT_VERTEX:
+    case FaceConflictStatus::COINCIDENT_VERTEX:
       num_coincident_vertex += 1;
       break;
-    case ConflictStatus::HIDDEN_POINT:
+    case FaceConflictStatus::HIDDEN_POINT:
       num_hidden_point += 1;
       break;
-    case ConflictStatus::FACE_NOT_CONFLICT:
+    case FaceConflictStatus::FACE_NOT_CONFLICT:
       num_face_not_conflict += 1;
       break;
-    case ConflictStatus::OK:
+    case FaceConflictStatus::OK:
       num_inserted_point += 1;
       if (num_inserted_point % 100 == 0)
         std::cout << std::format("\rIntersected points {}         ",
@@ -176,8 +176,8 @@ void FaceRefine<T, D>::refine()
 #endif
   }
 
-#ifdef OMC_FACE_REFINE_PROFILE
-  Logger::info("FaceRefine profile:");
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
+  Logger::info("DelaunayRefine profile:");
   Logger::info(std::format("  Inserted points: {}", num_inserted_point));
   Logger::info(std::format("  Coincident vertex: {}", num_coincident_vertex));
   Logger::info(std::format("  Hidden point: {}", num_hidden_point));
@@ -198,7 +198,7 @@ void FaceRefine<T, D>::refine()
  * associated conflict zone to ensure consistency and correctness.
  */
 template <typename T, typename D>
-void FaceRefine<T, D>::checkNewFace(index_t face_idoff)
+void DelaunayRefine<T, D>::checkNewFace(index_t face_idoff)
 {
   index_t mirror_idoff = tet_mesh.mirrorFace(face_idoff);
 
@@ -261,9 +261,9 @@ void FaceRefine<T, D>::checkNewFace(index_t face_idoff)
  * false.
  */
 template <typename T, typename D>
-bool FaceRefine<T, D>::isFaceRestricted(index_t            face_idoff,
-                                        SurfacePatchIndex &surface_patch,
-                                        Point3            &intersection) const
+bool DelaunayRefine<T, D>::isFaceRestricted(index_t            face_idoff,
+                                            SurfacePatchIndex &surface_patch,
+                                            Point3 &intersection) const
 {
   // Check if the face is adjacent to two finite tetrahedra
   index_t mirror_idoff = tet_mesh.mirrorFace(face_idoff);
@@ -317,7 +317,137 @@ bool FaceRefine<T, D>::isFaceRestricted(index_t            face_idoff,
 }
 
 template <typename T, typename D>
-index_t FaceRefine<T, D>::newVertex(const Point3 &point, NT weight)
+void DelaunayRefine<T, D>::scanCells()
+{
+  size_t num_tets = tet_mesh.sizeTets();
+
+  for (index_t tet_id = 0; tet_id < num_tets; tet_id++)
+  {
+    checkNewCell(TetMesh::toIdOff(tet_id));
+  }
+}
+
+template <typename T, typename D>
+bool DelaunayRefine<T, D>::isCellRefineDone()
+{
+  // TODO: An external force stop control
+  // TODO: Other internal stop conditions
+  return cell_queue.empty();
+}
+
+template <typename T, typename D>
+auto DelaunayRefine<T, D>::processOneCell() -> CellConflictStatus
+{
+  // Get the next cell to process from the queue ========================
+
+  auto [tet_idoff, cell_to_refine] = cell_queue.top();
+  cell_queue.pop();
+
+  OMC_EXPENSIVE_ASSERT(!tet_mesh.isTetDeleted(tet_idoff),
+                       "The tetrahedron to process is deleted.");
+
+  // Get the refinement point ===========================================
+
+  Point3 refine_point = tet_mesh.tetDualPoint(tet_idoff);
+
+  // Locate the refinement point in Delaunay tetrahedralization =========
+
+  DelTet del_tet(tet_mesh);
+
+  index_t tet_id    = TetMesh::clipId(tet_idoff);
+  int     dimension = -1;
+  del_tet.walk(refine_point, tet_id, &dimension);
+
+  if (dimension == 0)
+  {
+    // The dual point is coincident with a vertex of the tetrahedral mesh.
+    return CellConflictStatus::COINCIDENT_VERTEX;
+  }
+
+  // Find the conflict zone of the refinement point =====================
+
+  InlinedVector64<index_t> conflict_tets;
+  InlinedVector64<index_t> conflict_corners;
+  del_tet.conflict(refine_point, /*weight*/ 0, tet_id, conflict_tets,
+                   conflict_corners);
+
+  if (conflict_tets.empty())
+  {
+    // The dual point is hidden by an existing weighted vertex.
+    return CellConflictStatus::HIDDEN_POINT;
+  }
+
+  // Remove cells in conflict zone from the queue ========================
+  for (index_t cf_tet : conflict_tets)
+  {
+    if (cell_queue.exist(cf_tet))
+      cell_queue.remove(cf_tet);
+  }
+
+  // Insert the refinement point into the mesh ============================
+  del_tet.removeConflicts(conflict_tets);
+  index_t new_vtx_vid = newVertex(refine_point, /*weight*/ 0);
+  del_tet.filling(new_vtx_vid, conflict_corners);
+
+  // Check new cells in the conflict zone =================================
+
+  for (index_t corner : conflict_corners) // for each corner `c`
+  {
+    checkNewCell(TetMesh::clipId(tet_mesh.tetNeigh(corner)));
+  }
+
+  return CellConflictStatus::OK;
+}
+
+template <typename T, typename D>
+void DelaunayRefine<T, D>::refineCells()
+{
+  // TODO verbose
+  scanCells();
+
+  while (!isCellRefineDone())
+  {
+    processOneCell();
+  }
+
+  tet_mesh.removeDeletedTets();
+}
+
+/**
+ * @brief Check a new cell to determine if it need to be refined.
+ *
+ * @param tet_idoff The idoff of the tetrahedron in the tetrahedral mesh.
+ *
+ * @note While checking a new cell, no modifications should be made to its
+ * associated conflict zone to ensure consistency and correctness.
+ */
+template <typename T, typename D>
+void DelaunayRefine<T, D>::checkNewCell(index_t tet_idoff)
+{
+  // ensure unique idoff
+  tet_idoff = TetMesh::clipId(tet_idoff);
+
+  if (!tet_mesh.isFiniteTet(tet_idoff))
+  { // the tetrahedron is infinite.
+    return;
+  }
+
+  Point3 dual_point = tet_mesh.tetDualPoint(tet_idoff);
+  if (!domain.isInDomain(dual_point))
+  { // the dual point is outside the domain.
+    return;
+  }
+
+  CellQuality cell_quality = criteria.cellQuality(tet_mesh, tet_idoff);
+
+  if (cell_quality)
+  { // the tetrahedron should be refined.
+    cell_queue.push(tet_idoff, cell_quality);
+  }
+}
+
+template <typename T, typename D>
+index_t DelaunayRefine<T, D>::newVertex(const Point3 &point, NT weight)
 {
   // TODO lock in multi-threaded env.
 
@@ -329,7 +459,7 @@ index_t FaceRefine<T, D>::newVertex(const Point3 &point, NT weight)
 }
 
 template <typename T, typename D>
-Sign FaceRefine<T, D>::canonicalCompare(const Point3 &p1, const Point3 &p2)
+Sign DelaunayRefine<T, D>::canonicalCompare(const Point3 &p1, const Point3 &p2)
 {
   return p1.x() < p2.x()   ? Sign::NEGATIVE
          : p1.x() > p2.x() ? Sign::POSITIVE
