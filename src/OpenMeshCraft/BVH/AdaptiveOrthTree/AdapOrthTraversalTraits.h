@@ -27,8 +27,9 @@ public:
 
   bool intersection(const TreeBboxT &leaf_bbox)
   {
+    // FIXME attr is not always index.
     if (DoIntersect()(m_box_of_query, leaf_bbox.bbox()))
-      m_intersected_ids.push_back(leaf_bbox.id());
+      m_intersected_ids.push_back(leaf_bbox.attr());
     return true;
   }
 

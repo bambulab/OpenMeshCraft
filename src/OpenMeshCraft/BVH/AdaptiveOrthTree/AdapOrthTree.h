@@ -41,10 +41,11 @@ public: /* Types and Declarations *******************************************/
   static constexpr bool StoreBoxesInInternalNodes =
     Traits::StoreBoxesInInternalNodes;
 
+  /* number type */
   using NT = typename Traits::NT;
 
-  using Bbox = typename Traits::BboxT;
-
+  /* bounding box types */
+  using Bbox     = typename Traits::BboxT;
   using TreeBbox = typename Traits::TreeBboxT;
   AdapOrthTreeAbbreviate(TreeBbox);
   using TreeBboxes = CStyleVector<TreeBbox>;
@@ -52,20 +53,17 @@ public: /* Types and Declarations *******************************************/
     remove_cvref_t<decltype(std::declval<TreeBbox>().min_bound())>;
   AdapOrthTreeAbbreviate(TreePoint);
 
-  using CalcBbox    = typename Traits::CalcBbox;
-  using DoIntersect = typename Traits::DoIntersect;
-
-  using SplitPred = typename Traits::SplitPred;
+  /* predicates */
+  using CalcBbox        = typename Traits::CalcBbox;
+  using DoIntersect     = typename Traits::DoIntersect;
+  using SplitPred       = typename Traits::SplitPred;
   // using CollapsePred = typename Traits::CollapsePred;
-
   using ShapeRefinePred = typename Traits::ShapeRefinePred;
 
-  using calc_box_from_boxes       = typename Traits::calc_box_from_boxes;
-  using calc_box_from_box_indices = typename Traits::calc_box_from_box_indices;
-
-  using Node = AdapOrthNode<Traits>;
+  /* node types */
+  using NodeAttrT = typename Traits::NodeAttrT;
+  using Node      = AdapOrthNode<Traits, NodeAttrT>;
   AdapOrthTreeAbbreviate(Node);
-
   using Nodes     = tbb::concurrent_vector<Node>;
   using NodesIter = typename Nodes::iterator;
 
@@ -86,28 +84,28 @@ public: /* Constructors and Destructor *************************************/
   void shallow_copy(const AdapOrthTree &rhs);
 
   /**
-   * @brief Insert primitives and indices to tree. Will clear tree before
+   * @brief Insert primitives and attributes to tree. Will clear tree before
    * inserting, Won't build tree until calling construction.
    * @param primitives primitives to initialize tree. Won't store primitives
    * internally, only store their boxes.
-   * @param indices indices of primitives.
+   * @param attributes attributes of primitives.
    * @note Once the primitives are inserted, they can't be changed, except
    * clear, reinsert and rebuild.
    */
-  template <typename Primitives, typename Indices>
-  void insert_primitives(const Primitives &primitives, const Indices &indices);
+  template <typename Primitives, typename Attributes>
+  void insert_primitives(const Primitives &primitives, const Attributes &attributes);
 
   /**
-   * @brief Insert bounding boxes and indices to tree. Will clear tree before
+   * @brief Insert bounding boxes and attributes to tree. Will clear tree before
    * inserting, Won't build tree until calling construction.
    * @param bboxes bounding boxes to initialize tree. If your primitives are
    * composed by hybrid types, construct bboxes for them and just insert bboxes.
-   * @param indices indices of bounding boxes.
+   * @param attributes attributes of bounding boxes.
    * @note Once the bboxes are inserted, they can't be changed, except
    * clear, reinsert and rebuild.
    */
-  template <typename Bboxes, typename Indices>
-  void insert_boxes(const Bboxes &bboxes, const Indices &indices);
+  template <typename Bboxes, typename Attributes>
+  void insert_boxes(const Bboxes &bboxes, const Attributes &attributes);
 
   /**
    * @brief Construct the orthogonal tree after inserting points.

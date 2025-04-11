@@ -18,23 +18,24 @@ public:
   static constexpr size_t Dimension = Traits::Dimension;
   static constexpr size_t Degree    = (1u << Dimension);
 
-  using NT = typename Traits::NT;
+  using Base = AdapOrthTree<Traits>;
 
-  using Bbox = typename Traits::BboxT;
+  using NT = typename Base::NT;
 
-  using TreeBbox = typename Traits::TreeBboxT;
+  using Bbox = typename Base::Bbox;
+
+  using TreeBbox = typename Base::TreeBbox;
   AdapOrthTreeAbbreviate(TreeBbox);
 
-  using OrPoint =
-    remove_cvref_t<decltype(std::declval<TreeBbox>().min_bound())>;
-  AdapOrthTreeAbbreviate(OrPoint);
+  using TreePoint = typename Base::TreePoint;
+  AdapOrthTreeAbbreviate(TreePoint);
 
-  using Node = AdapOrthNode<Traits>;
+  using Node = typename Base::Node;
   AdapOrthTreeAbbreviate(Node);
 
 protected:
   virtual void
-  calc_box_for_children(NodeRef nd, OrPointCRef center,
+  calc_box_for_children(NodeRef nd, TreePointCRef center,
                         std::array<Bbox, Degree> &child_boxes) final;
 };
 

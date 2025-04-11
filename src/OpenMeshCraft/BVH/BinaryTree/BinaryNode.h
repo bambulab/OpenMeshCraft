@@ -145,7 +145,7 @@ protected:
   /// coordinate where this node is split
   NT              m_split_coord;
   /// attribute
-  NodeAttrT       m_attribute;
+  NodeAttrT       m_attribute; // TODO make attribute optional
 };
 
 template <typename Traits>

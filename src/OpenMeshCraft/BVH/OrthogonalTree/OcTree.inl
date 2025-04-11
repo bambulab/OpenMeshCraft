@@ -9,52 +9,52 @@ namespace OMC {
 template <typename Traits>
 auto OcTree<Traits>::adj_vertex(index_t vidx, index_t axis, bool dir) -> index_t
 {
+  static_assert(EnableVertices,
+                "adj_vertex() is only available when EnableVertices is true.");
   return m_adj_vertices[vidx][(axis << 1) + dir];
 }
 
 template <typename Traits>
-auto OcTree<Traits>::calc_vertex_position(index_t nd_idx, index_t nv_idx)
-  -> OrPoint
+void OcTree<Traits>::build_vertices()
 {
-  NodeCRef nd = this->node(nd_idx);
-  OrPoint  c  = this->node_center(nd);
-  OrPoint  h  = this->node_side_length(nd) * NT(0.5);
-  switch (nv_idx)
+  if constexpr (EnableVertices)
   {
-  case 0:
-    return OrPoint(c.x() - h.x(), c.y() - h.y(), c.z() - h.z());
-  case 1:
-    return OrPoint(c.x() + h.x(), c.y() - h.y(), c.z() - h.z());
-  case 2:
-    return OrPoint(c.x() - h.x(), c.y() + h.y(), c.z() - h.z());
-  case 3:
-    return OrPoint(c.x() + h.x(), c.y() + h.y(), c.z() - h.z());
-  case 4:
-    return OrPoint(c.x() - h.x(), c.y() - h.y(), c.z() + h.z());
-  case 5:
-    return OrPoint(c.x() + h.x(), c.y() - h.y(), c.z() + h.z());
-  case 6:
-    return OrPoint(c.x() - h.x(), c.y() + h.y(), c.z() + h.z());
-  case 7:
-    return OrPoint(c.x() + h.x(), c.y() + h.y(), c.z() + h.z());
-  default:
-#ifdef OMC_ENABLE_ASSERT
-    OMC_ASSERT(false, "vertex index {} out of range.", nv_idx);
-#else
-    return OrPoint(NT(0.), NT(0.), NT(0.));
-#endif
+    build_vertices_impl();
+  }
+  else
+  {
+    // do nothing
   }
 }
 
 template <typename Traits>
-void OcTree<Traits>::set_adj_vertices_pair(index_t vl, index_t vh, index_t axis)
+void OcTree<Traits>::calc_box_for_children(NodeRef nd, OrPointCRef c)
 {
-  m_adj_vertices[vl][(axis << 1) + true]  = vh;
-  m_adj_vertices[vh][(axis << 1) + false] = vl;
+  OrPointCRef minb = nd.box().min_bound();
+  OrPointCRef maxb = nd.box().max_bound();
+
+  // clang-format off
+  // child 0(000, -x-y-z)
+  this->node(nd.child(0)).box() = Bbox(minb, c);
+  // child 1(001, +x-y-z)
+  this->node(nd.child(1)).box() = Bbox(OrPoint(c.x(), minb.y(), minb.z()), OrPoint(maxb.x(), c.y(), c.z()));
+  // child 2(010, -x+y-z)
+  this->node(nd.child(2)).box() = Bbox(OrPoint(minb.x(), c.y(), minb.z()), OrPoint(c.x(), maxb.y(), c.z()));
+  // child 3(011, +x+y-z)
+  this->node(nd.child(3)).box() = Bbox(OrPoint(c.x(), c.y(), minb.z()), OrPoint(maxb.x(), maxb.y(), c.z()));
+  // child 4(100, -x-y+z)
+  this->node(nd.child(4)).box() = Bbox(OrPoint(minb.x(), minb.y(), c.z()), OrPoint(c.x(), c.y(), maxb.z()));
+  // child 5(101, +x-y+z)
+  this->node(nd.child(5)).box() = Bbox(OrPoint(c.x(), minb.y(), c.z()), OrPoint(maxb.x(), c.y(), maxb.z()));
+  // child 6(110, -x+y+z)
+  this->node(nd.child(6)).box() = Bbox(OrPoint(minb.x(), c.y(), c.z()), OrPoint(c.x(), maxb.y(), maxb.z()));
+  // child 7(111, +x+y+z)
+  this->node(nd.child(7)).box() = Bbox(c, maxb);
+  // clang-format on
 }
 
 template <typename Traits>
-void OcTree<Traits>::build_vertices()
+void OcTree<Traits>::build_vertices_impl()
 {
   this->m_vertices.clear();
   m_adj_vertices.clear();
@@ -297,29 +297,43 @@ void OcTree<Traits>::build_vertices()
 }
 
 template <typename Traits>
-void OcTree<Traits>::calc_box_for_children(NodeRef nd, OrPointCRef c)
+auto OcTree<Traits>::calc_vertex_position(index_t nd_idx, index_t nv_idx)
+  -> OrPoint
 {
-  OrPointCRef minb = nd.box().min_bound();
-  OrPointCRef maxb = nd.box().max_bound();
-
-  // clang-format off
-  // child 0(000, -x-y-z)
-  this->node(nd.child(0)).box() = Bbox(minb, c);
-  // child 1(001, +x-y-z)
-  this->node(nd.child(1)).box() = Bbox(OrPoint(c.x(), minb.y(), minb.z()), OrPoint(maxb.x(), c.y(), c.z()));
-  // child 2(010, -x+y-z)
-  this->node(nd.child(2)).box() = Bbox(OrPoint(minb.x(), c.y(), minb.z()), OrPoint(c.x(), maxb.y(), c.z()));
-  // child 3(011, +x+y-z)
-  this->node(nd.child(3)).box() = Bbox(OrPoint(c.x(), c.y(), minb.z()), OrPoint(maxb.x(), maxb.y(), c.z()));
-  // child 4(100, -x-y+z)
-  this->node(nd.child(4)).box() = Bbox(OrPoint(minb.x(), minb.y(), c.z()), OrPoint(c.x(), c.y(), maxb.z()));
-  // child 5(101, +x-y+z)
-  this->node(nd.child(5)).box() = Bbox(OrPoint(c.x(), minb.y(), c.z()), OrPoint(maxb.x(), c.y(), maxb.z()));
-  // child 6(110, -x+y+z)
-  this->node(nd.child(6)).box() = Bbox(OrPoint(minb.x(), c.y(), c.z()), OrPoint(c.x(), maxb.y(), maxb.z()));
-  // child 7(111, +x+y+z)
-  this->node(nd.child(7)).box() = Bbox(c, maxb);
-  // clang-format on
+  NodeCRef nd = this->node(nd_idx);
+  OrPoint  c  = this->node_center(nd);
+  OrPoint  h  = this->node_side_length(nd) * NT(0.5);
+  switch (nv_idx)
+  {
+  case 0:
+    return OrPoint(c.x() - h.x(), c.y() - h.y(), c.z() - h.z());
+  case 1:
+    return OrPoint(c.x() + h.x(), c.y() - h.y(), c.z() - h.z());
+  case 2:
+    return OrPoint(c.x() - h.x(), c.y() + h.y(), c.z() - h.z());
+  case 3:
+    return OrPoint(c.x() + h.x(), c.y() + h.y(), c.z() - h.z());
+  case 4:
+    return OrPoint(c.x() - h.x(), c.y() - h.y(), c.z() + h.z());
+  case 5:
+    return OrPoint(c.x() + h.x(), c.y() - h.y(), c.z() + h.z());
+  case 6:
+    return OrPoint(c.x() - h.x(), c.y() + h.y(), c.z() + h.z());
+  case 7:
+    return OrPoint(c.x() + h.x(), c.y() + h.y(), c.z() + h.z());
+  default:
+#ifdef OMC_ENABLE_ASSERT
+    OMC_ASSERT(false, "vertex index {} out of range.", nv_idx);
+#else
+    return OrPoint(NT(0.), NT(0.), NT(0.));
+#endif
+  }
 }
 
+template <typename Traits>
+void OcTree<Traits>::set_adj_vertices_pair(index_t vl, index_t vh, index_t axis)
+{
+  m_adj_vertices[vl][(axis << 1) + true]  = vh;
+  m_adj_vertices[vh][(axis << 1) + false] = vl;
+}
 } // namespace OMC

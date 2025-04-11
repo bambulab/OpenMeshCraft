@@ -2,6 +2,7 @@
 
 #include "OrthogonalTree.h"
 
+#include "OpenMeshCraft/BVH/Utils.h"
 #include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
 
 #include "tbb/tbb.h"
@@ -14,44 +15,44 @@
 namespace OMC {
 
 template <typename Traits>
-template <typename Primitives, typename Indices>
+template <typename Primitives, typename Attributes>
 void OrthogonalTree<Traits>::insert_primitives(const Primitives &primitives,
-                                               const Indices    &indices)
+                                               const Attributes &attributes)
 {
   OMC_THROW_INVALID_ARGUMENT_IF(
-    primitives.size() != indices.size(),
-    "size of primitives and indices are different.");
+    primitives.size() != attributes.size(),
+    "size of primitives and attributes are different.");
 
   clear();
 
   m_boxes.resize(primitives.size());
   tbb::parallel_for(size_t(0), primitives.size(),
-                    [this, &primitives, &indices](size_t i)
+                    [this, &primitives, &attributes](size_t i)
                     {
                       m_boxes[i].bbox() = m_calc_bbox(primitives[i]);
-                      m_boxes[i].id()   = static_cast<index_t>(indices[i]);
+                      m_boxes[i].attr() = attributes[i];
                     });
 }
 
 template <typename Traits>
-template <typename Bboxes, typename Indices>
-void OrthogonalTree<Traits>::insert_boxes(const Bboxes  &bboxes,
-                                          const Indices &indices)
+template <typename Bboxes, typename Attributes>
+void OrthogonalTree<Traits>::insert_boxes(const Bboxes     &bboxes,
+                                          const Attributes &attributes)
 {
   static_assert(std::is_same_v<remove_cvref_t<decltype(*bboxes.begin())>, Bbox>,
                 "Bounding box types are different.");
   OMC_THROW_INVALID_ARGUMENT_IF(
-    bboxes.size() != indices.size(),
-    "size of primitives and indices are different.");
+    bboxes.size() != attributes.size(),
+    "size of primitives and attributes are different.");
 
   clear();
 
   m_boxes.resize(bboxes.size());
   tbb::parallel_for(size_t(0), bboxes.size(),
-                    [this, &bboxes, &indices](size_t i)
+                    [this, &bboxes, &attributes](size_t i)
                     {
                       m_boxes[i].bbox() = bboxes[i];
-                      m_boxes[i].id()   = static_cast<index_t>(indices[i]);
+                      m_boxes[i].attr() = attributes[i];
                     });
 }
 
@@ -63,7 +64,7 @@ void OrthogonalTree<Traits>::construct(bool compact_box, NT enlarge_ratio,
   m_enlarge_ratio = enlarge_ratio;
   m_depth_delta   = depth_delta;
   // Find the tight bounding box of boxes
-  m_bbox          = calc_box_from_boxes()(m_boxes.begin(), m_boxes.end());
+  m_bbox          = calc_box_from_boxes<Bbox>(m_boxes.begin(), m_boxes.end());
 
   // Find the side length of box
   OrPoint bbox_center = (m_bbox.max_bound() + m_bbox.min_bound()) * NT(0.5);
@@ -97,7 +98,6 @@ void OrthogonalTree<Traits>::construct(bool compact_box, NT enlarge_ratio,
                  root_node().boxes().begin(), [](OrBbox &box) { return &box; });
 
   std::deque<index_t> nodes_to_split;
-  nodes_to_split.push_back(m_root_idx);
 
   // split the root node
   if (m_split_pred(*this, root_node()))
@@ -237,6 +237,8 @@ auto OrthogonalTree<Traits>::new_children() -> index_t
 template <typename Traits>
 auto OrthogonalTree<Traits>::new_vertex() -> index_t
 {
+  static_assert(EnableVertices,
+                "vertices() is only available when EnableVertices is true.");
   index_t idx = (index_t)m_vertices.size();
   m_vertices.emplace_back();
   return idx;
@@ -322,12 +324,15 @@ void OrthogonalTree<Traits>::collapse(index_t node_idx)
       auto &ch_boxes = node(ch + i).boxes();
       boxes.insert(boxes.end(), ch_boxes.begin(), ch_boxes.end());
     }
+// FIXME id does not exist
+#if 0
     std::sort(boxes.begin(), boxes.end(), [](OrBboxCPtr lhs, OrBboxCPtr rhs)
               { return lhs->id() < rhs->id(); });
     boxes.erase(std::unique(boxes.begin(), boxes.end(),
                             [](OrBboxCPtr lhs, OrBboxCPtr rhs)
                             { return lhs->id() == rhs->id(); }),
                 boxes.end());
+#endif
   }
 
   // delete its children
@@ -426,6 +431,36 @@ template <typename Traits>
 auto OrthogonalTree<Traits>::node_side_length(NodeCRef nd) const -> OrPoint
 {
   return m_side_length_per_depth[nd.depth()];
+}
+
+template <typename Traits>
+auto OrthogonalTree<Traits>::vertices() -> Vertices &
+{
+  static_assert(EnableVertices,
+                "vertices() is only available when EnableVertices is true.");
+  return m_vertices;
+}
+template <typename Traits>
+auto OrthogonalTree<Traits>::vertices() const -> const Vertices &
+{
+  static_assert(EnableVertices,
+                "vertices() is only available when EnableVertices is true.");
+  return m_vertices;
+}
+
+template <typename Traits>
+auto OrthogonalTree<Traits>::vertex(index_t idx) -> VertexRef
+{
+  static_assert(EnableVertices,
+                "vertex() is only available when EnableVertices is true.");
+  return m_vertices[idx];
+}
+template <typename Traits>
+auto OrthogonalTree<Traits>::vertex(index_t idx) const -> VertexCRef
+{
+  static_assert(EnableVertices,
+                "vertex() is only available when EnableVertices is true.");
+  return m_vertices[idx];
 }
 
 template <typename Traits>

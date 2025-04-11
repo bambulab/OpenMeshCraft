@@ -6,14 +6,15 @@
 #include "OpenMeshCraft/Utils/Exception.h"
 
 #if defined(OMC_ARR_PROFILE) && 0
-  #define COLLECT_INTERSECTING_TRIANGLE                                     \
-    if (Triangle3_Triangle3_DoIntersect().intersection_type(                \
-          ts.triVertPtr(b0.id(), 0), ts.triVertPtr(b0.id(), 1),             \
-          ts.triVertPtr(b0.id(), 2), ts.triVertPtr(b1.id(), 0),             \
-          ts.triVertPtr(b1.id(), 1),                                        \
-          ts.triVertPtr(b1.id(), 2)) >= SimplexIntersectionType::INTERSECT) \
-    {                                                                       \
-      intersecting_triangle_pairs.push_back(unique_pair(b0.id(), b1.id())); \
+  #define COLLECT_INTERSECTING_TRIANGLE                                       \
+    if (Triangle3_Triangle3_DoIntersect().intersection_type(                  \
+          ts.triVertPtr(b0.attr(), 0), ts.triVertPtr(b0.attr(), 1),           \
+          ts.triVertPtr(b0.attr(), 2), ts.triVertPtr(b1.attr(), 0),           \
+          ts.triVertPtr(b1.attr(), 1),                                        \
+          ts.triVertPtr(b1.attr(), 2)) >= SimplexIntersectionType::INTERSECT) \
+    {                                                                         \
+      intersecting_triangle_pairs.push_back(                                  \
+        unique_pair(b0.attr(), b1.attr()));                                   \
     }
 
   #define REPORT_INTERSECTING_TRIANGLE                                \
@@ -133,10 +134,10 @@ void DetectClassifyTTIs<Traits>::parallelOnSmallNodes(
           if (!DoIntersect()(b0.bbox(), b1.bbox()))
             continue; // early reject
 
-          OMC_EXPENSIVE_ASSERT(b0.id() != b1.id(), "duplicate triangles.");
+          OMC_EXPENSIVE_ASSERT(b0.attr() != b1.attr(), "duplicate triangles.");
 
           DetectClassifyTTI<Traits> dc(ts, pnt_arenas[thread_id]);
-          dc.check_TTI(b0.id(), b1.id());
+          dc.check_TTI(b0.attr(), b1.attr());
 
           COLLECT_INTERSECTING_TRIANGLE;
         }
@@ -155,10 +156,10 @@ void DetectClassifyTTIs<Traits>::parallelOnSmallNodes(
           if (!DoIntersect()(b0.bbox(), b1.bbox()))
             continue; // early reject
 
-          OMC_EXPENSIVE_ASSERT(b0.id() != b1.id(), "duplicate triangles.");
+          OMC_EXPENSIVE_ASSERT(b0.attr() != b1.attr(), "duplicate triangles.");
 
           DetectClassifyTTI<Traits> dc(ts, pnt_arenas[thread_id]);
-          dc.check_TTI(b0.id(), b1.id());
+          dc.check_TTI(b0.attr(), b1.attr());
 
           COLLECT_INTERSECTING_TRIANGLE;
         }
@@ -212,9 +213,10 @@ void DetectClassifyTTIs<Traits>::parallelOnLargeNodes(
             if (!DoIntersect()(b0, b1))
               continue; // early reject.
 
-            OMC_EXPENSIVE_ASSERT(b0.id() != b1.id(), "duplicate triangles.");
+            OMC_EXPENSIVE_ASSERT(b0.attr() != b1.attr(),
+                                 "duplicate triangles.");
             DetectClassifyTTI<Traits> dc(ts, pnt_arenas[thread_id]);
-            dc.check_TTI(b0.id(), b1.id());
+            dc.check_TTI(b0.attr(), b1.attr());
 
             COLLECT_INTERSECTING_TRIANGLE;
           }
@@ -231,9 +233,10 @@ void DetectClassifyTTIs<Traits>::parallelOnLargeNodes(
             if (!DoIntersect()(b0, b1))
               continue; // early reject.
 
-            OMC_EXPENSIVE_ASSERT(b0.id() != b1.id(), "duplicate triangles.");
+            OMC_EXPENSIVE_ASSERT(b0.attr() != b1.attr(),
+                                 "duplicate triangles.");
             DetectClassifyTTI<Traits> dc(ts, pnt_arenas[thread_id]);
-            dc.check_TTI(b0.id(), b1.id());
+            dc.check_TTI(b0.attr(), b1.attr());
 
             COLLECT_INTERSECTING_TRIANGLE;
           }
@@ -266,7 +269,7 @@ void DetectClassifyTTIs<Traits>::cacheBoxesInNode(
   {
     cached_labels.resize(num_boxes, /*keep_data*/ false);
     for (size_t i = 0; i < num_boxes; i++)
-      cached_labels[i] = labels[tree.box(boxes[i]).id()];
+      cached_labels[i] = labels[tree.box(boxes[i]).attr()];
   }
 }
 

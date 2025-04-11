@@ -53,7 +53,7 @@ namespace OMC {
  * @tparam NodeTraits
  */
 template <typename Traits>
-class OrthogonalVertex
+class OrthogonalVertex_Base
 {
 public: /* Types *************************************************************/
   /// Dimension, typically 2 or 3, or higher n
@@ -66,21 +66,39 @@ public: /* Types *************************************************************/
   using OrBbox  = typename Traits::OrBboxT;
   using OrPoint = remove_cvref_t<decltype(std::declval<OrBbox>().min_bound())>;
 
-  using VertexAttrT = typename Traits::VertexAttrT;
-
 public: /* Constructors and Destructor ***************************************/
-  OrthogonalVertex() = default;
+  /* All default */
 
 public: /* Data access *******************************************************/
   OrPoint       &position() { return m_position; }
   const OrPoint &position() const { return m_position; }
 
+protected:
+  OrPoint m_position;
+};
+
+template <typename Traits, typename VertexAttr>
+class OrthogonalVertex : public OrthogonalVertex_Base<Traits>
+{
+public: /* Types *************************************************************/
+  using VertexAttrT = typename Traits::VertexAttrT;
+
+public: /* Constructors and Destructor ***************************************/
+  /* All default */
+
+public: /* Data access *******************************************************/
   VertexAttrT       &attribute() { return m_attribute; }
   const VertexAttrT &attribute() const { return m_attribute; }
 
 protected:
-  OrPoint     m_position;
   VertexAttrT m_attribute;
+};
+
+template <typename Traits>
+class OrthogonalVertex<Traits, /*VertexAttr=*/void>
+  : public OrthogonalVertex_Base<Traits>
+{
+  /* No member or interface */
 };
 
 } // namespace OMC

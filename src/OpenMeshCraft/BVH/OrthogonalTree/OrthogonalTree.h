@@ -40,72 +40,74 @@ public: /* Types and Declarations *******************************************/
   static constexpr bool StoreBoxesInInternalNodes =
     Traits::StoreBoxesInInternalNodes;
 
+  /* number type */
   using NT = typename Traits::NT;
 
-  using Bbox = typename Traits::BboxT;
-
+  /* Bounding box types */
+  using Bbox   = typename Traits::BboxT;
   using OrBbox = typename Traits::OrBboxT;
   OrthTreeAbbreviate(OrBbox);
-
   using OrBboxes       = std::vector<OrBbox>;
   using OrBboxesIter   = typename OrBboxes::iterator;
   using OrBboxPtrs     = std::vector<OrBboxPtr>;
   using OrBboxPtrsIter = typename OrBboxPtrs ::iterator;
 
+  /* Point type */
   using OrPoint = remove_cvref_t<decltype(std::declval<OrBbox>().min_bound())>;
   OrthTreeAbbreviate(OrPoint);
 
+  /* Predicates */
   using CalcBbox    = typename Traits::CalcBbox;
   using DoIntersect = typename Traits::DoIntersect;
-
-  using SplitPred = typename Traits::SplitPred;
+  using SplitPred   = typename Traits::SplitPred;
   // using CollapsePred = typename Traits::CollapsePred;
 
-  using calc_box_from_boxes = typename Traits::calc_box_from_boxes;
-  using calc_box_from_box_pointers =
-    typename Traits::calc_box_from_box_pointers;
+  /* Primitive attribute type */
+  using PrimAttrT = typename Traits::PrimAttrT;
 
-  using Node = OrthogonalNode<Traits>;
+  /* Node types */
+  using NodeAttrT = typename Traits::NodeAttrT;
+  using Node      = OrthogonalNode<Traits, NodeAttrT, EnableVertices>;
   OrthTreeAbbreviate(Node);
-
   using Nodes     = tbb::concurrent_vector<Node>;
   using NodesIter = typename Nodes::iterator;
 
-  using LocalCoordinates  = typename Node::LocalCoordinates;
-  using GlobalCoordinates = typename Node::GlobalCoordinates;
-
-  using Vertex = OrthogonalVertex<Traits>;
+  /* Vertex types */
+  using VertexAttrT = typename Traits::VertexAttrT;
+  using Vertex      = OrthogonalVertex<Traits, VertexAttrT>;
   OrthTreeAbbreviate(Vertex);
-
   using Vertices     = tbb::concurrent_vector<Vertex>;
   using VerticesIter = typename Vertices::iterator;
 
-public: /* Constructors and Destructor *************************************/
-  OrthogonalTree() = default;
+  /* Coordinate types */
+  using LocalCoordinates  = typename Node::LocalCoordinates;
+  using GlobalCoordinates = typename Node::GlobalCoordinates;
 
+public: /* Constructors and Destructor *************************************/
   /**
    * @brief Insert primitives and indices to tree. Will clear tree before
    * inserting, Won't build tree until calling construction.
    * @param primitives primitives to initialize tree. Won't store primitives
    * internally, only store their boxes.
-   * @param indices indices of primitives.
+   * @param attributes attributes of primitives.
    * @note Once the primitives are inserted, they can't be changed, except
    * clear, reinsert and rebuild.
    */
-  template <typename Primitives, typename Indices>
-  void insert_primitives(const Primitives &primitives, const Indices &indices);
+  template <typename Primitives, typename Attributes>
+  void insert_primitives(const Primitives &primitives,
+                         const Attributes &attributes);
 
   /**
    * @brief Insert bounding boxes and indices to tree. Will clear tree before
    * inserting, Won't build tree until calling construction.
    * @param bboxes bounding boxes to initialize tree. If your primitives are
    * composed by hybrid types, construct bboxes for them and just insert bboxes.
-   * @param indices indices of bounding boxes.
+   * @param attributes attributes of bounding boxes.
    * @note Once the bboxes are inserted, they can't be changed, except
    * clear, reinsert and rebuild.
    */
-  template <typename Bboxes, typename Indices>
-  void insert_boxes(const Bboxes &bboxes, const Indices &indices);
+  template <typename Bboxes, typename Attributes>
+  void insert_boxes(const Bboxes &bboxes, const Attributes &attributes);
 
   /**
    * @brief Construct the orthogonal tree after inserting points.
@@ -209,11 +211,11 @@ public: /* Queries */
   /** @brief Get the side length of a node. */
   OrPoint node_side_length(NodeCRef nd) const;
 
-  Vertices       &vertices() { return m_vertices; }
-  const Vertices &vertices() const { return m_vertices; }
+  Vertices       &vertices();
+  const Vertices &vertices() const;
 
-  VertexRef  vertex(index_t idx) { return m_vertices[idx]; }
-  VertexCRef vertex(index_t idx) const { return m_vertices[idx]; }
+  VertexRef  vertex(index_t idx);
+  VertexCRef vertex(index_t idx) const;
 
   std::vector<index_t> all_leaf_nodes() const;
 

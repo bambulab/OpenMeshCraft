@@ -2,6 +2,7 @@
 
 #include "BinaryTree.h"
 
+#include "OpenMeshCraft/BVH/Utils.h"
 #include "OpenMeshCraft/Utils/IndexDef.h"
 
 #include <algorithm>
@@ -82,7 +83,7 @@ void BinaryTree<Traits>::construct(bool compact_box, NT enlarge_ratio)
   // save behavior control flags and data for further use or query.
   m_enlarge_ratio = enlarge_ratio;
   // Find the tight bounding box of input boxes
-  m_bbox          = calc_box_from_boxes()(m_boxes.begin(), m_boxes.end());
+  m_bbox          = calc_box_from_boxes<Bbox>(m_boxes.begin(), m_boxes.end());
   // set the tight box to root node
   m_nodes.clear();
   m_nodes.emplace_back();
@@ -306,8 +307,8 @@ void BinaryTree<Traits>::calc_tbox_for_children(NodeRef nd)
   for (index_t chi = 0; chi < nd.children_size(); chi++)
   {
     NodeRef ch = node(nd.child(chi));
-    ch.tbox() =
-      calc_box_from_box_indices()(*this, ch.boxes().begin(), ch.boxes().end());
+    ch.tbox()  = calc_box_from_box_indices<Bbox>(*this, ch.boxes().begin(),
+                                                 ch.boxes().end());
     ch.tbox().min_bound().maximize(ch.box().min_bound());
     ch.tbox().max_bound().minimize(ch.box().max_bound());
   }

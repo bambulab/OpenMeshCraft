@@ -60,9 +60,6 @@ public: /* Types and Declarations *******************************************/
 
   using ShapeRefinePred = typename Traits::ShapeRefinePred;
 
-  using calc_box_from_boxes       = typename Traits::calc_box_from_boxes;
-  using calc_box_from_box_indices = typename Traits::calc_box_from_box_indices;
-
 public: /* Constructors and Destructor *************************************/
   BinaryTree() = default;
 

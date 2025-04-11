@@ -51,42 +51,8 @@ public:
 
   protected:
     index_t m_id;
-  };
-
-  class calc_box_from_boxes
-  {
-  public:
-    template <typename BoxIter>
-    BboxT operator()(BoxIter begin, BoxIter end)
-    {
-      BboxT box;
-      if (begin == end)
-        return box;
-
-      box = *begin;
-      for (++begin; begin != end; ++begin)
-        box += *begin;
-
-      return box;
-    }
-  };
-
-  class calc_box_from_box_indices
-  {
-  public:
-    template <typename Tree, typename BoxIdxIter>
-    BboxT operator()(const Tree &tree, BoxIdxIter begin, BoxIdxIter end)
-    {
-      BboxT box;
-      if (begin == end)
-        return box;
-
-      box = tree.box(*begin);
-      for (++begin; begin != end; ++begin)
-        box += tree.box(*begin);
-
-      return box;
-    }
+    // TODO replace id with attribute
+    // TODO make attribute optional
   };
 };
 

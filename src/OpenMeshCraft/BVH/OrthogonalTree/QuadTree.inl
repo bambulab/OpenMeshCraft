@@ -10,45 +10,44 @@ template <typename Traits>
 auto QuadTree<Traits>::adj_vertex(index_t vidx, index_t axis, bool dir)
   -> index_t
 {
+  static_assert(EnableVertices,
+                "adj_vertex() is only available when EnableVertices is true.");
   return m_adj_vertices[vidx][(axis << 1) + dir];
 }
 
 template <typename Traits>
-auto QuadTree<Traits>::calc_vertex_position(index_t nd_idx, index_t nv_idx)
-  -> OrPoint
+void QuadTree<Traits>::build_vertices()
 {
-  NodeCRef nd = this->node(nd_idx);
-  OrPoint  c  = this->node_center(nd);
-  OrPoint  h  = this->node_side_length(nd) * NT(0.5);
-  switch (nv_idx)
+  if constexpr (EnableVertices)
   {
-  case 0:
-    return OrPoint(c.x() - h.x(), c.y() - h.y());
-  case 1:
-    return OrPoint(c.x() + h.x(), c.y() - h.y());
-  case 2:
-    return OrPoint(c.x() - h.x(), c.y() + h.y());
-  case 3:
-    return OrPoint(c.x() + h.x(), c.y() + h.y());
-  default:
-#ifdef OMC_ENABLE_ASSERT
-    OMC_ASSERT(false, "vertex index {} out of range.", nv_idx);
-#else
-    return OrPoint(NT(0.), NT(0.), NT(0.));
-#endif
+    build_vertices_impl();
+  }
+  else
+  {
+    // do nothing
   }
 }
 
 template <typename Traits>
-void QuadTree<Traits>::set_adj_vertices_pair(index_t vl, index_t vh,
-                                             index_t axis)
+void QuadTree<Traits>::calc_box_for_children(NodeRef nd, OrPointCRef c)
 {
-  m_adj_vertices[vl][(axis << 1) + true]  = vh;
-  m_adj_vertices[vh][(axis << 1) + false] = vl;
+  OrPointCRef minb = nd.box().min_bound();
+  OrPointCRef maxb = nd.box().max_bound();
+
+  // clang-format off
+  // child 0(000, -x-y)
+  this->node(nd.child(0)).box() = Bbox(minb, c);
+  // child 1(001, +x-y)
+  this->node(nd.child(1)).box() = Bbox(OrPoint(c.x(), minb.y()), OrPoint(maxb.x(), c.y()));
+  // child 2(010, -x+y)
+  this->node(nd.child(2)).box() = Bbox(OrPoint(minb.x(), c.y()), OrPoint(c.x(), maxb.y()));
+  // child 3(011, +x+y)
+  this->node(nd.child(3)).box() = Bbox(c, maxb);
+  // clang-format on
 }
 
 template <typename Traits>
-void QuadTree<Traits>::build_vertices()
+void QuadTree<Traits>::build_vertices_impl()
 {
   this->m_vertices.clear();
   m_adj_vertices.clear();
@@ -200,21 +199,37 @@ void QuadTree<Traits>::build_vertices()
 }
 
 template <typename Traits>
-void QuadTree<Traits>::calc_box_for_children(NodeRef nd, OrPointCRef c)
+auto QuadTree<Traits>::calc_vertex_position(index_t nd_idx, index_t nv_idx)
+  -> OrPoint
 {
-  OrPointCRef minb = nd.box().min_bound();
-  OrPointCRef maxb = nd.box().max_bound();
+  NodeCRef nd = this->node(nd_idx);
+  OrPoint  c  = this->node_center(nd);
+  OrPoint  h  = this->node_side_length(nd) * NT(0.5);
+  switch (nv_idx)
+  {
+  case 0:
+    return OrPoint(c.x() - h.x(), c.y() - h.y());
+  case 1:
+    return OrPoint(c.x() + h.x(), c.y() - h.y());
+  case 2:
+    return OrPoint(c.x() - h.x(), c.y() + h.y());
+  case 3:
+    return OrPoint(c.x() + h.x(), c.y() + h.y());
+  default:
+#ifdef OMC_ENABLE_ASSERT
+    OMC_ASSERT(false, "vertex index {} out of range.", nv_idx);
+#else
+    return OrPoint(NT(0.), NT(0.), NT(0.));
+#endif
+  }
+}
 
-  // clang-format off
-  // child 0(000, -x-y)
-  this->node(nd.child(0)).box() = Bbox(minb, c);
-  // child 1(001, +x-y)
-  this->node(nd.child(1)).box() = Bbox(OrPoint(c.x(), minb.y()), OrPoint(maxb.x(), c.y()));
-  // child 2(010, -x+y)
-  this->node(nd.child(2)).box() = Bbox(OrPoint(minb.x(), c.y()), OrPoint(c.x(), maxb.y()));
-  // child 3(011, +x+y)
-  this->node(nd.child(3)).box() = Bbox(c, maxb);
-  // clang-format on
+template <typename Traits>
+void QuadTree<Traits>::set_adj_vertices_pair(index_t vl, index_t vh,
+                                             index_t axis)
+{
+  m_adj_vertices[vl][(axis << 1) + true]  = vh;
+  m_adj_vertices[vh][(axis << 1) + false] = vl;
 }
 
 } // namespace OMC

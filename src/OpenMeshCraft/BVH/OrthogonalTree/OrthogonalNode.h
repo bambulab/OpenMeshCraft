@@ -3,10 +3,9 @@
 #include "OrthogonalTraits.h"
 #include "OrthogonalVertex.h"
 
-#include "OpenMeshCraft/Utils/Exception.h"
+#include "OpenMeshCraft/Utils/IndexDef.h"
 
 #include <bitset>
-#include <memory>
 #include <vector>
 
 namespace OMC {
@@ -16,10 +15,13 @@ namespace OMC {
  * Node maintains a local topology of the tree (parent and children),
  * and provides some functions to modify and traverse the tree's topology.
  * Node also contains geometry information, but never modify it.
+ *
+ * This base class contains necessary data structure. Optional data are stored
+ * optionally in derived class.
  * @tparam Traits
  */
 template <typename Traits>
-class OrthogonalNode
+class OrthogonalNode_Base
 {
 public: /* Types *************************************************************/
   /// The maximal depth of orthogonal tree.
@@ -45,16 +47,9 @@ public: /* Types *************************************************************/
   using OrBbox = typename Traits::OrBboxT;
   OrthTreeAbbreviate(OrBbox);
 
-  /// Attribute type defined on node.
-  using NodeAttrT = typename Traits::NodeAttrT;
-
   /// Abbreviation of OrthogonalNode.
-  using Node = OrthogonalNode<Traits>;
+  using Node = OrthogonalNode_Base<Traits>;
   OrthTreeAbbreviate(Node);
-
-  /// Abbreviation of OrthogonalVertex.
-  using Vertex = OrthogonalVertex<Traits>;
-  OrthTreeAbbreviate(Vertex);
 
   /** @brief Array storing a bundle of children.
    * @details The orthtree subdivides the space in 2 on each axis
@@ -78,29 +73,6 @@ public: /* Types *************************************************************/
   using Children = index_t;
 
   /**
-   * @brief Array storing corner vertices of this node.
-   * A node has and only has Degree corner vertices.
-   * @note A node hold a vertex, but the vertex may not be adjacent to the node.
-   * For example in 2D, the big cell holds 4 corner vertices (marked in `c`),
-   * but all 4 corner vertices are adjacent to small cells.
-   *          c-------f-------c
-   *          |       |       |
-   *          |       |       |
-   *          |       |       |
-   *          f-------+-------f
-   *          |       |       |
-   *          |       |       |
-   *          |       |       |
-   *          c-------f-------c
-   */
-  using Vertices = std::array<index_t, Degree>;
-
-  /**
-   * @brief unique pointer, allocate memory if need to store vertices.
-   */
-  using VerticesUPtr = std::unique_ptr<Vertices>;
-
-  /**
    * @brief Represent this node's relationship to its parent.
    * LocalCoord[i] indicates whether the i-th dimention of this node is
    * lower (bit=0) or higher (bit=1).
@@ -122,17 +94,12 @@ public: /* Types *************************************************************/
   using GlobalCoordinates = std::array<gc_t, Dimension>;
 
 public: /* Constructors (Copy, Move, Assign) and Destructor *******************/
-  OrthogonalNode();
-
-  OrthogonalNode(const Node &src) { *this = src; }
-
-  OrthogonalNode(Node &&src) { *this = std::move(src); }
-
-  NodeRef operator=(const Node &src);
-
-  NodeRef operator=(Node &&src);
-
-  ~OrthogonalNode() {}
+  OrthogonalNode_Base();
+  OrthogonalNode_Base(const Node &src) = default;
+  OrthogonalNode_Base(Node &&src)      = default;
+  NodeRef operator=(const Node &src)   = default;
+  NodeRef operator=(Node &&src)        = default;
+  ~OrthogonalNode_Base()               = default;
 
 public: /* Queries ************************************************************/
   bool is_root() const { return m_depth == 0; }
@@ -162,11 +129,6 @@ public: /* Data access ********************************************************/
   index_t       &vertex(index_t index);
   /// @brief Access one vertex by local index  (0 ~ Degree-1).
   const index_t &vertex(index_t index) const;
-
-  /// @brief Access vertices.
-  Vertices       &vertices();
-  /// @brief Access vertices.
-  const Vertices &vertices() const;
 
   index_t       &depth() { return m_depth; }
   const index_t &depth() const { return m_depth; }
@@ -200,17 +162,11 @@ public: /* Data access ********************************************************/
   size_t       &size() { return m_size; }
   const size_t &size() const { return m_size; }
 
-  /// Access node attribute
-  NodeAttrT       &attribute() { return m_attribute; }
-  const NodeAttrT &attribute() const { return m_attribute; }
-
 protected: /* Data ************************************************************/
   /// index of parent, InvalidIndex if parent doesn't exist.
   index_t                 m_parent;
   /// children of this node.
   Children                m_children;
-  /// vertices of this node.
-  VerticesUPtr            m_vertices;
   /// global coordinates of this node.
   GlobalCoordinates       m_global_coordinates;
   /// start from 0 (Root), end with MaxDepth.
@@ -221,139 +177,100 @@ protected: /* Data ************************************************************/
   std::vector<OrBboxCPtr> m_boxes;
   /// size of all boxes stored in this node (including children).
   size_t                  m_size;
+};
+
+/**
+ * @brief This derived class is used to optionally store node attributes.
+ *
+ * @tparam Traits
+ * @tparam NodeAttr Node attribute type.
+ */
+template <typename Traits, typename NodeAttr>
+class OrthogonalNode_Attr : public OrthogonalNode_Base<Traits>
+{
+public: /* Types *************************************************************/
+  /// Attribute type defined on node.
+  using NodeAttrT = typename Traits::NodeAttrT;
+
+public: /* Data access *******************************************************/
+  /// Access node attribute
+  NodeAttrT       &attribute() { return m_attribute; }
+  const NodeAttrT &attribute() const { return m_attribute; }
+
+protected: /* Data ************************************************************/
   /// attribute
-  NodeAttrT               m_attribute;
+  NodeAttrT m_attribute;
 };
 
 template <typename Traits>
-OrthogonalNode<Traits>::OrthogonalNode()
+class OrthogonalNode_Attr<Traits, void> : public OrthogonalNode_Base<Traits>
 {
-  m_parent   = InvalidIndex;
-  m_children = InvalidIndex;
-  m_depth    = 0;
-  m_size     = 0;
-
-  std::fill(m_global_coordinates.begin(), m_global_coordinates.end(), 0);
-
-  if constexpr (EnableVertices)
-    m_vertices = std::make_unique<Vertices>();
-}
+  /* No member or interfaces */
+};
 
 /**
- * @brief Shallow copy.
- * @param src source node.
+ * @brief This derived class is used to optionally store vertices.
+ *
+ * @tparam Traits
+ * @tparam NodeAttr
+ * @tparam Vertex
  */
-template <typename Traits>
-auto OrthogonalNode<Traits>::operator=(const Node &src) -> NodeRef
-{
-  m_boxes              = src.m_boxes;
-  m_parent             = src.m_parent;
-  m_children           = src.m_children;
-  m_global_coordinates = src.m_global_coordinates;
-  m_depth              = src.m_depth;
-  m_box                = src.m_box;
-  m_boxes              = src.m_boxes;
-  m_size               = src.m_size;
-  m_attribute          = src.m_attribute;
-  if (src.m_vertices)
-    m_vertices = std::make_unique<Vertices>(*src.m_vertices);
-  return *this;
-}
+template <typename Traits, typename NodeAttr, bool HasVertex>
+class OrthogonalNode_Vtx;
 
-/**
- * @brief Move (Shallow copy).
- * @param src source node.
- */
-template <typename Traits>
-auto OrthogonalNode<Traits>::operator=(Node &&src) -> NodeRef
+template <typename Traits, typename NodeAttr>
+class OrthogonalNode_Vtx<Traits, NodeAttr, /*HasVertex=*/true>
+  : public OrthogonalNode_Attr<Traits, NodeAttr>
 {
-  m_boxes              = std::move(src.m_boxes);
-  m_parent             = std::move(src.m_parent);
-  m_children           = std::move(src.m_children);
-  m_vertices           = std::move(src.m_vertices);
-  m_global_coordinates = std::move(src.m_global_coordinates);
-  m_depth              = std::move(src.m_depth);
-  m_box                = std::move(src.m_box);
-  m_boxes              = std::move(src.m_boxes);
-  m_size               = std::move(src.m_size);
-  m_attribute          = std::move(src.m_attribute);
-  return *this;
-}
+public:
+  /// Base class
+  using Base = OrthogonalNode_Attr<Traits, NodeAttr>;
 
-/// @brief Access one child by local index.
-template <typename Traits>
-auto OrthogonalNode<Traits>::child(index_t index) const -> index_t
-{
-  OMC_EXPENSIVE_ASSERT(is_valid_idx(m_children), "leaf node has no child.");
-  OMC_EXPENSIVE_ASSERT(index < Degree, "index {} out of range.", index);
-  return m_children + index;
-}
+  /**
+   * @brief Array storing corner vertices of this node.
+   * A node has and only has Degree corner vertices.
+   * @note A node hold a vertex, but the vertex may not be adjacent to the node.
+   * For example in 2D, the big cell holds 4 corner vertices (marked in `c`),
+   * but all 4 corner vertices are adjacent to small cells.
+   *          c-------f-------c
+   *          |       |       |
+   *          |       |       |
+   *          |       |       |
+   *          f-------+-------f
+   *          |       |       |
+   *          |       |       |
+   *          |       |       |
+   *          c-------f-------c
+   */
+  using VertexIds = std::array<index_t, Base::Degree>;
 
-/// @brief Access vertices.
-/// There are Degree vertices in Degree subspaces.
-/// They can be accessed by local coordinates.
-template <typename Traits>
-auto OrthogonalNode<Traits>::vertex(index_t index) -> index_t &
-{
-  OMC_EXPENSIVE_ASSERT(m_vertices, "Null vertices.");
-  OMC_EXPENSIVE_ASSERT(index < Degree, "index {} out of range.", index);
-  return (*m_vertices)[index];
-}
+public:
+  /// @brief Access vertex.
+  index_t         &vertex(index_t index);
+  /// @brief Access vertex.
+  index_t          vertex(index_t index) const;
+  /// @brief Access vertices.
+  VertexIds       &vertices() { return m_vertices; }
+  /// @brief Access vertices.
+  const VertexIds &vertices() const { return m_vertices; }
 
-/// @brief Access vertices.
-/// There are Degree vertices in Degree subspaces.
-/// They can be accessed by local coordinates.
-template <typename Traits>
-auto OrthogonalNode<Traits>::vertex(index_t index) const -> const index_t &
-{
-  OMC_EXPENSIVE_ASSERT(m_vertices, "Null vertices.");
-  OMC_EXPENSIVE_ASSERT(index < Degree, "index {} out of range.", index);
-  return (*m_vertices)[index];
-}
+protected: /* Data ************************************************************/
+  /// vertices of this node.
+  VertexIds m_vertices;
+};
 
-/// @brief Access vertices.
-template <typename Traits>
-auto OrthogonalNode<Traits>::vertices() -> Vertices &
+template <typename Traits, typename NodeAttr>
+class OrthogonalNode_Vtx<Traits, NodeAttr, /*HasVertex=*/false>
+  : public OrthogonalNode_Attr<Traits, NodeAttr>
 {
-  OMC_EXPENSIVE_ASSERT(m_vertices, "Null vertices.");
-  return *m_vertices;
-}
-/// @brief Access vertices.
-template <typename Traits>
-auto OrthogonalNode<Traits>::vertices() const -> const Vertices &
-{
-  OMC_EXPENSIVE_ASSERT(m_vertices, "Null vertices.");
-  return *m_vertices;
-}
+  // no member or interfaces
+};
 
-template <typename Traits>
-bool OrthogonalNode<Traits>::local_coordinates(size_t axis) const
-{
-  OMC_EXPENSIVE_ASSERT(axis < Dimension, "invalid axis {}", axis);
-  return m_global_coordinates[axis] & gc_t(1);
-}
-
-template <typename Traits>
-void OrthogonalNode<Traits>::local_coordinates(LocalCoordinates &lc) const
-{
-  // OPT: cost is expensive.
-  if constexpr (Dimension >= 1)
-    lc[0] = m_global_coordinates[0] & gc_t(1);
-  if constexpr (Dimension >= 2)
-    lc[1] = m_global_coordinates[1] & gc_t(1);
-  if constexpr (Dimension >= 3)
-    lc[2] = m_global_coordinates[2] & gc_t(1);
-  if constexpr (Dimension > 3)
-    for (size_t i = 3; i < Dimension; i++)
-      lc[i] = m_global_coordinates[i] & gc_t(1);
-}
-
-template <typename Traits>
-auto OrthogonalNode<Traits>::local_coordinates() const -> LocalCoordinates
-{
-  LocalCoordinates result;
-  local_coordinates(result);
-  return result;
-}
+template <typename Traits, typename NodeAttr, bool HasVertex>
+using OrthogonalNode = OrthogonalNode_Vtx<Traits, NodeAttr, HasVertex>;
 
 } // namespace OMC
+
+#ifdef OMC_HAS_IMPL
+  #include "OrthogonalNode.inl"
+#endif

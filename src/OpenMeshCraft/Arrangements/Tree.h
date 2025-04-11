@@ -161,6 +161,8 @@ public:
   using NT    = typename AppTraits::NT;
   using BboxT = typename AppTraits::BoundingBox3;
 
+  using PrimAttrT = index_t;
+
   using SplitPred       = Arr_TreeSplitPred;
   using ShapeRefinePred = Arr_TreeShapeRefinePred;
   using DoIntersect     = typename AppTraits::DoIntersect;

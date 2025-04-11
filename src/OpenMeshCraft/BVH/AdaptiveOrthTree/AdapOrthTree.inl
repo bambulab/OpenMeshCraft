@@ -2,6 +2,7 @@
 
 #include "AdapOrthTree.h"
 
+#include "OpenMeshCraft/BVH/Utils.h"
 #include "OpenMeshCraft/Utils/ExtendedTypeTraits.h"
 
 #include "tbb/tbb.h"
@@ -37,46 +38,46 @@ void AdapOrthTree<Traits>::shallow_copy(const AdapOrthTree &rhs)
 }
 
 template <typename Traits>
-template <typename Primitives, typename Indices>
+template <typename Primitives, typename Attributes>
 void AdapOrthTree<Traits>::insert_primitives(const Primitives &primitives,
-                                             const Indices    &indices)
+                                             const Attributes &attributes)
 {
   OMC_THROW_INVALID_ARGUMENT_IF(
-    primitives.size() != indices.size(),
-    "size of primitives and indices are different.");
+    primitives.size() != attributes.size(),
+    "size of primitives and attributes are different.");
 
   clear();
 
   m_boxes.reserve((size_t)(primitives.size() * 1.2));
   m_boxes.resize(primitives.size());
   tbb::parallel_for(size_t(0), primitives.size(),
-                    [this, &primitives, &indices](size_t i)
+                    [this, &primitives, &attributes](size_t i)
                     {
                       m_boxes[i].bbox() = m_calc_bbox(primitives[i]);
-                      m_boxes[i].id()   = static_cast<index_t>(indices[i]);
+                      m_boxes[i].attr() = attributes[i];
                     });
 }
 
 template <typename Traits>
-template <typename Bboxes, typename Indices>
-void AdapOrthTree<Traits>::insert_boxes(const Bboxes  &bboxes,
-                                        const Indices &indices)
+template <typename Bboxes, typename Attributes>
+void AdapOrthTree<Traits>::insert_boxes(const Bboxes     &bboxes,
+                                        const Attributes &attributes)
 {
   static_assert(std::is_same_v<remove_cvref_t<decltype(*bboxes.begin())>, Bbox>,
                 "Bounding box types are different.");
   OMC_THROW_INVALID_ARGUMENT_IF(
-    bboxes.size() != indices.size(),
-    "size of primitives and indices are different.");
+    bboxes.size() != attributes.size(),
+    "size of primitives and attributes are different.");
 
   clear();
 
   m_boxes.reserve((size_t)(bboxes.size() * 1.2));
   m_boxes.resize(bboxes.size());
   tbb::parallel_for(size_t(0), bboxes.size(),
-                    [this, &bboxes, &indices](size_t i)
+                    [this, &bboxes, &attributes](size_t i)
                     {
                       m_boxes[i].bbox() = bboxes[i];
-                      m_boxes[i].id()   = static_cast<index_t>(indices[i]);
+                      m_boxes[i].attr() = attributes[i];
                     });
 }
 
@@ -88,7 +89,7 @@ void AdapOrthTree<Traits>::construct(bool compact_box, NT enlarge_ratio,
   m_enlarge_ratio  = enlarge_ratio;
   m_adaptive_thres = adaptive_thres;
   // Find the tight bounding box of input boxes
-  m_bbox           = calc_box_from_boxes()(m_boxes.begin(), m_boxes.end());
+  m_bbox           = calc_box_from_boxes<Bbox>(m_boxes.begin(), m_boxes.end());
   // set the tight box to root node
   m_nodes.clear();
   m_nodes.emplace_back();
@@ -351,12 +352,15 @@ void AdapOrthTree<Traits>::collapse(index_t node_idx)
       boxes.insert(boxes.end(), ch_boxes.begin(), ch_boxes.end());
       ch_boxes = std::vector<index_t>();
     }
+// FIXME
+#if 0
     std::sort(boxes.begin(), boxes.end(), [](TreeBboxCPtr lhs, TreeBboxCPtr rhs)
               { return lhs->id() < rhs->id(); });
     boxes.erase(std::unique(boxes.begin(), boxes.end(),
                             [](TreeBboxCPtr lhs, TreeBboxCPtr rhs)
                             { return lhs->id() == rhs->id(); }),
                 boxes.end());
+#endif
   }
 
   // FIXME TODO delete its children, need a garbage collection strategy?

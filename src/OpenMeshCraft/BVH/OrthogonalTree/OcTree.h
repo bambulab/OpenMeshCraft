@@ -52,31 +52,55 @@ class OcTree : public OrthogonalTree<_Traits>
 public:
   using Traits = _Traits;
 
-  static constexpr size_t MaxDepth       = Traits::MaxDepth;
-  static constexpr size_t Dimension      = Traits::Dimension;
-  static constexpr size_t Degree         = (1u << Dimension);
-  static constexpr bool   EnableVertices = Traits::EnableVertices;
+  static constexpr size_t Dimension = Traits::Dimension;
+  static constexpr size_t Degree    = (1u << Dimension);
 
-  using NT = typename Traits::NT;
+  static constexpr bool EnableVertices = Traits::EnableVertices;
 
-  using Bbox = typename Traits::BboxT;
+  using Base = OrthogonalTree<Traits>;
 
-  using OrBbox = typename Traits::OrBboxT;
+  using NT = typename Base::NT;
+
+  using Bbox = typename Base::Bbox;
+
+  using OrBbox = typename Base::OrBbox;
   OrthTreeAbbreviate(OrBbox);
 
-  using OrPoint = remove_cvref_t<decltype(std::declval<OrBbox>().min_bound())>;
+  using OrPoint = typename Base::OrPoint;
   OrthTreeAbbreviate(OrPoint);
 
-  using Node = OrthogonalNode<Traits>;
+  using Node = typename Base::Node;
   OrthTreeAbbreviate(Node);
 
-  using Vertex = OrthogonalVertex<Traits>;
+  using Vertex = typename Base::Vertex;
   OrthTreeAbbreviate(Vertex);
 
 public:
   index_t adj_vertex(index_t vidx, index_t axis, bool dir);
 
 protected:
+  /**
+   * @brief Build vertices for the OcTree.
+   * Each node has eight corner vertices. A vertex is unique to all adjacent
+   * nodes.
+   */
+  virtual void build_vertices() final;
+
+  /**
+   * @brief Calculate bounding box for children nodes.
+   *
+   * @param nd The parent node
+   * @param center The parent node's center
+   */
+  virtual void calc_box_for_children(NodeRef nd, OrPointCRef center) final;
+
+protected:
+  /**
+   * @brief Implementation of build_vertices().
+   * @tparam HasVertex
+   */
+  void build_vertices_impl();
+
   /**
    * @brief Get the position of a vertex. the vertex is located by node + local
    * vertex index.
@@ -86,16 +110,14 @@ protected:
    */
   OrPoint calc_vertex_position(index_t nd_idx, index_t nv_idx);
 
-  void set_adj_vertices_pair(index_t vl, index_t vh, index_t axis);
-
   /**
-   * @brief Build vertices for the OcTree.
-   * Each node has eight corner vertices. A vertex is unique to all adjacent
-   * nodes.
+   * @brief Set two vertices are adjacent along the given axis.
+   *
+   * @param vl lower vertex
+   * @param vh higher vertex
+   * @param axis
    */
-  virtual void build_vertices() final;
-
-  virtual void calc_box_for_children(NodeRef nd, OrPointCRef center) final;
+  void set_adj_vertices_pair(index_t vl, index_t vh, index_t axis);
 
 protected:
   /// Six adjcent vertices of each vertex.

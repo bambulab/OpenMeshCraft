@@ -25,7 +25,7 @@ void Arr_Tree_Intersection<AppTraits>::init_from_triangle_soup(
                       box += AsEP()(*verts[tris[i * 3 + 1]]);
                       box += AsEP()(*verts[tris[i * 3 + 2]]);
                       this->m_boxes[i].bbox() = box;
-                      this->m_boxes[i].id()   = i;
+                      this->m_boxes[i].attr() = i;
                     });
   // set parameters
   this->m_split_pred = Arr_TreeSplitPred(config.tree_split_size_thres);
@@ -102,7 +102,7 @@ void Arr_Tree_Intersection<AppTraits>::insert_box(const BboxT &ins_box,
 
   this->m_boxes.resize(this->m_boxes.size() + 1);
   this->m_boxes.back().bbox() = ins_box;
-  this->m_boxes.back().id()   = ins_id;
+  this->m_boxes.back().attr() = ins_id;
 
   std::queue<index_t> nodes_to_insert;
   nodes_to_insert.push(this->root_node_idx());

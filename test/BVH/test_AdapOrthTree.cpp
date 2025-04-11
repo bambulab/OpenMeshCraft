@@ -63,6 +63,8 @@ protected:
 		using NT    = APAC::NT;
 		using BboxT = APAC::BoundingBox2;
 
+    using PrimAttrT = index_t;
+
 		using SplitPred       = AdapOrthSplitPred;
 		using ShapeRefinePred = AdapQuadShapeRefinePred;
 		using DoIntersect     = APAC::DoIntersect;
@@ -80,6 +82,8 @@ protected:
 
 		using NT    = APAC::NT;
 		using BboxT = APAC::BoundingBox3;
+
+    using PrimAttrT = index_t;
 
 		using SplitPred       = AdapOrthSplitPred;
 		using ShapeRefinePred = AdapOcShapeRefinePred;

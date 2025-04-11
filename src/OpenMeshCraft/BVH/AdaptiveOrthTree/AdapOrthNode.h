@@ -16,7 +16,7 @@ namespace OMC {
  * @tparam Traits
  */
 template <typename Traits>
-class AdapOrthNode
+class AdapOrthNode_Base
 {
 public:
   /// The maximal depth of orthogonal tree.
@@ -39,11 +39,8 @@ public:
   using TreeBbox = typename Traits::TreeBboxT;
   AdapOrthTreeAbbreviate(TreeBbox);
 
-  /// Attribute type defined on node.
-  using NodeAttrT = typename Traits::NodeAttrT;
-
   /// Abbreviation of AdapOrthNode.
-  using Node = AdapOrthNode<Traits>;
+  using Node = AdapOrthNode_Base<Traits>;
   AdapOrthTreeAbbreviate(Node);
 
   /** @brief Array storing a bundle of children.
@@ -68,21 +65,30 @@ public:
   using Children = index_t;
 
 public: /* Constructors (Copy, Move, Assign) and Destructor */
-  AdapOrthNode();
+  AdapOrthNode_Base()
+  {
+    m_parent        = InvalidIndex;
+    m_children      = InvalidIndex;
+    m_children_size = 0;
+    m_depth         = 0;
+    m_size          = 0;
 
-  AdapOrthNode(const Node &src) { *this = src; }
+    std::fill(m_child_map.begin(), m_child_map.end(), InvalidIndex);
+  }
 
-  AdapOrthNode(Node &&src) { *this = std::move(src); }
+  void shallow_copy(NodeCRef rhs)
+  {
+    m_parent        = rhs.m_parent;
+    m_children      = rhs.m_children;
+    m_children_size = rhs.m_children_size;
+    m_depth         = rhs.m_depth;
+    m_box           = rhs.m_box;
+    m_tbox          = rhs.m_tbox;
+    m_size          = 0;
+    m_child_map     = rhs.m_child_map;
+  }
 
-  NodeRef operator=(const Node &src);
-
-  NodeRef operator=(Node &&src);
-
-  void shallow_copy(NodeCRef rhs);
-
-  void clear_boxes();
-
-  ~AdapOrthNode() {}
+  void clear_boxes() { m_boxes = std::vector<index_t>(); }
 
 public: /* Queries */
   bool is_root() const { return m_depth == 0; }
@@ -98,7 +104,13 @@ public: /* Data access */
   const index_t &parent() const { return m_parent; }
 
   /// @brief Access one child by local index (0 ~ Degree-1).
-  index_t child(index_t index) const;
+  index_t child(index_t index) const
+  {
+    OMC_EXPENSIVE_ASSERT(is_valid_idx(m_children), "leaf node has no child.");
+    OMC_EXPENSIVE_ASSERT(index < children_size(), "index {} out of range.",
+                         index);
+    return m_children + index;
+  }
 
   /// @brief Access children (start index of children)
   index_t       &children() { return m_children; }
@@ -133,10 +145,6 @@ public: /* Data access */
   const std::array<index_t, Degree> &child_map() const { return m_child_map; }
   std::array<index_t, Degree>       &child_map() { return m_child_map; }
 
-  /// Access node attribute
-  NodeAttrT       &attribute() { return m_attribute; }
-  const NodeAttrT &attribute() const { return m_attribute; }
-
 protected:
   /// index of parent, InvalidIndex if parent doesn't exist.
   index_t                     m_parent;
@@ -155,95 +163,25 @@ protected:
   size_t                      m_size;
   /// Map children to all corners
   std::array<index_t, Degree> m_child_map;
+};
+
+template <typename Traits, typename NodeAttrT>
+class AdapOrthNode : public AdapOrthNode_Base<Traits>
+{
+public:
+  /// Access node attribute
+  NodeAttrT       &attribute() { return m_attribute; }
+  const NodeAttrT &attribute() const { return m_attribute; }
+
+protected:
   /// attribute
-  NodeAttrT                   m_attribute;
+  NodeAttrT m_attribute;
 };
 
 template <typename Traits>
-AdapOrthNode<Traits>::AdapOrthNode()
+class AdapOrthNode<Traits, void> : public AdapOrthNode_Base<Traits>
 {
-  m_parent        = InvalidIndex;
-  m_children      = InvalidIndex;
-  m_children_size = 0;
-  m_depth         = 0;
-  m_size          = 0;
-
-  std::fill(m_child_map.begin(), m_child_map.end(), InvalidIndex);
-}
-
-/**
- * @brief Shallow copy.
- * @param src source node.
- */
-template <typename Traits>
-auto AdapOrthNode<Traits>::operator=(const Node &src) -> NodeRef
-{
-  m_parent        = src.m_parent;
-  m_children      = src.m_children;
-  m_children_size = src.m_children_size;
-  m_depth         = src.m_depth;
-  m_box           = src.m_box;
-  m_tbox          = src.m_tbox;
-  m_boxes         = src.m_boxes;
-  m_size          = src.m_size;
-  m_child_map     = src.m_child_map;
-  m_attribute     = src.m_attribute;
-  return *this;
-}
-
-/**
- * @brief Move (Shallow copy).
- * @param src source node.
- */
-template <typename Traits>
-auto AdapOrthNode<Traits>::operator=(Node &&src) -> NodeRef
-{
-  m_parent        = std::move(src.m_parent);
-  m_children      = std::move(src.m_children);
-  m_children_size = std::move(src.m_children_size);
-  m_depth         = std::move(src.m_depth);
-  m_box           = std::move(src.m_box);
-  m_tbox          = std::move(src.m_tbox);
-  m_boxes         = std::move(src.m_boxes);
-  m_size          = std::move(src.m_size);
-  m_child_map     = std::move(src.m_child_map);
-  m_attribute     = std::move(src.m_attribute);
-  return *this;
-}
-
-/**
- * @brief Only copy topology and box shape.
- * Won't copy contained data and attributes.
- * @return Node The copied node.
- */
-template <typename Traits>
-void AdapOrthNode<Traits>::shallow_copy(NodeCRef rhs)
-{
-  m_parent        = rhs.m_parent;
-  m_children      = rhs.m_children;
-  m_children_size = rhs.m_children_size;
-  m_depth         = rhs.m_depth;
-  m_box           = rhs.m_box;
-  m_tbox          = rhs.m_tbox;
-  m_size          = 0;
-  m_child_map     = rhs.m_child_map;
-}
-
-/// @brief clear boxes stored in node to save memory
-template <typename Traits>
-void AdapOrthNode<Traits>::clear_boxes()
-{
-  m_boxes = std::vector<index_t>();
-}
-
-/// @brief Access one child by local index.
-template <typename Traits>
-auto AdapOrthNode<Traits>::child(index_t index) const -> index_t
-{
-  OMC_EXPENSIVE_ASSERT(is_valid_idx(m_children), "leaf node has no child.");
-  OMC_EXPENSIVE_ASSERT(index < children_size(), "index {} out of range.",
-                       index);
-  return m_children + index;
-}
+  // empty attribute
+};
 
 } // namespace OMC
