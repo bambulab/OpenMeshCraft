@@ -33,11 +33,6 @@ public:
   {
   }
 
-  BoundingBox3T(const BoundingBox3T &)            = default;
-  BoundingBox3T(BoundingBox3T &&)                 = default;
-  BoundingBox3T &operator=(const BoundingBox3T &) = default;
-  BoundingBox3T &operator=(BoundingBox3T &&)      = default;
-
   /**
    * @brief Construct a new BoundingBox3T object from given bounds \p minB and
    * \p maxB .
@@ -137,6 +132,12 @@ public:
    * 0, 1, 2 -> x, y, z.
    */
   size_t longest_axis() const;
+
+  /**
+   * @brief Calculate the diagonal length of the bounding box.
+   * @return NT The diagonal length.
+   */
+  NT diagonal_length() const;
 
 private:
   PointT m_min_bound, m_max_bound;

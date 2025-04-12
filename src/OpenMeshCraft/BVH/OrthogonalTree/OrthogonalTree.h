@@ -277,9 +277,10 @@ public: /* Traversal and adjacency *******************************************/
   bool is_topologically_same(NodeCRef lhs, NodeCRef rhs) const;
 
   /**
-   * @brief find the box where the point locates.
+   * @brief find the node where the point locates.
    * @param point query point
-   * @return index_t index to the box.
+   * @return index_t index to the node, InvalidIndex if point is outside the
+   * tree.
    */
   template <typename PointT>
   index_t locate(const PointT &point) const;

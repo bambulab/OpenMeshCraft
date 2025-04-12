@@ -539,9 +539,10 @@ template <typename PointT>
 auto OrthogonalTree<Traits>::locate(const PointT &point) const -> index_t
 {
   // Make sure the point is enclosed by the orthtree
-  OMC_THROW_INVALID_ARGUMENT_IF(
-    !m_do_intersect(point, m_bbox),
-    "point does not locate in the tree's bounding box.");
+  if (!m_do_intersect(point, m_bbox))
+  {
+    return InvalidIndex;
+  }
 
   // Start at the root node
   index_t node_for_point = m_root_idx;

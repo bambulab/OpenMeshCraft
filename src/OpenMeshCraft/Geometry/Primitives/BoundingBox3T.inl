@@ -74,4 +74,10 @@ size_t BoundingBox3T<NT, VecT, PointT>::longest_axis() const
   }
 }
 
+template <typename NT, typename VecT, typename PointT>
+NT BoundingBox3T<NT, VecT, PointT>::diagonal_length() const
+{
+  return (m_max_bound - m_min_bound).length();
+}
+
 } // namespace OMC

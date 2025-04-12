@@ -33,11 +33,6 @@ public:
   {
   }
 
-  BoundingBox2T(const BoundingBox2T &)            = default;
-  BoundingBox2T(BoundingBox2T &&)                 = default;
-  BoundingBox2T &operator=(const BoundingBox2T &) = default;
-  BoundingBox2T &operator=(BoundingBox2T &&)      = default;
-
   /**
    * @brief Construct a new BoundingBox2T object from given bounds \p minB and
    * \p maxB .
@@ -80,7 +75,7 @@ public:
    * @param b the other bounding box.
    * @return true if they are same, false if they are different.
    */
-  inline bool operator==(const BboxT &b) const;
+  bool operator==(const BboxT &b) const;
 
   /// @name Access min/max bounds.
   /// @{
@@ -99,28 +94,28 @@ public:
    * @param[in] b the given box.
    * @return BoundingBox2T the result of union.
    */
-  inline BboxT operator+(const PointT &p) const;
+  BboxT operator+(const PointT &p) const;
 
   /**
    * @brief Set this bounding box \p this to the union of \p this and \p b .
    * @param[in] b the given box.
    * @return BoundingBox2T \p this .
    */
-  inline BboxT &operator+=(const PointT &p);
+  BboxT &operator+=(const PointT &p);
 
   /**
    * @brief Calculate a bounding box that is the union of \p this and \p b .
    * @param[in] p the given point.
    * @return BoundingBox2T the result of union.
    */
-  inline BboxT operator+(const BboxT &b) const;
+  BboxT operator+(const BboxT &b) const;
 
   /**
    * @brief Set this bounding box \p this to the union of \p this and \p b .
    * @param[in] p the given point.
    * @return BoundingBox2T \p this .
    */
-  inline BboxT &operator+=(const BboxT &b);
+  BboxT &operator+=(const BboxT &b);
 
   /**
    * @brief Enlarge the bounding box by \p offset .
@@ -129,14 +124,20 @@ public:
    * @param[in] offset
    * @note \p offset is allowed to contain negative values.
    */
-  inline void enlarge(const VecT &offset);
+  void enlarge(const VecT &offset);
 
   /**
    * @brief Get the longest axis of this bounding box.
    * @return The dimension where longest axis is in.
    * 0, 1, 2 -> x, y, z.
    */
-  inline size_t longest_axis() const;
+  size_t longest_axis() const;
+
+  /**
+   * @brief Calculate the diagonal length of the bounding box.
+   * @return NT The diagonal length.
+   */
+  NT diagonal_length() const;
 
 private:
   PointT m_min_bound, m_max_bound;

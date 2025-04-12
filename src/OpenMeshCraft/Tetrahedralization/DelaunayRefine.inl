@@ -177,7 +177,7 @@ void DelaunayRefine<T, D>::refineFaces()
   }
 
 #ifdef OMC_DELAUNAY_REFINE_PROFILE
-  Logger::info("DelaunayRefine profile:");
+  Logger::info("\nDelaunayRefine FaceRefine profile:");
   Logger::info(std::format("  Inserted points: {}", num_inserted_point));
   Logger::info(std::format("  Coincident vertex: {}", num_coincident_vertex));
   Logger::info(std::format("  Hidden point: {}", num_hidden_point));
@@ -402,13 +402,43 @@ auto DelaunayRefine<T, D>::processOneCell() -> CellConflictStatus
 template <typename T, typename D>
 void DelaunayRefine<T, D>::refineCells()
 {
-  // TODO verbose
   scanCells();
+
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
+  size_t num_inserted_point    = 0;
+  size_t num_coincident_vertex = 0;
+  size_t num_hidden_point      = 0;
+#endif
 
   while (!isCellRefineDone())
   {
-    processOneCell();
+    CellConflictStatus cs = processOneCell();
+
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
+    switch (cs)
+    {
+    case CellConflictStatus::COINCIDENT_VERTEX:
+      num_coincident_vertex += 1;
+      break;
+    case CellConflictStatus::HIDDEN_POINT:
+      num_hidden_point += 1;
+      break;
+    case CellConflictStatus::OK:
+      num_inserted_point += 1;
+      if (num_inserted_point % 100 == 0)
+        std::cout << std::format("\rIntersected points {}         ",
+                                 num_inserted_point);
+      break;
+    }
+#endif
   }
+
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
+  Logger::info("\nDelaunayRefine CellRefine profile:");
+  Logger::info(std::format("  Inserted points: {}", num_inserted_point));
+  Logger::info(std::format("  Coincident vertex: {}", num_coincident_vertex));
+  Logger::info(std::format("  Hidden point: {}", num_hidden_point));
+#endif
 
   tet_mesh.removeDeletedTets();
 }

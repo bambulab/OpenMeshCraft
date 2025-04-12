@@ -49,7 +49,7 @@ public: /* Traits **********************************************************/
   using TET_MARK  = typename TetMesh::TET_MARK;
   using FACE_MARK = typename TetMesh::FACE_MARK;
 
-  using Criteria = TetMeshCriteria<Traits>;
+  using Criteria = TetMeshCriteria<Traits, Domain>;
 
   /* Points and weights in TetMesh ==========================================
    */

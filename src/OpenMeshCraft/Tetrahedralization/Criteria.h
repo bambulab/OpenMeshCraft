@@ -4,13 +4,14 @@
 
 namespace OMC {
 
-template <typename _Traits>
+template <typename _Traits, typename _Domain>
 class TetMeshCriteria
 {
 public: /* Traits **********************************************************/
   using Traits = _Traits;
+  using Domain = _Domain;
 
-  using Self = TetMeshCriteria<Traits>;
+  using Self = TetMeshCriteria<Traits, Domain>;
 
   using NT           = typename Traits::NT;
   using Vec3         = typename Traits::Vec3;
@@ -74,16 +75,18 @@ public: /* Quality definitions *********************************************/
   };
 
 public: /* Quality settings ************************************************/
+  // Domain
+  const Domain *domain = nullptr;
   // The domain bounding box.
-  BoundingBox3 domain_bbox;
+  BoundingBox3  domain_bbox;
   // The diagonal length of the domain bounding box.
-  NT           domain_diag_length;
+  NT            domain_diag_length;
 
   /**
    * @brief Set the domain bounding box and initialize related data.
    * @param bbox Bounding box of the domain.
    */
-  Self &setDomain(const BoundingBox3 &bbox);
+  Self &setDomain(const Domain &_domain);
 
   // A restricted face has a corresponding intersection point between its
   // Voronoi dual (a segment or a ray) and input surface patch.
@@ -110,8 +113,8 @@ public: /* Quality settings ************************************************/
    * domain diagonal length. For example, `threshold = 1.0` means the 1% of the
    * domain diagonal length.
    */
-  Self &setMinUniformSizeThreshold (NT threshold);
-  Self &setMaxUniformSizeThreshold (NT threshold);
+  Self &setMinUniformSizeThreshold(NT threshold);
+  Self &setMaxUniformSizeThreshold(NT threshold);
 
   // The ratio between the circumradius and the edge length of a tetrahedron.
   // Range [0, 1], optimal 1, recommanded target range [0.6, 1].

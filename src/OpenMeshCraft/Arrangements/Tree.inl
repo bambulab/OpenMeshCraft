@@ -56,7 +56,7 @@ template <typename Tree, typename Node>
 bool Arr_TreeShapeRefinePred::operator()(const Tree &tree, const Node &node,
                                          std::array<bool, 3> &partitionable)
 {
-  auto diag_length = (tree.box().max_bound() - tree.box().min_bound()).length();
+  auto diag_length = tree.box().diagonal_length();
   auto node_length = node.box().max_bound() - node.box().min_bound();
   partitionable[0] = node_length[0] > scale * diag_length;
   partitionable[1] = node_length[1] > scale * diag_length;

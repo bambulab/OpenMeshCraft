@@ -60,4 +60,10 @@ size_t BoundingBox2T<NT, VecT, PointT>::longest_axis() const
   return dx >= dy ? 0 : 1;
 }
 
+template <typename NT, typename VecT, typename PointT>
+NT BoundingBox2T<NT, VecT, PointT>::diagonal_length() const
+{
+  return (m_max_bound - m_min_bound).length();
+}
+
 } // namespace OMC

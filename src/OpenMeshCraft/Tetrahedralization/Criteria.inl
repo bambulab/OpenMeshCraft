@@ -8,54 +8,60 @@
 
 namespace OMC {
 
-template <typename T>
-auto TetMeshCriteria<T>::setDomain(const BoundingBox3 &bbox) -> Self &
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::setDomain(const Domain &_domain) -> Self &
 {
-  domain_bbox        = bbox;
-  domain_diag_length = (bbox.max_bound() - bbox.min_bound()).norm();
+  domain             = &_domain;
+  domain_bbox        = domain->bbox();
+  domain_diag_length = domain_bbox.diagonal_length();
   return *this;
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::setRestrictedFaceDistanceThreshold(NT threshold)
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::setRestrictedFaceDistanceThreshold(NT threshold)
   -> Self &
 {
   restricted_face_distance_threshold = (threshold * 0.01) * domain_diag_length;
   return *this;
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::setMinUniformSizeThreshold(NT threshold) -> Self &
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::setMinUniformSizeThreshold(NT threshold) -> Self &
 {
   cell_min_uniform_size_threshold = (threshold * 0.01) * domain_diag_length;
   return *this;
 }
-template <typename T>
-auto TetMeshCriteria<T>::setMaxUniformSizeThreshold(NT threshold) -> Self &
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::setMaxUniformSizeThreshold(NT threshold) -> Self &
 {
   cell_max_uniform_size_threshold = (threshold * 0.01) * domain_diag_length;
   return *this;
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::setCellRadiusEdgeRatioThreshold(NT threshold) -> Self &
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::setCellRadiusEdgeRatioThreshold(NT threshold)
+  -> Self &
 {
   cell_radius_edge_ratio_threshold = threshold;
   return *this;
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::faceQuality(const TetMesh &tet_mesh,
-                                     index_t        face_idoff,
-                                     const Point3  &intersection) const
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::faceQuality(const TetMesh &tet_mesh,
+                                        index_t        face_idoff,
+                                        const Point3  &intersection) const
   -> FaceQuality
 {
   NT quality = 0.0;
+
+  index_t v0 =
+    tet_mesh.tetNode(TetMesh::clipId(face_idoff) + TetMesh::tetON1(face_idoff));
 
   // restricted face distance ===============================================
 
   // get the circumcenter of the face
   Point3 circumcenter = tet_mesh.faceDualPoint(face_idoff);
+  NT     circumradius = (circumcenter - tet_mesh.point(v0)).length();
 
   // compute the distance between the circumcenter and the intersection point
   NT distance = (circumcenter - intersection).norm();
@@ -65,16 +71,39 @@ auto TetMeshCriteria<T>::faceQuality(const TetMesh &tet_mesh,
     quality += distance;
 
   // restricted face size ===================================================
-  // TODO
+
+  // uniform size -----------------------------------------------------------
+  if (cell_min_uniform_size_threshold > 0.0 &&
+      circumradius < cell_min_uniform_size_threshold)
+  { // filter out small faces
+    return FaceQuality(0);
+  }
+
+  if (cell_max_uniform_size_threshold > 0.0 &&
+      circumradius > cell_max_uniform_size_threshold)
+  { // refine too large faces
+    return FaceQuality(circumradius / cell_max_uniform_size_threshold);
+  }
+
+  // sizing field -----------------------------------------------------------
+  if (domain && domain->hasSizingField())
+  {
+    // get the size
+    NT size = domain->pointSize(circumcenter);
+    if (size > 0.0 && circumradius > size)
+    { // refine too large faces
+      return FaceQuality(circumradius / size);
+    }
+  }
 
   // add more quality metrics below =========================================
 
   return FaceQuality(quality);
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::cellQuality(const TetMesh &tet_mesh,
-                                     index_t tet_idoff) const -> CellQuality
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::cellQuality(const TetMesh &tet_mesh,
+                                        index_t tet_idoff) const -> CellQuality
 {
   // ensure valid and unique idoff
   tet_idoff = TetMesh::clipId(tet_idoff);
@@ -115,7 +144,15 @@ auto TetMeshCriteria<T>::cellQuality(const TetMesh &tet_mesh,
   }
 
   // sizing field -----------------------------------------------------------
-  // TODO
+  if (domain && domain->hasSizingField())
+  {
+    // get the size
+    NT size = domain->pointSize(unweighted_cc);
+    if (size > 0.0 && unweighted_cr > size)
+    { // refine too large cells
+      return CellQuality(unweighted_cr / size);
+    }
+  }
 
   // cell shape =============================================================
 
@@ -153,35 +190,35 @@ auto TetMeshCriteria<T>::cellQuality(const TetMesh &tet_mesh,
   return CellQuality(0);
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::length(const Point3 &p, const Point3 &q) -> NT
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::length(const Point3 &p, const Point3 &q) -> NT
 {
   return (q - p).norm();
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::sq_length(const Point3 &p, const Point3 &q) -> NT
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::sq_length(const Point3 &p, const Point3 &q) -> NT
 {
   return (q - p).sqrnorm();
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::area(const Point3 &p, const Point3 &q, const Point3 &r)
-  -> NT
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::area(const Point3 &p, const Point3 &q,
+                                 const Point3 &r) -> NT
 {
   return std::abs((q - p).cross(r - p).norm() / 2.0);
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::volume(const Point3 &p, const Point3 &q,
-                                const Point3 &r, const Point3 &s) -> NT
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::volume(const Point3 &p, const Point3 &q,
+                                   const Point3 &r, const Point3 &s) -> NT
 {
   return std::abs(((q - p).cross(r - p)).dot(s - p) / 6.0);
 }
 
-template <typename T>
-auto TetMeshCriteria<T>::minDiahedralAngle(const Point3 &p, const Point3 &q,
-                                           const Point3 &r, const Point3 &s)
+template <typename T, typename D>
+auto TetMeshCriteria<T, D>::minDiahedralAngle(const Point3 &p, const Point3 &q,
+                                              const Point3 &r, const Point3 &s)
   -> NT
 {
   Vec3 v01 = (p - q);
