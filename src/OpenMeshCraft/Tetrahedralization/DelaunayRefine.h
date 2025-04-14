@@ -49,6 +49,13 @@ public: /* Traits **********************************************************/
   using TET_MARK  = typename TetMesh::TET_MARK;
   using FACE_MARK = typename TetMesh::FACE_MARK;
 
+  /* Domain =================================================================
+   * TODO documentation
+   */
+
+  /* Criteria ===============================================================
+   * TODO documentation
+   */
   using Criteria = TetMeshCriteria<Traits, Domain>;
 
   /* Points and weights in TetMesh ==========================================
@@ -81,13 +88,70 @@ public: /* Traits **********************************************************/
   /* Weighted Delaunay tetrahedralization */
   using DelTet = DelaunayTet<Traits>;
 
+  /* Subdomain in Domain ====================================================
+   */
+  using SubdomainIndex = index_t;
+
   /* Surface patch in Domain ================================================
    *
    * A surface patch in the domain is the boundary of two subdomains.
    * It is represented by two indices of the subdomains.
    *
    */
-  using SurfacePatchIndex = typename Domain::SurfacePatchIndex;
+  using SurfacePatchIndex = std::pair<SubdomainIndex, SubdomainIndex>;
+
+  /* Feature =================================================================
+   *
+   * Feature vertices and edges are preserved during the refinement process.
+   * Feature vertices are given as points in the domain, and feature edges must
+   * connect two feature vertices.
+   *
+   * Now we require that feature edges are always straight segments.
+   * Otherwise there will be a lot of works to do if feature edges are curves.
+   *
+   * For efficiency, we require feature indices are densely packed.
+   * So, we use std::vector to store feature vertices and edges.
+   */
+  // index to feature vertex
+  using FeatureVertexIndex = index_t;
+  // index to feature edge
+  using FeatureEdgeIndex   = index_t;
+  // feature edge, a pair of indices to feature vertices
+  using FeatureEdge        = std::pair<FeatureVertexIndex, FeatureVertexIndex>;
+
+  /* Feature Preservation ====================================================
+   *
+   * Features are safeguarded using protecting balls. These balls are
+   * strategically placed on feature vertices and edges to meet the following
+   * requirements:
+   *
+   * - [Dense Sampling 1] The protecting balls must adequately cover all feature
+   *   vertices and edges.
+   * - [Dense Sampling 2] Adjacent balls on the same edge must intersect
+   * significantly, but without one ball containing the center of the other.
+   * - [Disjoint Non-Overlapping 1] No three protecting balls should intersect.
+   * - [Disjoint Non-Overlapping 2] Protecting balls on different edges must not
+   * intersect.
+   *
+   * These protecting balls are later transformed into weighted vertices within
+   * the tetrahedral mesh.
+   */
+  // Feature protecting ball (center point + squared radius).
+  struct ProtectBall
+  {
+    Point3  center;            // ball center
+    NT      radius_sq;         // squared radius
+    index_t feature_index;     // index to feature vertex or edge,
+                               // depending on is_feature_vertex
+    bool    is_feature_vertex; // true if the ball is a feature vertex
+
+    ProtectBall(const Point3 &_center, NT _radius_sq,
+                FeatureVertexIndex _feature_vertex_index,
+                std::true_type     is_vertex);
+    ProtectBall(const Point3 &_center, NT _radius_sq,
+                FeatureEdgeIndex _feature_edge_index,
+                std::false_type  is_not_vertex);
+  };
 
   /* Face quality from Criteria ==============================================
    *
@@ -185,6 +249,32 @@ public: /* Constructor and Destructor **************************************/
 
   ~DelaunayRefine() = default;
 
+public: /* Feature preserving *********************************************/
+  void preserveFeatures();
+
+public: /* Helper functions for feature preserving ************************/
+  void initFeatureVertices();
+
+  void initFeatureEdges();
+
+  /**
+   * @brief Check if the feature edge is dense sampled.
+   */
+  bool edgeDenseSampled(FeatureEdgeIndex feature_edge_idx,
+                        index_t          first_ball_local_idx,
+                        index_t          last_ball_local_idx) const;
+
+  /**
+   * @brief Given the feature edge and the local index of the first and last
+   * ball, populate protecting balls between the first and last balls, to
+   * satisfy [Dense Sampling] requirement.
+   * @param feature_edge_idx
+   * @param first_ball_local_idx range includes first
+   * @param last_ball_local_idx range includes last
+   */
+  void populateEdge(FeatureEdgeIndex feature_edge_idx,
+                    index_t first_ball_local_idx, index_t last_ball_local_idx);
+
 public: /* Restricted Face Refinement *************************************/
   /**
    * @brief [Initialization] Scan the tetrahedral mesh and add faces to the
@@ -254,13 +344,29 @@ public: /* Common functions ***************************************************/
   index_t newVertex(const Point3 &point, NT weight);
 
 public: /* Data ***************************************************************/
+  /* Input domain and criteria */
   const Domain   &domain;
   const Criteria &criteria;
 
+  /* Tetrahedral mesh */
   Points  &points;
   Weights &weights;
   TetMesh &tet_mesh;
 
+  /* Feature protecting balls */
+
+  // All balls
+  std::vector<ProtectBall> protect_balls;
+
+  // balls on feature vertices (Vertex index -> ball index)
+  std::vector<index_t>              feature_vertex_balls;
+  // balls on feature edges (Edge index -> set of ball indices)
+  std::vector<std::vector<index_t>> feature_edge_balls;
+
+  // Deleted balls, waiting to be reused.
+  std::vector<index_t> balls_deleted;
+
+  /* Refinement queue */
   FaceQueue face_queue;
   CellQueue cell_queue;
 

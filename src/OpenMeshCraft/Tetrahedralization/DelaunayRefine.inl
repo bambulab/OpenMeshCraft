@@ -23,6 +23,327 @@ DelaunayRefine<T, D>::DelaunayRefine(const Domain   &_domain,
 }
 
 template <typename T, typename D>
+DelaunayRefine<T, D>::ProtectBall::ProtectBall(
+  const Point3 &_center, NT _radius_sq,
+  FeatureVertexIndex _feature_vertex_index, std::true_type /*is_vertex*/)
+{
+  center            = _center;
+  radius_sq         = _radius_sq;
+  feature_index     = _feature_vertex_index;
+  is_feature_vertex = true;
+}
+
+template <typename T, typename D>
+DelaunayRefine<T, D>::ProtectBall::ProtectBall(
+  const Point3 &_center, NT _radius_sq, FeatureEdgeIndex _feature_edge_index,
+  std::false_type /*is_not_vertex*/)
+{
+  center            = _center;
+  radius_sq         = _radius_sq;
+  feature_index     = _feature_edge_index;
+  is_feature_vertex = false;
+}
+
+template <typename T, typename D>
+void DelaunayRefine<T, D>::preserveFeatures()
+{
+  if (!domain.hasFeatures())
+    return; // no features to preserve
+
+  // initialize protecting balls on feature vertices
+  initFeatureVertices();
+
+  // initialize protecting balls on feature edges
+  initFeatureEdges();
+
+  // Finally, insert all protect balls as weighted vertex into tetrahedral mesh.
+  std::sort(balls_deleted.begin(), balls_deleted.end());
+  DelTet  dt(tet_mesh);
+  index_t tet = 0;
+  for (index_t ball_idx = 0; ball_idx < balls_deleted.size(); ++ball_idx)
+  {
+    if (std::binary_search(balls_deleted.begin(), balls_deleted.end(),
+                           ball_idx))
+      continue; // already deleted
+    const ProtectBall &ball       = protect_balls[ball_idx];
+    index_t            vertex_idx = newVertex(ball.center, ball.radius_sq);
+    dt.insertVertex(vertex_idx, tet);
+  }
+}
+
+template <typename T, typename D>
+void DelaunayRefine<T, D>::initFeatureVertices()
+{
+  std::vector<std::pair<FeatureVertexIndex, Point3>> feature_vertices;
+  domain.getFeatureVertices(std::back_inserter(feature_vertices));
+  feature_vertex_balls.resize(domain.numberFeatureVertices(), InvalidIndex);
+
+  if (feature_vertices.size() == 0)
+    return; // no feature vertices
+
+  if (feature_vertices.size() == 1)
+  {
+    // only one feature vertex, no need to check the distance between them
+    const auto &[idx, pnt] = feature_vertices[0];
+    index_t ball_idx       = protect_balls.size();
+    protect_balls.emplace_back(
+      /*center=*/pnt, /*weight=*/0.0, /*index=*/idx,
+      /*is_vertex=*/std::true_type());
+    feature_vertex_balls[idx] = ball_idx;
+    return;
+  }
+
+  for (const auto &[idx, pnt] : feature_vertices)
+  {
+    // The radius must be less than the distance to the nearest feature
+    // vertex/edge except the current feature vertex and its adjacent feature
+    // edge.
+    Point3   nearest_feature_pnt = domain.nearestFeature(pnt, idx, /*dim=*/0);
+    const NT nearest_sq_dist     = (pnt - nearest_feature_pnt).sqrnorm();
+    NT       radius_sq           = nearest_sq_dist / 9.0;
+
+    // Ensure the radius is less than the size suggested by sizing field.
+    if (domain.hasSizingField())
+    {
+      // need an exact feature size? pass feature_vertex_index to domain?
+      const NT size    = domain.pointSize(pnt);
+      const NT size_sq = size * size;
+      radius_sq        = std::min(radius_sq, size_sq);
+    }
+
+    index_t ball_idx = protect_balls.size();
+    protect_balls.emplace_back(/*center=*/pnt, /*weight=*/radius_sq,
+                               /*index=*/idx, /*is_vertex=*/std::true_type());
+    feature_vertex_balls[idx] = ball_idx;
+  }
+}
+
+template <typename T, typename D>
+void DelaunayRefine<T, D>::initFeatureEdges()
+{
+  std::vector<std::pair<FeatureEdgeIndex, FeatureEdge>> feature_edges;
+  domain.getFeatureEdges(std::back_inserter(feature_edges));
+  feature_edge_balls.resize(domain.numberFeatureEdges());
+
+  if (feature_edges.size() == 0)
+    return; // no feature edges
+
+  for (const auto &[idx, edge] : feature_edges)
+  {
+    const auto &[v0_idx, v1_idx] = edge;
+
+    feature_edge_balls[idx] = std::vector<index_t>(
+      {feature_vertex_balls[v0_idx], feature_vertex_balls[v1_idx]});
+
+    if (!edgeDenseSampled(idx, /*first=*/0, /*last=*/1))
+    {
+      populateEdge(idx, /*first=*/0, /*last=*/1);
+
+#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
+      for (index_t i = 0; i < feature_edge_balls[idx].size() - 1; ++i)
+      {
+        OMC_ASSERT(edgeDenseSampled(idx, /*first=*/i, /*last=*/i + 1),
+                   "The edge {} is not dense sampled.", idx);
+      }
+#endif
+    }
+  }
+}
+
+template <typename T, typename D>
+bool DelaunayRefine<T, D>::edgeDenseSampled(FeatureEdgeIndex feature_edge_idx,
+                                            index_t first_ball_local_idx,
+                                            index_t last_ball_local_idx) const
+{
+  OMC_EXPENSIVE_ASSERT(first_ball_local_idx + 1 == last_ball_local_idx,
+                       "Non-adjacent balls: {} - {}", first_ball_local_idx,
+                       last_ball_local_idx);
+
+  index_t first_ball_idx =
+    feature_edge_balls.at(feature_edge_idx)[first_ball_local_idx];
+  index_t last_ball_idx =
+    feature_edge_balls.at(feature_edge_idx)[last_ball_local_idx];
+  const ProtectBall &first_ball = protect_balls[first_ball_idx];
+  const ProtectBall &last_ball  = protect_balls[last_ball_idx];
+
+  NT distance     = (first_ball.center - last_ball.center).norm();
+  NT first_radius = std::sqrt(first_ball.radius_sq);
+  NT last_radius  = std::sqrt(last_ball.radius_sq);
+  // swap to ensure first_radius <= last_radius
+  if (first_radius > last_radius)
+    std::swap(first_radius, last_radius);
+
+  // ensure balls intersect significantly
+  return distance < first_radius + NT(0.4) * last_radius;
+}
+
+template <typename T, typename D>
+void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
+                                        index_t          first_ball_local_idx,
+                                        index_t          last_ball_local_idx)
+{
+  std::vector<index_t> &edge_balls = feature_edge_balls.at(feature_edge_idx);
+
+  OMC_EXPENSIVE_ASSERT(first_ball_local_idx < last_ball_local_idx,
+                       "The first ball {} must be before the last ball {}.",
+                       first_ball_local_idx, last_ball_local_idx);
+
+  // if there are balls between the first and last balls, these balls are not
+  // dense sampled, we need to delete them and populate new balls.
+  if (last_ball_local_idx - first_ball_local_idx > 1)
+  {
+    balls_deleted.insert(balls_deleted.end(),
+                         edge_balls.begin() + first_ball_local_idx + 1,
+                         edge_balls.begin() + last_ball_local_idx);
+    edge_balls.erase(edge_balls.begin() + first_ball_local_idx + 1,
+                     edge_balls.begin() + last_ball_local_idx);
+    last_ball_local_idx = first_ball_local_idx + 1;
+  }
+
+  // populate new balls between the first and last balls
+  index_t first_ball_idx = edge_balls[first_ball_local_idx];
+  index_t last_ball_idx  = edge_balls[last_ball_local_idx];
+
+  const ProtectBall &first_ball = protect_balls[first_ball_idx];
+  const ProtectBall &last_ball  = protect_balls[last_ball_idx];
+
+  const NT first_radius = std::sqrt(first_ball.radius_sq);
+  const NT last_radius  = std::sqrt(last_ball.radius_sq);
+
+  const bool adjust_orientation = first_radius > last_radius;
+
+  // Populate method from CGAL::Mesh_3::Protect_edges_sizing_field.
+  //
+  // Notations:
+  // sp = first_radius , sq = last_radius,  d = first_last_geodesic_distance
+  // n = nb_points,   r = delta_step_size
+  //
+  // Hypothesis:
+  // sp <= sq
+  //
+  // Let's define
+  // P0 = p, Pn+1 = q, d(Pi,Pi+1) = ai
+  //
+  // The following constraints should be verified:
+  // a0 = sp + r, an = sq,
+  // ai+1 = ai + r
+  // d = Sum(ai)
+  //
+  // The following could be obtained:
+  // r = (sq - sp) / (n+1)
+  // n = 2(d-sq) / (sp+sq)
+  //
+  // =======================
+  // Calculus details:
+  // ai+1 = ai + r
+  // ai+1 = a0 + r*(i+1)
+  //   an = a0 + r*n
+  //   sq = sp + r + r*n
+  //    r = (sq-sp) / (n+1)
+  //
+  //   d = Sum(ai)
+  //   d = Sum(sp + (i+1)*r)
+  //   d = (n+1)*sp + (n+1)(n+2)/2 * r
+  //   d = (n+1)*sp + (n+1)(n+2)/2 * (sq-sp) / (n+1)
+  // 2*d = 2(n+1)*sp + (n+2)*sq - (n+2)*sp
+  // 2*d = n*sp + (n+2)*sq
+  //   n = 2(d-sq) / (sp+sq)
+  // =======================
+
+  auto populate_balls =
+    [](const Point3 &p, NT sp, const Point3 &q, const NT sq, const NT d)
+  {
+    int  n = static_cast<int>(NT(2.0) * (d - sq) / (sp + sq));
+    NT   r = (sq - sp) / NT(n + 1);
+    Vec3 v = (q - p).normalized();
+
+    // Since n is underestimated, we need to adjust size of steps
+    // CD = covered distance
+    NT CD             = sp * NT(n + 1) + NT((n + 1) * (n + 2)) / NT(2) * r;
+    NT dleft_frac     = d / CD;
+    // Initialize step sizes
+    NT step_size      = sp + r;
+    NT norm_step_size = dleft_frac * step_size;
+    // Initial distance
+    NT pt_dist        = norm_step_size;
+
+    // If there is some place to insert one point, insert it
+    if ((0 == n) && (d >= sp + sq))
+    {
+      n              = 1;
+      step_size      = sp + (d - sp - sq) / NT(2);
+      pt_dist        = step_size;
+      norm_step_size = step_size;
+    }
+
+    std::vector<std::pair<Point3, NT>> balls;
+    // Launch balls
+    for (int i = 1; i <= n; ++i)
+    {
+      // New point position
+      Point3 new_point = p + v * pt_dist;
+
+      // New point weight
+      // (use as size the min between norm_step_size and linear interpolation)
+      NT current_size = std::min(norm_step_size, sp + pt_dist / d * (sq - sp));
+      NT point_weight = current_size * current_size;
+
+      balls.push_back({new_point, point_weight});
+
+      // Step size
+      step_size += r;
+      norm_step_size = dleft_frac * step_size;
+
+      // Increment distance
+      pt_dist += norm_step_size;
+    }
+
+    return balls;
+  };
+
+  NT edge_length = (last_ball.center - first_ball.center).norm();
+  std::vector<std::pair<Point3, NT>> balls =
+    adjust_orientation
+      ? populate_balls(last_ball.center, last_radius, first_ball.center,
+                       first_radius, edge_length)
+      : populate_balls(first_ball.center, first_radius, last_ball.center,
+                       last_radius, edge_length);
+
+  auto new_ball = [this](const Point3 &pnt, NT radius,
+                         index_t feature_edge_idx) -> index_t
+  {
+    if (balls_deleted.empty())
+    {
+      protect_balls.emplace_back(pnt, radius, feature_edge_idx,
+                                 /*is_vertex=*/std::false_type());
+      return protect_balls.size() - 1;
+    }
+    else
+    {
+      index_t ball_idx = balls_deleted.back();
+      balls_deleted.pop_back();
+      protect_balls[ball_idx] = ProtectBall(pnt, radius, feature_edge_idx,
+                                            /*is_vertex=*/std::false_type());
+      return ball_idx;
+    }
+  };
+
+  // Construct new balls
+  InlinedVector64<index_t> new_balls;
+  for (const auto &[pnt, radius] : balls)
+    new_balls.push_back(new_ball(pnt, radius, feature_edge_idx));
+
+  // Insert balls into the feature edge
+  if (adjust_orientation)
+    edge_balls.insert(edge_balls.begin() + last_ball_local_idx,
+                      new_balls.rbegin(), new_balls.rend());
+  else
+    edge_balls.insert(edge_balls.begin() + last_ball_local_idx,
+                      new_balls.begin(), new_balls.end());
+  last_ball_local_idx = first_ball_local_idx + new_balls.size() + 1;
+}
+
+template <typename T, typename D>
 void DelaunayRefine<T, D>::scanFaces()
 {
   size_t num_faces = tet_mesh.sizeFaces();

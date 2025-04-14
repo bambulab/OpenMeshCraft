@@ -84,6 +84,7 @@ public:
     VISITED    = 1, ///< Marked as visited
     TO_CHECK   = 2, ///< Marked for checking (in CDT)
     ENCROACHED = 3, ///< Marked as encroached (in CDT)
+    FEATURE    = 4, ///< Marked as feature vertex
   };
 
   /// Marks (bit position) for each tetrahedron
