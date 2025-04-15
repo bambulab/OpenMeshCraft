@@ -50,20 +50,18 @@ void DelaunayRefine<T, D>::preserveFeatures()
   if (!domain.hasFeatures())
     return; // no features to preserve
 
-  // initialize protecting balls on feature vertices
-  initFeatureVertices();
+  // construct protecting balls on feature vertices
+  constructBallsOnVertices();
 
-  // initialize protecting balls on feature edges
-  initFeatureEdges();
-
-  // TODO shrink balls
+  // construct protecting balls on feature edges
+  constructBallsOnEdges();
 
   // Finally, insert all protect balls as weighted vertex into tetrahedral mesh.
   insertAllBalls();
 }
 
 template <typename T, typename D>
-void DelaunayRefine<T, D>::initFeatureVertices()
+void DelaunayRefine<T, D>::constructBallsOnVertices()
 {
   std::vector<std::pair<FeatureVertexIndex, Point3>> feature_vertices;
   domain.getFeatureVertices(std::back_inserter(feature_vertices));
@@ -110,7 +108,7 @@ void DelaunayRefine<T, D>::initFeatureVertices()
 }
 
 template <typename T, typename D>
-void DelaunayRefine<T, D>::initFeatureEdges()
+void DelaunayRefine<T, D>::constructBallsOnEdges()
 {
   std::vector<std::pair<FeatureEdgeIndex, FeatureEdge>> feature_edges;
   domain.getFeatureEdges(std::back_inserter(feature_edges));
@@ -119,26 +117,73 @@ void DelaunayRefine<T, D>::initFeatureEdges()
   if (feature_edges.size() == 0)
     return; // no feature edges
 
-  for (const auto &[idx, edge] : feature_edges)
+  for (const auto &[edge_idx, edge] : feature_edges)
   {
     const auto &[v0_idx, v1_idx] = edge;
 
-    feature_edge_balls[idx] = std::vector<index_t>(
+    feature_edge_balls[edge_idx] = std::vector<index_t>(
       {feature_vertex_balls[v0_idx], feature_vertex_balls[v1_idx]});
 
-    if (!edgeDenseSampled(idx, /*first=*/0, /*last=*/1))
-    {
-      populateEdge(idx, /*first=*/0, /*last=*/1);
+    if (edgeDenseSampled(edge_idx, /*first=*/0, /*last=*/1))
+      continue; // edge is already dense sampled, no ball is inserted.
 
-#ifdef OMC_ENABLE_EXPENSIVE_ASSERT
-      for (index_t i = 0; i < feature_edge_balls[idx].size() - 1; ++i)
+    // edge is not dense sampled, populate more balls
+    populateEdge(edge_idx, /*first=*/0, /*last=*/1);
+    // verify
+    OMC_EXPENSIVE_ASSERT(verifyDenseSampled(edge_idx),
+                         "Feature edge {} is not dense sampled.", edge_idx);
+
+    // Shrink balls to be far from nearest feature vertex/edge to satisfy
+    // [Disjoint Non-Overlapping] requirements.
+    // We ensure each ball satisfies condition:
+    //    `Radius < distance to nearest feature vertex/edge / 3.0`
+    while (shrinkBalls(edge_idx))
+    {
+      // shrinking may violate [Dense Sampling] requirements.
+      // find violating ranges
+      InlinedVector64<std::pair<index_t, index_t>> sparse_ranges =
+        findSparseSampledRange(edge_idx);
+      // repopulate balls on violating ranges
+      for (const auto &[first, last] : sparse_ranges)
       {
-        OMC_ASSERT(edgeDenseSampled(idx, /*first=*/i, /*last=*/i + 1),
-                   "The edge {} is not dense sampled.", idx);
+        populateEdge(edge_idx, first, last);
       }
-#endif
+      // verify
+      OMC_EXPENSIVE_ASSERT(verifyDenseSampled(edge_idx),
+                           "Feature edge {} is not dense sampled.", edge_idx);
     }
   }
+}
+
+template <typename T, typename D>
+bool DelaunayRefine<T, D>::shrinkBalls(FeatureEdgeIndex feature_edge_idx)
+{
+  // Shrink balls to be far from nearest feature vertex/edge.
+  // Radius < distance to nearest feature vertex/edge / 3.0
+  const std::vector<index_t> &edge_balls = feature_edge_balls[feature_edge_idx];
+  bool                        shrunk     = false;
+
+  for (size_t i = 1; i < edge_balls.size() - 1; i++)
+  { // skip two endpoints
+    index_t ball_idx = edge_balls[i];
+
+    ProtectBall &ball = protect_balls[ball_idx];
+
+    // Find the nearest feature vertex/edge to the ball center.
+    Point3 nearest_feature_pnt =
+      domain.nearestFeature(ball.center, ball.feature_index, /*dim=*/1);
+    const NT nearest_sq_dist  = (ball.center - nearest_feature_pnt).sqrnorm();
+    const NT target_radius_sq = nearest_sq_dist / 9.0;
+
+    if (ball.radius_sq <= target_radius_sq)
+      continue; // already satisfied
+
+    // Shrink the ball
+    ball.radius_sq = target_radius_sq;
+    shrunk         = true;
+  }
+
+  return shrunk;
 }
 
 template <typename T, typename D>
@@ -165,7 +210,19 @@ bool DelaunayRefine<T, D>::edgeDenseSampled(FeatureEdgeIndex feature_edge_idx,
     std::swap(first_radius, last_radius);
 
   // ensure balls intersect significantly
-  return distance < NT(0.4) * first_radius + last_radius;
+  return distance < dense_sampled_factor * first_radius + last_radius;
+}
+
+template <typename T, typename D>
+bool DelaunayRefine<T, D>::verifyDenseSampled(
+  FeatureEdgeIndex feature_edge_idx) const
+{
+  for (index_t i = 0; i < feature_edge_balls[feature_edge_idx].size() - 1; ++i)
+  {
+    if (!edgeDenseSampled(feature_edge_idx, /*first=*/i, /*last=*/i + 1))
+      return false;
+  }
+  return true;
 }
 
 template <typename T, typename D>
@@ -175,6 +232,9 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
 {
   std::vector<index_t> &edge_balls = feature_edge_balls.at(feature_edge_idx);
 
+  OMC_EXPENSIVE_ASSERT(!edgeDenseSampled(feature_edge_idx, first_ball_local_idx,
+                                         last_ball_local_idx),
+                       "Edge is already dense sampled.");
   OMC_EXPENSIVE_ASSERT(first_ball_local_idx < last_ball_local_idx,
                        "The first ball {} must be before the last ball {}.",
                        first_ball_local_idx, last_ball_local_idx);
@@ -275,9 +335,9 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
       Point3 new_point = p + v * pt_dist;
 
       // New point weight
-      // (min between norm_step_size and linear interpolation from CGLA, why?)
-      // std::min(norm_step_size, sp + pt_dist / d * (sq - sp));
-      NT current_size = norm_step_size;
+      // (min between norm_step_size and linear interpolation,
+      //  linear interpolation size is used in repopulation process)
+      NT current_size = std::min(norm_step_size, sp + pt_dist / d * (sq - sp));
       NT point_weight = current_size * current_size;
 
       balls.push_back({new_point, point_weight});
@@ -333,6 +393,30 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
     edge_balls.insert(edge_balls.begin() + last_ball_local_idx,
                       new_balls.begin(), new_balls.end());
   last_ball_local_idx = first_ball_local_idx + new_balls.size() + 1;
+}
+
+template <typename T, typename D>
+InlinedVector64<std::pair<index_t, index_t>>
+DelaunayRefine<T, D>::findSparseSampledRange(
+  FeatureEdgeIndex feature_edge_idx) const
+{
+  // Identify ranges of balls on the same edge that violate the [Dense Sampling]
+  // condition. Then split these ranges into subranges where the ball radius
+  // decreases monotonically after repopulation.
+  //
+  // During repopulation, each new ball's radius is smaller than the linearly
+  // interpolated radius at its center. Therefore, if a ball's current radius is
+  // larger than the interpolated radius, the new radius will be smaller as
+  // well. In this case, it is safe to repopulate balls between these points.
+
+  const std::vector<index_t> &edge_balls =
+    feature_edge_balls.at(feature_edge_idx);
+  const index_t begin = 0, end = edge_balls.size() - 1;
+
+  InlinedVector64<std::pair<index_t, index_t>> sparse_ranges;
+  // TODO
+
+  return sparse_ranges;
 }
 
 template <typename T, typename D>

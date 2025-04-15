@@ -264,9 +264,23 @@ public: /* Feature preserving *********************************************/
   void preserveFeatures();
 
 public: /* Helper functions for feature preserving ************************/
-  void initFeatureVertices();
+  /**
+   * @brief construct protecting balls on feature vertices
+   */
+  void constructBallsOnVertices();
 
-  void initFeatureEdges();
+  /**
+   * @brief Construct protecting balls on feature edges. It will construct more
+   * balls to guarantee [Dense Sampling] on feature edges.
+   */
+  void constructBallsOnEdges();
+
+  /**
+   * @brief Shrink the protecting balls on feature vertices and edges.
+   * This is to ensure [Disjoint Non-Overlapping] requirements.
+   * @return return true if any ball is shrunk.
+   */
+  bool shrinkBalls(FeatureEdgeIndex feature_edge_idx);
 
   /**
    * @brief Check if the feature edge is dense sampled.
@@ -275,10 +289,13 @@ public: /* Helper functions for feature preserving ************************/
                         index_t          first_ball_local_idx,
                         index_t          last_ball_local_idx) const;
 
+  bool verifyDenseSampled(FeatureEdgeIndex feature_edge_idx) const;
+
   /**
    * @brief Given the feature edge and the local index of the first and last
    * ball, populate protecting balls between the first and last balls, to
-   * satisfy [Dense Sampling] requirement.
+   * satisfy [Dense Sampling] requirements. It also ensures [Disjoint
+   * Non-Overlapping 1] requirement on the same edge.
    * @param feature_edge_idx
    * @param first_ball_local_idx range includes first
    * @param last_ball_local_idx range includes last
@@ -287,19 +304,28 @@ public: /* Helper functions for feature preserving ************************/
                     index_t first_ball_local_idx, index_t last_ball_local_idx);
 
   /**
+   * @brief After a ball is shrunk, find the range of balls on the same edge
+   * that do not satisfy [Dense Sampling] requirements.
+   * @param feature_edge_idx
+   * @return sparse sampling ranges [first, last] need to be re-populated.
+   */
+  InlinedVector64<std::pair<index_t, index_t>>
+  findSparseSampledRange(FeatureEdgeIndex feature_edge_idx) const;
+
+  /**
    * @brief insert all balls into the tetrahedral mesh as weighted vertices.
-   * 
+   *
    */
   void insertAllBalls();
 
   /**
    * @brief Try to insert a ball as a weighted vertex into weighted DT.
-   * 
-   * @param ball 
+   *
+   * @param ball
    * @param tet tet_idoff to start walking from.
-   * @return BallConflictStatus 
+   * @return BallConflictStatus
    */
-  BallConflictStatus insertBall(const ProtectBall& ball, index_t& tet);
+  BallConflictStatus insertBall(const ProtectBall &ball, index_t &tet);
 
 public: /* Restricted Face Refinement *************************************/
   /**
@@ -398,6 +424,8 @@ public: /* Data ***************************************************************/
 
 private:
   static Sign canonicalCompare(const Point3 &p1, const Point3 &p2);
+
+  static constexpr NT dense_sampled_factor = 0.6;
 };
 
 } // namespace OMC
