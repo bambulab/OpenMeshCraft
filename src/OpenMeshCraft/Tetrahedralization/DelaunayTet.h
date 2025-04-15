@@ -89,7 +89,7 @@ public: /* Checks **********************************************************/
 
   bool verifyDelaunay(index_t vid) const;
 
-  bool verifyWalk(const Point3 &pnt, index_t tet) const;
+  bool verifyWalk(const Point3 &pnt, index_t tet, int *dimension = nullptr) const;
 
 public: /* Data ************************************************************/
   TetMesh &mesh;

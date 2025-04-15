@@ -56,19 +56,10 @@ void DelaunayRefine<T, D>::preserveFeatures()
   // initialize protecting balls on feature edges
   initFeatureEdges();
 
+  // TODO shrink balls
+
   // Finally, insert all protect balls as weighted vertex into tetrahedral mesh.
-  std::sort(balls_deleted.begin(), balls_deleted.end());
-  DelTet  dt(tet_mesh);
-  index_t tet = 0;
-  for (index_t ball_idx = 0; ball_idx < balls_deleted.size(); ++ball_idx)
-  {
-    if (std::binary_search(balls_deleted.begin(), balls_deleted.end(),
-                           ball_idx))
-      continue; // already deleted
-    const ProtectBall &ball       = protect_balls[ball_idx];
-    index_t            vertex_idx = newVertex(ball.center, ball.radius_sq);
-    dt.insertVertex(vertex_idx, tet);
-  }
+  insertAllBalls();
 }
 
 template <typename T, typename D>
@@ -174,7 +165,7 @@ bool DelaunayRefine<T, D>::edgeDenseSampled(FeatureEdgeIndex feature_edge_idx,
     std::swap(first_radius, last_radius);
 
   // ensure balls intersect significantly
-  return distance < first_radius + NT(0.4) * last_radius;
+  return distance < NT(0.4) * first_radius + last_radius;
 }
 
 template <typename T, typename D>
@@ -253,7 +244,7 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
   auto populate_balls =
     [](const Point3 &p, NT sp, const Point3 &q, const NT sq, const NT d)
   {
-    int  n = static_cast<int>(NT(2.0) * (d - sq) / (sp + sq));
+    int  n = static_cast<int>(std::ceil(NT(2.0) * (d - sq) / (sp + sq)));
     NT   r = (sq - sp) / NT(n + 1);
     Vec3 v = (q - p).normalized();
 
@@ -284,8 +275,9 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
       Point3 new_point = p + v * pt_dist;
 
       // New point weight
-      // (use as size the min between norm_step_size and linear interpolation)
-      NT current_size = std::min(norm_step_size, sp + pt_dist / d * (sq - sp));
+      // (min between norm_step_size and linear interpolation from CGLA, why?)
+      // std::min(norm_step_size, sp + pt_dist / d * (sq - sp));
+      NT current_size = norm_step_size;
       NT point_weight = current_size * current_size;
 
       balls.push_back({new_point, point_weight});
@@ -309,12 +301,12 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
       : populate_balls(first_ball.center, first_radius, last_ball.center,
                        last_radius, edge_length);
 
-  auto new_ball = [this](const Point3 &pnt, NT radius,
+  auto new_ball = [this](const Point3 &pnt, NT radius_sq,
                          index_t feature_edge_idx) -> index_t
   {
     if (balls_deleted.empty())
     {
-      protect_balls.emplace_back(pnt, radius, feature_edge_idx,
+      protect_balls.emplace_back(pnt, radius_sq, feature_edge_idx,
                                  /*is_vertex=*/std::false_type());
       return protect_balls.size() - 1;
     }
@@ -322,7 +314,7 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
     {
       index_t ball_idx = balls_deleted.back();
       balls_deleted.pop_back();
-      protect_balls[ball_idx] = ProtectBall(pnt, radius, feature_edge_idx,
+      protect_balls[ball_idx] = ProtectBall(pnt, radius_sq, feature_edge_idx,
                                             /*is_vertex=*/std::false_type());
       return ball_idx;
     }
@@ -330,8 +322,8 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
 
   // Construct new balls
   InlinedVector64<index_t> new_balls;
-  for (const auto &[pnt, radius] : balls)
-    new_balls.push_back(new_ball(pnt, radius, feature_edge_idx));
+  for (const auto &[pnt, radius_sq] : balls)
+    new_balls.push_back(new_ball(pnt, radius_sq, feature_edge_idx));
 
   // Insert balls into the feature edge
   if (adjust_orientation)
@@ -341,6 +333,97 @@ void DelaunayRefine<T, D>::populateEdge(FeatureEdgeIndex feature_edge_idx,
     edge_balls.insert(edge_balls.begin() + last_ball_local_idx,
                       new_balls.begin(), new_balls.end());
   last_ball_local_idx = first_ball_local_idx + new_balls.size() + 1;
+}
+
+template <typename T, typename D>
+void DelaunayRefine<T, D>::insertAllBalls()
+{
+  // clang-format off
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
+  size_t num_inserted_point    = 0;
+  size_t num_coincident_vertex = 0;
+  size_t num_hidden_point      = 0;
+  #define COLLECT_BALL_INSERT_RESULT(cs)                                               \
+    if (cs == BallConflictStatus::OK) { num_inserted_point++; }                        \
+    else if (cs == BallConflictStatus::HIDDEN_POINT) { num_hidden_point++; }           \
+    else if (cs == BallConflictStatus::COINCIDENT_VERTEX) { num_coincident_vertex++; }
+#else
+  #define COLLECT_BALL_INSERT_RESULT(cs)
+#endif
+  // clang-format on
+
+  // Find a tetrahedron to start walking from
+  index_t tet = 0;
+  while (tet < tet_mesh.sizeTets() * 4 && tet_mesh.isTetDeleted(tet))
+    tet += 4;
+  OMC_ASSERT(tet < tet_mesh.sizeTets() * 4, "All tets are deleted.");
+
+  // insert balls of all feature vertices
+  for (index_t ball_idx : feature_vertex_balls)
+  {
+    const ProtectBall &ball = protect_balls[ball_idx];
+    BallConflictStatus cs   = insertBall(ball, tet);
+    COLLECT_BALL_INSERT_RESULT(cs);
+  }
+
+  // insert balls on feature edges
+  for (const std::vector<index_t> &edge_balls : feature_edge_balls)
+  {
+    for (size_t i = 1; i < edge_balls.size() - 1; i++)
+    { // skip endpoints
+      index_t ball_idx = edge_balls[i];
+
+      const ProtectBall &ball = protect_balls[ball_idx];
+      BallConflictStatus cs   = insertBall(ball, tet);
+      COLLECT_BALL_INSERT_RESULT(cs);
+    }
+  }
+
+#ifdef OMC_DELAUNAY_REFINE_PROFILE
+  Logger::info("\nDelaunayRefine FeaturePreserving profile:");
+  Logger::info(std::format("  Inserted points: {}", num_inserted_point));
+  Logger::info(std::format("  Hidden points: {}", num_hidden_point));
+  Logger::info(std::format("  Coincident vertices: {}", num_coincident_vertex));
+#endif
+}
+
+template <typename T, typename D>
+auto DelaunayRefine<T, D>::insertBall(const ProtectBall &ball, index_t &tet)
+  -> BallConflictStatus
+{
+  DelTet dt(tet_mesh);
+
+  // Locate the point in Delaunay tetrahedralization =======================
+
+  int dimension = -1;
+  dt.walk(/*point=*/ball.center, tet, &dimension);
+
+  if (dimension == 0)
+  {
+    // The point is coincident with a vertex of the tetrahedral mesh.
+    return BallConflictStatus::COINCIDENT_VERTEX;
+  }
+
+  // Find the conflict zone of the point ==================================
+
+  InlinedVector64<index_t> conflict_tets;
+  InlinedVector64<index_t> conflict_corners;
+  dt.conflict(/*point=*/ball.center, /*weight=*/ball.radius_sq, tet,
+              conflict_tets, conflict_corners);
+
+  if (conflict_tets.empty())
+  {
+    // The weighted point is hidden by an existing weighted vertex.
+    return BallConflictStatus::HIDDEN_POINT;
+  }
+
+  // Insert the point into the mesh ========================================
+  dt.removeConflicts(conflict_tets);
+  index_t new_vtx_vid = newVertex(ball.center, /*weight=*/ball.radius_sq);
+  dt.filling(new_vtx_vid, conflict_corners);
+
+  tet = TetMesh::toIdOff(tet_mesh.incTet(new_vtx_vid));
+  return BallConflictStatus::OK;
 }
 
 template <typename T, typename D>
@@ -490,7 +573,7 @@ void DelaunayRefine<T, D>::refineFaces()
     case FaceConflictStatus::OK:
       num_inserted_point += 1;
       if (num_inserted_point % 100 == 0)
-        std::cout << std::format("\rIntersected points {}         ",
+        std::cout << std::format("\rInserted points {}         ",
                                  num_inserted_point);
       break;
     }
@@ -747,7 +830,7 @@ void DelaunayRefine<T, D>::refineCells()
     case CellConflictStatus::OK:
       num_inserted_point += 1;
       if (num_inserted_point % 100 == 0)
-        std::cout << std::format("\rIntersected points {}         ",
+        std::cout << std::format("\rInserted points {}         ",
                                  num_inserted_point);
       break;
     }

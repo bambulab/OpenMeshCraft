@@ -1142,10 +1142,10 @@ bool TetrahedralMesh<Traits>::vertexInTetSphere(index_t tet_idoff,
   {
     // For a finite tetrahedron, check the inSphere predicate.
 
-    OMC_EXPENSIVE_ASSERT(Orient3D()(point(node[0]), point(node[1]),
-                                    point(node[2]),
-                                    point(node[3])) == Sign::POSITIVE,
-                         "The tetrahedron is either degenerate or flipped.");
+    // clang-format off
+    OMC_EXPENSIVE_ASSERT(Orient3D()(point(node[0]), point(node[1]), point(node[2]), point(node[3]))
+      == Sign::POSITIVE, "The tetrahedron is either degenerate or flipped.");
+    // clang-format on
 
     // Apply an inSphere predicate with symbolic perturbation to avoid
     // non-general configurations (five points co-spherical).

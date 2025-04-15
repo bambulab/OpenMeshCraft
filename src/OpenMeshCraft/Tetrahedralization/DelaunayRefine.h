@@ -153,6 +153,17 @@ public: /* Traits **********************************************************/
                 std::false_type  is_not_vertex);
   };
 
+  /* Status in inserting a protect ball ========================================
+   */
+  enum class BallConflictStatus
+  {
+    OK,
+    // the refinement point is coincident with an existing vertex
+    COINCIDENT_VERTEX,
+    // the refinement point is hidden by an existing weighted vertex
+    HIDDEN_POINT,
+  };
+
   /* Face quality from Criteria ==============================================
    *
    * The face quality is used to determine whether a face should be refined.
@@ -274,6 +285,21 @@ public: /* Helper functions for feature preserving ************************/
    */
   void populateEdge(FeatureEdgeIndex feature_edge_idx,
                     index_t first_ball_local_idx, index_t last_ball_local_idx);
+
+  /**
+   * @brief insert all balls into the tetrahedral mesh as weighted vertices.
+   * 
+   */
+  void insertAllBalls();
+
+  /**
+   * @brief Try to insert a ball as a weighted vertex into weighted DT.
+   * 
+   * @param ball 
+   * @param tet tet_idoff to start walking from.
+   * @return BallConflictStatus 
+   */
+  BallConflictStatus insertBall(const ProtectBall& ball, index_t& tet);
 
 public: /* Restricted Face Refinement *************************************/
   /**

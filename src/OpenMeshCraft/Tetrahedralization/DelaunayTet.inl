@@ -159,6 +159,7 @@ void DelaunayTet<Traits>::walk(const Point3 &pnt, index_t &tet,
   // Traverse the tetrahedral mesh from `tet` to the tetrahedron containing
   // the point `pnt`
 
+  tet = TetMesh::clipId(tet);
   // Check if we are in an infinite tet
   if (mesh.tetNode(tet + 3) == TetMesh::INFINITE_VERTEX)
     // then move to the finite neighbor.
@@ -176,22 +177,30 @@ void DelaunayTet<Traits>::walk(const Point3 &pnt, index_t &tet,
     index_t off = 0;
     Sign    orientations[4];
 
+    index_t      *nodes   = &mesh.tetNode(tet);
+    const Point3 *pnts[4] = {&mesh.point(nodes[0]), &mesh.point(nodes[1]),
+                             &mesh.point(nodes[2]), &mesh.point(nodes[3])};
+
+    OMC_EXPENSIVE_ASSERT(Orient3D()(*pnts[0], *pnts[1], *pnts[2], *pnts[3]) ==
+                           Sign::POSITIVE,
+                         "The tetrahedron is either degenerate or flipped.");
+
     for (; off < 4; off++)
     {
       if (off == entering_face) // skip the entering face
+      {
+        orientations[off] = Sign::POSITIVE;
         continue;
-      OMC_EXPENSIVE_ASSERT(
-        !CollinearPoints3()(
-          mesh.point(mesh.tetNode(tet + TetMesh::tetON1(off))),
-          mesh.point(mesh.tetNode(tet + TetMesh::tetON2(off))),
-          mesh.point(mesh.tetNode(tet + TetMesh::tetON3(off)))),
-        "Current face is degenerate.");
+      }
+      OMC_EXPENSIVE_ASSERT(!CollinearPoints3()(*pnts[TetMesh::tetON1(off)],
+                                               *pnts[TetMesh::tetON2(off)],
+                                               *pnts[TetMesh::tetON3(off)]),
+                           "Current face is degenerate.");
 
       // check the orientation of `pnt` with respect to the current face
       orientations[off] =
-        Orient3D()(mesh.point(mesh.tetNode(tet + TetMesh::tetON1(off))),
-                   mesh.point(mesh.tetNode(tet + TetMesh::tetON2(off))),
-                   mesh.point(mesh.tetNode(tet + TetMesh::tetON3(off))), pnt);
+        Orient3D()(*pnts[TetMesh::tetON1(off)], *pnts[TetMesh::tetON2(off)],
+                   *pnts[TetMesh::tetON3(off)], pnt);
       if (orientations[off] == Sign::NEGATIVE)
       {
         index_t neighbor_idoff = mesh.tetNeigh(tet + off);
@@ -216,10 +225,17 @@ void DelaunayTet<Traits>::walk(const Point3 &pnt, index_t &tet,
     }
     // if we have stepped into an infinite tetrahedron, it is the target too.
     if (!mesh.isFiniteTet(tet))
+    {
+      if (dimension)
+      {
+        (*dimension) = 3;
+      }
       break; // break the while loop
+    }
   }
 
-  OMC_EXPENSIVE_ASSERT(verifyWalk(pnt, tet), "Walking verification failed.");
+  OMC_EXPENSIVE_ASSERT(verifyWalk(pnt, tet, dimension),
+                       "Walking verification failed.");
 }
 
 /**
@@ -447,10 +463,10 @@ void DelaunayTet<Traits>::filling(
  * it has the largest index, which will be used in symbolic computation.
  */
 template <typename Traits>
-void DelaunayTet<Traits>::conflict(
-  const Point3 &pnt, const Weight wt, const index_t tet,
-  InlinedVector64<index_t> &conflict_tets,
-  InlinedVector64<index_t> &conflict_corners)
+void DelaunayTet<Traits>::conflict(const Point3 &pnt, const Weight wt,
+                                   const index_t             tet,
+                                   InlinedVector64<index_t> &conflict_tets,
+                                   InlinedVector64<index_t> &conflict_corners)
 {
   if constexpr (WEIGHTED)
   { // In the weighted version, the inserted vertex may be hidden by the
@@ -697,38 +713,41 @@ bool DelaunayTet<Traits>::verifyDelaunay(index_t vid) const
 }
 
 template <typename Traits>
-bool DelaunayTet<Traits>::verifyWalk(const Point3 &pnt, index_t tet) const
+bool DelaunayTet<Traits>::verifyWalk(const Point3 &pnt, index_t tet,
+                                     int *dimension) const
 {
-  // clang-format off
+  // clang-format of
   if (mesh.isFiniteTet(tet))
   {
-    bool coincide_vertex =
-      !(LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 0))) ||
-        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 1))) ||
-        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 2))) ||
-        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 3))));
-    OMC_ASSERT_RETURN(coincide_vertex, "The inserted vertex coincides with an existing vertex.");
+    index_t      *nodes     = &mesh.tetNode(tet);
+    const Point3 *pnts[4]   = {&mesh.point(nodes[0]), &mesh.point(nodes[1]),
+                               &mesh.point(nodes[2]), &mesh.point(nodes[3])};
+    bool no_coincide_vertex = !(LessThan3D().coincident(pnt, *pnts[0]) ||
+                                LessThan3D().coincident(pnt, *pnts[1]) ||
+                                LessThan3D().coincident(pnt, *pnts[2]) ||
+                                LessThan3D().coincident(pnt, *pnts[3]));
+    if (dimension)
+    { OMC_ASSERT_RETURN((no_coincide_vertex ^ (*dimension == 0)), "The coincidence is not detected."); }
+    else
+    { OMC_ASSERT_RETURN( no_coincide_vertex, "The inserted vertex coincides with an existing vertex."); }
 
     Sign ori[4];
     for (index_t i = 0; i < 4; i++)
     {
-      ori[i] = Orient3D()(mesh.point(mesh.tetNode(tet + TetMesh::tetON1(i))),
-                          mesh.point(mesh.tetNode(tet + TetMesh::tetON2(i))),
-                          mesh.point(mesh.tetNode(tet + TetMesh::tetON3(i))),
-                          pnt);
+      ori[i] = Orient3D()(*pnts[TetMesh::tetON1(i)], *pnts[TetMesh::tetON2(i)], *pnts[TetMesh::tetON3(i)], pnt);
       OMC_ASSERT_RETURN(ori[i] >= Sign::ZERO, "The vertex is not inside the target finite tetrahedron.");
     }
   }
   else
   {
-    bool coincide_vertex =
-      !(LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 0))) ||
-        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 1))) ||
-        LessThan3D().coincident(pnt, mesh.point(mesh.tetNode(tet + 2))));
-    OMC_ASSERT_RETURN(coincide_vertex, "The inserted vertex coincides with an existing vertex.");
-    bool outside_boundary =
-      Orient3D()(mesh.point(mesh.tetNode(tet)), mesh.point(mesh.tetNode(tet + 1)),
-                 mesh.point(mesh.tetNode(tet + 2)), pnt) == Sign::POSITIVE;
+    index_t      *nodes     = &mesh.tetNode(tet);
+    const Point3 *pnts[4]   = {&mesh.point(nodes[0]), &mesh.point(nodes[1]),
+                               &mesh.point(nodes[2]), nullptr};
+    bool no_coincide_vertex = !(LessThan3D().coincident(pnt, *pnts[0]) ||
+                                LessThan3D().coincident(pnt, *pnts[1]) ||
+                                LessThan3D().coincident(pnt, *pnts[2]));
+    OMC_ASSERT_RETURN(no_coincide_vertex, "The inserted vertex coincides with an existing vertex.");
+    bool outside_boundary = Orient3D()(*pnts[0], *pnts[1], *pnts[2], pnt) == Sign::POSITIVE;
     OMC_ASSERT_RETURN(outside_boundary, "The vertex is not inside the target infinite tetrahedron.");
   }
   // clang-format on
