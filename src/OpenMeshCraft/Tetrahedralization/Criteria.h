@@ -74,7 +74,9 @@ public: /* Quality definitions *********************************************/
     // clang-format on
   };
 
-public: /* Quality settings ************************************************/
+public: /* Quality settings ***************************************************/
+  /* Domain *******************************************************************/
+
   // Domain
   const Domain *domain = nullptr;
   // The domain bounding box.
@@ -87,6 +89,28 @@ public: /* Quality settings ************************************************/
    * @param bbox Bounding box of the domain.
    */
   Self &setDomain(const Domain &_domain);
+
+  /* Feature preserving *******************************************************/
+  NT protect_ball_minimal_weight = 0;
+
+  /**
+   * @brief Set the protect ball minimal radius.
+   *
+   * @param radius The threshold should be given in the percentage of the
+   * domain diagonal length. For example, `radius = 1.0` means the 1% of the
+   * domain diagonal length.
+   */
+  Self &setProtectBallMinimalRadius(NT radius);
+
+  // clang-format off
+  bool hasProtectBallMinimalWeight() const {return protect_ball_minimal_weight > 0;}
+  NT protectBallMinimalWeight() const { return protect_ball_minimal_weight; }
+  // clang-format on
+
+  /* Edge quality *************************************************************/
+  /* placeholder */
+
+  /* Face quality *************************************************************/
 
   // A restricted face has a corresponding intersection point between its
   // Voronoi dual (a segment or a ray) and input surface patch.
@@ -101,6 +125,8 @@ public: /* Quality settings ************************************************/
    * domain diagonal length.
    */
   Self &setRestrictedFaceDistanceThreshold(NT threshold);
+
+  /* Cell quality *************************************************************/
 
   // The minimal/maximal uniform size thresholds for cells.
   // All cells' circumradius should be greater/less than the thresholds.
@@ -125,6 +151,9 @@ public: /* Quality settings ************************************************/
    * @param threshold See `cell_radius_edge_ratio_threshold`.
    */
   Self &setCellRadiusEdgeRatioThreshold(NT threshold);
+
+  /* Size of elements *********************************************************/
+  /* placeholder */
 
 public: /* Quality queries *************************************************/
   /**

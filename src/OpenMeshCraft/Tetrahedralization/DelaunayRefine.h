@@ -425,7 +425,8 @@ public: /* Data ***************************************************************/
 private:
   static Sign canonicalCompare(const Point3 &p1, const Point3 &p2);
 
-  static constexpr NT dense_sampled_factor = 0.6;
+  static constexpr NT     dense_sampled_factor  = 0.4;
+  static constexpr size_t shrink_max_iterations = 10;
 };
 
 } // namespace OMC

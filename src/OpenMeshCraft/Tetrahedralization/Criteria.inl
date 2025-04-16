@@ -18,6 +18,14 @@ auto TetMeshCriteria<T, D>::setDomain(const Domain &_domain) -> Self &
 }
 
 template <typename T, typename D>
+auto TetMeshCriteria<T, D>::setProtectBallMinimalRadius(NT radius) -> Self &
+{
+  radius = (radius * 0.01) * domain_diag_length;
+  protect_ball_minimal_weight = radius * radius;
+  return *this;
+}
+
+template <typename T, typename D>
 auto TetMeshCriteria<T, D>::setRestrictedFaceDistanceThreshold(NT threshold)
   -> Self &
 {
