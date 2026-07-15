@@ -70,7 +70,7 @@ void FaceRecover<Traits>::faceRecovery()
       else
         recover_fail++;
       if (config.verbose)
-        std::cout << std::format(
+        std::cout << OMC::format(
           "\r[OpenMeshCraft CDT] {} faces are recovered. {} faces are missing.",
           recover_succeed, recover_fail);
 
