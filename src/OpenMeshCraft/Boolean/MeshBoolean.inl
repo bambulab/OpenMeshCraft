@@ -11,6 +11,8 @@
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
 // clang-format on
 
+#include "OpenMeshCraft/Utils/ExecutionCompat.h"
+
 #include <stack>
 
 namespace OMC {
@@ -1314,8 +1316,8 @@ private:
 
     size_t l_off = labels.size();
     labels.resize(labels.size() + triangles.size());
-    std::fill(std::execution::par_unseq, labels.begin() + l_off, labels.end(),
-              label);
+    std::fill(OMC_IF_EXEC(std::execution::par_unseq) labels.begin() + l_off,
+              labels.end(), label);
   }
 };
 

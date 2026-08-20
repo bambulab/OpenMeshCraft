@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Multiprecision.h"
+#if defined(OMC_AVX2)
 #include <immintrin.h>
+#endif
 
 namespace OMC {
 

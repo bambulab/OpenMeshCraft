@@ -18,14 +18,21 @@ if(NOT DEFINED OMC_MASTER_PROJECT)
   endif()
 endif()
 
+# x86 SIMD is unavailable on Apple Silicon / ARM; do not enable it by default.
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm|ARM|aarch64|ARM64|arm64)")
+  set(_OMC_SIMD_DEFAULT OFF)
+else()
+  set(_OMC_SIMD_DEFAULT ON)
+endif()
+
 # cmake-format: off
 option(OMC_CMAKE_ENABLE_EXCEPTION "Enable exception in OpenMeshCraft" ON)
 option(OMC_CMAKE_ENABLE_ASSERT "Enable assertion in OpenMeshCraft" ON)
 option(OMC_CMAKE_ENABLE_EXPENSIVE_ASSERT "Enable expensive assertion in OpenMeshCraft" OFF)
-option(OMC_CMAKE_ENABLE_SSE2 "Enable SSE2 instruction set in OpenMeshCraft" ON)
-option(OMC_CMAKE_ENABLE_AVX "Enable AVX instruction set in OpenMeshCraft" ON)
-option(OMC_CMAKE_ENABLE_AVX2 "Enable AVX2 instruction set in OpenMeshCraft" ON)
-option(OMC_CMAKE_ENABLE_FMA "Enable FMA instruction set in OpenMeshCraft" ON)
+option(OMC_CMAKE_ENABLE_SSE2 "Enable SSE2 instruction set in OpenMeshCraft" ${_OMC_SIMD_DEFAULT})
+option(OMC_CMAKE_ENABLE_AVX "Enable AVX instruction set in OpenMeshCraft" ${_OMC_SIMD_DEFAULT})
+option(OMC_CMAKE_ENABLE_AVX2 "Enable AVX2 instruction set in OpenMeshCraft" ${_OMC_SIMD_DEFAULT})
+option(OMC_CMAKE_ENABLE_FMA "Enable FMA instruction set in OpenMeshCraft" ${_OMC_SIMD_DEFAULT})
 option(OMC_CMAKE_ENABLE_DEBUG_INFO "Generate debug information for OpenMeshCraft" ON)
 
 option(OMC_CMAKE_LOG_TRACE "Log runtime trace messages." OFF)
@@ -39,6 +46,15 @@ option(OMC_CMAKE_INTER_PROFILE "Enable profiling intersection in OpenMeshCraft."
 option(OMC_CMAKE_ARR_PROFILE "Enable profiling arrangements in OpenMeshCraft." OFF)
 
 option(OMC_BUILD_TEST "Build test project of OpenMeshCraft" ${OMC_MASTER_PROJECT})
+# PredicatesGenerator needs a newer std::format toolchain; boolean/arrangement
+# runtime does not. Keep it off unless explicitly requested.
+option(OMC_BUILD_PREDICATES_GENERATOR "Build PredicatesGenerator" OFF)
+# MSVC 2019 16.10+ ships std::format; GCC 9 / older Apple libc++ do not.
+if(MSVC)
+  option(OMC_USE_STD_FORMAT "Use C++20 std::format instead of {fmt}" ON)
+else()
+  option(OMC_USE_STD_FORMAT "Use C++20 std::format instead of {fmt}" OFF)
+endif()
 # cmake-format: on
 
 # ##############################################################################

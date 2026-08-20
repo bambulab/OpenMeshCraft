@@ -46,9 +46,10 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
            # block comment error
            -Wno-comment
            # pass pragmas only on Windows
-           -Wno-unknown-pragmas
-           # treat all warnings as errors
-           -Werror)
+           -Wno-unknown-pragmas)
+  if(OMC_MASTER_PROJECT)
+    target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -Werror)
+  endif()
 
   # handle vectorization
   if (OMC_CMAKE_ENABLE_AVX2)
@@ -63,8 +64,38 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -mfma)
   endif()
 
-  # reserve enough stack size
-  target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -Wl,-z,stacksize=8421376)
+  # Linker flag, Linux only (Apple ld does not accept -z stacksize).
+  if(UNIX AND NOT APPLE)
+    target_link_options(${OMC_CONFIG_TARGET} PUBLIC -Wl,-z,stacksize=8421376)
+  endif()
+
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # AppleClang and LLVM Clang: same FP / warning / SIMD flags as GCC, without
+  # GCC-only -fsignaling-nans and without the GNU ld stacksize flag.
+  target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -fno-unsafe-math-optimizations)
+  target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -frounding-math)
+
+  target_compile_options(
+    ${OMC_CONFIG_TARGET}
+    PUBLIC -Wall
+           -Wextra
+           -Wno-comment
+           -Wno-unknown-pragmas)
+  if(OMC_MASTER_PROJECT)
+    target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -Werror)
+  endif()
+
+  if (OMC_CMAKE_ENABLE_AVX2)
+    target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -mavx2)
+  elseif(OMC_CMAKE_ENABLE_AVX)
+    target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -mavx)
+  elseif(OMC_CMAKE_ENABLE_SSE2)
+    target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -msse2)
+  endif()
+
+  if (OMC_CMAKE_ENABLE_FMA)
+    target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -mfma)
+  endif()
 
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # /fp:strict
@@ -86,8 +117,11 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # turn on multiprocessor compile.
   target_compile_options(${OMC_CONFIG_TARGET} PUBLIC /MP)
 
-  # raise up warning level and treat all warnings as errors.
-  target_compile_options(${OMC_CONFIG_TARGET} PUBLIC /W4 /WX)
+  # raise up warning level; treat warnings as errors only for the standalone build.
+  target_compile_options(${OMC_CONFIG_TARGET} PUBLIC /W4)
+  if(OMC_MASTER_PROJECT)
+    target_compile_options(${OMC_CONFIG_TARGET} PUBLIC /WX)
+  endif()
 
   # handle vectorization
   if (OMC_CMAKE_ENABLE_AVX2)

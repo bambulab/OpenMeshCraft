@@ -6,8 +6,10 @@
 #include "OpenMeshCraft/Utils/EnableWarnings.h"
 // clang-format on
 
+#include "OpenMeshCraft/Utils/FormatCompat.h"
 #include "OpenMeshCraft/Utils/IndexDef.h"
 #include "OpenMeshCraft/Utils/Label.h"
+#include "OpenMeshCraft/Utils/Logger.h"
 
 #include <algorithm>
 #include <deque>
