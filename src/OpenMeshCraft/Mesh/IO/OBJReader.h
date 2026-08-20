@@ -3,6 +3,7 @@
 #include "IOOptions.h"
 #include "OpenMeshCraft/Mesh/TriSoup.h"
 
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>

@@ -1,7 +1,7 @@
 #include "IntersectionUtils.h"
 
 #ifdef OMC_INTER_PROFILE
-  #include <format>
+  #include "OpenMeshCraft/Utils/FormatCompat.h"
   #include <iostream>
   #include <string>
   #include <vector>

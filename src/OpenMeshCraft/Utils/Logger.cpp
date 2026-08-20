@@ -1,6 +1,5 @@
 #include "Logger.h"
 
-#include <format>
 #include <iostream>
 
 namespace OMC {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Logger.h"
+#include "FormatCompat.h"
 
 #include <cassert>
 

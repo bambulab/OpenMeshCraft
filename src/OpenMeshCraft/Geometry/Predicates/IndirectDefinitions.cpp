@@ -1,7 +1,7 @@
 #include "IndirectDefinitions.h"
 
 #ifdef OMC_PRED_PROFILE
-  #include <format>
+  #include "OpenMeshCraft/Utils/FormatCompat.h"
   #include <iostream>
   #include <string>
   #include <vector>

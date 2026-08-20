@@ -114,7 +114,8 @@ if(OMC_CMAKE_ENABLE_DEBUG_INFO)
 
   message(STATUS "[OpenMeshCraft] Enable DebugInfo")
 
-  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES
+                                                  "Clang")
     target_compile_options(${OMC_CONFIG_TARGET} PUBLIC -g)
   elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     # generate debug information

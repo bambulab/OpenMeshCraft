@@ -1,5 +1,8 @@
 #pragma once
 
+#include "OpenMeshCraft/Utils/FormatCompat.h"
+#include "OpenMeshCraft/Utils/Logger.h"
+
 #include <deque>
 #include <queue>
 
