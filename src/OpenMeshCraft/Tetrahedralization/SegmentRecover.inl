@@ -141,7 +141,7 @@ void SegmentRecover<Traits>::segmentRecovery_SiHang(size_t num_loop)
       split_count++;
       if (config.verbose && split_count % 100 == 0)
       {
-        std::cout << std::format(
+        std::cout << OMC::format(
           "\r[OpenMeshCraft CDT] {} segments are split. "
           "{} segments are missing.                     ",
           split_count, missing_segments.size());

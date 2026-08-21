@@ -19,7 +19,7 @@
 
   #define REPORT_INTERSECTING_TRIANGLE                                \
     remove_duplicates(intersecting_triangle_pairs);                   \
-    OMC::Logger::info(std::format(                                    \
+    OMC::Logger::info(OMC::format(                                    \
       "[OpenMeshCraft Arrangements] intersecting triangle pairs: {}", \
       intersecting_triangle_pairs.size()));
 #else
